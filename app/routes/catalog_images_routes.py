@@ -1,3 +1,10 @@
+# Script: catalog_images_routes.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 catalog_images_routes.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 import os
 from flask import Blueprint, request, redirect, url_for, flash, current_app, render_template, session
 from werkzeug.utils import secure_filename

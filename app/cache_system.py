@@ -1,3 +1,10 @@
+# Script: cache_system.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 cache_system.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 """
 Sistema de caché en memoria para reducir la dependencia en MongoDB.
 Almacena temporalmente resultados de consultas frecuentes.

@@ -3,7 +3,7 @@ import logging
 
 # Configuración de registro
 logging.basicConfig(
-    filename='/var/www/vhosts/edefrutos2025.xyz/httpdocs/test_app.log',
+    filename='/test_app.log',
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
@@ -25,4 +25,4 @@ def test_error():
         return f"Error generado para pruebas: {str(e)}"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

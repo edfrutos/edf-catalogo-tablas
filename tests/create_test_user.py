@@ -1,3 +1,10 @@
+# Script: create_test_user.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 create_test_user.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash
 from datetime import datetime
@@ -10,7 +17,7 @@ load_dotenv()
 # Conectar a MongoDB
 MONGO_URI = os.getenv('MONGO_URI')
 client = MongoClient(MONGO_URI)
-db = client["app_catalogojoyero"]
+db = client["app_catalogojoyero_nueva"]
 users = db["users"]
 
 # Datos del usuario de prueba

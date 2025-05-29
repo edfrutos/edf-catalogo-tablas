@@ -7,11 +7,13 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {% if session.get('role') == 'admin' %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.path == url_for('main.dashboard_user') %}active{% endif %}" href="{{ url_for('main.dashboard_user') }}">
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a>
                 </li>
+                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link {% if '/catalogs' in request.path or '/tables' in request.path %}active{% endif %}" href="{{ url_for('catalogs.list') }}">
                         <i class="fas fa-book"></i> Catálogos

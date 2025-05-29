@@ -1,1 +1,0 @@
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/app_runners/ejecutar_flask_directo.py

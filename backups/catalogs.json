@@ -1,0 +1,243 @@
+[
+    {
+        "_id": "68320105f90e22bc3fe6e329",
+        "Número": 1,
+        "Nombre": "Ejemplo",
+        "Descripción": "Primer registro",
+        "table": "catalogo_prueba.xlsx"
+    },
+    {
+        "_id": "6832023e45188f2e133bfcaf",
+        "Número": 1,
+        "Nombre": "Ejemplo",
+        "Descripción": "Primer registro",
+        "table": "catalogo_prueba_2.xlsx"
+    },
+    {
+        "_id": "680a1950b6570e9943828f63",
+        "coleccion": "catalogs",
+        "name": "Unidades de almacenamiento",
+        "created_by": "admin@example.com"
+    },
+    {
+        "_id": "682602ecf7e52b888b9de17c",
+        "coleccion": "catalogs",
+        "name": "inventario valor",
+        "created_by": "j.g.1991",
+        "created_at": "2025-05-15 15:06:20.255000"
+    },
+    {
+        "_id": "68263313e88075ac494aad4f",
+        "coleccion": "catalogs",
+        "name": "JOYERO",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-15 18:31:47.620000"
+    },
+    {
+        "_id": "68275b8ada07e805c039b25e",
+        "coleccion": "catalogs",
+        "name": "Joyero de Armando",
+        "created_by": "armando",
+        "created_at": "2025-05-16 15:36:42.762000"
+    },
+    {
+        "_id": "682c3d854b450347469136eb",
+        "coleccion": "catalogs",
+        "name": "inventario valor",
+        "created_by": "Alberto",
+        "created_at": "2025-05-20 08:29:57.470000"
+    },
+    {
+        "_id": "682c40aa4b450347469136ec",
+        "coleccion": "catalogs",
+        "name": "joyero",
+        "created_by": "Alberto",
+        "created_at": "2025-05-20 08:43:22.517000"
+    },
+    {
+        "_id": "682c501bc25cb98fdcc91b02",
+        "coleccion": "catalogs",
+        "name": "inventario valor",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-20 09:49:15.548000"
+    },
+    {
+        "_id": "682dbb6e54e3cbab2b135dd3",
+        "coleccion": "catalogs",
+        "name": "inventario valor",
+        "created_by": "armando",
+        "created_at": "2025-05-21 11:39:26.310000"
+    },
+    {
+        "_id": "67f84aa1369d8c2a7c236496",
+        "coleccion": "spreadsheets",
+        "name": "Catálogo storage_units.xlsx",
+        "created_by": "edefrutos",
+        "created_at": "2025-04-11 00:48:01.836000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "681d073e9257364ac1e044cc",
+        "coleccion": "spreadsheets",
+        "name": "Tasbla importada",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-08 19:34:22.466000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "681f2189f3e71c71760bf457",
+        "coleccion": "spreadsheets",
+        "name": "Joyero",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-10 09:51:05.853000"
+    },
+    {
+        "_id": "6821df3e55c88f691ec0d6c8",
+        "coleccion": "spreadsheets",
+        "name": "Manual",
+        "created_by": "amelia",
+        "created_at": "2025-05-12 11:45:02.363000"
+    },
+    {
+        "_id": "682240e2fb5a20fbc93ec081",
+        "coleccion": "spreadsheets",
+        "name": "Manual",
+        "created_by": "alberto",
+        "created_at": "2025-05-12 18:41:38.570000"
+    },
+    {
+        "_id": "682240fffb5a20fbc93ec082",
+        "coleccion": "spreadsheets",
+        "name": "Datos",
+        "created_by": "alberto",
+        "created_at": "2025-05-12 18:42:07.423000"
+    },
+    {
+        "_id": "68230b933776461a7d261b6a",
+        "coleccion": "spreadsheets",
+        "name": "Importada",
+        "created_by": "Alberto",
+        "created_at": "2025-05-13 09:06:27.432000"
+    },
+    {
+        "_id": "68230e3492fe1ecb5c261b6a",
+        "coleccion": "spreadsheets",
+        "name": "Manual Admin",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-13 09:17:40.217000"
+    },
+    {
+        "_id": "682319758609019c32d26f57",
+        "coleccion": "spreadsheets",
+        "name": "Test Imporft xlsx",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-13 10:05:41.576000"
+    },
+    {
+        "_id": "68231cf1580991777dd26f58",
+        "coleccion": "spreadsheets",
+        "name": "xlsx importada",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-13 10:20:33.467000"
+    },
+    {
+        "_id": "682370a87fda23ad5d29c7d0",
+        "coleccion": "spreadsheets",
+        "name": "Nueva",
+        "created_by": "Alberto",
+        "created_at": "2025-05-13 16:17:44.707000"
+    },
+    {
+        "_id": "68247404f481122b393f97ea",
+        "coleccion": "spreadsheets",
+        "name": "Alberto Joyero",
+        "created_by": "Alberto",
+        "created_at": "2025-05-14 10:44:20.947000"
+    },
+    {
+        "_id": "6824b4565dd463dce4bdd96b",
+        "coleccion": "spreadsheets",
+        "name": "Nueva Mnaual Julia",
+        "created_by": "j.g.1991",
+        "created_at": "2025-05-14 15:18:46.731000"
+    },
+    {
+        "_id": "6824c35fbb75a4af64112410",
+        "coleccion": "spreadsheets",
+        "name": "Enrique Nueva",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-14 16:22:55.289000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "6824c375bb75a4af64112411",
+        "coleccion": "spreadsheets",
+        "name": "Enri9que importada",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-14 16:23:17.965000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "6824d6e217a06891baf031d5",
+        "coleccion": "spreadsheets",
+        "name": "Adolfo tabla",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-14 17:46:10.043000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "6824d9cc252f62f5e5350f62",
+        "coleccion": "spreadsheets",
+        "name": "Adolfo Nueva",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-14 17:58:36.411000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "6826ff3be88075ac494aad50",
+        "coleccion": "spreadsheets",
+        "name": "Tabla Roberto",
+        "created_by": "fsareirz26",
+        "created_at": "2025-05-16 09:02:51.401000"
+    },
+    {
+        "_id": "682726bee88075ac494aad53",
+        "coleccion": "spreadsheets",
+        "name": "Tabla Depurando",
+        "created_by": "j.g.1991",
+        "created_at": "2025-05-16 11:51:26.079000"
+    },
+    {
+        "_id": "68272e581710109e024f7d4a",
+        "coleccion": "spreadsheets",
+        "name": "Manual Creada por edefrutos en Mis Tablas de Catalogo",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-16 12:23:52.650000"
+    },
+    {
+        "_id": "68320105f90e22bc3fe6e328",
+        "name": "Catálogo de Prueba admin",
+        "headers": "['Número', 'Nombre', 'Descripción']",
+        "filename": "catalogo_prueba.xlsx",
+        "owner": "admin",
+        "created_by": "admin",
+        "updated_at": "2025-05-24 19:00:41.478000",
+        "data": "[{'Número': '1001', 'Nombre': 'Amex', 'Descripción': 'Terminación tarjeta American Express', 'imagenes': ['3147c8aab51a448687e68f077d39af57.jpg'], 'imagen_data': ['3147c8aab51a448687e68f077d39af57.jpg'], 'num_imagenes': 1}]",
+        "num_rows": 1
+    },
+    {
+        "_id": "6832023e45188f2e133bfcae",
+        "name": "Catálogo de Prueba edefrutos",
+        "headers": "['Número', 'Nombre', 'Descripción', 'Localización', 'Stock']",
+        "filename": "catalogo_prueba_2.xlsx",
+        "owner": "edefrutos",
+        "created_by": "edefrutos",
+        "updated_at": "2025-05-24 19:00:25.467000"
+    }
+]

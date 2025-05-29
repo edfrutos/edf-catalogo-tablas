@@ -149,7 +149,7 @@ Asegúrese de que su archivo `.env` contiene:
 
 ```
 MONGO_URI=mongodb+srv://usuario:contraseña@cluster.mongodb.net/?retryWrites=true&w=majority
-MONGO_DB=app_catalogojoyero
+MONGO_DB=app_catalogojoyero_nueva
 UPLOAD_FOLDER=imagenes_subidas
 UNUSED_IMAGES_FOLDER=unused_images
 # Para activar la eliminación directa en lugar de mover a unused_images
@@ -165,7 +165,7 @@ UNUSED_IMAGES_FOLDER=unused_images
 Puede definir las variables en la misma línea del crontab:
 
 ```
-0 2 * * 0 cd /ruta/completa && MONGO_URI="mongodb+srv://usuario:contraseña@cluster.mongodb.net" MONGO_DB="app_catalogojoyero" /usr/bin/python3 clean_images_scheduled.py >> ~/logs/clean_images_cron.log 2>&1
+0 2 * * 0 cd /ruta/completa && MONGO_URI="mongodb+srv://usuario:contraseña@cluster.mongodb.net" MONGO_DB="app_catalogojoyero_nueva" /usr/bin/python3 clean_images_scheduled.py >> ~/logs/clean_images_cron.log 2>&1
 ```
 
 ## Prueba de la Tarea Programada

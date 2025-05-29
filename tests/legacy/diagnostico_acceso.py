@@ -50,7 +50,7 @@ def verificar_mongodb():
         client.admin.command('ping')
         
         # Seleccionar base de datos y colección
-        db = client["app_catalogojoyero"]
+        db = client["app_catalogojoyero_nueva"]
         users_collection = db["users"]
         
         # Buscar usuario administrador

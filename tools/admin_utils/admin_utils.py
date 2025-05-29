@@ -11,7 +11,7 @@ class AdminUtils:
         self.db = db
         self.users_collection = db['users']
         self.spreadsheets_collection = db['67b8c24a7fdc72dd4d8703cf']  # Colección de tablas
-        self.SPREADSHEET_FOLDER = "/var/www/vhosts/edefrutos2025.xyz/httpdocs/spreadsheets"
+        self.SPREADSHEET_FOLDER = "/spreadsheets"
         
         # Asegurar que el directorio existe
         if not os.path.exists(self.SPREADSHEET_FOLDER):

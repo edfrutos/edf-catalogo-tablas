@@ -1,3 +1,10 @@
+# Script: logger.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 logger.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 import logging
 import os
 from logging.handlers import RotatingFileHandler

@@ -41,7 +41,7 @@ def get_resets_collection():
 
 def get_catalogs_collection():
     try:
-        return db_get_catalogs_collection()
+        return get_mongo_db()['spreadsheets']
     except Exception as e:
         logger.error(f"Error obteniendo colección catalogs: {str(e)}")
         raise

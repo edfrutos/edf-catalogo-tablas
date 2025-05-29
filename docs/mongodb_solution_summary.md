@@ -37,7 +37,7 @@ Se han creado las siguientes herramientas para monitorear y diagnosticar problem
 ### 2. Actualización de Lista Blanca de IPs
 
 - **Script `update_mongodb_whitelist.py`**: Genera instrucciones para actualizar la lista blanca de IPs en MongoDB Atlas.
-- **Documentación**: Se han generado instrucciones detalladas en `/var/www/vhosts/edefrutos2025.xyz/httpdocs/docs/mongodb_whitelist_instructions.txt`.
+- **Documentación**: Se han generado instrucciones detalladas en `/docs/mongodb_whitelist_instructions.txt`.
 
 ### 3. Pruebas de Carga
 
@@ -67,7 +67,7 @@ La aplicación muestra un rendimiento excelente bajo carga moderada, con tiempos
 
 ### 1. Monitoreo Regular
 
-- **Revisar Logs de Monitoreo**: Verificar regularmente los logs generados por el script de monitoreo en `/var/www/vhosts/edefrutos2025.xyz/httpdocs/logs/mongodb_monitor.log`.
+- **Revisar Logs de Monitoreo**: Verificar regularmente los logs generados por el script de monitoreo en `/logs/mongodb_monitor.log`.
 - **Configurar Alertas por Correo**: Completar la configuración de alertas por correo electrónico añadiendo las variables SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD y ALERT_EMAIL al archivo `.env`.
 
 ### 2. Seguridad
@@ -92,30 +92,30 @@ La aplicación muestra un rendimiento excelente bajo carga moderada, con tiempos
 
 ```bash
 # Ejecutar monitoreo manual
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/python /var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/monitor_mongodb.py
+/.venv/bin/python /tools/monitor_mongodb.py
 
 # Ver logs de monitoreo
-tail -f /var/www/vhosts/edefrutos2025.xyz/httpdocs/logs/mongodb_monitor.log
+tail -f /logs/mongodb_monitor.log
 ```
 
 ### Pruebas de Carga
 
 ```bash
 # Ejecutar prueba de carga básica
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/python /var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/load_test.py
+/.venv/bin/python /tools/load_test.py
 
 # Ejecutar prueba de carga personalizada
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/python /var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/load_test.py --requests 100 --concurrency 10
+/.venv/bin/python /tools/load_test.py --requests 100 --concurrency 10
 ```
 
 ### Solución de Problemas
 
 ```bash
 # Corregir problemas de conexión a MongoDB
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/python /var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/fix_mongodb_atlas.py
+/.venv/bin/python /tools/fix_mongodb_atlas.py
 
 # Revertir cambios
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/python /var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/fix_mongodb_atlas.py --revert
+/.venv/bin/python /tools/fix_mongodb_atlas.py --revert
 ```
 
 ## Conclusión

@@ -1,1 +1,0 @@
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/root/03_ver_guardado_rutas_en_MongoDB.py

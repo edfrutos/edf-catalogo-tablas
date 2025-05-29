@@ -1,3 +1,10 @@
+# Script: test_password.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 test_password.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os

@@ -2,15 +2,6 @@
 {% block content %}
 <h2>Iniciar Sesión</h2>
 
-<!-- Mostrar mensajes flash -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-
 <form method="POST" action="{{ url_for('auth.login') }}">
   <div class="mb-3">
     <label for="email" class="form-label">Correo o Usuario</label>
@@ -32,12 +23,9 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
 document.querySelectorAll('.toggle-password').forEach(function(btn) {
-    btn.addEventListener('click', function (e) {
-      e.preventDefault(); // Evita el envío del formulario
+  btn.addEventListener('click', function () {
     const pwd = this.parentElement.querySelector('input[type="password"], input[type="text"]');
-      if (!pwd) return;
     const icon = this.querySelector('i');
     if (pwd.type === 'password') {
       pwd.type = 'text';
@@ -46,7 +34,6 @@ document.querySelectorAll('.toggle-password').forEach(function(btn) {
       pwd.type = 'password';
       if (icon) { icon.classList.remove('bi-eye-slash'); icon.classList.add('bi-eye'); }
     }
-    });
   });
 });
 </script>

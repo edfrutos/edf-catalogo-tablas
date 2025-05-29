@@ -32,15 +32,17 @@
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">Nueva Contraseña</label>
-                            <input type="password" class="form-control" name="password" id="password">
-                            <button class="btn btn-outline-secondary toggle-password" type="button"><i class="bi bi-eye"></i></button>
-                            <small class="form-text text-muted">Dejar en blanco para mantener la contraseña actual</small>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="password">
+                                <button class="btn btn-outline-secondary toggle-password" type="button"><i class="bi bi-eye"></i></button>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="confirm_password" class="form-label">Confirmar Contraseña</label>
-                            <input type="password" class="form-control" name="confirm_password" id="confirm_password">
-                            <button class="btn btn-outline-secondary toggle-password" type="button"><i class="bi bi-eye"></i></button>
-                            <small class="form-text text-muted">Solo necesario si cambia la contraseña</small>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="confirm_password" id="confirm_password">
+                                <button class="btn btn-outline-secondary toggle-password" type="button"><i class="bi bi-eye"></i></button>
+                            </div>
                         </div>
                         <div class="d-flex justify-content-between">
                             <button type="submit" class="btn btn-success">Actualizar</button>

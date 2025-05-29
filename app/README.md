@@ -94,8 +94,8 @@ After=network.target
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/vhosts/edefrutos2025.xyz/httpdocs
-Environment="PATH=/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin"
-ExecStart=/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/gunicorn --workers 4 --bind 127.0.0.1:8000 run:app
+Environment="PATH=/.venv/bin"
+ExecStart=/.venv/bin/gunicorn --workers 4 --bind 127.0.0.1:8000 run:app
 
 [Install]
 WantedBy=multi-user.target

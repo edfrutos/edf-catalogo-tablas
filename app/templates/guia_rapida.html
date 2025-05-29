@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Guía rápida de uso{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Guía rápida de uso</h2>
+                </div>
+                <div class="card-body">
+                    <h4>¿Qué puedes hacer en esta aplicación?</h4>
+                    <ul>
+                        <li><strong>Ver y gestionar tus catálogos/tablas:</strong> Accede a tus datos organizados, consulta detalles y visualiza imágenes asociadas.</li>
+                        <li><strong>Añadir nuevas filas:</strong> Usa el botón <span class="badge bg-success">Añadir fila</span> para incorporar nuevos registros a tus tablas.</li>
+                        <li><strong>Editar o eliminar datos:</strong> Modifica o elimina filas existentes usando los botones de acción en cada registro.</li>
+                        <li><strong>Subir imágenes:</strong> Puedes asociar imágenes a tus registros para enriquecer la información.</li>
+                        <li><strong>Descargar tus datos:</strong> Exporta tus catálogos/tablas en formatos compatibles (Excel, CSV, etc.) si la opción está disponible.</li>
+                    </ul>
+                    <hr>
+                    <h4>¿Cómo navegar?</h4>
+                    <ul>
+                        <li>Utiliza el menú superior para acceder a tus catálogos/tablas y otras secciones disponibles.</li>
+                        <li>El botón <span class="badge bg-secondary">Volver</span> te permite regresar fácilmente a la pantalla anterior.</li>
+                        <li>En la pantalla principal verás un resumen de tus catálogos/tablas y accesos directos a las acciones más frecuentes.</li>
+                    </ul>
+                    <hr>
+                    <h4>¿Necesitas ayuda?</h4>
+                    <ul>
+                        <li>Consulta esta guía en cualquier momento desde la pantalla de bienvenida.</li>
+                        <li>Si tienes dudas o encuentras algún problema, contacta con el equipo de soporte usando el <a href="mailto:admin@edefrutos2025.xyz" class="link-primary">correo de soporte</a> o el siguiente formulario:</li>
+                    </ul>
+                    <a href="{{ url_for('main.soporte') }}" class="btn btn-outline-primary mt-2">Ir al formulario de contacto/soporte</a>
+                    <div class="alert alert-info mt-4">
+                        <strong>Consejo:</strong> Mantén tus datos actualizados y revisa periódicamente tus catálogos para asegurar su calidad.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

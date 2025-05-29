@@ -87,62 +87,37 @@
               {% endfor %}
               <td>
                 {% if row.imagen_urls and row.imagen_urls|length > 0 %}
-                <div class="d-flex flex-wrap gap-2">
-                  {% for img_url in row.imagen_urls %}
-                  <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;" class="position-relative">
-                    <div class="image-container" data-img-url="{{ img_url }}">
-                      <div class="spinner-border text-primary spinner-border-sm position-absolute top-50 start-50 translate-middle" role="status">
-                        <span class="visually-hidden">Cargando...</span>
-                      </div>
-                      <img src="{{ img_url }}" alt="Imagen" class="img-thumbnail catalog-image" 
-                           style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
-                           onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                           onerror="this.src='/static/img/image-error.svg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                           loading="lazy">
-                    </div>
-                  </a>
-                  {% endfor %}
-                  <small class="text-muted align-self-center ms-2">({{ row.imagen_urls|length }} imágenes)</small>
-                </div>
-                {% elif row.imagenes is defined %}
-                  {% if row.imagenes is number %}
-                    <!-- Si imagenes es un número, mostrar el número de imágenes -->
-                    <div class="d-flex align-items-center">
-                      <span class="badge bg-info text-white me-2">{{ row.imagenes }}</span>
-                      <span class="text-muted">imágenes</span>
-                    </div>
-                  {% elif row.imagenes is iterable and row.imagenes is not string and row.imagenes|length > 0 %}
-                    <!-- Si imagenes es una lista con elementos -->
-                    <div class="d-flex flex-wrap gap-2">
-                      {% for img in row.imagenes %}
-                        {% if img is string and img|length > 5 %}
-                          {% set img_url = url_for('static', filename='uploads/' ~ img) %}
-                          <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;" class="position-relative">
-                            <div class="image-container" data-img-url="{{ img_url }}">
-                              <div class="spinner-border text-primary spinner-border-sm position-absolute top-50 start-50 translate-middle" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                              </div>
-                              <img src="{{ img_url }}" alt="Imagen" class="img-thumbnail catalog-image" 
-                                   style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
-                                   onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                   onerror="this.src='/static/img/image-error.svg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                   loading="lazy">
-                            </div>
-                          </a>
-                        {% endif %}
-                      {% endfor %}
-                      <small class="text-muted align-self-center ms-2">({{ row.imagenes|length }} imágenes)</small>
-                    </div>
-                  {% else %}
-                    <span class="text-muted">Sin imágenes</span>
-                  {% endif %}
+                  <div class="d-flex flex-wrap gap-2">
+                    {% for img_url in row.imagen_urls %}
+                      <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;" class="position-relative">
+                        <div class="image-container" data-img-url="{{ img_url }}">
+                          <div class="spinner-border text-primary spinner-border-sm position-absolute top-50 start-50 translate-middle" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                          </div>
+                          <img src="{{ img_url }}" alt="Imagen" class="img-thumbnail catalog-image" 
+                               style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
+                               onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                               onerror="this.src='/static/img/image-error.svg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                               loading="lazy">
+                        </div>
+                      </a>
+                    {% endfor %}
+                    <small class="text-muted align-self-center ms-2">({{ row.imagen_urls|length }} imágenes)</small>
+                  </div>
                 {% else %}
                   <span class="text-muted">Sin imágenes</span>
                 {% endif %}
               </td>
               {% if session.role == 'admin' or session.username == table.owner %}
                 <td>
-                  <a href="{{ url_for('main.editar_fila', tabla_id=table._id, fila_index=loop.index0) }}" class="btn btn-sm btn-primary">Editar</a>
+                  <a href="{{ url_for('main.editar_fila', tabla_id=table._id, fila_index=loop.index0) }}" class="btn btn-sm btn-warning me-1">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                  <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=table._id, row_index=loop.index0) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                    <button type="submit" class="btn btn-sm btn-danger">
+                      <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                  </form>
                 </td>
               {% endif %}
             </tr>

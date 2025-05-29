@@ -1,0 +1,25 @@
+Nombre	Email	Rol
+admin	admin@example.com	admin
+edefrutos	edefrutos@gmail.com	admin
+Felipe	felipe@yahoo.com	admin
+Roberto	fsareirz26@gmail.com	user
+Alberto	alberto@yahoo.com	user
+Julia	j.g.1991@hotmail.es	admin
+Eduardo	eduardo@gmail.com	admin
+Alejandro	alejandro@gmail.com	user
+Amelia	amelia@gmail.com	user
+Aurelio	aurelio@gmail.com	user
+Rosario	rosario@gmail.com	user
+Roberto	roberto@gmail.com	user
+Armando	armando@gmail.com	user
+Amadeo	amadeo@gmail.com	user
+edfrutos	edfrutos@hotmail.com	user
+Alberto	alberto@gmail.com	user
+Fernando	fernando@gmail.com	user
+Enrique	enrique@gmail.com	user
+Ricardo	ricardo@gmail.com	admin
+Carlos	carlos@gmail.com	user
+Anton	anton@gmail.com	user
+Usuario Normal	usuario@example.com	user
+Rocio	rocio@gmail.com	user
+Elisa	elisa@gmail.com	user

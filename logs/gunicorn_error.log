@@ -1,32 +1,4 @@
 
-[2025-05-20 13:00:15 +0200] [522271] [INFO] Handling signal: term
-[2025-05-20 13:00:15 +0200] [522297] [INFO] Worker exiting (pid: 522297)
-[2025-05-20 13:00:15 +0200] [522295] [INFO] Worker exiting (pid: 522295)
-[2025-05-20 13:00:15 +0200] [522294] [INFO] Worker exiting (pid: 522294)
-[2025-05-20 13:00:15 +0200] [522296] [INFO] Worker exiting (pid: 522296)
-[2025-05-20 13:00:15 +0200] [522293] [INFO] Worker exiting (pid: 522293)
-[2025-05-20 13:00:21 +0200] [548286] [INFO] Starting gunicorn 23.0.0
-[2025-05-20 13:00:21 +0200] [548286] [INFO] Iniciando servidor Gunicorn para edefrutos2025
-[2025-05-20 13:00:21 +0200] [548286] [INFO] Listening at: http://127.0.0.1:8002 (548286)
-[2025-05-20 13:00:21 +0200] [548286] [INFO] Using worker: gthread
-[2025-05-20 13:00:21 +0200] [548286] [INFO] Workers listos. Sirviendo en 127.0.0.1:8002
-[2025-05-20 13:00:21 +0200] [548299] [INFO] Booting worker with pid: 548299
-[2025-05-20 13:00:21 +0200] [548299] [INFO] Worker 548299 iniciado
-[2025-05-20 13:00:21 +0200] [548300] [INFO] Booting worker with pid: 548300
-[2025-05-20 13:00:21 +0200] [548300] [INFO] Worker 548300 iniciado
-[2025-05-20 13:00:21 +0200] [548301] [INFO] Booting worker with pid: 548301
-[2025-05-20 13:00:21 +0200] [548301] [INFO] Worker 548301 iniciado
-[2025-05-20 13:00:21 +0200] [548302] [INFO] Booting worker with pid: 548302
-[2025-05-20 13:00:21 +0200] [548302] [INFO] Worker 548302 iniciado
-[2025-05-20 13:00:22 +0200] [548303] [INFO] Booting worker with pid: 548303
-[2025-05-20 13:00:22 +0200] [548303] [INFO] Worker 548303 iniciado
-[2025-05-20 14:00:13 +0200] [548286] [INFO] Handling signal: term
-[2025-05-20 14:00:13 +0200] [548300] [INFO] Worker exiting (pid: 548300)
-[2025-05-20 14:00:13 +0200] [548302] [INFO] Worker exiting (pid: 548302)
-[2025-05-20 14:00:13 +0200] [548303] [INFO] Worker exiting (pid: 548303)
-[2025-05-20 14:00:13 +0200] [548299] [INFO] Worker exiting (pid: 548299)
-[2025-05-20 14:00:14 +0200] [548301] [INFO] Worker exiting (pid: 548301)
-[2025-05-20 14:03:02 +0200] [579322] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -47,7 +19,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:03:05 +0200] [579321] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -68,9 +39,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:03:05 +0200] [579301] [ERROR] Worker (pid:579322) exited with code 255
-[2025-05-20 14:03:05 +0200] [579301] [ERROR] Worker (pid:579322) exited with code 255.
-[2025-05-20 14:03:05 +0200] [579301] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 208, in run
     self.sleep()
@@ -83,9 +51,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/gunicorn_config.py", line 106, in child_exit
     server.log.warning(f"Worker {worker.pid} ha terminado con código de salida {worker.exitcode}")
 AttributeError: 'ThreadWorker' object has no attribute 'exitcode'
-[2025-05-20 14:03:07 +0200] [579301] [ERROR] Worker (pid:579321) exited with code 255
-[2025-05-20 14:03:07 +0200] [579301] [ERROR] Worker (pid:579321) exited with code 255.
-[2025-05-20 14:04:01 +0200] [581540] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -106,7 +71,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:04:04 +0200] [581541] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -127,9 +91,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:04:05 +0200] [581538] [ERROR] Worker (pid:581540) exited with code 255
-[2025-05-20 14:04:05 +0200] [581538] [ERROR] Worker (pid:581540) exited with code 255.
-[2025-05-20 14:04:05 +0200] [581538] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 208, in run
     self.sleep()
@@ -142,8 +103,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/gunicorn_config.py", line 106, in child_exit
     server.log.warning(f"Worker {worker.pid} ha terminado con código de salida {worker.exitcode}")
 AttributeError: 'ThreadWorker' object has no attribute 'exitcode'
-[2025-05-20 14:04:05 +0200] [581538] [ERROR] Worker (pid:581541) was sent code 131!
-[2025-05-20 14:04:22 +0200] [582091] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -164,7 +123,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:04:22 +0200] [582092] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -185,9 +143,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:04:22 +0200] [582086] [ERROR] Worker (pid:582091) exited with code 255
-[2025-05-20 14:04:22 +0200] [582086] [ERROR] Worker (pid:582091) exited with code 255.
-[2025-05-20 14:04:22 +0200] [582086] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 208, in run
     self.sleep()
@@ -200,9 +155,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/gunicorn_config.py", line 106, in child_exit
     server.log.warning(f"Worker {worker.pid} ha terminado con código de salida {worker.exitcode}")
 AttributeError: 'ThreadWorker' object has no attribute 'exitcode'
-[2025-05-20 14:04:23 +0200] [582086] [ERROR] Worker (pid:582092) exited with code 255
-[2025-05-20 14:04:23 +0200] [582086] [ERROR] Worker (pid:582092) exited with code 255.
-[2025-05-20 14:04:37 +0200] [582242] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -223,7 +175,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:04:37 +0200] [582241] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -244,7 +195,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:04:37 +0200] [582243] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -265,9 +215,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:04:37 +0200] [582239] [ERROR] Worker (pid:582242) exited with code 255
-[2025-05-20 14:04:37 +0200] [582239] [ERROR] Worker (pid:582242) exited with code 255.
-[2025-05-20 14:04:37 +0200] [582239] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 208, in run
     self.sleep()
@@ -280,11 +227,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/gunicorn_config.py", line 106, in child_exit
     server.log.warning(f"Worker {worker.pid} ha terminado con código de salida {worker.exitcode}")
 AttributeError: 'ThreadWorker' object has no attribute 'exitcode'
-[2025-05-20 14:04:38 +0200] [582239] [ERROR] Worker (pid:582241) exited with code 255
-[2025-05-20 14:04:38 +0200] [582239] [ERROR] Worker (pid:582241) exited with code 255.
-[2025-05-20 14:04:38 +0200] [582239] [ERROR] Worker (pid:582243) exited with code 255
-[2025-05-20 14:04:38 +0200] [582239] [ERROR] Worker (pid:582243) exited with code 255.
-[2025-05-20 14:05:43 +0200] [582762] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -305,7 +247,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:05:44 +0200] [582761] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -326,9 +267,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:05:44 +0200] [582751] [ERROR] Worker (pid:582762) exited with code 255
-[2025-05-20 14:05:44 +0200] [582751] [ERROR] Worker (pid:582762) exited with code 255.
-[2025-05-20 14:05:44 +0200] [582751] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 208, in run
     self.sleep()
@@ -341,9 +279,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/gunicorn_config.py", line 106, in child_exit
     server.log.warning(f"Worker {worker.pid} ha terminado con código de salida {worker.exitcode}")
 AttributeError: 'ThreadWorker' object has no attribute 'exitcode'
-[2025-05-20 14:05:44 +0200] [582751] [ERROR] Worker (pid:582761) exited with code 255
-[2025-05-20 14:05:44 +0200] [582751] [ERROR] Worker (pid:582761) exited with code 255.
-[2025-05-20 14:06:53 +0200] [583086] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -364,7 +299,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:06:53 +0200] [583083] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -385,9 +319,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:06:54 +0200] [583078] [ERROR] Worker (pid:583086) exited with code 255
-[2025-05-20 14:06:54 +0200] [583078] [ERROR] Worker (pid:583086) exited with code 255.
-[2025-05-20 14:06:54 +0200] [583078] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 208, in run
     self.sleep()
@@ -400,9 +331,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/gunicorn_config.py", line 106, in child_exit
     server.log.warning(f"Worker {worker.pid} ha terminado con código de salida {worker.exitcode}")
 AttributeError: 'ThreadWorker' object has no attribute 'exitcode'
-[2025-05-20 14:06:54 +0200] [583078] [ERROR] Worker (pid:583083) exited with code 255
-[2025-05-20 14:06:54 +0200] [583078] [ERROR] Worker (pid:583083) exited with code 255.
-[2025-05-20 14:09:41 +0200] [583723] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -423,7 +351,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:09:43 +0200] [583725] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
     worker.init_process()
@@ -444,9 +371,6 @@ Traceback (most recent call last):
   File "/usr/lib/python3.8/threading.py", line 852, in start
     _start_new_thread(self._bootstrap, ())
 RuntimeError: can't start new thread
-[2025-05-20 14:09:44 +0200] [583718] [ERROR] Worker (pid:583723) exited with code 255
-[2025-05-20 14:09:44 +0200] [583718] [ERROR] Worker (pid:583723) exited with code 255.
-[2025-05-20 14:09:44 +0200] [583718] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 208, in run
     self.sleep()
@@ -458,9 +382,6 @@ Traceback (most recent call last):
     self.cfg.child_exit(self, worker)
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/gunicorn_config.py", line 106, in child_exit
 AttributeError: 'ThreadWorker' object has no attribute 'exitcode'
-[2025-05-20 14:09:47 +0200] [583718] [ERROR] Worker (pid:583725) exited with code 255
-[2025-05-20 14:09:47 +0200] [583718] [ERROR] Worker (pid:583725) exited with code 255.
-[2025-05-20 14:09:57 +0200] [585167] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -471,7 +392,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 14:10:08 +0200] [585285] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -482,7 +402,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 14:10:18 +0200] [585406] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -493,7 +412,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 14:10:30 +0200] [585534] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -508,7 +426,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 14:10:30 +0200] [585535] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -523,12 +440,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 14:10:30 +0200] [585532] [ERROR] Worker (pid:585534) exited with code 3
-[2025-05-20 14:10:30 +0200] [585532] [ERROR] Worker (pid:585535) was sent SIGTERM!
-[2025-05-20 14:10:30 +0200] [585532] [WARNING] Worker 585535 ha terminado con código de salida 0
-[2025-05-20 14:10:30 +0200] [585532] [ERROR] Shutting down: Master
-[2025-05-20 14:10:30 +0200] [585532] [ERROR] Reason: Worker failed to boot.
-[2025-05-20 14:11:09 +0200] [585838] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -543,10 +454,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 14:11:09 +0200] [585836] [ERROR] Worker (pid:585838) exited with code 3
-[2025-05-20 14:11:09 +0200] [585836] [ERROR] Shutting down: Master
-[2025-05-20 14:11:09 +0200] [585836] [ERROR] Reason: Worker failed to boot.
-[2025-05-20 15:00:06 +0200] [611941] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -557,7 +464,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 15:00:16 +0200] [612326] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -568,7 +474,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 15:00:27 +0200] [612449] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -579,7 +484,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 16:00:05 +0200] [643777] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -590,7 +494,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 16:00:15 +0200] [643890] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -601,7 +504,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 16:00:25 +0200] [644301] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -612,7 +514,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 16:30:03 +0200] [660114] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -627,7 +528,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 16:30:03 +0200] [660115] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -642,10 +542,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 16:30:03 +0200] [660109] [ERROR] Worker (pid:660114) exited with code 3
-[2025-05-20 16:30:03 +0200] [660109] [ERROR] Shutting down: Master
-[2025-05-20 16:30:03 +0200] [660109] [ERROR] Reason: Worker failed to boot.
-[2025-05-20 16:32:00 +0200] [661159] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -660,7 +556,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 16:32:01 +0200] [661160] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -675,12 +570,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 16:32:01 +0200] [661157] [ERROR] Worker (pid:661159) exited with code 3
-[2025-05-20 16:32:01 +0200] [661157] [ERROR] Worker (pid:661160) was sent SIGTERM!
-[2025-05-20 16:32:01 +0200] [661157] [WARNING] Worker 661160 ha terminado con código de salida 0
-[2025-05-20 16:32:01 +0200] [661157] [ERROR] Shutting down: Master
-[2025-05-20 16:32:01 +0200] [661157] [ERROR] Reason: Worker failed to boot.
-[2025-05-20 16:45:38 +0200] [669356] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -695,7 +584,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 16:45:38 +0200] [669357] [ERROR] Exception in worker process
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/workers/base.py", line 135, in init_process
@@ -710,12 +598,6 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 991, in _find_and_load
   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'wsgi'
-[2025-05-20 16:45:38 +0200] [669353] [ERROR] Worker (pid:669356) exited with code 3
-[2025-05-20 16:45:38 +0200] [669353] [ERROR] Worker (pid:669357) was sent SIGTERM!
-[2025-05-20 16:45:38 +0200] [669353] [WARNING] Worker 669357 ha terminado con código de salida 0
-[2025-05-20 16:45:38 +0200] [669353] [ERROR] Shutting down: Master
-[2025-05-20 16:45:38 +0200] [669353] [ERROR] Reason: Worker failed to boot.
-[2025-05-20 16:48:37 +0200] [670961] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -726,7 +608,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 16:48:48 +0200] [671070] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -737,7 +618,6 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 16:48:58 +0200] [671131] [ERROR] Unhandled exception in main loop
 Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 201, in run
     self.manage_workers()
@@ -748,7 +628,3 @@ Traceback (most recent call last):
   File "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/gunicorn/arbiter.py", line 592, in spawn_worker
     pid = os.fork()
 BlockingIOError: [Errno 11] Resource temporarily unavailable
-[2025-05-20 17:00:47 +0200] [672858] [WARNING] Worker 672874 ha terminado
-[2025-05-20 17:00:47 +0200] [672858] [WARNING] Worker 672870 ha terminado
-[2025-05-20 17:18:54 +0200] [677723] [WARNING] Worker 677740 ha terminado
-[2025-05-20 17:18:54 +0200] [677723] [WARNING] Worker 677736 ha terminado

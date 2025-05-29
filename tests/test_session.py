@@ -1,3 +1,10 @@
+# Script: test_session.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 test_session.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 from flask import Flask, session, redirect, url_for, request
 
 app = Flask(__name__)

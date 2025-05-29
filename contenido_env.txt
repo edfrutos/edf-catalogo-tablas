@@ -1,0 +1,52 @@
+############################
+# CONFIGURACIÓN GENERAL
+############################
+
+# Clave secreta de Flask (protege sesiones y cookies)
+SECRET_KEY=MBZl1W45ute3UEMCXPlL9JzcR7XsTeUi-4ZI6KCd79M
+FLASK_SECRET_KEY=MBZl1W45ute3UEMCXPlL9JzcR7XsTeUi-4ZI6KCd79M
+
+# Entorno y modo de ejecución
+FLASK_ENV=production
+FLASK_DEBUG=False
+
+############################
+# CONFIGURACIÓN DE MONGODB
+############################
+
+# URI de conexión a MongoDB Atlas (incluyendo el nombre de la base de datos)
+MONGO_URI=mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero?retryWrites=true&w=majority
+
+############################
+# CONFIGURACIÓN DE CORREO
+############################
+
+MAIL_SERVER=smtp.ethereal.email
+MAIL_PORT=587
+MAIL_USE_TLS=True
+MAIL_USERNAME=caitlyn.anderson4@ethereal.email
+MAIL_PASSWORD=TkCxse18jANkqVxhqS
+MAIL_DEFAULT_SENDER_NAME=Administrador
+MAIL_DEFAULT_SENDER_EMAIL=admin@edefrutos.me
+MAIL_DEFAULT_SENDER=no-reply@edefrutos2025.xyz
+MAIL_DEBUG=1
+
+############################
+# CONFIGURACIÓN DE AWS S3
+############################
+
+# Credenciales y configuración de Amazon S3
+AWS_ACCESS_KEY_ID=AKIA2VCI2BNFGN564KLO
+AWS_SECRET_ACCESS_KEY=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
+AWS_REGION=eu-central-1
+S3_BUCKET_NAME=local-catalogotablas
+USE_S3=true
+
+############################
+# CONFIGURACIÓN DE RUTAS
+############################
+
+# Asegurar que Python encuentre los módulos correctamente
+PYTHONPATH=.
+
+

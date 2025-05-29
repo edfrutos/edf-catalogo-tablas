@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 # URI de conexión a MongoDB Atlas
-uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero?retryWrites=true&w=majority"
+uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
 
 try:
     # Crear cliente de MongoDB

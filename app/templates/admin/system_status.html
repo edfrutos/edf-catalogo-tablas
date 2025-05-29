@@ -1,668 +1,1123 @@
-{% extends 'base.html' %}
-
-{% block title %}Estado del Sistema{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% block title %}Estado del Sistema{% endblock %} {%
+block content %}
 <div class="container mt-4">
-    <h1>Panel de Estado del Sistema</h1>
-    
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="card">
-                <div class="card-header bg-{{ 'success' if data.health.status == 'healthy' else 'warning' if data.health.status == 'degraded' else 'danger' }}">
-                    <h4 class="card-title mb-0 text-white">
-                        Estado General: 
-                        {% if data.health.status == 'healthy' %}
-                            <span class="badge bg-success">Saludable</span>
-                        {% elif data.health.status == 'degraded' %}
-                            <span class="badge bg-warning">Degradado</span>
-                        {% else %}
-                            <span class="badge bg-danger">En riesgo</span>
-                        {% endif %}
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Tiempo activo</h5>
-                                    <p class="card-text fs-4">{{ data.uptime }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Solicitudes</h5>
-                                    <p class="card-text fs-4">{{ data.request_stats.total_requests }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Estado BD</h5>
-                                    <p class="card-text fs-4">
-                                        {% if data.database.is_available %}
-                                            <span class="text-success">Conectado</span>
-                                        {% else %}
-                                            <span class="text-danger">Desconectado</span>
-                                        {% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Tiempo resp. BD</h5>
-                                    <p class="card-text fs-4">{{ data.database.response_time_ms }} ms</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <h1>Panel de Estado del Sistema</h1>
+
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div
+          class="card-header bg-{{ 'success' if data.health.status == 'healthy' else 'warning' if data.health.status == 'degraded' else 'danger' }}"
+        >
+          <h4 class="card-title mb-0 text-white">
+            Estado General: {% if data.health.status == 'healthy' %}
+            <span class="badge bg-success">Saludable</span>
+            {% elif data.health.status == 'degraded' %}
+            <span class="badge bg-warning">Degradado</span>
+            {% else %}
+            <span class="badge bg-danger">En riesgo</span>
+            {% endif %}
+          </h4>
         </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="card-title mb-0">Recursos del Sistema</h4>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tiempo activo</h5>
+                  <p class="card-text fs-4">{{ data.uptime }}</p>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <h5>CPU</h5>
-                        <div class="progress">
-                            <div class="progress-bar {% if data.health.metrics.system_status.cpu_usage < 70 %}bg-success{% elif data.health.metrics.system_status.cpu_usage < 85 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                 role="progressbar" 
-                                 style="width: {{ data.health.metrics.system_status.cpu_usage }}%;" 
-                                 aria-valuenow="{{ data.health.metrics.system_status.cpu_usage }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                {{ data.health.metrics.system_status.cpu_usage }}%
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <h5>Memoria</h5>
-                        <div class="progress">
-                            <div class="progress-bar {% if data.health.metrics.system_status.memory_usage.percent < 70 %}bg-success{% elif data.health.metrics.system_status.memory_usage.percent < 85 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                 role="progressbar" 
-                                 style="width: {{ data.health.metrics.system_status.memory_usage.percent }}%;" 
-                                 aria-valuenow="{{ data.health.metrics.system_status.memory_usage.percent }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                {{ data.health.metrics.system_status.memory_usage.percent }}%
-                            </div>
-                        </div>
-                        <small class="text-muted">
-                            {{ data.health.metrics.system_status.memory_usage.used_mb }} MB de {{ data.health.metrics.system_status.memory_usage.total_mb }} MB
-                        </small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <h5>Disco</h5>
-                        <div class="progress">
-                            <div class="progress-bar {% if data.health.metrics.system_status.disk_usage.percent < 70 %}bg-success{% elif data.health.metrics.system_status.disk_usage.percent < 85 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                 role="progressbar" 
-                                 style="width: {{ data.health.metrics.system_status.disk_usage.percent }}%;" 
-                                 aria-valuenow="{{ data.health.metrics.system_status.disk_usage.percent }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                {{ data.health.metrics.system_status.disk_usage.percent }}%
-                            </div>
-                        </div>
-                        <small class="text-muted">
-                            {{ data.health.metrics.system_status.disk_usage.used_gb }} GB de {{ data.health.metrics.system_status.disk_usage.total_gb }} GB
-                        </small>
-                    </div>
-                </div>
+              </div>
             </div>
-        </div>
-        
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="card-title mb-0">Estadísticas de Caché</h4>
+            <div class="col-md-3">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Solicitudes</h5>
+                  <p class="card-text fs-4">
+                    {{ data.request_stats.total_requests }}
+                  </p>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Tasa de aciertos</h5>
-                                    <p class="card-text fs-4">{{ data.health.metrics.cache_status.hit_rate }}%</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Tamaño</h5>
-                                    <p class="card-text fs-4">{{ data.health.metrics.cache_status.size }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Aciertos</h5>
-                                    <p class="card-text fs-4">{{ data.health.metrics.cache_status.hit_count }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Fallos</h5>
-                                    <p class="card-text fs-4">{{ data.health.metrics.cache_status.miss_count }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="card-title mb-0">Archivos Temporales</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Cantidad</h5>
-                                    <p class="card-text fs-4">{{ data.health.metrics.temp_files.count }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Tamaño Total</h5>
-                                    <p class="card-text fs-4">{{ data.health.metrics.temp_files.total_size_mb }} MB</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-light mb-3">
-                                <div class="card-body text-center">
-                                    <button class="btn btn-warning" id="cleanupTempBtn">Limpiar archivos >2 días</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% if data.health.metrics.temp_files.count > 0 %}
-                    <div class="mt-3">
-                        <h5>Archivos (primeros 10)</h5>
-                        <ul class="list-group">
-                            {% for file in data.health.metrics.temp_files.files[:10] %}
-                            <li class="list-group-item">{{ file }}</li>
-                            {% endfor %}
-                            {% if data.health.metrics.temp_files.count > 10 %}
-                            <li class="list-group-item text-muted">...y {{ data.health.metrics.temp_files.count - 10 }} más</li>
-                            {% endif %}
-                        </ul>
-                    </div>
+            <div class="col-md-3">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Estado BD</h5>
+                  <p class="card-text fs-4">
+                    {% if data.database.is_available %}
+                    <span class="text-success">Conectado</span>
+                    {% else %}
+                    <span class="text-danger">Desconectado</span>
                     {% endif %}
+                  </p>
                 </div>
+              </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="card">
-                <div class="card-header bg-secondary text-white">
-                    <div class="d-flex justify-content-between">
-                        <h4 class="card-title mb-0">Detalles Técnicos</h4>
-                        <span>Actualizado: {{ data.refresh_time }}</span>
-                    </div>
+            <div class="col-md-3">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tiempo resp. BD</h5>
+                  <p class="card-text fs-4">
+                    {{ data.database.response_time_ms }} ms
+                  </p>
                 </div>
-                <div class="card-body">
-                    <div class="accordion" id="accordionDetails">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingDatabase">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDatabase">
-                                    Conexión a Base de Datos
-                                </button>
-                            </h2>
-                            <div id="collapseDatabase" class="accordion-collapse collapse" data-bs-parent="#accordionDetails">
-                                <div class="accordion-body">
-                                    <pre class="bg-light p-3">{{ data.database | tojson(indent=2) }}</pre>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingRequests">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRequests">
-                                    Estadísticas de Solicitudes
-                                </button>
-                            </h2>
-                            <div id="collapseRequests" class="accordion-collapse collapse" data-bs-parent="#accordionDetails">
-                                <div class="accordion-body">
-                                    <pre class="bg-light p-3">{{ data.request_stats | tojson(indent=2) }}</pre>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingAll">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAll">
-                                    Todos los Datos
-                                </button>
-                            </h2>
-                            <div id="collapseAll" class="accordion-collapse collapse" data-bs-parent="#accordionDetails">
-                                <div class="accordion-body">
-                                    <pre class="bg-light p-3">{{ data | tojson(indent=2) }}</pre>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingBackups">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBackups">
-                                    Gestión de Archivos de Backup
-                                </button>
-                            </h2>
-                            <div id="collapseBackups" class="accordion-collapse collapse" data-bs-parent="#accordionDetails">
-                                <div class="accordion-body">
-                                    <div class="card">
-                                        <div class="card-header bg-danger text-white">
-                                            <h5 class="mb-0">Eliminar Archivos de Backup</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <form id="deleteBackupsForm">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Seleccionar archivos de backup:</label>
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="checkbox" id="selectAllBackups">
-                                                        <label class="form-check-label" for="selectAllBackups"><strong>Seleccionar todos</strong></label>
-                                                    </div>
-                                                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 10px;">
-                                                        {% if backup_files %}
-                                                            {% for backup in backup_files %}
-                                                            <div class="form-check d-flex justify-content-between align-items-center mb-2">
-                                                                <div>
-                                                                    <input class="form-check-input backup-file-checkbox" type="checkbox" name="backupFiles" id="backup{{ loop.index }}" value="{{ backup.name }}">
-                                                                    <label class="form-check-label" for="backup{{ loop.index }}">{{ backup.name }}</label>
-                                                                </div>
-                                                                <small class="text-muted">{{ backup.size }} | {{ backup.modified }}</small>
-                                                            </div>
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            <div class="alert alert-info mb-0">No se encontraron archivos de backup</div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Criterio de eliminación:</label>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="deleteCriteria" id="deleteSelected" value="selected" checked>
-                                                        <label class="form-check-label" for="deleteSelected">
-                                                            Eliminar archivos seleccionados
-                                                        </label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="deleteCriteria" id="deleteDate" value="date">
-                                                        <label class="form-check-label" for="deleteDate">
-                                                            Eliminar archivos anteriores a fecha
-                                                        </label>
-                                                        <div id="dateContainer" class="mt-2 ms-4" style="display: none;">
-                                                            <input type="date" class="form-control" id="cutoffDate" name="cutoffDate">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="deleteCriteria" id="deleteAll" value="all">
-                                                        <label class="form-check-label" for="deleteAll">
-                                                            Eliminar todos los archivos de backup
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="d-grid gap-2">
-                                                    <button type="button" id="deleteBackupsBtn" class="btn btn-danger">Eliminar Backups</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingLogs">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLogs">
-                                    Gestión de Archivos de Log
-                                </button>
-                            </h2>
-                            <div id="collapseLogs" class="accordion-collapse collapse" data-bs-parent="#accordionDetails">
-                                <div class="accordion-body">
-                                    <div class="card">
-                                        <div class="card-header bg-warning text-white">
-                                            <h5 class="mb-0">Truncar Archivos de Log</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <form id="truncateLogsForm">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Seleccionar archivos de log:</label>
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="checkbox" id="selectAllLogs">
-                                                        <label class="form-check-label" for="selectAllLogs"><strong>Seleccionar todos</strong></label>
-                                                    </div>
-                                                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 10px;">
-                                                        {% if log_files %}
-                                                            {% for log in log_files %}
-                                                            <div class="form-check d-flex justify-content-between align-items-center mb-2">
-                                                                <div>
-                                                                    <input class="form-check-input log-file-checkbox" type="checkbox" name="logFiles" id="log{{ loop.index }}" value="{{ log.name }}">
-                                                                    <label class="form-check-label" for="log{{ loop.index }}">{{ log.name }}</label>
-                                                                </div>
-                                                                <small class="text-muted">{{ log.size }} | {{ log.modified }}</small>
-                                                            </div>
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            <div class="alert alert-info mb-0">No se encontraron archivos de log</div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Método de truncado:</label>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="truncateMethod" id="truncateComplete" value="complete" checked>
-                                                        <label class="form-check-label" for="truncateComplete">
-                                                            Truncado completo (eliminar todo el contenido)
-                                                        </label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="truncateMethod" id="truncateLines" value="lines">
-                                                        <label class="form-check-label" for="truncateLines">
-                                                            Mantener últimas líneas
-                                                        </label>
-                                                        <div class="ms-4 mt-2" id="linesContainer" style="display: none;">
-                                                            <input type="number" class="form-control" id="lineCount" name="lineCount" min="10" value="100" placeholder="Número de líneas a mantener">
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="truncateMethod" id="truncateDate" value="date">
-                                                        <label class="form-check-label" for="truncateDate">
-                                                            Eliminar entradas anteriores a fecha
-                                                        </label>
-                                                        <div class="ms-4 mt-2" id="dateContainer" style="display: none;">
-                                                            <input type="date" class="form-control" id="cutoffDate" name="cutoffDate">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="d-flex justify-content-between">
-                                                    <button type="button" id="truncateLogsBtn" class="btn btn-warning">Truncar Logs</button>
-                                                    <button type="button" id="downloadLogsBtn" class="btn btn-secondary">Descargar Logs</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="card-title mb-0">Recursos del Sistema</h4>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <h5>CPU</h5>
+            <div class="progress">
+              <div
+                class="progress-bar {% if data.health.metrics.system_status.cpu_usage < 70 %}bg-success{% elif data.health.metrics.system_status.cpu_usage < 85 %}bg-warning{% else %}bg-danger{% endif %}"
+                role="progressbar"
+                style="width: {{ data.health.metrics.system_status.cpu_usage }}%;"
+                aria-valuenow="{{ data.health.metrics.system_status.cpu_usage }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                {{ data.health.metrics.system_status.cpu_usage }}%
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <h5>Memoria</h5>
+            <div class="progress">
+              <div
+                class="progress-bar {% if (data.health.metrics.system_status.memory_usage.percent|default(0)) < 70 %}bg-success{% elif (data.health.metrics.system_status.memory_usage.percent|default(0)) < 85 %}bg-warning{% else %}bg-danger{% endif %}"
+                role="progressbar"
+                style="width: {{ data.health.metrics.system_status.memory_usage.percent|default(0) }}%;"
+                aria-valuenow="{{ data.health.metrics.system_status.memory_usage.percent|default(0) }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                {{
+                data.health.metrics.system_status.memory_usage.percent|default(0)
+                }}%
+              </div>
+            </div>
+            <small class="text-muted">
+              {{ data.health.metrics.system_status.memory_usage.used_mb }} MB de
+              {{ data.health.metrics.system_status.memory_usage.total_mb }} MB
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <h5>Disco</h5>
+            <div class="progress">
+              <div
+                class="progress-bar {% if (data.health.metrics.system_status.disk_usage.percent|default(0)) < 70 %}bg-success{% elif (data.health.metrics.system_status.disk_usage.percent|default(0)) < 85 %}bg-warning{% else %}bg-danger{% endif %}"
+                role="progressbar"
+                style="width: {{ data.health.metrics.system_status.disk_usage.percent|default(0) }}%;"
+                aria-valuenow="{{ data.health.metrics.system_status.disk_usage.percent|default(0) }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                {{
+                data.health.metrics.system_status.disk_usage.percent|default(0)
+                }}%
+              </div>
+            </div>
+            <small class="text-muted">
+              {{ data.health.metrics.system_status.disk_usage.used_gb }} GB de
+              {{ data.health.metrics.system_status.disk_usage.total_gb }} GB
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="card-title mb-0">Estadísticas de Caché</h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tasa de aciertos</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.cache_status.hit_rate }}%
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tamaño</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.cache_status.size }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Aciertos</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.cache_status.hit_count }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Fallos</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.cache_status.miss_count }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="card-title mb-0">Archivos Temporales</h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Cantidad</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.temp_files.count }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tamaño Total</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.temp_files.total_size_mb }} MB
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <button class="btn btn-warning" id="cleanupTempBtn">
+                    Limpiar archivos >2 días
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if data.health.metrics.temp_files.count > 0 %}
+          <div class="mt-3">
+            <h5>Archivos (primeros 10)</h5>
+            <ul class="list-group">
+              {% for file in data.health.metrics.temp_files.files[:10] %}
+              <li class="list-group-item">{{ file }}</li>
+              {% endfor %} {% if data.health.metrics.temp_files.count > 10 %}
+              <li class="list-group-item text-muted">
+                ...y {{ data.health.metrics.temp_files.count - 10 }} más
+              </li>
+              {% endif %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-header">Uso de memoria</div>
+        <div class="card-body">
+          <strong>Proceso Python:</strong><br />
+          PID: {{ data.memory.python_process.pid }}<br />
+          RSS: {{ data.memory.python_process.rss_mb }} MB<br />
+          VMS: {{ data.memory.python_process.vms_mb }} MB<br />
+          % del sistema: {{ data.memory.python_process.percent }}%<br />
+          <hr />
+          <strong>Sistema:</strong><br />
+          Total: {{ data.memory.system.total_mb }} MB<br />
+          Usada: {{ data.memory.system.used_mb }} MB<br />
+          % usada: {{ data.memory.system.percent }}%<br />
+          <hr />
+          <strong>Swap:</strong><br />
+          Total: {{ data.memory.swap.total_mb }} MB<br />
+          Usada: {{ data.memory.swap.used_mb }} MB<br />
+          % usada: {{ data.memory.swap.percent }}%<br />
+          <button
+            class="btn btn-link mt-2"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#memDetails"
+            aria-expanded="false"
+            aria-controls="memDetails"
+          >
+            Ver detalles técnicos
+          </button>
+          <div class="collapse" id="memDetails">
+            <div class="card card-body mt-2">
+              <strong>Top procesos por memoria:</strong>
+              <ul>
+                {% for proc in data.memory.top_processes %}
+                <li>
+                  PID {{ proc.pid }} - {{ proc.name }}: {{ proc.rss_mb }} MB ({{
+                  proc.mem_percent }}%)
+                </li>
+                {% endfor %}
+              </ul>
+              <strong>Plataforma:</strong>
+              <ul>
+                <li>
+                  Sistema: {{ data.memory.platform.system }} {{
+                  data.memory.platform.release }}
+                </li>
+                <li>Versión: {{ data.memory.platform.version }}</li>
+                <li>Arquitectura: {{ data.memory.platform.machine }}</li>
+                <li>Procesador: {{ data.memory.platform.processor }}</li>
+                <li>Python: {{ data.memory.platform.python_version }}</li>
+              </ul>
+            </div>
+          </div>
+          <a
+            href="{{ url_for('admin.system_status_report') }}"
+            class="btn btn-outline-secondary btn-sm mt-3"
+          >
+            Descargar informe técnico (JSON)
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="card-title mb-0">Estadísticas de Caché</h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tasa de aciertos</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.cache_status.hit_rate }}%
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tamaño</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.cache_status.size }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Aciertos</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.cache_status.hit_count }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Fallos</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.cache_status.miss_count }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="card-title mb-0">Archivos Temporales</h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Cantidad</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.temp_files.count }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tamaño Total</h5>
+                  <p class="card-text fs-4">
+                    {{ data.health.metrics.temp_files.total_size_mb }} MB
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <button class="btn btn-warning" id="cleanupTempBtn">
+                    Limpiar archivos >2 días
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if data.health.metrics.temp_files.count > 0 %}
+          <div class="mt-3">
+            <h5>Archivos (primeros 10)</h5>
+            <ul class="list-group">
+              {% for file in data.health.metrics.temp_files.files[:10] %}
+              <li class="list-group-item">{{ file }}</li>
+              {% endfor %} {% if data.health.metrics.temp_files.count > 10 %}
+              <li class="list-group-item text-muted">
+                ...y {{ data.health.metrics.temp_files.count - 10 }} más
+              </li>
+              {% endif %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div class="card-header bg-secondary text-white">
+          <div class="d-flex justify-content-between">
+            <h4 class="card-title mb-0">Detalles Técnicos</h4>
+            <span>Actualizado: {{ data.refresh_time }}</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="accordionDetails">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingDatabase">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseDatabase"
+                >
+                  Conexión a Base de Datos
+                </button>
+              </h2>
+              <div
+                id="collapseDatabase"
+                class="accordion-collapse collapse"
+                data-bs-parent="#accordionDetails"
+              >
+                <div class="accordion-body">
+                  <pre class="bg-light p-3">
+{{ data.database | tojson(indent=2) }}</pre
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingRequests">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseRequests"
+                >
+                  Estadísticas de Solicitudes
+                </button>
+              </h2>
+              <div
+                id="collapseRequests"
+                class="accordion-collapse collapse"
+                data-bs-parent="#accordionDetails"
+              >
+                <div class="accordion-body">
+                  <pre class="bg-light p-3">
+{{ data.request_stats | tojson(indent=2) }}</pre
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingAll">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseAll"
+                >
+                  Todos los Datos
+                </button>
+              </h2>
+              <div
+                id="collapseAll"
+                class="accordion-collapse collapse"
+                data-bs-parent="#accordionDetails"
+              >
+                <div class="accordion-body">
+                  <pre class="bg-light p-3">{{ data | tojson(indent=2) }}</pre>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingBackups">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseBackups"
+                >
+                  Gestión de Archivos de Backup
+                </button>
+              </h2>
+              <div
+                id="collapseBackups"
+                class="accordion-collapse collapse"
+                data-bs-parent="#accordionDetails"
+              >
+                <div class="accordion-body">
+                  <div class="card">
+                    <div class="card-header bg-danger text-white">
+                      <h5 class="mb-0">Eliminar Archivos de Backup</h5>
+                    </div>
+                    <div class="card-body">
+                      <form id="deleteBackupsForm">
+                        <div class="mb-3">
+                          <label class="form-label"
+                            >Seleccionar archivos de backup:</label
+                          >
+                          <div class="form-check mb-2">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="selectAllBackups"
+                            />
+                            <label
+                              class="form-check-label"
+                              for="selectAllBackups"
+                              ><strong>Seleccionar todos</strong></label
+                            >
+                          </div>
+                          <div
+                            style="
+                              max-height: 200px;
+                              overflow-y: auto;
+                              border: 1px solid #dee2e6;
+                              border-radius: 0.25rem;
+                              padding: 10px;
+                            "
+                          >
+                            {% if backup_files %} {% for backup in backup_files
+                            %}
+                            <div
+                              class="form-check d-flex justify-content-between align-items-center mb-2"
+                            >
+                              <div>
+                                <input
+                                  class="form-check-input backup-file-checkbox"
+                                  type="checkbox"
+                                  name="backupFiles"
+                                  id="backup{{ loop.index }}"
+                                  value="{{ backup.name }}"
+                                />
+                                <label
+                                  class="form-check-label"
+                                  for="backup{{ loop.index }}"
+                                  >{{ backup.name }}</label
+                                >
+                              </div>
+                              <small class="text-muted"
+                                >{{ backup.size }} | {{ backup.modified
+                                }}</small
+                              >
+                            </div>
+                            {% endfor %} {% else %}
+                            <div class="alert alert-info mb-0">
+                              No se encontraron archivos de backup
+                            </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label"
+                            >Criterio de eliminación:</label
+                          >
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="deleteCriteria"
+                              id="deleteSelected"
+                              value="selected"
+                              checked
+                            />
+                            <label
+                              class="form-check-label"
+                              for="deleteSelected"
+                            >
+                              Eliminar archivos seleccionados
+                            </label>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="deleteCriteria"
+                              id="deleteDate"
+                              value="date"
+                            />
+                            <label class="form-check-label" for="deleteDate">
+                              Eliminar archivos anteriores a fecha
+                            </label>
+                            <div
+                              id="dateContainer"
+                              class="mt-2 ms-4"
+                              style="display: none"
+                            >
+                              <input
+                                type="date"
+                                class="form-control"
+                                id="cutoffDate"
+                                name="cutoffDate"
+                              />
+                            </div>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="deleteCriteria"
+                              id="deleteAll"
+                              value="all"
+                            />
+                            <label class="form-check-label" for="deleteAll">
+                              Eliminar todos los archivos de backup
+                            </label>
+                          </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                          <button
+                            type="button"
+                            id="deleteBackupsBtn"
+                            class="btn btn-danger"
+                          >
+                            Eliminar Backups
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingLogs">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseLogs"
+                >
+                  Gestión de Archivos de Log
+                </button>
+              </h2>
+              <div
+                id="collapseLogs"
+                class="accordion-collapse collapse"
+                data-bs-parent="#accordionDetails"
+              >
+                <div class="accordion-body">
+                  <div class="card">
+                    <div class="card-header bg-warning text-white">
+                      <h5 class="mb-0">Truncar Archivos de Log</h5>
+                    </div>
+                    <div class="card-body">
+                      <form id="truncateLogsForm">
+                        <div class="mb-3">
+                          <label class="form-label"
+                            >Seleccionar archivos de log:</label
+                          >
+                          <div class="form-check mb-2">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="selectAllLogs"
+                            />
+                            <label class="form-check-label" for="selectAllLogs"
+                              ><strong>Seleccionar todos</strong></label
+                            >
+                          </div>
+                          <div
+                            style="
+                              max-height: 200px;
+                              overflow-y: auto;
+                              border: 1px solid #dee2e6;
+                              border-radius: 0.25rem;
+                              padding: 10px;
+                            "
+                          >
+                            {% if log_files %} {% for log in log_files %}
+                            <div
+                              class="form-check d-flex justify-content-between align-items-center mb-2"
+                            >
+                              <div>
+                                <input
+                                  class="form-check-input log-file-checkbox"
+                                  type="checkbox"
+                                  name="logFiles"
+                                  id="log{{ loop.index }}"
+                                  value="{{ log.name }}"
+                                />
+                                <label
+                                  class="form-check-label"
+                                  for="log{{ loop.index }}"
+                                  >{{ log.name }}</label
+                                >
+                              </div>
+                              <small class="text-muted"
+                                >{{ log.size }} | {{ log.modified }}</small
+                              >
+                            </div>
+                            {% endfor %} {% else %}
+                            <div class="alert alert-info mb-0">
+                              No se encontraron archivos de log
+                            </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Método de truncado:</label>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="truncateMethod"
+                              id="truncateComplete"
+                              value="complete"
+                              checked
+                            />
+                            <label
+                              class="form-check-label"
+                              for="truncateComplete"
+                            >
+                              Truncado completo (eliminar todo el contenido)
+                            </label>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="truncateMethod"
+                              id="truncateLines"
+                              value="lines"
+                            />
+                            <label class="form-check-label" for="truncateLines">
+                              Mantener últimas líneas
+                            </label>
+                            <div
+                              class="ms-4 mt-2"
+                              id="linesContainer"
+                              style="display: none"
+                            >
+                              <input
+                                type="number"
+                                class="form-control"
+                                id="lineCount"
+                                name="lineCount"
+                                min="10"
+                                value="100"
+                                placeholder="Número de líneas a mantener"
+                              />
+                            </div>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="truncateMethod"
+                              id="truncateDate"
+                              value="date"
+                            />
+                            <label class="form-check-label" for="truncateDate">
+                              Eliminar entradas anteriores a fecha
+                            </label>
+                            <div
+                              class="ms-4 mt-2"
+                              id="dateContainer"
+                              style="display: none"
+                            >
+                              <input
+                                type="date"
+                                class="form-control"
+                                id="cutoffDate"
+                                name="cutoffDate"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                          <button
+                            type="button"
+                            id="truncateLogsBtn"
+                            class="btn btn-warning"
+                          >
+                            Truncar Logs
+                          </button>
+                          <button
+                            type="button"
+                            id="downloadLogsBtn"
+                            class="btn btn-secondary"
+                          >
+                            Descargar Logs
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Manejo del botón de limpieza de archivos temporales
-        const cleanupBtn = document.getElementById('cleanupTempBtn');
-        if (cleanupBtn) {
-            cleanupBtn.addEventListener('click', function() {
-                if (confirm('¿Seguro que deseas eliminar los archivos temporales con más de 2 días de antigüedad?')) {
-                    fetch('/admin/api/cleanup-temp', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: 'days=7'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(data.message);
-                        location.reload();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error al limpiar archivos temporales');
-                    });
-                }
+  document.addEventListener("DOMContentLoaded", function () {
+    // Manejo del botón de limpieza de archivos temporales
+    const cleanupBtn = document.getElementById("cleanupTempBtn");
+    if (cleanupBtn) {
+      cleanupBtn.addEventListener("click", function () {
+        if (
+          confirm(
+            "¿Seguro que deseas eliminar los archivos temporales con más de 2 días de antigüedad?"
+          )
+        ) {
+          fetch("/admin/api/cleanup-temp", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: "days=7",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message);
+              location.reload();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error al limpiar archivos temporales");
             });
         }
-        
-        // Manejo del formulario de truncado de logs
-        const truncateMethodRadios = document.querySelectorAll('input[name="truncateMethod"]');
-        const linesContainer = document.getElementById('linesContainer');
-        const dateContainer = document.getElementById('dateContainer');
-        const truncateLogsBtn = document.getElementById('truncateLogsBtn');
-        const downloadLogsBtn = document.getElementById('downloadLogsBtn');
-        const selectAllLogs = document.getElementById('selectAllLogs');
-        const logFileCheckboxes = document.querySelectorAll('.log-file-checkbox');
-        
-        // Establecer la fecha actual como valor predeterminado para el campo de fecha
-        const today = new Date();
-        const formattedDate = today.toISOString().split('T')[0];
-        document.getElementById('cutoffDate').value = formattedDate;
-        
-        // Mostrar/ocultar campos según el método de truncado seleccionado
-        truncateMethodRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                linesContainer.style.display = (this.value === 'lines') ? 'block' : 'none';
-                dateContainer.style.display = (this.value === 'date') ? 'block' : 'none';
-            });
-        });
-        
-        // Manejar selección de todos los archivos de log
-        if (selectAllLogs) {
-            selectAllLogs.addEventListener('change', function() {
-                logFileCheckboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-            });
-            
-            // Actualizar el estado del checkbox "Seleccionar todos" cuando se cambian los checkboxes individuales
-            logFileCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const allChecked = Array.from(logFileCheckboxes).every(cb => cb.checked);
-                    const anyChecked = Array.from(logFileCheckboxes).some(cb => cb.checked);
-                    
-                    selectAllLogs.checked = allChecked;
-                    selectAllLogs.indeterminate = anyChecked && !allChecked;
-                });
-            });
-        }
-        
-        // Manejar el botón de truncado de logs
-        if (truncateLogsBtn) {
-            truncateLogsBtn.addEventListener('click', function() {
-                // Obtener los archivos de log seleccionados
-                const logFilesCheckboxes = document.querySelectorAll('input[name="logFiles"]:checked');
-                if (logFilesCheckboxes.length === 0) {
-                    alert('Debe seleccionar al menos un archivo de log');
-                    return;
-                }
-                
-                const logFiles = Array.from(logFilesCheckboxes).map(cb => cb.value);
-                const truncateMethod = document.querySelector('input[name="truncateMethod"]:checked').value;
-                
-                let requestData = {
-                    logFiles: logFiles,
-                    method: truncateMethod
-                };
-                
-                // Añadir parámetros adicionales según el método seleccionado
-                if (truncateMethod === 'lines') {
-                    const lineCount = document.getElementById('lineCount').value;
-                    if (!lineCount || lineCount < 10) {
-                        alert('Debe especificar un número válido de líneas (mínimo 10)');
-                        return;
-                    }
-                    requestData.lineCount = lineCount;
-                } else if (truncateMethod === 'date') {
-                    const cutoffDate = document.getElementById('cutoffDate').value;
-                    if (!cutoffDate) {
-                        alert('Debe seleccionar una fecha');
-                        return;
-                    }
-                    requestData.cutoffDate = cutoffDate;
-                }
-                
-                // Confirmar la acción antes de proceder
-                let confirmMessage = `¿Seguro que deseas truncar los siguientes archivos de log: ${logFiles.join(', ')}?`;
-                if (confirm(confirmMessage)) {
-                    fetch('/admin/api/truncate-logs', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestData)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(data.message);
-                        location.reload();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error al truncar los archivos de log');
-                    });
-                }
-            });
-        }
-        
-        // Manejar selección de todos los backups
-        if (selectAllBackups) {
-            selectAllBackups.addEventListener('change', function() {
-                document.querySelectorAll('.backup-file-checkbox').forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-            });
-            
-            // Actualizar el estado del checkbox "Seleccionar todos" cuando se cambian los checkboxes individuales
-            document.querySelectorAll('.backup-file-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const allCheckboxes = document.querySelectorAll('.backup-file-checkbox');
-                    const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
-                    const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
-                    
-                    selectAllBackups.checked = allChecked;
-                    selectAllBackups.indeterminate = anyChecked && !allChecked;
-                });
-            });
-        }
-        
-        // Manejar cambios en el criterio de eliminación de backups
-        document.querySelectorAll('input[name="deleteCriteria"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const dateContainer = document.getElementById('dateContainer');
-                dateContainer.style.display = (this.value === 'date') ? 'block' : 'none';
-            });
-        });
-        
-        // Manejar el botón de eliminación de backups
-        if (deleteBackupsBtn) {
-            deleteBackupsBtn.addEventListener('click', function() {
-                const deleteCriteria = document.querySelector('input[name="deleteCriteria"]:checked').value;
-                let requestData = {
-                    deleteCriteria: deleteCriteria
-                };
-                
-                if (deleteCriteria === 'selected') {
-                    // Obtener los archivos de backup seleccionados
-                    const backupFilesCheckboxes = document.querySelectorAll('input[name="backupFiles"]:checked');
-                    if (backupFilesCheckboxes.length === 0) {
-                        alert('Debe seleccionar al menos un archivo de backup');
-                        return;
-                    }
-                    
-                    requestData.backupFiles = Array.from(backupFilesCheckboxes).map(cb => cb.value);
-                } else if (deleteCriteria === 'date') {
-                    // Obtener la fecha de corte
-                    const cutoffDate = document.getElementById('cutoffDate').value;
-                    if (!cutoffDate) {
-                        alert('Debe seleccionar una fecha');
-                        return;
-                    }
-                    requestData.cutoffDate = cutoffDate;
-                } else if (deleteCriteria === 'all') {
-                    // Confirmar que realmente quiere eliminar todos los backups
-                    if (!confirm('¿Está seguro de que desea eliminar TODOS los archivos de backup? Esta acción no se puede deshacer.')) {
-                        return;
-                    }
-                }
-                
-                // Confirmar la acción antes de proceder
-                let confirmMessage = '';
-                if (deleteCriteria === 'selected') {
-                    confirmMessage = `¿Seguro que deseas eliminar los siguientes archivos de backup: ${requestData.backupFiles.join(', ')}?`;
-                } else if (deleteCriteria === 'date') {
-                    confirmMessage = `¿Seguro que deseas eliminar todos los archivos de backup anteriores a ${requestData.cutoffDate}?`;
-                } else {
-                    confirmMessage = '¿Seguro que deseas eliminar TODOS los archivos de backup?';
-                }
-                
-                if (confirm(confirmMessage)) {
-                    fetch('/admin/api/delete-backups', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestData)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(data.message);
-                        location.reload();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error al eliminar los archivos de backup');
-                    });
-                }
-            });
-        }
-        
-        // Manejar el botón de descarga de logs
-        if (downloadLogsBtn) {
-            downloadLogsBtn.addEventListener('click', function() {
-                const logFilesCheckboxes = document.querySelectorAll('input[name="logFiles"]:checked');
-                if (logFilesCheckboxes.length === 0) {
-                    alert('Debe seleccionar al menos un archivo de log');
-                    return;
-                }
-                
-                const logFiles = Array.from(logFilesCheckboxes).map(cb => cb.value);
-                
-                // Redirigir a la URL de descarga
-                if (logFiles.length === 1) {
-                    // Si solo hay un archivo, descargarlo directamente
-                    window.location.href = `/admin/logs/download/${logFiles[0]}`;
-                } else {
-                    // Si hay múltiples archivos, crear un archivo ZIP
-                    window.location.href = `/admin/logs/download-multiple?files=${logFiles.join(',')}`;
-                }
-            });
-        }
-        
-        // Actualizar la página cada 60 segundos
-        setTimeout(function() {
-            location.reload();
-        }, 60000);
+      });
+    }
+
+    // Manejo del formulario de truncado de logs
+    const truncateMethodRadios = document.querySelectorAll(
+      'input[name="truncateMethod"]'
+    );
+    const linesContainer = document.getElementById("linesContainer");
+    const dateContainer = document.getElementById("dateContainer");
+    const truncateLogsBtn = document.getElementById("truncateLogsBtn");
+    const downloadLogsBtn = document.getElementById("downloadLogsBtn");
+    const selectAllLogs = document.getElementById("selectAllLogs");
+    const logFileCheckboxes = document.querySelectorAll(".log-file-checkbox");
+
+    // Establecer la fecha actual como valor predeterminado para el campo de fecha
+    const today = new Date();
+    const formattedDate = today.toISOString().split("T")[0];
+    document.getElementById("cutoffDate").value = formattedDate;
+
+    // Mostrar/ocultar campos según el método de truncado seleccionado
+    truncateMethodRadios.forEach((radio) => {
+      radio.addEventListener("change", function () {
+        linesContainer.style.display =
+          this.value === "lines" ? "block" : "none";
+        dateContainer.style.display = this.value === "date" ? "block" : "none";
+      });
     });
+
+    // Manejar selección de todos los archivos de log
+    if (selectAllLogs) {
+      selectAllLogs.addEventListener("change", function () {
+        logFileCheckboxes.forEach((checkbox) => {
+          checkbox.checked = this.checked;
+        });
+      });
+
+      // Actualizar el estado del checkbox "Seleccionar todos" cuando se cambian los checkboxes individuales
+      logFileCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          const allChecked = Array.from(logFileCheckboxes).every(
+            (cb) => cb.checked
+          );
+          const anyChecked = Array.from(logFileCheckboxes).some(
+            (cb) => cb.checked
+          );
+
+          selectAllLogs.checked = allChecked;
+          selectAllLogs.indeterminate = anyChecked && !allChecked;
+        });
+      });
+    }
+
+    // Manejar el botón de truncado de logs
+    if (truncateLogsBtn) {
+      truncateLogsBtn.addEventListener("click", function () {
+        // Obtener los archivos de log seleccionados
+        const logFilesCheckboxes = document.querySelectorAll(
+          'input[name="logFiles"]:checked'
+        );
+        if (logFilesCheckboxes.length === 0) {
+          alert("Debe seleccionar al menos un archivo de log");
+          return;
+        }
+
+        const logFiles = Array.from(logFilesCheckboxes).map((cb) => cb.value);
+        const truncateMethod = document.querySelector(
+          'input[name="truncateMethod"]:checked'
+        ).value;
+
+        let requestData = {
+          logFiles: logFiles,
+          method: truncateMethod,
+        };
+
+        // Añadir parámetros adicionales según el método seleccionado
+        if (truncateMethod === "lines") {
+          const lineCount = document.getElementById("lineCount").value;
+          if (!lineCount || lineCount < 10) {
+            alert("Debe especificar un número válido de líneas (mínimo 10)");
+            return;
+          }
+          requestData.lineCount = lineCount;
+        } else if (truncateMethod === "date") {
+          const cutoffDate = document.getElementById("cutoffDate").value;
+          if (!cutoffDate) {
+            alert("Debe seleccionar una fecha");
+            return;
+          }
+          requestData.cutoffDate = cutoffDate;
+        }
+
+        // Confirmar la acción antes de proceder
+        let confirmMessage = `¿Seguro que deseas truncar los siguientes archivos de log: ${logFiles.join(
+          ", "
+        )}?`;
+        if (confirm(confirmMessage)) {
+          fetch("/admin/api/truncate-logs", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message);
+              location.reload();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error al truncar los archivos de log");
+            });
+        }
+      });
+    }
+
+    // Manejar selección de todos los backups
+    if (selectAllBackups) {
+      selectAllBackups.addEventListener("change", function () {
+        document
+          .querySelectorAll(".backup-file-checkbox")
+          .forEach((checkbox) => {
+            checkbox.checked = this.checked;
+          });
+      });
+
+      // Actualizar el estado del checkbox "Seleccionar todos" cuando se cambian los checkboxes individuales
+      document.querySelectorAll(".backup-file-checkbox").forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          const allCheckboxes = document.querySelectorAll(
+            ".backup-file-checkbox"
+          );
+          const allChecked = Array.from(allCheckboxes).every(
+            (cb) => cb.checked
+          );
+          const anyChecked = Array.from(allCheckboxes).some((cb) => cb.checked);
+
+          selectAllBackups.checked = allChecked;
+          selectAllBackups.indeterminate = anyChecked && !allChecked;
+        });
+      });
+    }
+
+    // Manejar cambios en el criterio de eliminación de backups
+    document
+      .querySelectorAll('input[name="deleteCriteria"]')
+      .forEach((radio) => {
+        radio.addEventListener("change", function () {
+          const dateContainer = document.getElementById("dateContainer");
+          dateContainer.style.display =
+            this.value === "date" ? "block" : "none";
+        });
+      });
+
+    // Manejar el botón de eliminación de backups
+    if (deleteBackupsBtn) {
+      deleteBackupsBtn.addEventListener("click", function () {
+        const deleteCriteria = document.querySelector(
+          'input[name="deleteCriteria"]:checked'
+        ).value;
+        let requestData = {
+          deleteCriteria: deleteCriteria,
+        };
+
+        if (deleteCriteria === "selected") {
+          // Obtener los archivos de backup seleccionados
+          const backupFilesCheckboxes = document.querySelectorAll(
+            'input[name="backupFiles"]:checked'
+          );
+          if (backupFilesCheckboxes.length === 0) {
+            alert("Debe seleccionar al menos un archivo de backup");
+            return;
+          }
+
+          requestData.backupFiles = Array.from(backupFilesCheckboxes).map(
+            (cb) => cb.value
+          );
+        } else if (deleteCriteria === "date") {
+          // Obtener la fecha de corte
+          const cutoffDate = document.getElementById("cutoffDate").value;
+          if (!cutoffDate) {
+            alert("Debe seleccionar una fecha");
+            return;
+          }
+          requestData.cutoffDate = cutoffDate;
+        } else if (deleteCriteria === "all") {
+          // Confirmar que realmente quiere eliminar todos los backups
+          if (
+            !confirm(
+              "¿Está seguro de que desea eliminar TODOS los archivos de backup? Esta acción no se puede deshacer."
+            )
+          ) {
+            return;
+          }
+        }
+
+        // Confirmar la acción antes de proceder
+        let confirmMessage = "";
+        if (deleteCriteria === "selected") {
+          confirmMessage = `¿Seguro que deseas eliminar los siguientes archivos de backup: ${requestData.backupFiles.join(
+            ", "
+          )}?`;
+        } else if (deleteCriteria === "date") {
+          confirmMessage = `¿Seguro que deseas eliminar todos los archivos de backup anteriores a ${requestData.cutoffDate}?`;
+        } else {
+          confirmMessage =
+            "¿Seguro que deseas eliminar TODOS los archivos de backup?";
+        }
+
+        if (confirm(confirmMessage)) {
+          fetch("/admin/api/delete-backups", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message);
+              location.reload();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error al eliminar los archivos de backup");
+            });
+        }
+      });
+    }
+
+    // Manejar el botón de descarga de logs
+    if (downloadLogsBtn) {
+      downloadLogsBtn.addEventListener("click", function () {
+        const logFilesCheckboxes = document.querySelectorAll(
+          'input[name="logFiles"]:checked'
+        );
+        if (logFilesCheckboxes.length === 0) {
+          alert("Debe seleccionar al menos un archivo de log");
+          return;
+        }
+
+        const logFiles = Array.from(logFilesCheckboxes).map((cb) => cb.value);
+
+        // Redirigir a la URL de descarga
+        if (logFiles.length === 1) {
+          // Si solo hay un archivo, descargarlo directamente
+          window.location.href = `/admin/logs/download/${logFiles[0]}`;
+        } else {
+          // Si hay múltiples archivos, crear un archivo ZIP
+          window.location.href = `/admin/logs/download-multiple?files=${logFiles.join(
+            ","
+          )}`;
+        }
+      });
+    }
+
+    // Actualizar la página cada 60 segundos
+    setTimeout(function () {
+      location.reload();
+    }, 60000);
+  });
 </script>
 {% endblock %}

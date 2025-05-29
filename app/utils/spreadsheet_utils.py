@@ -1,8 +1,16 @@
+# Script: spreadsheet_utils.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 spreadsheet_utils.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 import logging
 from flask import current_app
 from pymongo.collection import Collection
 from typing import Optional, Dict, List, Any, Union
 from bson.objectid import ObjectId
+from app.utils.db_utils import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +26,8 @@ def get_spreadsheet_collection() -> Optional[Collection]:
         spreadsheets_collection = getattr(current_app, 'spreadsheets_collection', None)
         
         # Si no está disponible directamente, intentar obtenerla desde la base de datos
-        if spreadsheets_collection is None and hasattr(current_app, 'db'):
-            spreadsheets_collection = current_app.db['spreadsheets']
+        if spreadsheets_collection is None:
+            spreadsheets_collection = get_db()['spreadsheets']
             
         return spreadsheets_collection
     except Exception as e:

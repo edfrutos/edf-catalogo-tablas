@@ -3,6 +3,7 @@
 from flask_pymongo import PyMongo
 from flask_mail import Mail
 import boto3
+import certifi
 
 mail = Mail()
 mongo = PyMongo()
@@ -16,7 +17,8 @@ def init_extensions(app):
     # Hacer que la conexión a MongoDB sea opcional
     if app.config.get('MONGO_URI'):
         try:
-            mongo.init_app(app)
+            # Forzar el uso de certifi para los certificados
+            mongo.init_app(app, tlsCAFile=certifi.where())
             catalog_collection = mongo.db.catalogo_tablas
             app.logger.info("MongoDB inicializado correctamente")
         except Exception as e:

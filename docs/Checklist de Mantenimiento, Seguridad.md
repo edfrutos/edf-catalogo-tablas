@@ -3,7 +3,7 @@
 ## 1. Actualización del sistema y servicios
 sudo apt update && sudo apt upgrade -y
 sudo apt install --only-upgrade nginx apache2 php
-source /var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/activate
+source /.venv/bin/activate
 pip install --upgrade pip
 pip list --outdated
 pip install --upgrade <paquete>
@@ -32,7 +32,7 @@ sudo systemctl restart plesk-php83-fpm
 sudo tar czvf /root/backup-edefrutos.me-$(date +%F).tar.gz /var/www/vhosts/edefrutos.me/
 mysqldump -u USUARIO -p NOMBRE_BD > /root/edefrutos.me-$(date +%F).sql
 # Backup manual de la app Flask
-sudo tar czvf /root/backup-edefrutos2025-$(date +%F).tar.gz /var/www/vhosts/edefrutos2025.xyz/httpdocs/
+sudo tar czvf /root/backup-edefrutos2025-$(date +%F).tar.gz /
 # MongoDB Atlas: desde el panel web o usando mongodump si tienes acceso
 
 ## 5. Seguridad WordPress

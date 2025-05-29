@@ -8,10 +8,10 @@ import uuid
 import datetime
 import pandas as pd
 from werkzeug.utils import secure_filename
-from app.extensions import mongo
 from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
 from app.decorators import is_datetime, is_list, is_string
 import logging
+from app.utils.db_utils import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -56,12 +56,12 @@ def check_catalog_permission(f):
             
             # Inicializar variables
             catalog = None
-            collections_to_check = ['spreadsheets', 'catalogs']  # Orden de prioridad para buscar
+            collections_to_check = ['spreadsheets']  # Solo spreadsheets como colección de catálogos
             
             # Buscar el catálogo en las colecciones principales
             for collection_name in collections_to_check:
                 try:
-                    collection = mongo.db[collection_name]
+                    collection = get_db()[collection_name]
                     # Buscar por ObjectId
                     catalog = collection.find_one({"_id": object_id})
                     if catalog:
@@ -74,7 +74,7 @@ def check_catalog_permission(f):
             if not catalog:
                 try:
                     # Obtener todas las colecciones disponibles
-                    all_collections = mongo.db.list_collection_names()
+                    all_collections = get_db().list_collection_names()
                     # Filtrar colecciones que podrían contener catálogos
                     potential_collections = [c for c in all_collections 
                                             if c not in collections_to_check and 
@@ -84,7 +84,7 @@ def check_catalog_permission(f):
                     # Buscar en las colecciones potenciales
                     for collection_name in potential_collections:
                         try:
-                            collection = mongo.db[collection_name]
+                            collection = get_db()[collection_name]
                             catalog = collection.find_one({"_id": object_id})
                             if catalog:
                                 current_app.logger.info(f"Catálogo encontrado en {collection_name} con ObjectId: {catalog_id}")
@@ -99,7 +99,7 @@ def check_catalog_permission(f):
                 try:
                     # Buscar por nombre en las colecciones principales
                     for collection_name in collections_to_check:
-                        collection = mongo.db[collection_name]
+                        collection = get_db()[collection_name]
                         catalog = collection.find_one({"name": catalog_id})
                         if catalog:
                             current_app.logger.info(f"Catálogo encontrado en {collection_name} por nombre: {catalog_id}")
@@ -113,7 +113,7 @@ def check_catalog_permission(f):
                     # Buscar catálogos similares para ayudar en la depuración
                     similar_catalogs = []
                     for collection_name in collections_to_check:
-                        collection = mongo.db[collection_name]
+                        collection = get_db()[collection_name]
                         sample_catalogs = list(collection.find({}, {"_id": 1, "name": 1, "created_by": 1, "owner": 1}).limit(5))
                         for cat in sample_catalogs:
                             similar_catalogs.append({
@@ -147,7 +147,7 @@ def check_catalog_permission(f):
                 # Intentar actualizar el documento en la base de datos
                 try:
                     for collection_name in collections_to_check:
-                        collection = mongo.db[collection_name]
+                        collection = get_db()[collection_name]
                         result = collection.update_one({"_id": object_id}, {"$set": {"created_by": owner}})
                         if result.modified_count > 0:
                             current_app.logger.info(f"Añadido campo created_by={owner} al catálogo {catalog_id}")
@@ -167,6 +167,10 @@ def check_catalog_permission(f):
                 catalog_owner == email or
                 catalog.get('email') == email):
                 # Usuario autorizado, pasar el catálogo a la función decorada
+                # Asegurar que el catálogo tenga la clave 'rows' correctamente inicializada
+                if 'rows' not in catalog or catalog['rows'] is None:
+                    current_app.logger.warning(f"[PERMISOS] Catálogo {catalog_id} no tenía 'rows', se inicializa como lista vacía.")
+                    catalog['rows'] = []
                 kwargs['catalog'] = catalog
                 return f(*args, **kwargs)
             else:
@@ -197,6 +201,11 @@ def allowed_image(filename):
 
 @catalogs_bp.route("/")
 def list_catalogs():
+    print("[DEBUG][LIST_CATALOGS] db:", get_db())
+    db = get_db()
+    if db is None:
+        flash('No se pudo acceder a la base de datos.', 'danger')
+        return render_template('error.html', mensaje='No se pudo conectar a la base de datos.')
     try:
         # Verificar si el usuario está autenticado
         if 'username' not in session:
@@ -227,14 +236,13 @@ def list_catalogs():
                 current_app.logger.info(f"Búsqueda por usuario: {search_query}")
         
         # Obtener las colecciones de catálogos
-        from app.extensions import mongo
-        collections_to_check = ['catalogs', 'spreadsheets']
+        collections_to_check = ['spreadsheets']
         all_catalogs = []
         
         # Buscar en todas las colecciones relevantes
         for collection_name in collections_to_check:
             try:
-                collection = mongo.db[collection_name]
+                collection = get_db()[collection_name]
                 current_app.logger.info(f"Buscando catálogos en la colección {collection_name}")
                 
                 # Aplicar filtros según el rol del usuario
@@ -344,80 +352,26 @@ def list():
 def view(catalog_id, catalog):
     try:
         current_app.logger.info(f"Visualizando catálogo {catalog_id}")
-        
-        # Registrar información del catálogo para depuración
-        current_app.logger.info(f"Datos del catálogo: ID={catalog.get('_id')}, Nombre={catalog.get('name')}, Creado por={catalog.get('created_by') or catalog.get('owner_name') or catalog.get('owner')}")
-        
-        # Asegurarse de que el catálogo tiene los campos necesarios
         if 'headers' not in catalog or catalog['headers'] is None:
             catalog['headers'] = []
-            current_app.logger.info(f"Añadiendo campo 'headers' vacío al catálogo {catalog_id}")
-        
-        # Manejar diferentes estructuras de datos (rows o data)
         if 'rows' in catalog and catalog['rows'] is not None:
             catalog['data'] = catalog['rows']
-            # Asegurar que rows y data son consistentes
             catalog['rows'] = catalog['data']
-            current_app.logger.info(f"Usando 'rows' como 'data' para el catálogo {catalog_id}")
         elif 'data' in catalog and catalog['data'] is not None:
-            # Asegurar que rows y data son consistentes
             catalog['rows'] = catalog['data']
-            current_app.logger.info(f"Usando 'data' como 'rows' para el catálogo {catalog_id}")
         else:
-            # Si no hay ni rows ni data, inicializar ambos como listas vacías
             catalog['data'] = []
             catalog['rows'] = []
-            current_app.logger.info(f"Añadiendo campos 'data' y 'rows' vacíos al catálogo {catalog_id}")
-        
-        # Asegurarse de que _id_str existe
         catalog['_id_str'] = str(catalog['_id'])
-        
-        # Asegurarse de que los campos de fecha se manejen correctamente
-        from datetime import datetime
-        
-        # Manejar created_at
-        if 'created_at' in catalog and catalog['created_at']:
-            # Usar is_string en lugar de isinstance para evitar errores
-            if catalog['created_at'] and not is_string(catalog['created_at']):
-                try:
-                    # Importar datetime para la comparación
-                    from datetime import datetime
-                    # Si es un objeto datetime, mantenerlo como está
-                    if hasattr(catalog['created_at'], 'strftime'):  # Verificar si es un objeto datetime
-                        catalog['created_at'] = catalog['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-                    else:
-                        # Convertir a string formateado si no es un datetime
-                        catalog['created_at'] = str(catalog['created_at'])
-                except Exception as e:
-                    current_app.logger.error(f"Error al procesar created_at: {str(e)}")
-                    catalog['created_at'] = str(catalog['created_at'])
-        else:
-            catalog['created_at'] = "No disponible"
-        
-        # Manejar updated_at
         if 'updated_at' in catalog and catalog['updated_at']:
-            # Usar is_string en lugar de isinstance para evitar errores
-            if catalog['updated_at'] and not is_string(catalog['updated_at']):
-                try:
-                    # Importar datetime para la comparación
-                    from datetime import datetime
-                    # Si es un objeto datetime, mantenerlo como está
-                    if hasattr(catalog['updated_at'], 'strftime'):  # Verificar si es un objeto datetime
-                        catalog['updated_at'] = catalog['updated_at'].strftime('%Y-%m-%d %H:%M:%S')
-                    else:
-                        # Convertir a string formateado si no es un datetime
-                        catalog['updated_at'] = str(catalog['updated_at'])
-                except Exception as e:
-                    current_app.logger.error(f"Error al procesar updated_at: {str(e)}")
-                    catalog['updated_at'] = str(catalog['updated_at'])
+            from datetime import datetime
+            if hasattr(catalog['updated_at'], 'strftime'):
+                catalog['updated_at'] = catalog['updated_at'].strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                catalog['updated_at'] = str(catalog['updated_at'])
         else:
             catalog['updated_at'] = "No disponible"
-        
-        # Registrar información adicional para depuración
-        current_app.logger.info(f"Catálogo preparado para visualización: ID={catalog['_id_str']}, Headers={len(catalog['headers'])}, Datos={len(catalog['data'])}")
-        current_app.logger.info(f"Fechas: created_at={catalog['created_at']} ({type(catalog['created_at']).__name__}), updated_at={catalog['updated_at']} ({type(catalog['updated_at']).__name__})")
-        
-        return render_template("ver_catalogo.html", catalog=catalog, session=session)
+        return render_template("catalogos/view.html", catalog=catalog, session=session)
     except Exception as e:
         current_app.logger.error(f"Error al visualizar catálogo: {str(e)}", exc_info=True)
         flash(f"Error al visualizar el catálogo: {str(e)}", "danger")
@@ -426,6 +380,9 @@ def view(catalog_id, catalog):
 @catalogs_bp.route("/<catalog_id>/edit", methods=["GET", "POST"])
 @check_catalog_permission
 def edit(catalog_id, catalog):
+    print("[DEBUG][EDIT_CATALOG] session:", dict(session))
+    print("[DEBUG][EDIT_CATALOG] db:", get_db())
+    print(f"[DEBUG][EDIT_CATALOG] catalog_id: {catalog_id}")
     if request.method == "POST":
         try:
             # Obtener los datos del formulario
@@ -448,12 +405,12 @@ def edit(catalog_id, catalog):
             current_app.logger.info(f"Actualizando catálogo {catalog_id} con nombre={new_name}, headers={new_headers}")
             
             # Intentar actualizar en ambas colecciones posibles
-            collections_to_check = ['catalogs', 'spreadsheets']
+            collections_to_check = ['spreadsheets']
             update_success = False
             
             for collection_name in collections_to_check:
                 try:
-                    collection = mongo.db[collection_name]
+                    collection = get_db()[collection_name]
                     result = collection.update_one(
                         {"_id": ObjectId(catalog_id)},
                         {"$set": {
@@ -489,256 +446,124 @@ def edit(catalog_id, catalog):
 def edit_row(catalog_id, row_index, catalog):
     if not is_mongo_available():
         flash("Error de conexión a la base de datos.", "danger")
+        current_app.logger.error("[edit_row] Error de conexión a la base de datos.")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
-    # Obtener la fila correspondiente
     row_data = catalog["rows"][row_index] if 0 <= row_index < len(catalog["rows"]) else None
-    
-    # Registrar información sobre la fila para depuración
-    current_app.logger.info(f"Datos de la fila a editar: {row_data}")
-    
-    # Verificar si hay imágenes en la fila y asegurarse de que estén en el formato correcto
-    if row_data:
-        # Verificar todos los posibles campos de imágenes
-        if 'imagenes' in row_data and row_data['imagenes']:
-            current_app.logger.info(f"Imágenes encontradas en 'imagenes': {row_data['imagenes']}")
-            # Asegurarse de que sea una lista
-            if not is_list(row_data['imagenes']):
-                row_data['imagenes'] = [row_data['imagenes']]
-        elif 'images' in row_data and row_data['images']:
-            current_app.logger.info(f"Imágenes encontradas en 'images': {row_data['images']}")
-            # Copiar las imágenes de 'images' a 'imagenes' para mantener consistencia
-            if not is_list(row_data['images']):
-                row_data['imagenes'] = [row_data['images']]
-            else:
-                row_data['imagenes'] = row_data['images']
-        # Verificar si hay un campo 'imagen' singular
-        elif 'imagen' in row_data and row_data['imagen']:
-            current_app.logger.info(f"Imagen encontrada en 'imagen': {row_data['imagen']}")
-            row_data['imagenes'] = [row_data['imagen']]
-        # Verificar si hay un campo 'image' singular
-        elif 'image' in row_data and row_data['image']:
-            current_app.logger.info(f"Imagen encontrada en 'image': {row_data['image']}")
-            row_data['imagenes'] = [row_data['image']]
-        else:
-            current_app.logger.info("No se encontraron imágenes en la fila")
-            # Inicializar el campo 'imagenes' como una lista vacía
-            row_data['imagenes'] = []
-            
-        # Asegurarse de que el campo 'imagenes' exista
-        if 'imagenes' not in row_data:
-            row_data['imagenes'] = []
-            
-        current_app.logger.info(f"Campo 'imagenes' final: {row_data['imagenes']}")
+    if not row_data:
+        flash("Fila no encontrada.", "danger")
+        current_app.logger.error(f"[edit_row] Fila no encontrada en índice {row_index}")
+        return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     if request.method == "POST":
-        # Actualizar los datos de la fila
         for header in catalog["headers"]:
             row_data[header] = request.form.get(header, "")
-        # Procesar imágenes
-        # Asegurarse de que imagenes sea una lista
-        if 'imagenes' not in row_data:
-            row_data['imagenes'] = []
-        elif not is_list(row_data['imagenes']):
-            # Si no es una lista, convertirlo a lista
-            if row_data['imagenes']:
-                row_data['imagenes'] = [row_data['imagenes']]
-            else:
-                row_data['imagenes'] = []
-            
-        current_app.logger.info(f"Imágenes actuales: {row_data['imagenes']}")
-        
-        # Procesar imágenes a eliminar
-        imagenes_a_eliminar_json = request.form.get('imagenes_a_eliminar', '')
-        if imagenes_a_eliminar_json:
-            try:
-                import json
-                imagenes_a_eliminar = json.loads(imagenes_a_eliminar_json)
-                current_app.logger.info(f"Imágenes a eliminar: {imagenes_a_eliminar}")
-                
-                # Filtrar las imágenes a eliminar
-                if imagenes_a_eliminar and is_list(imagenes_a_eliminar):
-                    row_data['imagenes'] = [img for img in row_data['imagenes'] if img not in imagenes_a_eliminar]
-                    current_app.logger.info(f"Imágenes después de eliminar: {row_data['imagenes']}")
-            except Exception as e:
-                current_app.logger.error(f"Error al procesar imágenes a eliminar: {str(e)}")
-        
-        # Procesar nuevas imágenes
-        if 'imagenes' in request.files:
-            files = request.files.getlist('imagenes')
+        # Manejo de imágenes
+        if 'images' in request.files:
+            files = request.files.getlist('images')
             upload_dir = get_upload_dir()
             nuevas_imagenes = []
-            
             for file in files:
                 if file and file.filename and allowed_image(file.filename):
                     filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
                     file_path = os.path.join(upload_dir, filename)
                     file.save(file_path)
                     nuevas_imagenes.append(filename)
-                    current_app.logger.info(f"Nueva imagen guardada: {filename}")
-            
-            # Añadir nuevas imágenes a las existentes
             if nuevas_imagenes:
-                row_data['imagenes'].extend(nuevas_imagenes)
-                current_app.logger.info(f"Imágenes actualizadas: {row_data['imagenes']}")
-        # Determinar en qué colección está el catálogo y guardar la fila actualizada
-        collection_names = ['catalogs', 'spreadsheets']
-        collection_used = None
-        success = False
-        
-        for coll_name in collection_names:
+                row_data['images'] = row_data.get('images', []) + nuevas_imagenes
+        # Eliminar imágenes seleccionadas
+        delete_images = request.form.getlist('delete_images')
+        if delete_images:
+            row_data['images'] = [img for img in row_data.get('images', []) if img not in delete_images]
+        # Si no hay imágenes nuevas ni a eliminar, conservar las existentes
+        if 'images' not in row_data:
+            row_data['images'] = catalog["rows"][row_index].get('images', [])
+        # Guardar cambios en ambas claves
+        for coll_name in ['spreadsheets']:
             try:
-                # Intentar actualizar en cada colección
-                result = mongo.db[coll_name].update_one(
+                result = get_db()[coll_name].update_one(
                     {"_id": catalog["_id"]},
-                    {"$set": {f"rows.{row_index}": row_data}}
+                    {"$set": {f"rows.{row_index}": row_data, f"data.{row_index}": row_data}}
                 )
-                
                 if result.matched_count > 0:
-                    collection_used = coll_name
-                    success = result.modified_count > 0
-                    current_app.logger.info(f"Fila actualizada en colección: {coll_name}, matched: {result.matched_count}, modified: {result.modified_count}")
+                    flash("Fila actualizada correctamente", "success")
                     break
             except Exception as e:
-                current_app.logger.error(f"Error al actualizar en {coll_name}: {str(e)}")
-        
-        if success:
-            flash("Fila actualizada correctamente", "success")
-        else:
-            if collection_used:
-                flash(f"Se encontró el catálogo en {collection_used}, pero no se pudo actualizar la fila. Inténtelo de nuevo.", "warning")
-            else:
-                flash("No se pudo encontrar la colección correcta para actualizar el catálogo. Inténtelo de nuevo.", "warning")
-        return redirect(url_for("catalogs.view", catalog_id=str(catalog["_id"])) )
-    return render_template("editar_fila.html", catalog=catalog, fila=row_data, row_index=row_index, session=session, headers=catalog["headers"])
+                current_app.logger.error(f"[edit_row] Error al actualizar fila: {str(e)}")
+                flash(f"Error al actualizar fila: {str(e)}", "danger")
+        return redirect(url_for("catalogs.view", catalog_id=str(catalog["_id"])))
+    return render_template("catalogos/edit_row.html", catalog=catalog, row=row_data, row_index=row_index)
 
 @catalogs_bp.route("/add-row/<catalog_id>", methods=["GET", "POST"])
 @check_catalog_permission
 def add_row(catalog_id, catalog):
     if not is_mongo_available():
         flash("Error de conexión a la base de datos.", "danger")
+        current_app.logger.error("[add_row] Error de conexión a la base de datos.")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     if request.method == "POST":
-        # Procesar datos del formulario
-        row = {}
-        for header in catalog["headers"]:
-            row[header] = request.form.get(header, "")
-        # Procesar imágenes
-        imagenes = []
-        if 'imagenes' in request.files:
-            files = request.files.getlist('imagenes')
+        row = {header: request.form.get(header, "") for header in catalog["headers"]}
+        # Manejo de imágenes
+        if 'images' in request.files:
+            files = request.files.getlist('images')
             upload_dir = get_upload_dir()
+            row['images'] = []
             for file in files:
-                if file and allowed_image(file.filename):
+                if file and file.filename and allowed_image(file.filename):
                     filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
-                    file.save(os.path.join(upload_dir, filename))
-                    imagenes.append(filename)
-        row['imagenes'] = imagenes
-        # Agregar la fila al catálogo en ambos campos (rows y data) para mantener consistencia
-        try:
-            # Determinar en qué colección está el catálogo
-            collections_to_check = ['catalogs', 'spreadsheets']
-            update_success = False
-            
-            for collection_name in collections_to_check:
-                try:
-                    collection = mongo.db[collection_name]
-                    # Intentar actualizar tanto rows como data para mantener consistencia
-                    result = collection.update_one(
-                        {"_id": ObjectId(catalog_id)},
-                        {
-                            "$push": {
-                                "rows": row,
-                                "data": row
-                            },
-                            "$set": {
-                                "updated_at": datetime.datetime.utcnow()
-                            }
-                        }
-                    )
-                    
-                    if result.matched_count > 0:
-                        current_app.logger.info(f"Fila agregada al catálogo {catalog_id} en colección {collection_name}")
-                        update_success = True
-                        break
-                except Exception as e:
-                    current_app.logger.error(f"Error al agregar fila en {collection_name}: {str(e)}")
-            
-            if not update_success:
-                raise Exception("No se pudo agregar la fila al catálogo en ninguna colección")
-        except Exception as e:
-            current_app.logger.error(f"Error al agregar fila: {str(e)}")
-            flash(f"Error al agregar fila: {str(e)}", "danger")
-            return redirect(url_for("catalogs.view", catalog_id=catalog_id))
-        flash("Fila agregada correctamente", "success")
+                    file_path = os.path.join(upload_dir, filename)
+                    file.save(file_path)
+                    row['images'].append(filename)
+        # Agregar la fila a ambas claves
+        for collection_name in ['spreadsheets']:
+            try:
+                collection = get_db()[collection_name]
+                result = collection.update_one(
+                    {"_id": ObjectId(catalog_id)},
+                    {"$push": {"rows": row, "data": row}, "$set": {"updated_at": datetime.datetime.utcnow()}}
+                )
+                if result.matched_count > 0:
+                    flash("Fila agregada correctamente", "success")
+                    break
+            except Exception as e:
+                current_app.logger.error(f"[add_row] Error al agregar fila: {str(e)}")
+                flash(f"Error al agregar fila: {str(e)}", "danger")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
-    return render_template("agregar_fila.html", catalog=catalog, session=session)
+    return render_template("catalogos/add_row.html", catalog=catalog, session=session)
 
-# Eliminar fila de un catálogo
-@catalogs_bp.route("/delete-row/<catalog_id>/<int:row_index>", methods=["GET", "POST"])
+@catalogs_bp.route("/delete-row/<catalog_id>/<int:row_index>", methods=["POST"])
 @check_catalog_permission
 def delete_row(catalog_id, row_index, catalog):
     if not is_mongo_available():
         flash("Error de conexión a la base de datos.", "danger")
+        current_app.logger.error("[delete_row] Error de conexión a la base de datos.")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     try:
-        # Obtener todas las filas actuales
-        current_rows = catalog.get("rows", [])
-        
-        # Registrar información de depuración
-        current_app.logger.info(f"Catálogo ID: {catalog_id}, Tipo: {type(catalog_id)}")
-        current_app.logger.info(f"Filas actuales: {len(current_rows)}")
-        current_app.logger.info(f"Intentando eliminar fila en índice: {row_index}")
-        
-        # Verificar que el índice es válido
-        if row_index < 0 or row_index >= len(current_rows):
-            flash(f"Índice de fila inválido: {row_index}. Total de filas: {len(current_rows)}", "danger")
+        # Refuerzo: recargar el catálogo desde la base de datos para evitar inconsistencias
+        db_catalog = get_db()["spreadsheets"].find_one({"_id": ObjectId(catalog_id)})
+        if not db_catalog:
+            flash("Catálogo no encontrado.", "danger")
+            current_app.logger.error(f"[delete_row] Catálogo {catalog_id} no encontrado en BD.")
             return redirect(url_for("catalogs.view", catalog_id=catalog_id))
-        
-        # Guardar la fila que se va a eliminar para depuración
-        row_to_delete = current_rows[row_index]
-        current_app.logger.info(f"Fila a eliminar: {row_to_delete}")
-        
-        # Eliminar la fila específica por índice
-        current_app.logger.info(f"Eliminando fila {row_index} del catálogo {catalog_id}")
+        current_rows = db_catalog.get("rows", [])
+        current_app.logger.info(f"[delete_row] Estado de filas antes de eliminar: {len(current_rows)} filas.")
+        if row_index < 0 or row_index >= len(current_rows):
+            flash(f"Índice de fila inválido: {row_index}.", "danger")
+            current_app.logger.error(f"[delete_row] Índice de fila inválido: {row_index}")
+            return redirect(url_for("catalogs.view", catalog_id=catalog_id))
         current_rows.pop(row_index)
-        
-        # Determinar en qué colección está el catálogo
-        collection_names = ['catalogs', 'spreadsheets']
-        collection_used = None
-        success = False
-        
-        for coll_name in collection_names:
-            try:
-                # Intentar actualizar en cada colección
-                result = mongo.db[coll_name].update_one(
-                    {"_id": ObjectId(catalog_id)},
-                    {"$set": {"rows": current_rows}}
-                )
-                
-                if result.matched_count > 0:
-                    collection_used = coll_name
-                    success = result.modified_count > 0
-                    current_app.logger.info(f"Catálogo actualizado en colección: {coll_name}, matched: {result.matched_count}, modified: {result.modified_count}")
-                    break
-            except Exception as e:
-                current_app.logger.error(f"Error al actualizar en {coll_name}: {str(e)}")
-        
-        current_app.logger.info(f"Resultado de la actualización: {result.modified_count} documento(s) modificado(s)")
-        
-        if success:
+        result = get_db()["spreadsheets"].update_one(
+            {"_id": ObjectId(catalog_id)},
+            {"$set": {"rows": current_rows, "data": current_rows}}
+        )
+        current_app.logger.info(f"[delete_row] Estado de filas después de eliminar: {len(current_rows)} filas. Modificados: {result.modified_count}")
+        if result.matched_count > 0 and result.modified_count > 0:
             flash("Fila eliminada correctamente", "success")
         else:
-            if collection_used:
-                flash(f"Se encontró el catálogo en {collection_used}, pero no se pudo eliminar la fila. Inténtelo de nuevo.", "warning")
-            else:
-                flash("No se pudo encontrar la colección correcta para actualizar el catálogo. Inténtelo de nuevo.", "warning")
-            
+            flash("No se pudo eliminar la fila. Puede que ya haya sido eliminada o que no existiera.", "warning")
     except Exception as e:
-        current_app.logger.error(f"Error al eliminar fila: {str(e)}", exc_info=True)
+        current_app.logger.error(f"[delete_row] Error general: {str(e)}")
         flash(f"Error al eliminar fila: {str(e)}", "danger")
-        
     return redirect(url_for("catalogs.view", catalog_id=catalog_id))
 
-# Eliminar catálogo
 @catalogs_bp.route("/delete/<catalog_id>", methods=["GET", "POST"])
 @check_catalog_permission
 def delete_catalog(catalog_id, catalog):
@@ -760,17 +585,17 @@ def delete_catalog(catalog_id, catalog):
         # Guardar información del catálogo antes de eliminarlo para mostrar mensaje personalizado
         catalog_name = catalog.get('name', 'Sin nombre')
         owner = catalog.get('owner', session.get('username', 'usuario'))
-        collection_source = catalog.get('collection_source', 'catalogs')
+        collection_source = catalog.get('collection_source', 'spreadsheets')
         
         current_app.logger.info(f"Eliminando catálogo de la colección: {collection_source}")
         
         # Intentar eliminar de la colección correcta
         if collection_source == 'spreadsheets':
             # Si el catálogo está en la colección spreadsheets
-            result = mongo.db.spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
+            result = get_db().spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
         else:
-            # Por defecto, intentar eliminar de la colección catalogs
-            result = mongo.db.catalogs.delete_one({"_id": ObjectId(catalog_id)})
+            # Por defecto, intentar eliminar de la colección spreadsheets
+            result = get_db().spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
         
         current_app.logger.info(f"Resultado de eliminación de {collection_source}: {result.deleted_count} documento(s) eliminado(s)")
         
@@ -786,10 +611,10 @@ def delete_catalog(catalog_id, catalog):
                 pass  # Si no existe el módulo de auditoría, continuar sin error
         else:
             # Si no se eliminó nada, intentar en la otra colección
-            if collection_source == 'catalogs':
-                result = mongo.db.spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
+            if collection_source == 'spreadsheets':
+                result = get_db().spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
             else:
-                result = mongo.db.catalogs.delete_one({"_id": ObjectId(catalog_id)})
+                result = get_db().spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
                 
             current_app.logger.info(f"Segundo intento de eliminación: {result.deleted_count} documento(s) eliminado(s)")
             
@@ -806,6 +631,8 @@ def delete_catalog(catalog_id, catalog):
 
 @catalogs_bp.route("/create", methods=["GET", "POST"])
 def create():
+    print("[DEBUG][CREATE_CATALOG] session:", dict(session))
+    print("[DEBUG][CREATE_CATALOG] db:", get_db())
     if 'username' not in session:
         flash('Debe iniciar sesión para crear catálogos', 'warning')
         return redirect(url_for('auth.login'))
@@ -846,14 +673,14 @@ def create():
                 'updated_at': datetime.datetime.utcnow()
             }
             
-            result = mongo.db.catalogs.insert_one(catalog)
+            result = get_db().spreadsheets.insert_one(catalog)
             catalog_id = str(result.inserted_id)
             
             current_app.logger.info(f"Catálogo creado con ID: {catalog_id}, nombre: {catalog_name}, creado por: {nombre}")
             flash(f'Catálogo "{catalog_name}" creado correctamente', 'success')
             
             # Actualizar el catálogo con el ID como string para facilitar su uso en plantillas
-            mongo.db.catalogs.update_one({"_id": result.inserted_id}, {"$set": {"_id_str": catalog_id}})
+            get_db().spreadsheets.update_one({"_id": result.inserted_id}, {"$set": {"_id_str": catalog_id}})
             
             # Redirigir a una página de confirmación en lugar de directamente a la vista
             return render_template('catalogo_creado.html', 
@@ -876,6 +703,11 @@ def create():
 
 @catalogs_bp.route("/import", methods=["GET", "POST"])
 def import_catalog():
+    print("[DEBUG][IMPORT_CATALOG] db:", get_db())
+    db = get_db()
+    if db is None:
+        flash('No se pudo acceder a la base de datos.', 'danger')
+        return render_template('error.html', mensaje='No se pudo conectar a la base de datos.')
     if 'username' not in session:
         flash('Debe iniciar sesión para importar catálogos', 'warning')
         return redirect(url_for('auth.login'))
@@ -909,7 +741,7 @@ def import_catalog():
             # Obtener información del usuario actual
             username = session.get('username')
             email = session.get('email')
-            nombre = session.get('nombre', username)  # Usar nombre si está disponible, sino username
+            nombre = session.get('nombre', username)
             
             current_app.logger.info(f"Importando catálogo con usuario: {username}, email: {email}, nombre: {nombre}")
                 
@@ -936,15 +768,19 @@ def import_catalog():
                 'headers': headers,
                 'rows': rows,
                 'created_by': username,
-                'owner': username,  # Campo adicional para compatibilidad
-                'owner_name': nombre,  # Guardar el nombre real del usuario
-                'email': email,  # Guardar el email para referencias
+                'owner': username,  # Refuerzo: asignar siempre el username
+                'owner_name': nombre,
+                'email': email,
                 'created_at': datetime.datetime.utcnow(),
                 'updated_at': datetime.datetime.utcnow()
             }
             
-            result = mongo.db.catalogs.insert_one(catalog)
+            result = get_db().spreadsheets.insert_one(catalog)
             catalog_id = str(result.inserted_id)
+            
+            # Refuerzo: actualizar el campo owner si por alguna razón no se guardó
+            get_db().spreadsheets.update_one({"_id": result.inserted_id}, {"$set": {"owner": username}})
+            current_app.logger.info(f"[REFUERZO][IMPORT] Propietario del catálogo {catalog_id} forzado a: {username}")
             
             current_app.logger.info(f"Catálogo importado con ID: {catalog_id}, nombre: {catalog_name}, creado por: {nombre}")
             flash(f'Catálogo "{catalog_name}" importado correctamente', 'success')

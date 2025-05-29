@@ -35,7 +35,7 @@ group = 'www-data'
 tmp_upload_dir = '/var/www/vhosts/edefrutos2025.xyz/tmp/uploads'
 
 # Logging
-log_dir = '/var/www/vhosts/edefrutos2025.xyz/httpdocs/logs'
+log_dir = '/logs'
 if not os.path.exists(log_dir):
     os.makedirs(log_dir, exist_ok=True)
 

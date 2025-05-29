@@ -3,8 +3,6 @@
 # ==============================================
 
 # Importar configuración de sesión corregida
-from session_config import *
-
 import time
 import certifi
 # --- Imports estándar ---
@@ -34,7 +32,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 from redis import Redis
 from app.decorators import admin_required, login_required
-from admin_utils import AdminUtils  # Ubicado en el directorio raíz
+from tools.admin_utils.admin_utils import AdminUtils
 # Importar otros módulos de utilidad según sea necesario
 from scrypt import hash as scrypt_hash
 from openpyxl import Workbook  # <--- Importación correcta
@@ -139,75 +137,31 @@ def create_app():
     
     # Inicializar la conexión global a MongoDB (para funciones legacy y modelos)
     try:
-        from app.database import initialize_db
+        from app.database import initialize_db, get_mongo_client, get_mongo_db
         initialize_db(app)
         app.logger.info("✅ Conexión global a MongoDB inicializada (initialize_db)")
+        # Refuerza la asignación de app.db y colecciones SIEMPRE tras inicializar
+        client = get_mongo_client()
+        db = get_mongo_db()
+        app.mongo_client = client
+        app.db = db
+        if db is not None:
+            app.users_collection = db["users"]
+            app.resets_collection = db["password_resets"]
+            app.catalog_collection = db["67b8c24a7fdc72dd4d8703cf"]
+            app.spreadsheets_collection = db["spreadsheets"]
+        else:
+            app.users_collection = None
+            app.resets_collection = None
+            app.catalog_collection = None
+            app.spreadsheets_collection = None
     except Exception as e:
         app.logger.error(f"❌ Error inicializando la conexión global a MongoDB: {e}")
-    
-    # =================== CONFIGURACIÓN ADICIONAL ===================
-    # Configurar manejo de errores personalizado
-    app.logger.info(f"✅ Clave secreta configurada: {type(app.secret_key).__name__} de longitud {len(str(app.secret_key))}")
-    app.logger.info(f"✅ Tipo de sesión configurado: {app.config.get('SESSION_TYPE')}")
-    app.logger.info(f"✅ Directorio de sesiones: {app.config.get('SESSION_FILE_DIR')}")
-    if not app.secret_key:
-        raise RuntimeError('SECRET_KEY no está definida en el entorno. Añádela a tu .env')
-    
-    # Variables de carpetas
-    SPREADSHEET_FOLDER = os.path.join(ROOT_DIR, "spreadsheets")
-    UPLOAD_FOLDER = os.path.join(ROOT_DIR, "imagenes_subidas")
-    os.makedirs(SPREADSHEET_FOLDER, exist_ok=True)
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    app.logger.info(f"Carpeta de uploads configurada: {app.config['UPLOAD_FOLDER']}")
-    
-    # Variables de entorno críticas
-    MONGO_URI = os.getenv("MONGO_URI")
-    if not MONGO_URI:
-        print("Advertencia: MONGO_URI no está configurada, algunas funciones estarán deshabilitadas")
-        MONGO_URI = "mongodb://localhost:27017/app_catalogojoyero"
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_REGION = os.getenv('AWS_REGION')
-    S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") 
-    
-    # =================== INICIALIZACIÓN DE EXTENSIONES ===================
-    app.config["MONGO_URI"] = MONGO_URI
-    init_extensions(app)
-    
-    # =================== CONFIGURACIÓN DE S3 ===================
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        region_name=AWS_REGION
-    )
-    
-    # =================== DEFINICIÓN DE COLECCIONES ===================
-    client = MongoClient(
-        MONGO_URI,
-        tls=True,
-        tlsCAFile=certifi.where(),
-        server_api=ServerApi('1')
-    )
-    db = client["app_catalogojoyero"]
-    users_collection = db["users"]
-    resets_collection = db["password_resets"]
-    catalog_collection = db["67b8c24a7fdc72dd4d8703cf"]
-    spreadsheets_collection = db["spreadsheets"]
-    
-    # =================== VARIABLES Y CLIENTES GLOBALES COMO ATRIBUTOS DE APP ===================
-    # Asignar como atributos de app
-    app.s3_client = s3_client
-    app.mongo_client = client
-    app.db = db
-    app.users_collection = users_collection
-    app.resets_collection = resets_collection
-    app.catalog_collection = catalog_collection
-    app.spreadsheets_collection = spreadsheets_collection
-    app.S3_BUCKET_NAME = S3_BUCKET_NAME
+        app.db = None
+        app.users_collection = None
+        app.resets_collection = None
+        app.catalog_collection = None
+        app.spreadsheets_collection = None
 
     # =================== FUNCIONES AUXILIARES ===================
     # (Eliminar las definiciones internas de eliminar_archivo_imagen, get_current_spreadsheet y leer_datos_excel aquí)
@@ -270,6 +224,7 @@ def create_app():
     from app.routes.debug_routes import debug_bp  # Blueprint para diagnóstico de sesiones
     from app.routes.admin_diagnostic import admin_diagnostic_bp  # Blueprint para diagnóstico de administrador
     from app.routes.diagnostico import diagnostico_bp  # Blueprint para diagnóstico simplificado
+    print("ANTES DE BLUEPRINTS", app.db)
     app.register_blueprint(auth_bp, url_prefix='')
     app.register_blueprint(main_bp)
     app.register_blueprint(catalogs_bp)
@@ -278,6 +233,7 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(errors_bp)
     app.register_blueprint(emergency_bp)  # <-- REGISTRO DE EMERGENCIA
+    print("DESPUÉS DE BLUEPRINTS", app.db)
     
     # Importar explícitamente los blueprints de diagnóstico
     try:
@@ -422,9 +378,35 @@ def create_app():
         
         # Redirigir a los catálogos
         return redirect(url_for('catalogs.list'))
+
+    def ensure_db():
+        from app.database import get_mongo_db, get_mongo_client
+        client = get_mongo_client()
+        db = get_mongo_db()
+        current_app.mongo_client = client
+        current_app.db = db
+        if db is not None:
+            current_app.users_collection = db["users"]
+            current_app.resets_collection = db["password_resets"]
+            current_app.spreadsheets_collection = db["spreadsheets"]
+            print("[DEBUG][ensure_db] Base de datos y colecciones asignadas correctamente en current_app")
+        else:
+            current_app.users_collection = None
+            current_app.resets_collection = None
+            current_app.spreadsheets_collection = None
+            print("[DEBUG][ensure_db] No se pudo asignar la base de datos en current_app")
+    app.before_request(ensure_db)
+
+    print("[DEBUG][ADMIN] db:", getattr(current_app, "db", None))
+
     return app
 
 app = create_app()
+
+if __name__ == '__main__':
+    # Leer el modo debug de la variable de entorno (por defecto False)
+    debug_mode = os.getenv('FLASK_DEBUG', '0') in ('1', 'true', 'True')
+    app.run(debug=debug_mode, host='0.0.0.0', port=5001)
 
 # ==============================================
 # 📄 INICIALIZACIÓN DE VARIABLES GLOBALES
@@ -1051,8 +1033,8 @@ def test_styles():
 # 🔥 AJUSTE FINAL: LANZAMIENTO DE LA APP
 # ==============================================
 
-if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0')
+# if __name__ == '__main__':
+#     app.run(debug=False, host='0.0.0.0')
 
 # ==============================================
 # 📄 RUTAS PARA DASHBOARDS

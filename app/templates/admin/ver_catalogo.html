@@ -1,105 +1,84 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
-{% block title %}Ver Catálogo{% endblock %}
+{% block title %}Detalle del Catálogo{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-        <a href="{{ url_for('admin.dashboard_admin') }}" class="btn btn-secondary">&larr; Volver al panel de administración</a>
-    {% elif catalog %}
-        <h2>Detalles del Catálogo/Tabla</h2>
-        <a href="{{ request.referrer or url_for('admin.dashboard_admin') }}" class="btn btn-secondary mb-3">&larr; Volver</a>
-        
         <div class="card mb-4">
-            <div class="card-header bg-light">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Información general</h5>
-                    {% if catalog.collection_source %}
-                        <span class="badge bg-{{ 'primary' if catalog.collection_source == 'catalogs' else 'info' }}">{{ catalog.collection_source }}</span>
-                    {% endif %}
-                </div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Detalles del Catálogo/Tabla</h2>
+            <a href="{{ return_url or url_for('admin.dashboard_admin') }}" class="btn btn-secondary">&larr; Volver</a>
             </div>
             <div class="card-body">
-                <table class="table table-bordered mb-0">
-                    <tr><th style="width: 200px;">Nombre</th><td>{{ catalog.name }}</td></tr>
-                    <tr><th>Propietario</th><td>{{ catalog.created_by or catalog.owner or catalog.email or '—' }}</td></tr>
-                    <tr><th>Fecha de creación</th><td>{{ catalog.created_at_formatted }}</td></tr>
-                    <tr><th>Número de filas</th><td>{{ catalog.row_count }}</td></tr>
-                    <tr><th>Encabezados</th><td>{% if catalog.headers %}{{ catalog.headers|join(', ') }}{% else %}—{% endif %}</td></tr>
+            <h5>Información general</h5>
+            <table class="table table-bordered mb-4">
+                <tr><th>Nombre</th><td>{{ catalog.name }}</td></tr>
+                <tr><th>Propietario</th><td>{{ catalog.owner_name or catalog.created_by or 'No disponible' }}</td></tr>
+                <tr><th>Fecha de creación</th><td>{{ catalog.created_at or 'Desconocida' }}</td></tr>
+                <tr><th>Número de filas</th><td>{{ catalog.rows|length if catalog.rows else 0 }}</td></tr>
+                <tr><th>Encabezados</th><td>{{ catalog.headers|join(', ') }}</td></tr>
+                </table>
+
+            <div class="d-flex justify-content-end mb-3">
+                <a href="{{ url_for('catalogs.add_row', catalog_id=catalog._id) }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Añadir fila
+                </a>
+            </div>
+
+            <h5>Filas del catálogo</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            {% for header in catalog.headers %}
+                                <th>{{ header }}</th>
+                            {% endfor %}
+                            <th>Imágenes</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if catalog.rows and catalog.rows|length > 0 %}
+                            {% for row in catalog.rows %}
+                                <tr>
+                                    {% for header in catalog.headers %}
+                                        <td>{{ row[header] }}</td>
+                                    {% endfor %}
+                                    <td>
+                                        {# Unificación de campo de imágenes: acepta 'imagenes' o 'images' #}
+                                        {% set imgs = row["imagenes"] if row is mapping and "imagenes" in row else row["images"] if row is mapping and "images" in row else None %}
+                                        {% if imgs %}
+                                            <div class="d-flex flex-wrap gap-2">
+                                                {% for img in imgs %}
+                                                    <img src="{{ url_for('static', filename='uploads/' ~ img) }}" alt="img" class="img-thumbnail" style="height:60px;margin-right:4px;cursor:pointer;">
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}-{% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('catalogs.edit_row', catalog_id=catalog._id, row_index=loop.index0) }}" class="btn btn-warning btn-sm">
+                                            <i class="bi bi-pencil-square"></i> Editar
+                                        </a>
+                                        {% if session.get('role') == 'admin' or catalog.owner == session.get('username') or catalog.owner_name == session.get('username') or catalog.created_by == session.get('username') %}
+                                        <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=loop.index0) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="{{ catalog.headers|length + 2 }}" class="text-center text-muted">Sin datos</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
                 </table>
             </div>
         </div>
-        <div class="card">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Filas del catálogo</h5>
-            </div>
-            <div class="card-body">
-                {% if catalog.data and catalog.headers %}
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    {% for header in catalog.headers %}
-                                        <th>{{ header }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in catalog.data %}
-                                    <tr>
-                                        {% for header in catalog.headers %}
-                                            <td>
-                                                {% if header in ['images', 'imagenes'] and row[header] is defined and row[header] %}
-                                                    {% set images = row[header] if row[header] is iterable and row[header] is not string else [row[header]] %}
-                                                    <div class="d-flex flex-wrap gap-2">
-                                                        {% for img in images %}
-                                                            {% if img and img|length > 5 %}
-                                                                {% set img_url = row.imagen_urls[loop.index0] if row.imagen_urls is defined and row.imagen_urls|length > loop.index0 else img %}
-                                                                <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;" class="position-relative">
-                                                                    <div class="image-container" data-img-url="{{ img_url }}">
-                                                                        <div class="spinner-border text-primary spinner-border-sm position-absolute top-50 start-50 translate-middle" role="status">
-                                                                            <span class="visually-hidden">Cargando...</span>
-                                                                        </div>
-                                                                        <img src="{{ img_url }}" alt="Imagen" class="img-thumbnail catalog-image" 
-                                                                             style="max-width: 80px; max-height: 80px; object-fit: cover;"
-                                                                             onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                                                             onerror="this.src='/static/img/image-error.png'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                                                             loading="lazy">
-                                                                    </div>
-                                                                </a>
-                                                            {% endif %}
-                                                        {% endfor %}
-                                                    </div>
-                                                {% elif header in ['image', 'imagen'] and row[header] is defined and row[header] %}
-                                                    <a href="#" onclick="mostrarImagenModal('{{ row[header] }}'); return false;" class="position-relative">
-                                                        <div class="image-container" data-img-url="{{ row[header] }}">
-                                                            <div class="spinner-border text-primary spinner-border-sm position-absolute top-50 start-50 translate-middle" role="status">
-                                                                <span class="visually-hidden">Cargando...</span>
-                                                            </div>
-                                                            <img src="{{ row[header] }}" alt="Imagen" class="img-thumbnail catalog-image" 
-                                                                 style="max-width: 80px; max-height: 80px; object-fit: cover;"
-                                                                 onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                                                 onerror="this.src='/static/img/image-error.png'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                                                 loading="lazy">
-                                                        </div>
-                                                    </a>
-                                                {% else %}
-                                                    {{ row[header] if row[header] is defined else '' }}
-                                                {% endif %}
-                                            </td>
-                                        {% endfor %}
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="alert alert-info">Este catálogo no tiene datos o no tiene encabezados definidos.</div>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}
 

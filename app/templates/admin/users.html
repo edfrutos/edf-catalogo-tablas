@@ -1,9 +1,27 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
 {% block title %}Gestión de Usuarios{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <form method="get" action="{{ url_for('admin.lista_usuarios') }}" class="d-flex">
+          <input type="text" name="q" class="form-control me-2" placeholder="Buscar por email o nombre de usuario" value="{{ request.args.get('q', '') }}">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Buscar</button>
+        </form>
+      </div>
+    </div>
     <div class="row">
         <div class="col-12">
             <h1>Gestión de Usuarios</h1>
@@ -55,14 +73,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for user in users %}
+                                {% if usuarios|length == 0 %}
+                                    <tr><td colspan="6" class="text-center text-muted">No hay usuarios registrados.</td></tr>
+                                {% else %}
+                                {% for user in usuarios %}
                                 <tr>
-                                    <td>{{ user.email }}</td>
-                                    <td>{{ user.nombre }}</td>
+                                    <td>{{ user.email or 'Sin email' }}</td>
+                                    <td>{{ user.nombre or user.username or 'Sin nombre' }}</td>
                                     <td>{{ user.role or 'Sin rol' }}</td>
                                     <td class="text-center">
                                         <a href="{{ url_for('admin.ver_catalogos_usuario', user_email=user.email) }}" 
-                                           class="btn btn-primary btn-sm position-relative" 
+                                           class="btn btn-info btn-sm position-relative" 
                                            style="min-width: 110px; font-weight: bold;">
                                             <i class="bi bi-table me-1"></i> Catálogos
                                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -85,7 +106,7 @@
                                     <td>
                                         <div class="btn-group">
                                             <a href="{{ url_for('admin.editar_usuario', user_id=user._id) }}" 
-                                               class="btn btn-sm btn-primary" 
+                                               class="btn btn-sm btn-warning" 
                                                title="Editar">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
@@ -98,28 +119,8 @@
                                         </div>
                                     </td>
                                 </tr>
-
-                                <!-- Modal de confirmación de eliminación -->
-                                <div class="modal fade" id="deleteModal{{ loop.index }}" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Confirmar Eliminación</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                ¿Estás seguro de que deseas eliminar al usuario {{ user.email }}?
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                <form action="{{ url_for('admin.eliminar_usuario', user_id=user._id) }}" method="POST" class="d-inline">
-                                                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                                 {% endfor %}
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -128,6 +129,31 @@
         </div>
     </div>
 </div>
+
+<!-- Modales de confirmación de eliminación -->
+{% if usuarios|length > 0 %}
+    {% for user in usuarios %}
+    <div class="modal fade" id="deleteModal{{ loop.index }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que deseas eliminar al usuario {{ user.email }}?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form action="{{ url_for('admin.eliminar_usuario', user_id=user._id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

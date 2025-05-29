@@ -1,3 +1,10 @@
+# Script: monitoring.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 monitoring.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 """
 Sistema de monitoreo para la aplicación
 Este módulo proporciona herramientas para monitorear la salud de la aplicación
@@ -110,7 +117,7 @@ def check_database_health(db_client):
 def check_system_health():
     """Comprueba la salud del sistema"""
     try:
-        cpu_usage = psutil.cpu_percent(interval=0.5)
+        cpu_usage = psutil.cpu_percent(interval=None)  # No bloqueante
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
         
@@ -200,16 +207,11 @@ def record_request(response_time_ms, is_error=False):
         _app_metrics["request_stats"]["avg_response_time_ms"] = round(response_time_ms, 2)
 
 def get_health_status():
-    """Devuelve un informe completo del estado de salud del sistema"""
-    # Actualizar métricas del sistema
-    check_system_health()
-    check_temp_files()
-    
-    # Prepara el reporte
+    """Devuelve un informe completo del estado de salud del sistema (solo lee métricas ya calculadas)"""
+    # NO recalcula métricas costosas aquí
     uptime = datetime.datetime.now() - datetime.datetime.strptime(
         _app_metrics["start_time"], "%Y-%m-%d %H:%M:%S"
     )
-    
     health_report = {
         "status": "healthy",  # Por defecto asumimos que está saludable
         "uptime_seconds": uptime.total_seconds(),
@@ -217,15 +219,12 @@ def get_health_status():
         "metrics": _app_metrics,
         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    
     # Determinar el estado general basado en criterios múltiples
     if not _app_metrics["database_status"]["is_available"]:
         health_report["status"] = "degraded"
-    
     if (_app_metrics["system_status"].get("cpu_usage", 0) > 90 or 
             _app_metrics["system_status"].get("memory_usage", {}).get("percent", 0) > 90):
         health_report["status"] = "at_risk"
-    
     error_rate = 0
     total_requests = _app_metrics["request_stats"].get("total_requests", 0)
     error_count = _app_metrics["request_stats"].get("error_count", 0)
@@ -233,12 +232,9 @@ def get_health_status():
         error_rate = (error_count / total_requests) * 100
     else:
         error_rate = 0
-    
     if error_rate > 10:  # Si más del 10% de las solicitudes fallan
         health_report["status"] = "unhealthy"
-    
     health_report["error_rate"] = error_rate
-    
     return health_report
 
 def cleanup_old_temp_files(days=2):  # Reducido a 2 días para limpiar archivos temporales más frecuentemente

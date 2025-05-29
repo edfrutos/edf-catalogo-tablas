@@ -1,8 +1,16 @@
+# Script: user_utils.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 user_utils.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 import logging
 from flask import current_app
 from typing import Optional, Dict, Any, List
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
+from app.utils.db_utils import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +28,7 @@ def get_user_collection():
         
         # Si no está disponible directamente, intentar obtenerla desde la base de datos
         if hasattr(current_app, 'db'):
-            return current_app.db['users']
+            return get_db()['users']
             
         # Si tampoco está disponible, intentar obtenerla desde la extensión mongo
         if hasattr(current_app, 'mongo'):

@@ -1,3 +1,10 @@
+# Script: auth_utils.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 auth_utils.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 """
 Utilidades de autenticación y autorización para la aplicación.
 Provee decoradores y funciones auxiliares para el manejo de sesiones y permisos.

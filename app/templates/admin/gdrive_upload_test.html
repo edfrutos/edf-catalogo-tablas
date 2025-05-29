@@ -1,0 +1,25 @@
+{% extends 'base.html' %} {% block title %}Subida de prueba a Google Drive{%
+endblock %} {% block content %}
+<div class="container mt-4">
+  <h2>Subida de prueba a Google Drive</h2>
+  <a href="{{ url_for('admin.maintenance') }}" class="btn btn-secondary mb-3"
+    >&larr; Volver al mantenimiento</a
+  >
+  {% if uploaded_links %}
+  <div class="alert alert-success">
+    <h5>Archivos subidos correctamente:</h5>
+    <ul>
+      {% for filename, enlace in uploaded_links %}
+      <li>
+        <strong>{{ filename }}</strong>:
+        <a href="{{ enlace }}" target="_blank">Ver en Google Drive</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  <div class="alert alert-info">
+    Puedes cerrar esta ventana y volver al panel de mantenimiento.
+  </div>
+</div>
+{% endblock %}

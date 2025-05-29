@@ -5,6 +5,7 @@ import os
 import sys
 import logging
 import requests
+import re
 import json
 from bs4 import BeautifulSoup
 import time
@@ -30,7 +31,7 @@ try:
     from config import Config
     MONGO_URI = Config.MONGO_URI
 except ImportError:
-    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://admin:admin123@cluster0.pmokh.mongodb.net/app_catalogojoyero?retryWrites=true&w=majority')
+    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://edfrutos:3Utitwr3piFt4LVf@cluster0.abpvipa.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority&appName=Cluster0')
 
 def conectar_mongodb():
     """Establece conexión con MongoDB y retorna el cliente y la base de datos."""

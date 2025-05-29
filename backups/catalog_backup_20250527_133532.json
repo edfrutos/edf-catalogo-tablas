@@ -1,0 +1,3096 @@
+[
+    {
+        "_id": "68320105f90e22bc3fe6e328",
+        "name": "Cat\u00e1logo de Prueba admin",
+        "headers": [
+            "N\u00famero",
+            "Nombre",
+            "Descripci\u00f3n"
+        ],
+        "filename": "catalogo_prueba.xlsx",
+        "owner": "admin",
+        "created_by": "admin",
+        "updated_at": "2025-05-27 11:09:57.791000",
+        "data": [
+            {
+                "N\u00famero": "1001",
+                "Nombre": "Prueba",
+                "Descripci\u00f3n": "A\u00f1adido de fila",
+                "images": [
+                    "dafab5a12c2248dbb73ca8fc54667bee_81v2YyzGvQL._AC_SL1500_.jpg",
+                    "6d46c8e3562e4737851838f7722f0a94_Crucial-MX500-500GB-3D-NAND-SATA-2.5-inch-internal-SSD.jpg",
+                    "d0a539d34fbd427187417d76ff8ae7d5_Disco_Duro_Westerm.jpeg",
+                    "4184fcb151c8474f904dd636517d450b_IMG_7602.jpg",
+                    "71e416c0c295499ea69f4001478ff396_IMG_7603.jpg"
+                ]
+            },
+            {
+                "N\u00famero": "1001",
+                "Nombre": "Prueba",
+                "Descripci\u00f3n": "A\u00f1adido de fila",
+                "images": [
+                    "dafab5a12c2248dbb73ca8fc54667bee_81v2YyzGvQL._AC_SL1500_.jpg",
+                    "6d46c8e3562e4737851838f7722f0a94_Crucial-MX500-500GB-3D-NAND-SATA-2.5-inch-internal-SSD.jpg",
+                    "d0a539d34fbd427187417d76ff8ae7d5_Disco_Duro_Westerm.jpeg"
+                ]
+            },
+            {
+                "N\u00famero": "Prueba n.1",
+                "Nombre": "Nombre Prueba",
+                "Descripci\u00f3n": "Descricpi\u00f3n Prueba",
+                "images": [
+                    "f9136769a93b401c9a986b2776cd6d0d_20250216_182608657_iOS.jpg",
+                    "a7c47e998530475ba64af3a65b0d0c41_20250216_182657205_iOS.jpg",
+                    "c3302adac4b7450787b32f62eb45ea27_20250216_182829765_iOS.jpg"
+                ]
+            }
+        ],
+        "num_rows": 1,
+        "rows": [
+            {
+                "N\u00famero": "1001",
+                "Nombre": "Prueba",
+                "Descripci\u00f3n": "A\u00f1adido de fila",
+                "images": [
+                    "dafab5a12c2248dbb73ca8fc54667bee_81v2YyzGvQL._AC_SL1500_.jpg",
+                    "6d46c8e3562e4737851838f7722f0a94_Crucial-MX500-500GB-3D-NAND-SATA-2.5-inch-internal-SSD.jpg",
+                    "d0a539d34fbd427187417d76ff8ae7d5_Disco_Duro_Westerm.jpeg",
+                    "4184fcb151c8474f904dd636517d450b_IMG_7602.jpg",
+                    "71e416c0c295499ea69f4001478ff396_IMG_7603.jpg"
+                ]
+            },
+            {
+                "N\u00famero": "Prueba n.1",
+                "Nombre": "Nombre Prueba",
+                "Descripci\u00f3n": "Descricpi\u00f3n Prueba",
+                "images": [
+                    "f9136769a93b401c9a986b2776cd6d0d_20250216_182608657_iOS.jpg",
+                    "a7c47e998530475ba64af3a65b0d0c41_20250216_182657205_iOS.jpg",
+                    "c3302adac4b7450787b32f62eb45ea27_20250216_182829765_iOS.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "_id": "6832023e45188f2e133bfcae",
+        "name": "Cat\u00e1logo de Prueba edefrutos",
+        "headers": [
+            "N\u00famero",
+            "Nombre",
+            "Descripci\u00f3n",
+            "Localizaci\u00f3n",
+            "Stock"
+        ],
+        "filename": "catalogo_prueba_2.xlsx",
+        "owner": "edefrutos",
+        "created_by": "edefrutos",
+        "updated_at": "2025-05-27 09:34:37.903000",
+        "data": [
+            {
+                "N\u00famero": "1",
+                "Nombre": "2",
+                "Descripci\u00f3n": "3",
+                "Localizaci\u00f3n": "4",
+                "Stock": "5",
+                "images": [
+                    "0c75462def5d4ab2b0f5b29105829d9a_tarjeta-memoria-lexar-sd-pro-gold-series-uhs-ii-1800x-64gb-v60.jpg",
+                    "fb3c970572274d3a9505817c2e0076be_th.jpeg",
+                    "f083f7b2c2c3439c9f3c9c499491792f_unsplash-Tatyana_Dobreva.jpg"
+                ]
+            }
+        ],
+        "rows": [
+            {
+                "N\u00famero": "1",
+                "Nombre": "2",
+                "Descripci\u00f3n": "3",
+                "Localizaci\u00f3n": "4",
+                "Stock": "5",
+                "images": [
+                    "0c75462def5d4ab2b0f5b29105829d9a_tarjeta-memoria-lexar-sd-pro-gold-series-uhs-ii-1800x-64gb-v60.jpg",
+                    "fb3c970572274d3a9505817c2e0076be_th.jpeg",
+                    "f083f7b2c2c3439c9f3c9c499491792f_unsplash-Tatyana_Dobreva.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "_id": "680a1950b6570e9943828f63",
+        "coleccion": "catalogs",
+        "name": "Unidades de almacenamiento",
+        "created_by": "admin@example.com",
+        "headers": [
+            "Nombre",
+            "Descripci\u00f3n",
+            "Precio",
+            "Stock"
+        ],
+        "updated_at": "2025-05-27 11:12:26.639000",
+        "data": [
+            {
+                "Nombre": "Almacen 1",
+                "Descripci\u00f3n": "Desc. Objeto",
+                "Precio": "Precio Objeto",
+                "Stock": "Stock de Objetos",
+                "images": [
+                    "c3219ca7467a4c95875a02be569475cb_20250216_153907398_iOS.jpg",
+                    "5757c64b2fdc4c6f87ba4e448f74338c_20250216_153913781_iOS.jpg",
+                    "d0970e59e63c4c56893db2d1836c8d6a_20250216_154010734_iOS.jpg"
+                ]
+            }
+        ],
+        "rows": [
+            {
+                "Nombre": "Almacen 1",
+                "Descripci\u00f3n": "Desc. Objeto",
+                "Precio": "Precio Objeto",
+                "Stock": "Stock de Objetos",
+                "images": [
+                    "c3219ca7467a4c95875a02be569475cb_20250216_153907398_iOS.jpg",
+                    "5757c64b2fdc4c6f87ba4e448f74338c_20250216_153913781_iOS.jpg",
+                    "d0970e59e63c4c56893db2d1836c8d6a_20250216_154010734_iOS.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "_id": "682602ecf7e52b888b9de17c",
+        "coleccion": "catalogs",
+        "name": "inventario valor",
+        "created_by": "j.g.1991",
+        "created_at": "2025-05-15 15:06:20.255000",
+        "headers": [
+            "Nombre",
+            "Descripci\u00f3n",
+            "Precio",
+            "Stock"
+        ],
+        "updated_at": "2025-05-27 09:36:16.086000",
+        "data": [
+            {
+                "Nombre": "uno",
+                "Descripci\u00f3n": "dos",
+                "Precio": "tres",
+                "Stock": "cuatro",
+                "images": [
+                    "bf079b202d0240149a06ad22d7129ed2_IMG_7602.jpg",
+                    "aafbcb4632f943bea23d5ea7d2eb0a23_IMG_7603.jpg"
+                ]
+            }
+        ],
+        "rows": [
+            {
+                "Nombre": "uno",
+                "Descripci\u00f3n": "dos",
+                "Precio": "tres",
+                "Stock": "cuatro",
+                "images": [
+                    "bf079b202d0240149a06ad22d7129ed2_IMG_7602.jpg",
+                    "aafbcb4632f943bea23d5ea7d2eb0a23_IMG_7603.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "_id": "68263313e88075ac494aad4f",
+        "coleccion": "catalogs",
+        "name": "JOYERO",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-15 18:31:47.620000"
+    },
+    {
+        "_id": "682c3d854b450347469136eb",
+        "coleccion": "catalogs",
+        "name": "inventario valor",
+        "created_by": "Alberto",
+        "created_at": "2025-05-20 08:29:57.470000"
+    },
+    {
+        "_id": "682c40aa4b450347469136ec",
+        "coleccion": "catalogs",
+        "name": "joyero",
+        "created_by": "Alberto",
+        "created_at": "2025-05-20 08:43:22.517000"
+    },
+    {
+        "_id": "682c501bc25cb98fdcc91b02",
+        "coleccion": "catalogs",
+        "name": "inventario valor",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-20 09:49:15.548000"
+    },
+    {
+        "_id": "67f84aa1369d8c2a7c236496",
+        "coleccion": "spreadsheets",
+        "name": "Cat\u00e1logo storage_units.xlsx",
+        "created_by": "edefrutos",
+        "created_at": "2025-04-11 00:48:01.836000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "681d073e9257364ac1e044cc",
+        "coleccion": "spreadsheets",
+        "name": "Tasbla importada",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-08 19:34:22.466000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "681f2189f3e71c71760bf457",
+        "coleccion": "spreadsheets",
+        "name": "Joyero",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-10 09:51:05.853000"
+    },
+    {
+        "_id": "6821df3e55c88f691ec0d6c8",
+        "coleccion": "spreadsheets",
+        "name": "Manual",
+        "created_by": "amelia",
+        "created_at": "2025-05-12 11:45:02.363000"
+    },
+    {
+        "_id": "682240e2fb5a20fbc93ec081",
+        "coleccion": "spreadsheets",
+        "name": "Manual",
+        "created_by": "alberto",
+        "created_at": "2025-05-12 18:41:38.570000",
+        "headers": [
+            "Columna1",
+            "Columna2",
+            "Columna3",
+            "Columna4"
+        ],
+        "updated_at": "2025-05-26 09:21:20.851000"
+    },
+    {
+        "_id": "682240fffb5a20fbc93ec082",
+        "coleccion": "spreadsheets",
+        "name": "Datos",
+        "created_by": "alberto",
+        "created_at": "2025-05-12 18:42:07.423000"
+    },
+    {
+        "_id": "68230b933776461a7d261b6a",
+        "coleccion": "spreadsheets",
+        "name": "Importada",
+        "created_by": "Alberto",
+        "created_at": "2025-05-13 09:06:27.432000"
+    },
+    {
+        "_id": "68230e3492fe1ecb5c261b6a",
+        "coleccion": "spreadsheets",
+        "name": "Manual Admin",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-13 09:17:40.217000"
+    },
+    {
+        "_id": "682319758609019c32d26f57",
+        "coleccion": "spreadsheets",
+        "name": "Test Imporft xlsx",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-13 10:05:41.576000"
+    },
+    {
+        "_id": "68231cf1580991777dd26f58",
+        "coleccion": "spreadsheets",
+        "name": "xlsx importada",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-13 10:20:33.467000"
+    },
+    {
+        "_id": "682370a87fda23ad5d29c7d0",
+        "coleccion": "spreadsheets",
+        "name": "Nueva",
+        "created_by": "Alberto",
+        "created_at": "2025-05-13 16:17:44.707000"
+    },
+    {
+        "_id": "68247404f481122b393f97ea",
+        "coleccion": "spreadsheets",
+        "name": "Alberto Joyero",
+        "created_by": "Alberto",
+        "created_at": "2025-05-14 10:44:20.947000"
+    },
+    {
+        "_id": "6824b4565dd463dce4bdd96b",
+        "coleccion": "spreadsheets",
+        "name": "Nueva Mnaual Julia",
+        "created_by": "j.g.1991",
+        "created_at": "2025-05-14 15:18:46.731000"
+    },
+    {
+        "_id": "6824c35fbb75a4af64112410",
+        "coleccion": "spreadsheets",
+        "name": "Enrique Nueva",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-14 16:22:55.289000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "6824c375bb75a4af64112411",
+        "coleccion": "spreadsheets",
+        "name": "Enri9que importada",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-14 16:23:17.965000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "6824d6e217a06891baf031d5",
+        "coleccion": "spreadsheets",
+        "name": "Adolfo tabla",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-14 17:46:10.043000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "6824d9cc252f62f5e5350f62",
+        "coleccion": "spreadsheets",
+        "name": "Adolfo Nueva",
+        "created_by": "edefrutos",
+        "created_at": "2025-05-14 17:58:36.411000",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos"
+    },
+    {
+        "_id": "6826ff3be88075ac494aad50",
+        "coleccion": "spreadsheets",
+        "name": "Tabla Roberto",
+        "created_by": "fsareirz26",
+        "created_at": "2025-05-16 09:02:51.401000"
+    },
+    {
+        "_id": "682726bee88075ac494aad53",
+        "coleccion": "spreadsheets",
+        "name": "Tabla Depurando",
+        "created_by": "j.g.1991",
+        "created_at": "2025-05-16 11:51:26.079000"
+    },
+    {
+        "_id": "6832e3436c96b5bdeb13df08",
+        "name": "Joyero edefrutos importado",
+        "headers": [
+            "N\u00famero",
+            "Descripci\u00f3n",
+            "Peso",
+            "Valor"
+        ],
+        "rows": [
+            {
+                "N\u00famero": "1",
+                "Descripci\u00f3n": "Collar oro 18 kilates y perlas cultivadas",
+                "Peso": "13",
+                "Valor": "1215",
+                "images": [
+                    "f738a71c48ad4e91b6769efcb5a864b8_20250216_151630506_iOS.jpg",
+                    "8b736df426e24c3497e85155a60547f3_20250216_151655238_iOS.jpg"
+                ]
+            },
+            {
+                "N\u00famero": "2",
+                "Descripci\u00f3n": "juego de pendientes y sortija",
+                "Peso": "10",
+                "Valor": "1800",
+                "images": [
+                    "2c18a52e3382467ea3e87a41449449b4_20250216_152438604_iOS.jpg",
+                    "56c3e10ed5bd4cffa29f7bca154f9fec_20250216_152445428_iOS.jpg",
+                    "f81d132e550044299f37b12b24fe5ade_20250216_152707232_iOS.jpg"
+                ]
+            },
+            {
+                "N\u00famero": 3,
+                "Descripci\u00f3n": "sello caballero oro 18 k y piedra azul marino",
+                "Peso": 9,
+                "Valor": 1800
+            },
+            {
+                "N\u00famero": 4,
+                "Descripci\u00f3n": "sello caballero oro 18 k y piedra roja rubi",
+                "Peso": 10,
+                "Valor": 1800
+            },
+            {
+                "N\u00famero": 5,
+                "Descripci\u00f3n": "sello caballero oro 18 k y piedra roja rubi",
+                "Peso": 8,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 6,
+                "Descripci\u00f3n": "anillo se\u00f1oraoro y esmeralda rectangular",
+                "Peso": 3,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 7,
+                "Descripci\u00f3n": "snillo se\u00f1ora oro y piedra rectangular  topacio amarillo",
+                "Peso": 7,
+                "Valor": 900
+            },
+            {
+                "N\u00famero": 8,
+                "Descripci\u00f3n": "anilo se\u00f1ora oro 18 k y piedra redonda amarilla",
+                "Peso": 5,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 9,
+                "Descripci\u00f3n": "anillo se\u00f1ora oro tipo serpiente con piedra rojas",
+                "Peso": 4,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 10,
+                "Descripci\u00f3n": "anillo oro 18 k y granates - flor granate ",
+                "Peso": 2,
+                "Valor": 200
+            },
+            {
+                "N\u00famero": 11,
+                "Descripci\u00f3n": "anillo oro 18 k- leon y serpiente con piedra roja",
+                "Peso": 6,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 12,
+                "Descripci\u00f3n": "anillo oro 18 k. labrado",
+                "Peso": 6,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 13,
+                "Descripci\u00f3n": "anillo oro 18 k piedra rubi oval sello",
+                "Peso": 7,
+                "Valor": 900
+            },
+            {
+                "N\u00famero": 14,
+                "Descripci\u00f3n": "sello letra F M ORO 18 K",
+                "Peso": 3,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 15,
+                "Descripci\u00f3n": "Pulsera oro 18 k 4 monedas",
+                "Peso": 65,
+                "Valor": 6000
+            },
+            {
+                "N\u00famero": 16,
+                "Descripci\u00f3n": "Pulsera oro 18 k 4 monedas",
+                "Peso": 53,
+                "Valor": 5000
+            },
+            {
+                "N\u00famero": 17,
+                "Descripci\u00f3n": "Pulsera oro 18 k medalla cierre de seguridad",
+                "Peso": 22,
+                "Valor": 2500
+            },
+            {
+                "N\u00famero": 18,
+                "Descripci\u00f3n": "Pulsera oro 18 k 4 monedas",
+                "Peso": 49,
+                "Valor": 5000
+            },
+            {
+                "N\u00famero": 19,
+                "Descripci\u00f3n": "correa reloj oro 18 k",
+                "Peso": 38,
+                "Valor": 1000
+            },
+            {
+                "N\u00famero": 20,
+                "Descripci\u00f3n": "reloj cyma de oro antiguo",
+                "Peso": 33,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 21,
+                "Descripci\u00f3n": "pulsera rigida oro 18 k labrada",
+                "Peso": 58,
+                "Valor": 6000
+            },
+            {
+                "N\u00famero": 22,
+                "Descripci\u00f3n": "pulsera rigida oro 18 k labrada",
+                "Peso": 54,
+                "Valor": 6000
+            },
+            {
+                "N\u00famero": 23,
+                "Descripci\u00f3n": "pulsera rigida oro 18 k labrada",
+                "Peso": 44,
+                "Valor": 5500
+            },
+            {
+                "N\u00famero": 24,
+                "Descripci\u00f3n": "pendientes oro 18 k hoja",
+                "Peso": 2,
+                "Valor": 150
+            },
+            {
+                "N\u00famero": 25,
+                "Descripci\u00f3n": "juego pendientes y anillo oro y granate rojo",
+                "Peso": 7,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 26,
+                "Descripci\u00f3n": "cadenas y pieza dental oro",
+                "Peso": 16,
+                "Valor": 1000
+            },
+            {
+                "N\u00famero": 27,
+                "Descripci\u00f3n": "3 medallas y cruz carabaca con cadena",
+                "Peso": 20,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 28,
+                "Descripci\u00f3n": "collar oro 18 kilates y coral",
+                "Peso": 14,
+                "Valor": 1310
+            },
+            {
+                "N\u00famero": 29,
+                "Descripci\u00f3n": "pulsera oro 18 k y coral",
+                "Peso": 6,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 30,
+                "Descripci\u00f3n": "juego de pendiente y anillo oro y coral",
+                "Peso": 6,
+                "Valor": 1200
+            },
+            {
+                "N\u00famero": 31,
+                "Descripci\u00f3n": "pulsera oro dibujo trenzado ",
+                "Peso": 9,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 32,
+                "Descripci\u00f3n": "3 anillos unidos piedra oro 18 k",
+                "Peso": 5,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 33,
+                "Descripci\u00f3n": "anillo de oro piedra cuarzo ahumado rectangular",
+                "Peso": 6,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 34,
+                "Descripci\u00f3n": "anillo sw oro 18 k. y muchas circonitas",
+                "Peso": 5,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 35,
+                "Descripci\u00f3n": "2 alianzas de oro 18 k",
+                "Peso": 3,
+                "Valor": 150
+            },
+            {
+                "N\u00famero": 36,
+                "Descripci\u00f3n": "2 pendientes oro circonitas y perlita",
+                "Peso": 3,
+                "Valor": 150
+            },
+            {
+                "N\u00famero": 37,
+                "Descripci\u00f3n": "reloj cyma de oro",
+                "Peso": 29,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 38,
+                "Descripci\u00f3n": "juego de pendientes y anillo oro circonitas y rubi",
+                "Peso": 10,
+                "Valor": 1000
+            },
+            {
+                "N\u00famero": 39,
+                "Descripci\u00f3n": "guardapelo, cruz cadena globo fetiche ",
+                "Peso": 7,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 40,
+                "Descripci\u00f3n": "sortija oro blanco y amarillo con perla y brillantes",
+                "Peso": 3,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 41,
+                "Descripci\u00f3n": "collar de perlas en disminucion con cierre de oro",
+                "Peso": 0,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 42,
+                "Descripci\u00f3n": "reloj de oro cronwell",
+                "Peso": 34,
+                "Valor": 4000
+            },
+            {
+                "N\u00famero": 43,
+                "Descripci\u00f3n": "reloj de oro cyma (mama)",
+                "Peso": 47,
+                "Valor": 3000
+            },
+            {
+                "N\u00famero": 44,
+                "Descripci\u00f3n": "reloj omega sra. Constelacion",
+                "Peso": 0,
+                "Valor": 8000
+            },
+            {
+                "N\u00famero": 45,
+                "Descripci\u00f3n": "sortija  oro amarillo y blanco con un gran diamante",
+                "Peso": 2,
+                "Valor": 2000
+            },
+            {
+                "N\u00famero": 46,
+                "Descripci\u00f3n": "placa eugenio de frutos oro",
+                "Peso": 3,
+                "Valor": 240
+            },
+            {
+                "N\u00famero": 47,
+                "Descripci\u00f3n": "anillo de oro blanco y diamantes",
+                "Peso": 5,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 48,
+                "Descripci\u00f3n": "pendientes oro blanco y diamante",
+                "Peso": 5,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 49,
+                "Descripci\u00f3n": "pendientes oro blanco y brillantes largos",
+                "Peso": 3,
+                "Valor": 800
+            },
+            {
+                "N\u00famero": 50,
+                "Descripci\u00f3n": "pulsera oro blanco y circonitas ",
+                "Peso": 14,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 51,
+                "Descripci\u00f3n": "3 pulseras oro ",
+                "Peso": 38,
+                "Valor": 3000
+            },
+            {
+                "N\u00famero": 52,
+                "Descripci\u00f3n": "pulsera antigua oro amarillo y blanco con brillantes",
+                "Peso": 6,
+                "Valor": 2500
+            },
+            {
+                "N\u00famero": 53,
+                "Descripci\u00f3n": "cadena y colgante oro blanco con diamantesy perla ",
+                "Peso": 8,
+                "Valor": 2500
+            },
+            {
+                "N\u00famero": 54,
+                "Descripci\u00f3n": "cadena y cruz oro (papa)",
+                "Peso": 16,
+                "Valor": 1300
+            },
+            {
+                "N\u00famero": 55,
+                "Descripci\u00f3n": "cadena oro y colgante tous ",
+                "Peso": 8,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 56,
+                "Descripci\u00f3n": "cadena y cruz oeo blanco (boda)",
+                "Peso": 6,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 57,
+                "Descripci\u00f3n": "medalla virgen y cruz con cadena oro 18 k (Mari)",
+                "Peso": 15,
+                "Valor": 1200
+            },
+            {
+                "N\u00famero": 58,
+                "Descripci\u00f3n": "pulsera oro 18 k y perlas (Mari)",
+                "Peso": 10,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 59,
+                "Descripci\u00f3n": "pulsera aro oro 18 k (regalo Tere)",
+                "Peso": 9,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 60,
+                "Descripci\u00f3n": "Gargantilla trenzada oro 18 k ",
+                "Peso": 8,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 61,
+                "Descripci\u00f3n": "gargantilla perlas de rio con broche de oro",
+                "Peso": 15,
+                "Valor": 200
+            },
+            {
+                "N\u00famero": 62,
+                "Descripci\u00f3n": "cadena y cruz peque\u00f1a oro 18 k",
+                "Peso": 2,
+                "Valor": 160
+            },
+            {
+                "N\u00famero": 63,
+                "Descripci\u00f3n": "anillo de oro blanco y amarillo 3 brillantes",
+                "Peso": 3,
+                "Valor": 1200
+            },
+            {
+                "N\u00famero": 64,
+                "Descripci\u00f3n": "sortija oro 18k circonitas y rubis",
+                "Peso": 3,
+                "Valor": 240
+            },
+            {
+                "N\u00famero": 65,
+                "Descripci\u00f3n": "sortija oro 18k aro grueso",
+                "Peso": 11,
+                "Valor": 880
+            },
+            {
+                "N\u00famero": 66,
+                "Descripci\u00f3n": "sortija oro 18k  y circonitas (joyeria Juanjo)",
+                "Peso": 5,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 67,
+                "Descripci\u00f3n": "solitario oro 18k  con un brillante (joyeria Juanjo)",
+                "Peso": 3,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 68,
+                "Descripci\u00f3n": "sello oro 18k EG (papa)",
+                "Peso": 20,
+                "Valor": 1600
+            },
+            {
+                "N\u00famero": 69,
+                "Descripci\u00f3n": "sortija oro blabco y amarillo con circonitas",
+                "Peso": 6,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 70,
+                "Descripci\u00f3n": "anillo oro 18k con dos circonitas (joyeria Juanjo)",
+                "Peso": 3,
+                "Valor": 240
+            },
+            {
+                "N\u00famero": 71,
+                "Descripci\u00f3n": "anillo oro blanco y amarillo con un brillante (17/03/02)",
+                "Peso": 3,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 72,
+                "Descripci\u00f3n": "alianza Mama ",
+                "Peso": 2,
+                "Valor": 160
+            },
+            {
+                "N\u00famero": 73,
+                "Descripci\u00f3n": "sortija regalo a Eugenio oro b y amarillo 2 brillantes",
+                "Peso": 6,
+                "Valor": 700
+            },
+            {
+                "N\u00famero": 74,
+                "Descripci\u00f3n": "broche de oro y rubis",
+                "Peso": 8,
+                "Valor": 480
+            },
+            {
+                "N\u00famero": 75,
+                "Descripci\u00f3n": "juego de pendientes agua marina oro blanco",
+                "Peso": 0,
+                "Valor": 1200
+            },
+            {
+                "N\u00famero": 76,
+                "Descripci\u00f3n": "juego de sortija y colgante aguamarina oro blanco",
+                "Peso": 0,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 77,
+                "Descripci\u00f3n": "pulsera tiffany plata",
+                "Peso": 0,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 78,
+                "Descripci\u00f3n": "pulsera calabrote grande planta",
+                "Peso": 0,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 79,
+                "Descripci\u00f3n": "pulsera plata colgantes",
+                "Peso": 0,
+                "Valor": 150
+            },
+            {
+                "N\u00famero": 80,
+                "Descripci\u00f3n": "pulsera calabrote peque\u00f1o",
+                "Peso": 0,
+                "Valor": 40
+            },
+            {
+                "N\u00famero": 81,
+                "Descripci\u00f3n": "pulsera tous negra y osito oro",
+                "Peso": 0,
+                "Valor": 40
+            },
+            {
+                "N\u00famero": 82,
+                "Descripci\u00f3n": "Collar perlas cultivadas gruesas y colgante plata",
+                "Peso": 0,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 83,
+                "Descripci\u00f3n": "pendientes oro blanco y piedrecita azul con colgante",
+                "Peso": 0,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 84,
+                "Descripci\u00f3n": "arras de plata",
+                "Peso": 0,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": "Nueva Joya",
+                "Descripci\u00f3n": "Descripci\u00f3n Nueva Joya",
+                "Peso": "Peso en gr.",
+                "Valor": "Valor en \u20ac",
+                "images": [
+                    "f1cc75f4e17746deab0bff1767d0ba3b_20250216_183738711_iOS.jpg",
+                    "861b79726fa648a09402380ca54be5d0_20250216_183753758_iOS.jpg",
+                    "95f7782a0dd44748bc260adbe9f8e4b1_20250216_183936169_iOS.jpg"
+                ]
+            }
+        ],
+        "created_by": "edefrutos",
+        "owner": "edefrutos",
+        "owner_name": "edefrutos",
+        "email": "edefrutos@gmail.com",
+        "created_at": "2025-05-25 09:30:43.129000",
+        "updated_at": "2025-05-27 09:55:16.507000",
+        "data": [
+            {
+                "N\u00famero": "1",
+                "Descripci\u00f3n": "Collar oro 18 kilates y perlas cultivadas",
+                "Peso": "13",
+                "Valor": "1215",
+                "images": [
+                    "f738a71c48ad4e91b6769efcb5a864b8_20250216_151630506_iOS.jpg",
+                    "8b736df426e24c3497e85155a60547f3_20250216_151655238_iOS.jpg"
+                ]
+            },
+            {
+                "N\u00famero": "2",
+                "Descripci\u00f3n": "juego de pendientes y sortija",
+                "Peso": "10",
+                "Valor": "1800",
+                "images": [
+                    "2c18a52e3382467ea3e87a41449449b4_20250216_152438604_iOS.jpg",
+                    "56c3e10ed5bd4cffa29f7bca154f9fec_20250216_152445428_iOS.jpg",
+                    "f81d132e550044299f37b12b24fe5ade_20250216_152707232_iOS.jpg"
+                ]
+            },
+            {
+                "N\u00famero": "1",
+                "Descripci\u00f3n": "2",
+                "Peso": "3",
+                "Valor": "4",
+                "imagenes": [
+                    "0f3365ab048449c3a1ad709c8104be04.jpg"
+                ],
+                "imagen_data": [
+                    "0f3365ab048449c3a1ad709c8104be04.jpg"
+                ],
+                "num_imagenes": 1
+            },
+            {
+                "N\u00famero": "Nueva Joya",
+                "Descripci\u00f3n": "Descripci\u00f3n Nueva Joya",
+                "Peso": "Peso en gr.",
+                "Valor": "Valor en \u20ac",
+                "images": [
+                    "f1cc75f4e17746deab0bff1767d0ba3b_20250216_183738711_iOS.jpg",
+                    "861b79726fa648a09402380ca54be5d0_20250216_183753758_iOS.jpg",
+                    "95f7782a0dd44748bc260adbe9f8e4b1_20250216_183936169_iOS.jpg"
+                ]
+            }
+        ],
+        "num_rows": 2
+    },
+    {
+        "_id": "68343360273c51203e1c7986",
+        "name": "inventario valor",
+        "headers": [
+            "DESCRIPCION",
+            "PESO en gr.",
+            "VALOR ESTIMADO"
+        ],
+        "rows": [
+            {
+                "DESCRIPCION": "Collar oro 18 kilates y perlas cultivadas",
+                "PESO en gr.": 13.0,
+                "VALOR ESTIMADO": 1215.0
+            },
+            {
+                "DESCRIPCION": "juego de pendientes y sortija",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 1800.0
+            },
+            {
+                "DESCRIPCION": "sello caballero oro 18 k y piedra azul marino",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 1800.0
+            },
+            {
+                "DESCRIPCION": "sello caballero oro 18 k y piedra roja rubi",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 1800.0
+            },
+            {
+                "DESCRIPCION": "sello caballero oro 18 k y piedra roja rubi",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "anillo se\u00f1oraoro y esmeralda rectangular",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "snillo se\u00f1ora oro y piedra rectangular  topacio amarillo",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 900.0
+            },
+            {
+                "DESCRIPCION": "anilo se\u00f1ora oro 18 k y piedra redonda amarilla",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "anillo se\u00f1ora oro tipo serpiente con piedra rojas",
+                "PESO en gr.": 4.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18 k- flor granate ",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 200.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18 k- leon y serpiente con piedra roja",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18 k. labrado",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18 k piedra rubi oval sello",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 900.0
+            },
+            {
+                "DESCRIPCION": "sello letra F M ORO 18 K",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 65.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 53.0,
+                "VALOR ESTIMADO": 5000.0
+            },
+            {
+                "DESCRIPCION": "Pulsera oro 18 k medalla cierre de seguridad",
+                "PESO en gr.": 22.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 49.0,
+                "VALOR ESTIMADO": 5000.0
+            },
+            {
+                "DESCRIPCION": "correa reloj oro 18 k",
+                "PESO en gr.": 38.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "DESCRIPCION": "reloj cyma de oro antiguo",
+                "PESO en gr.": 33.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 58.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 54.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 44.0,
+                "VALOR ESTIMADO": 5500.0
+            },
+            {
+                "DESCRIPCION": "pendientes oro 18 k hoja",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "DESCRIPCION": "juego pendientes y anillo oro y granate rojo",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "cadenas y pieza dental oro",
+                "PESO en gr.": 16.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "DESCRIPCION": "3 medallas y cruz carabaca con cadena",
+                "PESO en gr.": 20.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "collar oro 18 kilates y coral",
+                "PESO en gr.": 14.0,
+                "VALOR ESTIMADO": 1310.0
+            },
+            {
+                "DESCRIPCION": "pulsera oro 18 k y coral",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "juego de pendiente y anillo oro y coral",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "DESCRIPCION": "pulsera oro dibujo trenzado ",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "3 anillos unidos piedra oro 18 k",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "anillo de oro piedra cuarzo ahumado rectangular",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "anillo sw oro 18 k. y muchas circonitas",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "2 alianzas de oro 18 k",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "DESCRIPCION": "2 pendientes oro circonitas y perlita",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "DESCRIPCION": "reloj cyma de oro",
+                "PESO en gr.": 29.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "juego de pendientes y anillo oro circonitas y rubi",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "DESCRIPCION": "guardapelo, cruz cadena globo fetiche ",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "sortija oro blanco y amarillo con perla y brillantes",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "collar de perlas en disminucion con cierre de oro",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "reloj de oro cronwell",
+                "PESO en gr.": 34.0,
+                "VALOR ESTIMADO": 4000.0
+            },
+            {
+                "DESCRIPCION": "reloj de oro cyma (mama)",
+                "PESO en gr.": 47.0,
+                "VALOR ESTIMADO": 3000.0
+            },
+            {
+                "DESCRIPCION": "reloj omega sra. Constelacion",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 8000.0
+            },
+            {
+                "DESCRIPCION": "sortija  oro amarillo y blanco con un gran diamante",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 2000.0
+            },
+            {
+                "DESCRIPCION": "placa eugenio de frutos oro",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "DESCRIPCION": "anillo de oro blanco y diamantes",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "pendientes oro blanco y diamante",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "pendientes oro blanco y brillantes largos",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 800.0
+            },
+            {
+                "DESCRIPCION": "pulsera oro blanco y circonitas ",
+                "PESO en gr.": 14.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "3 pulseras oro ",
+                "PESO en gr.": 38.0,
+                "VALOR ESTIMADO": 3000.0
+            },
+            {
+                "DESCRIPCION": "pulsera antigua oro amarillo y blanco con brillantes",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "DESCRIPCION": "cadena y colgante oro blanco con diamantesy perla ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "DESCRIPCION": "cadena y cruz oro (papa)",
+                "PESO en gr.": 16.0,
+                "VALOR ESTIMADO": 1300.0
+            },
+            {
+                "DESCRIPCION": "cadena oro y colgante tous ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "cadena y cruz oeo blanco (boda)",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "medalla virgen y cruz con cadena oro 18 k (Mari)",
+                "PESO en gr.": 15.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "DESCRIPCION": "pulsera oro 18 k y perlas (Mari)",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "pulsera aro oro 18 k (regalo Tere)",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "Gargantilla trenzada oro 18 k ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "gargantilla perlas de rio con broche de oro",
+                "PESO en gr.": 15.0,
+                "VALOR ESTIMADO": 200.0
+            },
+            {
+                "DESCRIPCION": "cadena y cruz peque\u00f1a oro 18 k",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 160.0
+            },
+            {
+                "DESCRIPCION": "anillo de oro blanco y amarillo 3 brillantes",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "DESCRIPCION": "sortija oro 18k circonitas y rubis",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "DESCRIPCION": "sortija oro 18k aro grueso",
+                "PESO en gr.": 11.0,
+                "VALOR ESTIMADO": 880.0
+            },
+            {
+                "DESCRIPCION": "sortija oro 18k  y circonitas (joyeria Juanjo)",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "solitario oro 18k  con un brillante (joyeria Juanjo)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "sello oro 18k EG (papa)",
+                "PESO en gr.": 20.0,
+                "VALOR ESTIMADO": 1600.0
+            },
+            {
+                "DESCRIPCION": "sortija oro blabco y amarillo con circonitas",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18k con dos circonitas (joyeria Juanjo)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "DESCRIPCION": "anillo oro blanco y amarillo con un brillante (17/03/02)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "alianza Mama ",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 160.0
+            },
+            {
+                "DESCRIPCION": "sortija regalo a Eugenio oro b y amarillo 2 brillantes",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 700.0
+            },
+            {
+                "DESCRIPCION": "broche de oro y rubis",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 480.0
+            },
+            {
+                "DESCRIPCION": "juego de pendientes agua marina oro blanco",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "DESCRIPCION": "juego de sortija y colgante aguamarina oro blanco",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "pulsera tiffany plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "pulsera calabrote grande planta",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "pulsera plata colgantes",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "DESCRIPCION": "pulsera calabrote peque\u00f1o",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 40.0
+            },
+            {
+                "DESCRIPCION": "pulsera tous negra y osito oro",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 40.0
+            },
+            {
+                "DESCRIPCION": "Collar perlas cultivadas gruesas y colgante plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "pendientes oro blanco y piedrecita azul con colgante",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "arras de plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 109805.0
+            }
+        ],
+        "created_by": "alberto",
+        "owner": "alberto",
+        "owner_name": "alberto",
+        "email": "alberto@yahoo.com",
+        "created_at": "2025-05-26 09:24:48.850000",
+        "updated_at": "2025-05-26 09:24:48.850000",
+        "data": [
+            {
+                "DESCRIPCION": "joya nueva",
+                "PESO en gr.": "sin oeso",
+                "VALOR ESTIMADO": "sin valor",
+                "imagenes": [
+                    "bb386cbd7aa44c1d8291c5853529a993.jpg"
+                ],
+                "imagen_data": [
+                    "bb386cbd7aa44c1d8291c5853529a993.jpg"
+                ],
+                "num_imagenes": 1
+            }
+        ],
+        "num_rows": 1
+    },
+    {
+        "_id": "68343854e9fef948239a97b0",
+        "name": "Catalogo Manual Roberto",
+        "headers": [
+            "Nombre",
+            "Descripci\u00f3n",
+            "Precio",
+            "Stock"
+        ],
+        "rows": [],
+        "created_by": "roberto",
+        "owner": "roberto",
+        "owner_name": "roberto",
+        "email": "roberto@gmail.com",
+        "created_at": "2025-05-26 09:45:56.566000",
+        "updated_at": "2025-05-26 09:45:56.566000",
+        "_id_str": "68343854e9fef948239a97b0",
+        "data": [
+            {
+                "Nombre": "Nombre Roberto",
+                "Descripci\u00f3n": "Dewscripci\u00f3n Roberto",
+                "Precio": "Prfecio Roberto",
+                "Stock": "Stock Roberto",
+                "imagenes": [
+                    "fe8ce0370f7c4cd798adf199706c5842.jpg"
+                ],
+                "imagen_data": [
+                    "fe8ce0370f7c4cd798adf199706c5842.jpg"
+                ],
+                "num_imagenes": 1
+            },
+            {
+                "Nombre": "Nombre",
+                "Descripci\u00f3n": "Descripci\u00f3n",
+                "Precio": "Precio",
+                "Stock": "Stock",
+                "imagenes": [
+                    "11f08c399cb74774b349727c14225b92.jpg"
+                ],
+                "imagen_data": [
+                    "11f08c399cb74774b349727c14225b92.jpg"
+                ],
+                "num_imagenes": 1
+            }
+        ],
+        "num_rows": 2
+    },
+    {
+        "_id": "683445e55c0f61c4284454ae",
+        "name": "Cat\u00e1logo manual Carlos",
+        "headers": [
+            "Nombre",
+            "Descripci\u00f3n",
+            "Precio",
+            "Stock"
+        ],
+        "rows": [],
+        "created_by": "Carlos",
+        "owner": "Carlos",
+        "owner_name": "Carlos",
+        "email": "carlos@gmail.com",
+        "created_at": "2025-05-26 10:43:49.472000",
+        "updated_at": "2025-05-26 10:43:49.472000",
+        "_id_str": "683445e55c0f61c4284454ae",
+        "data": [
+            {
+                "Nombre": "Nombre",
+                "Descripci\u00f3n": "Descripci\u00f3n",
+                "Precio": "Precio",
+                "Stock": "Stock",
+                "imagenes": [
+                    "19e0ff79ef6d46979fb3fec138c55c1d.jpg"
+                ],
+                "imagen_data": [
+                    "19e0ff79ef6d46979fb3fec138c55c1d.jpg"
+                ],
+                "num_imagenes": 1
+            }
+        ],
+        "num_rows": 1
+    },
+    {
+        "_id": "683453643e6caa0a1128ef24",
+        "name": "Cat\u00e1logo importado Roberto",
+        "headers": [
+            "N\u00famero",
+            "DESCRIPCION",
+            "PESO en gr.",
+            "VALOR ESTIMADO"
+        ],
+        "rows": [
+            {
+                "N\u00famero": "1.0",
+                "DESCRIPCION": "Collar oro 18 kilates y perlas cultivadas",
+                "PESO en gr.": "13.0",
+                "VALOR ESTIMADO": "1215.0",
+                "images": [
+                    "b9670ce64d81493cb2f69c4c16444200_20250216_153446905_iOS.jpg"
+                ]
+            },
+            {
+                "N\u00famero": 2.0,
+                "DESCRIPCION": "juego de pendientes y sortija",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 1800.0
+            },
+            {
+                "N\u00famero": 3.0,
+                "DESCRIPCION": "sello caballero oro 18 k y piedra azul marino",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 1800.0
+            },
+            {
+                "N\u00famero": 4.0,
+                "DESCRIPCION": "sello caballero oro 18 k y piedra roja rubi",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 1800.0
+            },
+            {
+                "N\u00famero": 5.0,
+                "DESCRIPCION": "sello caballero oro 18 k y piedra roja rubi",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "N\u00famero": 6.0,
+                "DESCRIPCION": "anillo se\u00f1oraoro y esmeralda rectangular",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "N\u00famero": 7.0,
+                "DESCRIPCION": "snillo se\u00f1ora oro y piedra rectangular  topacio amarillo",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 900.0
+            },
+            {
+                "N\u00famero": 8.0,
+                "DESCRIPCION": "anilo se\u00f1ora oro 18 k y piedra redonda amarilla",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 9.0,
+                "DESCRIPCION": "anillo se\u00f1ora oro tipo serpiente con piedra rojas",
+                "PESO en gr.": 4.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "N\u00famero": 10.0,
+                "DESCRIPCION": "anillo oro 18 k- flor granate ",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 200.0
+            },
+            {
+                "N\u00famero": 11.0,
+                "DESCRIPCION": "anillo oro 18 k- leon y serpiente con piedra roja",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 12.0,
+                "DESCRIPCION": "anillo oro 18 k. labrado",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 13.0,
+                "DESCRIPCION": "anillo oro 18 k piedra rubi oval sello",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 900.0
+            },
+            {
+                "N\u00famero": 14.0,
+                "DESCRIPCION": "sello letra F M ORO 18 K",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "N\u00famero": 15.0,
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 65.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "N\u00famero": 16.0,
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 53.0,
+                "VALOR ESTIMADO": 5000.0
+            },
+            {
+                "N\u00famero": 17.0,
+                "DESCRIPCION": "Pulsera oro 18 k medalla cierre de seguridad",
+                "PESO en gr.": 22.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "N\u00famero": 18.0,
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 49.0,
+                "VALOR ESTIMADO": 5000.0
+            },
+            {
+                "N\u00famero": 19.0,
+                "DESCRIPCION": "correa reloj oro 18 k",
+                "PESO en gr.": 38.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "N\u00famero": 20.0,
+                "DESCRIPCION": "reloj cyma de oro antiguo",
+                "PESO en gr.": 33.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 21.0,
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 58.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "N\u00famero": 22.0,
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 54.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "N\u00famero": 23.0,
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 44.0,
+                "VALOR ESTIMADO": 5500.0
+            },
+            {
+                "N\u00famero": 24.0,
+                "DESCRIPCION": "pendientes oro 18 k hoja",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "N\u00famero": 25.0,
+                "DESCRIPCION": "juego pendientes y anillo oro y granate rojo",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "N\u00famero": 26.0,
+                "DESCRIPCION": "cadenas y pieza dental oro",
+                "PESO en gr.": 16.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "N\u00famero": 27.0,
+                "DESCRIPCION": "3 medallas y cruz carabaca con cadena",
+                "PESO en gr.": 20.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "N\u00famero": 28.0,
+                "DESCRIPCION": "collar oro 18 kilates y coral",
+                "PESO en gr.": 14.0,
+                "VALOR ESTIMADO": 1310.0
+            },
+            {
+                "N\u00famero": 29.0,
+                "DESCRIPCION": "pulsera oro 18 k y coral",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 30.0,
+                "DESCRIPCION": "juego de pendiente y anillo oro y coral",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "N\u00famero": 31.0,
+                "DESCRIPCION": "pulsera oro dibujo trenzado ",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 32.0,
+                "DESCRIPCION": "3 anillos unidos piedra oro 18 k",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "N\u00famero": 33.0,
+                "DESCRIPCION": "anillo de oro piedra cuarzo ahumado rectangular",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "N\u00famero": 34.0,
+                "DESCRIPCION": "anillo sw oro 18 k. y muchas circonitas",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "N\u00famero": 35.0,
+                "DESCRIPCION": "2 alianzas de oro 18 k",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "N\u00famero": 36.0,
+                "DESCRIPCION": "2 pendientes oro circonitas y perlita",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "N\u00famero": 37.0,
+                "DESCRIPCION": "reloj cyma de oro",
+                "PESO en gr.": 29.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 38.0,
+                "DESCRIPCION": "juego de pendientes y anillo oro circonitas y rubi",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "N\u00famero": 39.0,
+                "DESCRIPCION": "guardapelo, cruz cadena globo fetiche ",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 40.0,
+                "DESCRIPCION": "sortija oro blanco y amarillo con perla y brillantes",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "N\u00famero": 41.0,
+                "DESCRIPCION": "collar de perlas en disminucion con cierre de oro",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "N\u00famero": 42.0,
+                "DESCRIPCION": "reloj de oro cronwell",
+                "PESO en gr.": 34.0,
+                "VALOR ESTIMADO": 4000.0
+            },
+            {
+                "N\u00famero": 43.0,
+                "DESCRIPCION": "reloj de oro cyma (mama)",
+                "PESO en gr.": 47.0,
+                "VALOR ESTIMADO": 3000.0
+            },
+            {
+                "N\u00famero": 44.0,
+                "DESCRIPCION": "reloj omega sra. Constelacion",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 8000.0
+            },
+            {
+                "N\u00famero": 45.0,
+                "DESCRIPCION": "sortija  oro amarillo y blanco con un gran diamante",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 2000.0
+            },
+            {
+                "N\u00famero": 46.0,
+                "DESCRIPCION": "placa eugenio de frutos oro",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "N\u00famero": 47.0,
+                "DESCRIPCION": "anillo de oro blanco y diamantes",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "N\u00famero": 48.0,
+                "DESCRIPCION": "pendientes oro blanco y diamante",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "N\u00famero": 49.0,
+                "DESCRIPCION": "pendientes oro blanco y brillantes largos",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 800.0
+            },
+            {
+                "N\u00famero": 50.0,
+                "DESCRIPCION": "pulsera oro blanco y circonitas ",
+                "PESO en gr.": 14.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "N\u00famero": 51.0,
+                "DESCRIPCION": "3 pulseras oro ",
+                "PESO en gr.": 38.0,
+                "VALOR ESTIMADO": 3000.0
+            },
+            {
+                "N\u00famero": 52.0,
+                "DESCRIPCION": "pulsera antigua oro amarillo y blanco con brillantes",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "N\u00famero": 53.0,
+                "DESCRIPCION": "cadena y colgante oro blanco con diamantesy perla ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "N\u00famero": 54.0,
+                "DESCRIPCION": "cadena y cruz oro (papa)",
+                "PESO en gr.": 16.0,
+                "VALOR ESTIMADO": 1300.0
+            },
+            {
+                "N\u00famero": 55.0,
+                "DESCRIPCION": "cadena oro y colgante tous ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "N\u00famero": 56.0,
+                "DESCRIPCION": "cadena y cruz oeo blanco (boda)",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "N\u00famero": 57.0,
+                "DESCRIPCION": "medalla virgen y cruz con cadena oro 18 k (Mari)",
+                "PESO en gr.": 15.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "N\u00famero": 58.0,
+                "DESCRIPCION": "pulsera oro 18 k y perlas (Mari)",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 59.0,
+                "DESCRIPCION": "pulsera aro oro 18 k (regalo Tere)",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "N\u00famero": 60.0,
+                "DESCRIPCION": "Gargantilla trenzada oro 18 k ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 61.0,
+                "DESCRIPCION": "gargantilla perlas de rio con broche de oro",
+                "PESO en gr.": 15.0,
+                "VALOR ESTIMADO": 200.0
+            },
+            {
+                "N\u00famero": 62.0,
+                "DESCRIPCION": "cadena y cruz peque\u00f1a oro 18 k",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 160.0
+            },
+            {
+                "N\u00famero": 63.0,
+                "DESCRIPCION": "anillo de oro blanco y amarillo 3 brillantes",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "N\u00famero": 64.0,
+                "DESCRIPCION": "sortija oro 18k circonitas y rubis",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "N\u00famero": 65.0,
+                "DESCRIPCION": "sortija oro 18k aro grueso",
+                "PESO en gr.": 11.0,
+                "VALOR ESTIMADO": 880.0
+            },
+            {
+                "N\u00famero": 66.0,
+                "DESCRIPCION": "sortija oro 18k  y circonitas (joyeria Juanjo)",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "N\u00famero": 67.0,
+                "DESCRIPCION": "solitario oro 18k  con un brillante (joyeria Juanjo)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "N\u00famero": 68.0,
+                "DESCRIPCION": "sello oro 18k EG (papa)",
+                "PESO en gr.": 20.0,
+                "VALOR ESTIMADO": 1600.0
+            },
+            {
+                "N\u00famero": 69.0,
+                "DESCRIPCION": "sortija oro blabco y amarillo con circonitas",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "N\u00famero": 70.0,
+                "DESCRIPCION": "anillo oro 18k con dos circonitas (joyeria Juanjo)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "N\u00famero": 71.0,
+                "DESCRIPCION": "anillo oro blanco y amarillo con un brillante (17/03/02)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "N\u00famero": 72.0,
+                "DESCRIPCION": "alianza Mama ",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 160.0
+            },
+            {
+                "N\u00famero": 73.0,
+                "DESCRIPCION": "sortija regalo a Eugenio oro b y amarillo 2 brillantes",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 700.0
+            },
+            {
+                "N\u00famero": 74.0,
+                "DESCRIPCION": "broche de oro y rubis",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 480.0
+            },
+            {
+                "N\u00famero": 75.0,
+                "DESCRIPCION": "juego de pendientes agua marina oro blanco",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "N\u00famero": 76.0,
+                "DESCRIPCION": "juego de sortija y colgante aguamarina oro blanco",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "N\u00famero": 77.0,
+                "DESCRIPCION": "pulsera tiffany plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "N\u00famero": 78.0,
+                "DESCRIPCION": "pulsera calabrote grande planta",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "N\u00famero": 79.0,
+                "DESCRIPCION": "pulsera plata colgantes",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "N\u00famero": 80.0,
+                "DESCRIPCION": "pulsera calabrote peque\u00f1o",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 40.0
+            },
+            {
+                "N\u00famero": 81.0,
+                "DESCRIPCION": "pulsera tous negra y osito oro",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 40.0
+            },
+            {
+                "N\u00famero": 82.0,
+                "DESCRIPCION": "Collar perlas cultivadas gruesas y colgante plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "N\u00famero": 83.0,
+                "DESCRIPCION": "pendientes oro blanco y piedrecita azul con colgante",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "N\u00famero": 84.0,
+                "DESCRIPCION": "arras de plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "N\u00famero": NaN,
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "N\u00famero": NaN,
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "N\u00famero": NaN,
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "N\u00famero": NaN,
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 109805.0
+            }
+        ],
+        "created_by": "roberto",
+        "owner": "roberto",
+        "owner_name": "roberto",
+        "email": "roberto@gmail.com",
+        "created_at": "2025-05-26 11:41:24.359000",
+        "updated_at": "2025-05-26 11:41:24.359000",
+        "data": {
+            "0": {
+                "N\u00famero": "1.0",
+                "DESCRIPCION": "Collar oro 18 kilates y perlas cultivadas",
+                "PESO en gr.": "13.0",
+                "VALOR ESTIMADO": "1215.0",
+                "images": [
+                    "b9670ce64d81493cb2f69c4c16444200_20250216_153446905_iOS.jpg"
+                ]
+            }
+        }
+    },
+    {
+        "_id": "68358ad46f7efe1189e5a63e",
+        "name": "Joyero Armando",
+        "headers": [
+            "N\u00famero",
+            "Descripci\u00f3n",
+            "Peso",
+            "Valor"
+        ],
+        "rows": [
+            {
+                "N\u00famero": "1",
+                "Descripci\u00f3n": "Collar oro 18 kilates y perlas cultivadas",
+                "Peso": "13",
+                "Valor": "1215",
+                "images": [
+                    "c2984c5910494f008c5cc16dc6ea0add_20250216_151630506_iOS.jpg"
+                ]
+            },
+            {
+                "N\u00famero": 2,
+                "Descripci\u00f3n": "juego de pendientes y sortija",
+                "Peso": 10,
+                "Valor": 1800
+            },
+            {
+                "N\u00famero": 3,
+                "Descripci\u00f3n": "sello caballero oro 18 k y piedra azul marino",
+                "Peso": 9,
+                "Valor": 1800
+            },
+            {
+                "N\u00famero": 4,
+                "Descripci\u00f3n": "sello caballero oro 18 k y piedra roja rubi",
+                "Peso": 10,
+                "Valor": 1800
+            },
+            {
+                "N\u00famero": 5,
+                "Descripci\u00f3n": "sello caballero oro 18 k y piedra roja rubi",
+                "Peso": 8,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 6,
+                "Descripci\u00f3n": "anillo se\u00f1oraoro y esmeralda rectangular",
+                "Peso": 3,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 7,
+                "Descripci\u00f3n": "snillo se\u00f1ora oro y piedra rectangular  topacio amarillo",
+                "Peso": 7,
+                "Valor": 900
+            },
+            {
+                "N\u00famero": 8,
+                "Descripci\u00f3n": "anilo se\u00f1ora oro 18 k y piedra redonda amarilla",
+                "Peso": 5,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 9,
+                "Descripci\u00f3n": "anillo se\u00f1ora oro tipo serpiente con piedra rojas",
+                "Peso": 4,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 10,
+                "Descripci\u00f3n": "anillo oro 18 k y granates - flor granate ",
+                "Peso": 2,
+                "Valor": 200
+            },
+            {
+                "N\u00famero": 11,
+                "Descripci\u00f3n": "anillo oro 18 k- leon y serpiente con piedra roja",
+                "Peso": 6,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 12,
+                "Descripci\u00f3n": "anillo oro 18 k. labrado",
+                "Peso": 6,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 13,
+                "Descripci\u00f3n": "anillo oro 18 k piedra rubi oval sello",
+                "Peso": 7,
+                "Valor": 900
+            },
+            {
+                "N\u00famero": 14,
+                "Descripci\u00f3n": "sello letra F M ORO 18 K",
+                "Peso": 3,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 15,
+                "Descripci\u00f3n": "Pulsera oro 18 k 4 monedas",
+                "Peso": 65,
+                "Valor": 6000
+            },
+            {
+                "N\u00famero": 16,
+                "Descripci\u00f3n": "Pulsera oro 18 k 4 monedas",
+                "Peso": 53,
+                "Valor": 5000
+            },
+            {
+                "N\u00famero": 17,
+                "Descripci\u00f3n": "Pulsera oro 18 k medalla cierre de seguridad",
+                "Peso": 22,
+                "Valor": 2500
+            },
+            {
+                "N\u00famero": 18,
+                "Descripci\u00f3n": "Pulsera oro 18 k 4 monedas",
+                "Peso": 49,
+                "Valor": 5000
+            },
+            {
+                "N\u00famero": 19,
+                "Descripci\u00f3n": "correa reloj oro 18 k",
+                "Peso": 38,
+                "Valor": 1000
+            },
+            {
+                "N\u00famero": 20,
+                "Descripci\u00f3n": "reloj cyma de oro antiguo",
+                "Peso": 33,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 21,
+                "Descripci\u00f3n": "pulsera rigida oro 18 k labrada",
+                "Peso": 58,
+                "Valor": 6000
+            },
+            {
+                "N\u00famero": 22,
+                "Descripci\u00f3n": "pulsera rigida oro 18 k labrada",
+                "Peso": 54,
+                "Valor": 6000
+            },
+            {
+                "N\u00famero": 23,
+                "Descripci\u00f3n": "pulsera rigida oro 18 k labrada",
+                "Peso": 44,
+                "Valor": 5500
+            },
+            {
+                "N\u00famero": 24,
+                "Descripci\u00f3n": "pendientes oro 18 k hoja",
+                "Peso": 2,
+                "Valor": 150
+            },
+            {
+                "N\u00famero": 25,
+                "Descripci\u00f3n": "juego pendientes y anillo oro y granate rojo",
+                "Peso": 7,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 26,
+                "Descripci\u00f3n": "cadenas y pieza dental oro",
+                "Peso": 16,
+                "Valor": 1000
+            },
+            {
+                "N\u00famero": 27,
+                "Descripci\u00f3n": "3 medallas y cruz carabaca con cadena",
+                "Peso": 20,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 28,
+                "Descripci\u00f3n": "collar oro 18 kilates y coral",
+                "Peso": 14,
+                "Valor": 1310
+            },
+            {
+                "N\u00famero": 29,
+                "Descripci\u00f3n": "pulsera oro 18 k y coral",
+                "Peso": 6,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 30,
+                "Descripci\u00f3n": "juego de pendiente y anillo oro y coral",
+                "Peso": 6,
+                "Valor": 1200
+            },
+            {
+                "N\u00famero": 31,
+                "Descripci\u00f3n": "pulsera oro dibujo trenzado ",
+                "Peso": 9,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 32,
+                "Descripci\u00f3n": "3 anillos unidos piedra oro 18 k",
+                "Peso": 5,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 33,
+                "Descripci\u00f3n": "anillo de oro piedra cuarzo ahumado rectangular",
+                "Peso": 6,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 34,
+                "Descripci\u00f3n": "anillo sw oro 18 k. y muchas circonitas",
+                "Peso": 5,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 35,
+                "Descripci\u00f3n": "2 alianzas de oro 18 k",
+                "Peso": 3,
+                "Valor": 150
+            },
+            {
+                "N\u00famero": 36,
+                "Descripci\u00f3n": "2 pendientes oro circonitas y perlita",
+                "Peso": 3,
+                "Valor": 150
+            },
+            {
+                "N\u00famero": 37,
+                "Descripci\u00f3n": "reloj cyma de oro",
+                "Peso": 29,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 38,
+                "Descripci\u00f3n": "juego de pendientes y anillo oro circonitas y rubi",
+                "Peso": 10,
+                "Valor": 1000
+            },
+            {
+                "N\u00famero": 39,
+                "Descripci\u00f3n": "guardapelo, cruz cadena globo fetiche ",
+                "Peso": 7,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 40,
+                "Descripci\u00f3n": "sortija oro blanco y amarillo con perla y brillantes",
+                "Peso": 3,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 41,
+                "Descripci\u00f3n": "collar de perlas en disminucion con cierre de oro",
+                "Peso": 0,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 42,
+                "Descripci\u00f3n": "reloj de oro cronwell",
+                "Peso": 34,
+                "Valor": 4000
+            },
+            {
+                "N\u00famero": 43,
+                "Descripci\u00f3n": "reloj de oro cyma (mama)",
+                "Peso": 47,
+                "Valor": 3000
+            },
+            {
+                "N\u00famero": 44,
+                "Descripci\u00f3n": "reloj omega sra. Constelacion",
+                "Peso": 0,
+                "Valor": 8000
+            },
+            {
+                "N\u00famero": 45,
+                "Descripci\u00f3n": "sortija  oro amarillo y blanco con un gran diamante",
+                "Peso": 2,
+                "Valor": 2000
+            },
+            {
+                "N\u00famero": 46,
+                "Descripci\u00f3n": "placa eugenio de frutos oro",
+                "Peso": 3,
+                "Valor": 240
+            },
+            {
+                "N\u00famero": 47,
+                "Descripci\u00f3n": "anillo de oro blanco y diamantes",
+                "Peso": 5,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 48,
+                "Descripci\u00f3n": "pendientes oro blanco y diamante",
+                "Peso": 5,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 49,
+                "Descripci\u00f3n": "pendientes oro blanco y brillantes largos",
+                "Peso": 3,
+                "Valor": 800
+            },
+            {
+                "N\u00famero": 50,
+                "Descripci\u00f3n": "pulsera oro blanco y circonitas ",
+                "Peso": 14,
+                "Valor": 1500
+            },
+            {
+                "N\u00famero": 51,
+                "Descripci\u00f3n": "3 pulseras oro ",
+                "Peso": 38,
+                "Valor": 3000
+            },
+            {
+                "N\u00famero": 52,
+                "Descripci\u00f3n": "pulsera antigua oro amarillo y blanco con brillantes",
+                "Peso": 6,
+                "Valor": 2500
+            },
+            {
+                "N\u00famero": 53,
+                "Descripci\u00f3n": "cadena y colgante oro blanco con diamantesy perla ",
+                "Peso": 8,
+                "Valor": 2500
+            },
+            {
+                "N\u00famero": 54,
+                "Descripci\u00f3n": "cadena y cruz oro (papa)",
+                "Peso": 16,
+                "Valor": 1300
+            },
+            {
+                "N\u00famero": 55,
+                "Descripci\u00f3n": "cadena oro y colgante tous ",
+                "Peso": 8,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 56,
+                "Descripci\u00f3n": "cadena y cruz oeo blanco (boda)",
+                "Peso": 6,
+                "Valor": 300
+            },
+            {
+                "N\u00famero": 57,
+                "Descripci\u00f3n": "medalla virgen y cruz con cadena oro 18 k (Mari)",
+                "Peso": 15,
+                "Valor": 1200
+            },
+            {
+                "N\u00famero": 58,
+                "Descripci\u00f3n": "pulsera oro 18 k y perlas (Mari)",
+                "Peso": 10,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 59,
+                "Descripci\u00f3n": "pulsera aro oro 18 k (regalo Tere)",
+                "Peso": 9,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 60,
+                "Descripci\u00f3n": "Gargantilla trenzada oro 18 k ",
+                "Peso": 8,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 61,
+                "Descripci\u00f3n": "gargantilla perlas de rio con broche de oro",
+                "Peso": 15,
+                "Valor": 200
+            },
+            {
+                "N\u00famero": 62,
+                "Descripci\u00f3n": "cadena y cruz peque\u00f1a oro 18 k",
+                "Peso": 2,
+                "Valor": 160
+            },
+            {
+                "N\u00famero": 63,
+                "Descripci\u00f3n": "anillo de oro blanco y amarillo 3 brillantes",
+                "Peso": 3,
+                "Valor": 1200
+            },
+            {
+                "N\u00famero": 64,
+                "Descripci\u00f3n": "sortija oro 18k circonitas y rubis",
+                "Peso": 3,
+                "Valor": 240
+            },
+            {
+                "N\u00famero": 65,
+                "Descripci\u00f3n": "sortija oro 18k aro grueso",
+                "Peso": 11,
+                "Valor": 880
+            },
+            {
+                "N\u00famero": 66,
+                "Descripci\u00f3n": "sortija oro 18k  y circonitas (joyeria Juanjo)",
+                "Peso": 5,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 67,
+                "Descripci\u00f3n": "solitario oro 18k  con un brillante (joyeria Juanjo)",
+                "Peso": 3,
+                "Valor": 600
+            },
+            {
+                "N\u00famero": 68,
+                "Descripci\u00f3n": "sello oro 18k EG (papa)",
+                "Peso": 20,
+                "Valor": 1600
+            },
+            {
+                "N\u00famero": 69,
+                "Descripci\u00f3n": "sortija oro blabco y amarillo con circonitas",
+                "Peso": 6,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 70,
+                "Descripci\u00f3n": "anillo oro 18k con dos circonitas (joyeria Juanjo)",
+                "Peso": 3,
+                "Valor": 240
+            },
+            {
+                "N\u00famero": 71,
+                "Descripci\u00f3n": "anillo oro blanco y amarillo con un brillante (17/03/02)",
+                "Peso": 3,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 72,
+                "Descripci\u00f3n": "alianza Mama ",
+                "Peso": 2,
+                "Valor": 160
+            },
+            {
+                "N\u00famero": 73,
+                "Descripci\u00f3n": "sortija regalo a Eugenio oro b y amarillo 2 brillantes",
+                "Peso": 6,
+                "Valor": 700
+            },
+            {
+                "N\u00famero": 74,
+                "Descripci\u00f3n": "broche de oro y rubis",
+                "Peso": 8,
+                "Valor": 480
+            },
+            {
+                "N\u00famero": 75,
+                "Descripci\u00f3n": "juego de pendientes agua marina oro blanco",
+                "Peso": 0,
+                "Valor": 1200
+            },
+            {
+                "N\u00famero": 76,
+                "Descripci\u00f3n": "juego de sortija y colgante aguamarina oro blanco",
+                "Peso": 0,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 77,
+                "Descripci\u00f3n": "pulsera tiffany plata",
+                "Peso": 0,
+                "Valor": 500
+            },
+            {
+                "N\u00famero": 78,
+                "Descripci\u00f3n": "pulsera calabrote grande planta",
+                "Peso": 0,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 79,
+                "Descripci\u00f3n": "pulsera plata colgantes",
+                "Peso": 0,
+                "Valor": 150
+            },
+            {
+                "N\u00famero": 80,
+                "Descripci\u00f3n": "pulsera calabrote peque\u00f1o",
+                "Peso": 0,
+                "Valor": 40
+            },
+            {
+                "N\u00famero": 81,
+                "Descripci\u00f3n": "pulsera tous negra y osito oro",
+                "Peso": 0,
+                "Valor": 40
+            },
+            {
+                "N\u00famero": 82,
+                "Descripci\u00f3n": "Collar perlas cultivadas gruesas y colgante plata",
+                "Peso": 0,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 83,
+                "Descripci\u00f3n": "pendientes oro blanco y piedrecita azul con colgante",
+                "Peso": 0,
+                "Valor": 400
+            },
+            {
+                "N\u00famero": 84,
+                "Descripci\u00f3n": "arras de plata",
+                "Peso": 0,
+                "Valor": 300
+            }
+        ],
+        "created_by": "armando",
+        "owner": "armando",
+        "owner_name": "armando",
+        "email": "armando@gmail.com",
+        "created_at": "2025-05-27 09:50:12.147000",
+        "updated_at": "2025-05-27 09:50:12.147000",
+        "data": {
+            "0": {
+                "N\u00famero": "1",
+                "Descripci\u00f3n": "Collar oro 18 kilates y perlas cultivadas",
+                "Peso": "13",
+                "Valor": "1215",
+                "images": [
+                    "c2984c5910494f008c5cc16dc6ea0add_20250216_151630506_iOS.jpg"
+                ]
+            }
+        }
+    },
+    {
+        "_id": "68358b146f7efe1189e5a63f",
+        "name": "inventario valor",
+        "headers": [
+            "DESCRIPCION",
+            "PESO en gr.",
+            "VALOR ESTIMADO"
+        ],
+        "rows": [
+            {
+                "DESCRIPCION": "Collar oro 18 kilates y perlas cultivadas",
+                "PESO en gr.": "13.0",
+                "VALOR ESTIMADO": "1215.0",
+                "images": [
+                    "15d34c5a6c394fad8bddf88c98216f22_20250216_151630506_iOS.jpg",
+                    "8ea8e2a2b7fa4013bc1caef5b55f2598_20250216_151655238_iOS.jpg"
+                ]
+            },
+            {
+                "DESCRIPCION": "juego de pendientes y sortija",
+                "PESO en gr.": "10.0",
+                "VALOR ESTIMADO": "1800.0",
+                "images": [
+                    "72183ab4f5fa472ba8f96ee988580a25_20250216_152438604_iOS.jpg"
+                ]
+            },
+            {
+                "DESCRIPCION": "sello caballero oro 18 k y piedra azul marino",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 1800.0
+            },
+            {
+                "DESCRIPCION": "sello caballero oro 18 k y piedra roja rubi",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 1800.0
+            },
+            {
+                "DESCRIPCION": "sello caballero oro 18 k y piedra roja rubi",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "anillo se\u00f1oraoro y esmeralda rectangular",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "snillo se\u00f1ora oro y piedra rectangular  topacio amarillo",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 900.0
+            },
+            {
+                "DESCRIPCION": "anilo se\u00f1ora oro 18 k y piedra redonda amarilla",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "anillo se\u00f1ora oro tipo serpiente con piedra rojas",
+                "PESO en gr.": 4.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18 k- flor granate ",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 200.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18 k- leon y serpiente con piedra roja",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18 k. labrado",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18 k piedra rubi oval sello",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 900.0
+            },
+            {
+                "DESCRIPCION": "sello letra F M ORO 18 K",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 65.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 53.0,
+                "VALOR ESTIMADO": 5000.0
+            },
+            {
+                "DESCRIPCION": "Pulsera oro 18 k medalla cierre de seguridad",
+                "PESO en gr.": 22.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "DESCRIPCION": "Pulsera oro 18 k 4 monedas",
+                "PESO en gr.": 49.0,
+                "VALOR ESTIMADO": 5000.0
+            },
+            {
+                "DESCRIPCION": "correa reloj oro 18 k",
+                "PESO en gr.": 38.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "DESCRIPCION": "reloj cyma de oro antiguo",
+                "PESO en gr.": 33.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 58.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 54.0,
+                "VALOR ESTIMADO": 6000.0
+            },
+            {
+                "DESCRIPCION": "pulsera rigida oro 18 k labrada",
+                "PESO en gr.": 44.0,
+                "VALOR ESTIMADO": 5500.0
+            },
+            {
+                "DESCRIPCION": "pendientes oro 18 k hoja",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "DESCRIPCION": "juego pendientes y anillo oro y granate rojo",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "cadenas y pieza dental oro",
+                "PESO en gr.": 16.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "DESCRIPCION": "3 medallas y cruz carabaca con cadena",
+                "PESO en gr.": 20.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "collar oro 18 kilates y coral",
+                "PESO en gr.": 14.0,
+                "VALOR ESTIMADO": 1310.0
+            },
+            {
+                "DESCRIPCION": "pulsera oro 18 k y coral",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "juego de pendiente y anillo oro y coral",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "DESCRIPCION": "pulsera oro dibujo trenzado ",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "3 anillos unidos piedra oro 18 k",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "anillo de oro piedra cuarzo ahumado rectangular",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "anillo sw oro 18 k. y muchas circonitas",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "2 alianzas de oro 18 k",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "DESCRIPCION": "2 pendientes oro circonitas y perlita",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "DESCRIPCION": "reloj cyma de oro",
+                "PESO en gr.": 29.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "juego de pendientes y anillo oro circonitas y rubi",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 1000.0
+            },
+            {
+                "DESCRIPCION": "guardapelo, cruz cadena globo fetiche ",
+                "PESO en gr.": 7.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "sortija oro blanco y amarillo con perla y brillantes",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "collar de perlas en disminucion con cierre de oro",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "reloj de oro cronwell",
+                "PESO en gr.": 34.0,
+                "VALOR ESTIMADO": 4000.0
+            },
+            {
+                "DESCRIPCION": "reloj de oro cyma (mama)",
+                "PESO en gr.": 47.0,
+                "VALOR ESTIMADO": 3000.0
+            },
+            {
+                "DESCRIPCION": "reloj omega sra. Constelacion",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 8000.0
+            },
+            {
+                "DESCRIPCION": "sortija  oro amarillo y blanco con un gran diamante",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 2000.0
+            },
+            {
+                "DESCRIPCION": "placa eugenio de frutos oro",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "DESCRIPCION": "anillo de oro blanco y diamantes",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "pendientes oro blanco y diamante",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "pendientes oro blanco y brillantes largos",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 800.0
+            },
+            {
+                "DESCRIPCION": "pulsera oro blanco y circonitas ",
+                "PESO en gr.": 14.0,
+                "VALOR ESTIMADO": 1500.0
+            },
+            {
+                "DESCRIPCION": "3 pulseras oro ",
+                "PESO en gr.": 38.0,
+                "VALOR ESTIMADO": 3000.0
+            },
+            {
+                "DESCRIPCION": "pulsera antigua oro amarillo y blanco con brillantes",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "DESCRIPCION": "cadena y colgante oro blanco con diamantesy perla ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 2500.0
+            },
+            {
+                "DESCRIPCION": "cadena y cruz oro (papa)",
+                "PESO en gr.": 16.0,
+                "VALOR ESTIMADO": 1300.0
+            },
+            {
+                "DESCRIPCION": "cadena oro y colgante tous ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "cadena y cruz oeo blanco (boda)",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": "medalla virgen y cruz con cadena oro 18 k (Mari)",
+                "PESO en gr.": 15.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "DESCRIPCION": "pulsera oro 18 k y perlas (Mari)",
+                "PESO en gr.": 10.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "pulsera aro oro 18 k (regalo Tere)",
+                "PESO en gr.": 9.0,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "Gargantilla trenzada oro 18 k ",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "gargantilla perlas de rio con broche de oro",
+                "PESO en gr.": 15.0,
+                "VALOR ESTIMADO": 200.0
+            },
+            {
+                "DESCRIPCION": "cadena y cruz peque\u00f1a oro 18 k",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 160.0
+            },
+            {
+                "DESCRIPCION": "anillo de oro blanco y amarillo 3 brillantes",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "DESCRIPCION": "sortija oro 18k circonitas y rubis",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "DESCRIPCION": "sortija oro 18k aro grueso",
+                "PESO en gr.": 11.0,
+                "VALOR ESTIMADO": 880.0
+            },
+            {
+                "DESCRIPCION": "sortija oro 18k  y circonitas (joyeria Juanjo)",
+                "PESO en gr.": 5.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "solitario oro 18k  con un brillante (joyeria Juanjo)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 600.0
+            },
+            {
+                "DESCRIPCION": "sello oro 18k EG (papa)",
+                "PESO en gr.": 20.0,
+                "VALOR ESTIMADO": 1600.0
+            },
+            {
+                "DESCRIPCION": "sortija oro blabco y amarillo con circonitas",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "anillo oro 18k con dos circonitas (joyeria Juanjo)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 240.0
+            },
+            {
+                "DESCRIPCION": "anillo oro blanco y amarillo con un brillante (17/03/02)",
+                "PESO en gr.": 3.0,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "alianza Mama ",
+                "PESO en gr.": 2.0,
+                "VALOR ESTIMADO": 160.0
+            },
+            {
+                "DESCRIPCION": "sortija regalo a Eugenio oro b y amarillo 2 brillantes",
+                "PESO en gr.": 6.0,
+                "VALOR ESTIMADO": 700.0
+            },
+            {
+                "DESCRIPCION": "broche de oro y rubis",
+                "PESO en gr.": 8.0,
+                "VALOR ESTIMADO": 480.0
+            },
+            {
+                "DESCRIPCION": "juego de pendientes agua marina oro blanco",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 1200.0
+            },
+            {
+                "DESCRIPCION": "juego de sortija y colgante aguamarina oro blanco",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "pulsera tiffany plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 500.0
+            },
+            {
+                "DESCRIPCION": "pulsera calabrote grande planta",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "pulsera plata colgantes",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 150.0
+            },
+            {
+                "DESCRIPCION": "pulsera calabrote peque\u00f1o",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 40.0
+            },
+            {
+                "DESCRIPCION": "pulsera tous negra y osito oro",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 40.0
+            },
+            {
+                "DESCRIPCION": "Collar perlas cultivadas gruesas y colgante plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "pendientes oro blanco y piedrecita azul con colgante",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 400.0
+            },
+            {
+                "DESCRIPCION": "arras de plata",
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 300.0
+            },
+            {
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": NaN
+            },
+            {
+                "DESCRIPCION": NaN,
+                "PESO en gr.": NaN,
+                "VALOR ESTIMADO": 109805.0
+            }
+        ],
+        "created_by": "armando",
+        "owner": "armando",
+        "owner_name": "armando",
+        "email": "armando@gmail.com",
+        "created_at": "2025-05-27 09:51:16.494000",
+        "updated_at": "2025-05-27 09:51:16.494000",
+        "data": {
+            "1": {
+                "DESCRIPCION": "juego de pendientes y sortija",
+                "PESO en gr.": "10.0",
+                "VALOR ESTIMADO": "1800.0",
+                "images": [
+                    "72183ab4f5fa472ba8f96ee988580a25_20250216_152438604_iOS.jpg"
+                ]
+            },
+            "0": {
+                "DESCRIPCION": "Collar oro 18 kilates y perlas cultivadas",
+                "PESO en gr.": "13.0",
+                "VALOR ESTIMADO": "1215.0",
+                "images": [
+                    "15d34c5a6c394fad8bddf88c98216f22_20250216_151630506_iOS.jpg",
+                    "8ea8e2a2b7fa4013bc1caef5b55f2598_20250216_151655238_iOS.jpg"
+                ]
+            }
+        }
+    }
+]

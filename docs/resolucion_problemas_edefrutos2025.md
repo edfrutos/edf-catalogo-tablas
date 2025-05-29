@@ -56,8 +56,8 @@ Ajustamos importantes valores para producción:
 
 Establecimos los permisos adecuados para el archivo `.env`:
 ```bash
-sudo chmod 640 /var/www/vhosts/edefrutos2025.xyz/httpdocs/.env
-sudo chown edefrutos2025:www-data /var/www/vhosts/edefrutos2025.xyz/httpdocs/.env
+sudo chmod 640 /.env
+sudo chown edefrutos2025:www-data /.env
 ```
 
 Esto garantiza que:
@@ -82,7 +82,7 @@ dotenv_path = os.path.join("/var/www/vhosts/edefrutos2025.xyz/httpdocs", ".env")
 load_dotenv(dotenv_path)
 
 # Configurar el entorno virtual
-python_home = "/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv"
+python_home = "/.venv"
 python_bin = os.path.join(python_home, "bin")
 
 # Establecer variables de entorno para el entorno virtual
@@ -103,7 +103,7 @@ Este archivo realiza varias funciones críticas:
 
 Comprobamos que el paquete `python-dotenv` estaba correctamente instalado:
 ```bash
-sudo -u edefrutos2025 /var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/pip install python-dotenv
+sudo -u edefrutos2025 /.venv/bin/pip install python-dotenv
 ```
 
 Confirmamos que ya estaba disponible, lo que era necesario para cargar las variables de entorno.

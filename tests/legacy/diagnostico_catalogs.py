@@ -25,7 +25,7 @@ try:
     from config import Config
     MONGO_URI = Config.MONGO_URI
 except ImportError:
-    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://admin:admin123@cluster0.pmokh.mongodb.net/app_catalogojoyero?retryWrites=true&w=majority')
+    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://admin:admin123@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority')
 
 def conectar_mongodb():
     """Establece conexión con MongoDB y retorna el cliente y la base de datos."""

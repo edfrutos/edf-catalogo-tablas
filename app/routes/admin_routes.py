@@ -1,10 +1,17 @@
+# Script: admin_routes.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 admin_routes.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 from functools import wraps
 import logging
 import re
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, make_response, jsonify, current_app, abort
 from bson import ObjectId
 from app.database import (get_reset_tokens_collection, get_users_collection,
-                      get_audit_logs_collection, get_catalogs_collection)
+                      get_audit_logs_collection, get_catalogs_collection, get_mongo_client, get_mongo_db, get_last_error)
 from app.audit import audit_log
 from app.auth_utils import admin_required
 import app.monitoring as monitoring
@@ -18,6 +25,15 @@ import os
 import shutil
 from flask import send_file
 from app.extensions import is_mongo_available
+from app.utils.db_utils import get_db
+from tools.db_utils.google_drive_utils import upload_to_drive
+from subprocess import Popen, PIPE
+import certifi
+import traceback
+import pprint
+import psutil
+import platform
+from flask import session
 
 # Importar nuestro módulo de monitoreo
 from app import monitoring
@@ -26,23 +42,45 @@ logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 @admin_bp.route("/")
-# # @admin_required
+@admin_required
 def dashboard_admin():
+    db = get_db()
+    print(f"[DEBUG][ADMIN] db: {db}")
+    if db is None:
+        flash('No se pudo acceder a la base de datos. Contacte con el administrador.', 'error')
+        return render_template("error.html", mensaje="No se pudo conectar a la base de datos. Contacte con el administrador.")
+    users_collection = getattr(current_app, 'users_collection', None)
+    if users_collection is None:
+        flash('No se pudo acceder a la colección de usuarios.', 'error')
+        return render_template("error.html", mensaje="No se pudo conectar a la colección de usuarios.")
     try:
-        users_collection = get_users_collection()
-        spreadsheets_collection = getattr(current_app, 'spreadsheets_collection', None)
-        logger.info(f"[DEBUG] spreadsheets_collection: {spreadsheets_collection}")
-        if spreadsheets_collection is not None:
-            logger.info(f"[DEBUG] spreadsheets_collection.count_documents: {spreadsheets_collection.count_documents({})}")
-        else:
-            logger.warning("[DEBUG] spreadsheets_collection es None")
-        
+        # Obtener parámetros de búsqueda
+        search = request.args.get('search', '').strip()
+        search_type = request.args.get('search_type', 'name')
         # Obtener todos los usuarios
         usuarios = list(users_collection.find())
         total_usuarios = len(usuarios)
-        total_catalogos = spreadsheets_collection.count_documents({}) if spreadsheets_collection is not None else 0
-        
-        # Crear un diccionario para almacenar el recuento de catálogos por usuario
+        try:
+            tablas = list(db['spreadsheets'].find().sort('created_at', -1))
+            print(f"[DEBUG][ADMIN] tablas: {tablas}")
+        except Exception as e:
+            print(f"[ERROR][ADMIN] Consulta a spreadsheets falló: {e}")
+            tablas = []
+        try:
+            catalogos = list(db['catalogs'].find().sort('created_at', -1))
+            print(f"[DEBUG][ADMIN] catalogos: {catalogos}")
+        except Exception as e:
+            print(f"[ERROR][ADMIN] Consulta a catalogs falló: {e}")
+            catalogos = []
+        for t in tablas:
+            t['tipo'] = 'spreadsheet'
+            t['data'] = t.get('data', [])
+        for c in catalogos:
+            c['tipo'] = 'catalog'
+            c['data'] = c.get('rows', [])
+        registros = tablas + catalogos
+        total_catalogos = len(registros)
+        # Procesar usuarios con catálogos/tablas
         catalogos_por_usuario = {}
         for usuario in usuarios:
             catalogos_por_usuario[str(usuario['_id'])] = {
@@ -53,44 +91,13 @@ def dashboard_admin():
                 'count': 0,
                 'last_update': None
             }
-        
-        tablas = []
-        if spreadsheets_collection is not None:
-            # Mostrar todas las tablas/catálogos, no solo los del admin
-            tablas = list(spreadsheets_collection.find().sort('created_at', -1))
-            logger.info(f"[ADMIN] Se encontraron {len(tablas)} catálogos totales para mostrar en el dashboard.")
-            
-            # Procesar los propietarios de los catálogos para mostrar nombres reales
-            for tabla in tablas:
-                # Si el propietario es 'usuario_predeterminado' o no existe, intentar usar otros campos
-                owner_id = None
-                if 'owner' not in tabla or tabla['owner'] == 'usuario_predeterminado':
-                    if 'owner_name' in tabla and tabla['owner_name']:
-                        tabla['owner'] = tabla['owner_name']
-                    elif 'created_by' in tabla and tabla['created_by']:
-                        tabla['owner'] = tabla['created_by']
-                    elif 'username' in tabla and tabla['username']:
-                        tabla['owner'] = tabla['username']
-                    else:
-                        tabla['owner'] = 'Usuario desconocido'
-                
-                # Buscar el ID del usuario propietario
-                if 'created_by_id' in tabla and tabla['created_by_id']:
-                    owner_id = str(tabla['created_by_id'])
-                else:
-                    # Intentar encontrar el usuario por nombre de usuario
-                    for user_id, user_info in catalogos_por_usuario.items():
-                        if user_info['username'] == tabla.get('owner') or user_info['email'] == tabla.get('owner'):
-                            owner_id = user_id
-                            break
-                
-                # Incrementar el contador de catálogos para este usuario
-                if owner_id and owner_id in catalogos_por_usuario:
-                    catalogos_por_usuario[owner_id]['count'] += 1
-                    
-                    # Actualizar la última modificación si es más reciente
-                    if 'updated_at' in tabla and tabla['updated_at']:
-                        last_update = tabla['updated_at']
+        for reg in registros:
+            owner = reg.get('owner') or reg.get('created_by') or reg.get('owner_name')
+            for user_id, user_info in catalogos_por_usuario.items():
+                if user_info['username'] == owner or user_info['email'] == owner:
+                    catalogos_por_usuario[user_id]['count'] += 1
+                    if 'updated_at' in reg and reg['updated_at']:
+                        last_update = reg['updated_at']
                         if isinstance(last_update, str):
                             try:
                                 last_update = datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
@@ -99,51 +106,46 @@ def dashboard_admin():
                                     last_update = datetime.strptime(last_update, '%Y-%m-%d %H:%M')
                                 except:
                                     last_update = None
-                        
-                        if last_update and (catalogos_por_usuario[owner_id]['last_update'] is None or 
-                                           last_update > catalogos_por_usuario[owner_id]['last_update']):
-                            catalogos_por_usuario[owner_id]['last_update'] = last_update
-                
-                logger.info(f"[ADMIN] Propietario del catálogo {tabla.get('name', 'Sin nombre')}: {tabla.get('owner', 'Sin propietario')}")
-                
-                # Asegurarse de que created_at esté en formato adecuado
-                if 'created_at' in tabla and tabla['created_at'] and not isinstance(tabla['created_at'], str):
-                    try:
-                        tabla['created_at'] = tabla['created_at'].strftime('%Y-%m-%d %H:%M')
-                    except Exception as e:
-                        logger.warning(f"[ADMIN] Error al formatear fecha: {str(e)}")
-                        tabla['created_at'] = str(tabla['created_at'])
-        else:
-            logger.warning("[ADMIN] La colección de hojas de cálculo es None")
-        
-        # Convertir el diccionario a una lista para la plantilla
+                        if last_update and (catalogos_por_usuario[user_id]['last_update'] is None or last_update > catalogos_por_usuario[user_id]['last_update']):
+                            catalogos_por_usuario[user_id]['last_update'] = last_update
         usuarios_con_catalogos = []
         for user_id, user_info in catalogos_por_usuario.items():
-            # Formatear la fecha de última actualización
             if user_info['last_update']:
                 user_info['last_update_str'] = user_info['last_update'].strftime('%d/%m/%Y, %H:%M:%S')
             else:
                 user_info['last_update_str'] = 'No disponible'
-            
             user_info['id'] = user_id
             usuarios_con_catalogos.append(user_info)
-        
-        # Ordenar por número de catálogos (de mayor a menor)
         usuarios_con_catalogos.sort(key=lambda x: x['count'], reverse=True)
-        
-        # Cálculo seguro del porcentaje
-        if total_usuarios > 0:
-            porcentaje = float(total_catalogos) / float(total_usuarios) * 100.0
-        else:
-            porcentaje = 0.0
-        
-        logger.info(f"[ADMIN] total_usuarios={total_usuarios}, total_catalogos={total_catalogos}, porcentaje calculado: {porcentaje}")
+        # FILTRO: aplicar búsqueda a registros y usuarios
+        registros_filtrados = registros
+        usuarios_filtrados = usuarios_con_catalogos
+        if search:
+            if search_type == 'name':
+                registros_filtrados = [r for r in registros if search.lower() in (r.get('name','').lower())]
+            elif search_type == 'owner':
+                registros_filtrados = [r for r in registros if search.lower() in str(r.get('owner','')).lower() or search.lower() in str(r.get('created_by','')).lower() or search.lower() in str(r.get('owner_name','')).lower()]
+            # Filtrar usuarios también
+            if search_type == 'owner':
+                usuarios_filtrados = [u for u in usuarios_con_catalogos if search.lower() in u['username'].lower() or search.lower() in u['email'].lower() or search.lower() in u['nombre'].lower()]
+            elif search_type == 'name':
+                # Mostrar todos los usuarios si se busca por nombre de catálogo
+                usuarios_filtrados = usuarios_con_catalogos
+        porcentaje = float(len(registros_filtrados)) / float(total_usuarios) * 100.0 if total_usuarios > 0 else 0.0
+        # Filtrar catálogos/tablas propios del usuario logueado
+        username = session.get('username')
+        mis_registros = [r for r in registros if r.get('owner') == username or r.get('created_by') == username or r.get('owner_name') == username]
         response = make_response(render_template("admin/dashboard_admin.html",
                                                 total_usuarios=total_usuarios,
-                                                total_catalogos=total_catalogos,
-                                                tablas=tablas,
-                                                usuarios=usuarios_con_catalogos,
-                                                porcentaje=porcentaje))
+                                                total_catalogos=len(registros_filtrados),
+                                                registros=registros_filtrados,
+                                                mis_registros=mis_registros,
+                                                usuarios=usuarios_filtrados,
+                                                porcentaje=porcentaje,
+                                                tablas=[r for r in registros_filtrados if r['tipo']=='spreadsheet'],
+                                                catalogos=[r for r in registros_filtrados if r['tipo']=='catalog'],
+                                                search=search,
+                                                search_type=search_type))
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
@@ -153,7 +155,7 @@ def dashboard_admin():
         return render_template("error.html", error=f"Error en el panel de administración: {str(e)}"), 500
 
 @admin_bp.route("/maintenance")
-# # @admin_required
+@admin_required
 def maintenance():
     try:
         # Obtener estadísticas de archivos temporales
@@ -182,60 +184,126 @@ def maintenance():
         return redirect(url_for('admin.dashboard_admin'))
 
 @admin_bp.route("/system-status")
-# # @admin_required
+@admin_required
 def system_status():
+    import time
+    t0 = time.time()
     try:
+        print("[DEBUG][STATUS] Inicio carga system-status")
         # Obtener datos del sistema
+        t1 = time.time()
         data = get_system_status_data()
-        
+        t2 = time.time()
+        print(f"[DEBUG][STATUS] get_system_status_data: {t2-t1:.2f}s")
         # Obtener la lista de archivos de log
         logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
+        t3 = time.time()
         log_files = get_log_files(logs_dir)
-        
+        t4 = time.time()
+        print(f"[DEBUG][STATUS] get_log_files: {t4-t3:.2f}s")
         # Obtener la lista de archivos de backup
         backup_dir = os.path.abspath(os.path.join(os.getcwd(), 'backups'))
-        logger.info(f"Directorio de backups: {backup_dir}")
+        t5 = time.time()
         backup_files = get_backup_files(backup_dir)
-        
+        t6 = time.time()
+        print(f"[DEBUG][STATUS] get_backup_files: {t6-t5:.2f}s")
+        print(f"[DEBUG][STATUS] TOTAL system-status: {time.time()-t0:.2f}s")
         return render_template('admin/system_status.html', data=data, log_files=log_files, backup_files=backup_files)
     except Exception as e:
         logger.error(f"Error en system_status: {str(e)}", exc_info=True)
         flash("Error al obtener el estado del sistema", "danger")
         return redirect(url_for('admin.dashboard_admin'))
 
-def get_system_status_data():
+@admin_bp.route("/system-status/report")
+@admin_required
+def system_status_report():
+    import json
+    data = get_system_status_data(full=True)
+    response = current_app.response_class(
+        response=json.dumps(data, indent=2, default=str),
+        mimetype='application/json'
+    )
+    response.headers['Content-Disposition'] = 'attachment; filename=system_status_report.json'
+    return response
+
+def get_system_status_data(full=False):
+    import time
+    t0 = time.time()
     try:
-        # Obtener informe completo de estado
+        print("[DEBUG][STATUS] Inicio get_system_status_data")
+        # Obtener informe completo de estado (NO recalcular nada costoso aquí)
+        t1 = time.time()
         health_report = monitoring.get_health_status()
-        
-        # Actualizar información de la base de datos
-        from app.extensions import mongo
-        if is_mongo_available():
-            monitoring.check_database_health(mongo.cx)
-        else:
-            monitoring._app_metrics["database_status"] = {
-                "last_checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "is_available": False,
-                "response_time_ms": 0,
-                "error": "Conexión a la base de datos no inicializada"
-            }
-        
+        t2 = time.time()
+        print(f"[DEBUG][STATUS] get_health_status: {t2-t1:.2f}s")
         # Obtener estadísticas de solicitudes
         request_stats = monitoring._app_metrics["request_stats"]
-        
         # Calcular uptime
         start_time = datetime.strptime(monitoring._app_metrics["start_time"], "%Y-%m-%d %H:%M:%S")
         uptime = datetime.now() - start_time
         uptime_str = str(uptime).split('.')[0]  # Formato HH:MM:SS
-        
+        # Obtener métricas de memoria
+        process = psutil.Process(os.getpid())
+        mem_info = process.memory_info()
+        mem_percent = process.memory_percent()
+        system_mem = psutil.virtual_memory()
+        swap_mem = psutil.swap_memory()
+        # Top 5 procesos por consumo de memoria
+        all_procs = [p for p in psutil.process_iter(['pid', 'name', 'memory_info', 'memory_percent']) if p.info.get('memory_percent') is not None]
+        top_procs = sorted(all_procs, key=lambda p: p.info['memory_percent'], reverse=True)[:5]
+        top_processes = [
+            {
+                'pid': p.info['pid'],
+                'name': p.info['name'],
+                'rss_mb': round(p.info['memory_info'].rss / 1024 / 1024, 2) if p.info['memory_info'] else None,
+                'mem_percent': round(p.info['memory_percent'], 2)
+            }
+            for p in top_procs
+        ]
+        # Info de plataforma
+        platform_info = {
+            'system': platform.system(),
+            'release': platform.release(),
+            'version': platform.version(),
+            'machine': platform.machine(),
+            'processor': platform.processor(),
+            'python_version': platform.python_version(),
+        }
+        mem_breakdown = {
+            'python_process': {
+                'pid': process.pid,
+                'rss_mb': round(mem_info.rss / 1024 / 1024, 2),
+                'vms_mb': round(mem_info.vms / 1024 / 1024, 2),
+                'percent': round(mem_percent, 2)
+            },
+            'system': {
+                'total_mb': round(system_mem.total / 1024 / 1024, 2),
+                'used_mb': round(system_mem.used / 1024 / 1024, 2),
+                'percent': system_mem.percent
+            },
+            'swap': {
+                'total_mb': round(swap_mem.total / 1024 / 1024, 2),
+                'used_mb': round(swap_mem.used / 1024 / 1024, 2),
+                'percent': swap_mem.percent
+            },
+            'top_processes': top_processes,
+            'platform': platform_info
+        }
         status_data = {
             "health": health_report,
             "uptime": uptime_str,
             "request_stats": request_stats,
             "database": monitoring._app_metrics["database_status"],
-            "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "memory": mem_breakdown
         }
-        
+        if full:
+            status_data['raw_psutil'] = {
+                'process': dict(mem_info._asdict()),
+                'system': dict(system_mem._asdict()),
+                'swap': dict(swap_mem._asdict()),
+            }
+        print(f"[DEBUG][STATUS] TOTAL get_system_status_data: {time.time()-t0:.2f}s")
         return status_data
     except Exception as e:
         logger.error(f"Error en get_system_status_data: {str(e)}", exc_info=True)
@@ -244,43 +312,37 @@ def get_system_status_data():
             "uptime": "Error",
             "request_stats": {"total_requests": 0},
             "database": {"is_available": False, "response_time_ms": 0},
-            "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "memory": {}
         }
-    
-    return status_data
 
 def get_log_files(logs_dir):
-    """Obtiene la lista de archivos de log disponibles"""
+    """Obtiene la lista de archivos de log disponibles (máx 20 más recientes)"""
     try:
         if not os.path.exists(logs_dir):
             os.makedirs(logs_dir, exist_ok=True)
             return []
-        
-        # Obtener todos los archivos con extensión .log
         log_files = []
         for file in os.listdir(logs_dir):
             if file.endswith('.log'):
                 file_path = os.path.join(logs_dir, file)
-                # Obtener tamaño y fecha de modificación
                 stats = os.stat(file_path)
                 size_kb = stats.st_size / 1024
                 mod_time = datetime.fromtimestamp(stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
-                
                 log_files.append({
                     'name': file,
                     'size': f"{size_kb:.2f} KB",
                     'modified': mod_time
                 })
-        
-        # Ordenar por fecha de modificación (más reciente primero)
+        # Ordenar y limitar a 20 más recientes
         log_files.sort(key=lambda x: x['modified'], reverse=True)
-        return log_files
+        return log_files[:20]
     except Exception as e:
         logger.error(f"Error al obtener archivos de log: {str(e)}", exc_info=True)
         return []
-        
+
 def get_backup_files(backup_dir):
-    """Obtiene la lista de archivos de backup disponibles"""
+    """Obtiene la lista de archivos de backup disponibles (máx 20 más recientes, sin recursividad)"""
     try:
         logger.info(f"Buscando archivos de backup en: {backup_dir}")
         if not os.path.exists(backup_dir):
@@ -288,168 +350,107 @@ def get_backup_files(backup_dir):
             os.makedirs(backup_dir, exist_ok=True)
             logger.info(f"Directorio de backups creado: {backup_dir}")
             return []
-        
-        # Patrones para identificar archivos de backup
-        backup_patterns = [
-            r'^.*\.bak.*$',  # Cualquier archivo que contenga .bak en cualquier parte de la extensión
-            r'^.*\.backup.*$',
-            r'^.*\.old.*$',
-            r'^.*\.back.*$',
-            r'^.*_backup.*$',
-            r'^backup_.*$',
-            r'^.*_old.*$',
-            r'^.*_copy.*$',
-            r'^copy_of_.*$',
-            r'^.*\.tmp$',
-            r'^.*\.swp$',
-            r'^.*~$'  # Archivos temporales de editores como vim
-        ]
-        
-        # Extensiones comunes de backup
-        backup_extensions = [
-            '.bak', '.backup', '.zip', '.tar', '.gz', '.sql', '.dump',
-            '.old', '.back', '.tmp', '.swp', '~'
-        ]
-        
-        # Función para determinar si un archivo es de backup
-        def is_backup_file(filename):
-            basename = os.path.basename(filename)
-            
-            # Verificar patrones específicos
-            for pattern in backup_patterns:
-                if re.match(pattern, basename):
-                    return True
-            
-            # Verificar extensiones compuestas (como .bak.funcionalidad)
-            if '.bak.' in basename:
-                return True
-            
-            # Verificar otras extensiones comunes de backup
-            for ext in backup_extensions:
-                if basename.endswith(ext):
-                    return True
-                    
-            # Verificar si contiene palabras clave de backup
-            keywords = ['backup', 'copia', 'old', 'bak', 'respaldo']
-            for keyword in keywords:
-                if keyword in basename.lower():
-                    return True
-            
-            return False
-        
-        # Procesar todos los archivos en el directorio de backups
         backup_files = []
-        all_files = []
-        
-        # Recorrer recursivamente el directorio de backups
-        for root, dirs, files in os.walk(backup_dir):
-            for file in files:
-                # Ignorar archivos ocultos
-                if file.startswith('.'):
-                    continue
-                    
-                full_path = os.path.join(root, file)
-                rel_path = os.path.relpath(full_path, backup_dir)
-                
-                # Si está en un subdirectorio, añadir el nombre relativo
-                display_name = rel_path if os.path.dirname(rel_path) else file
-                
-                # Verificar si es un archivo de backup
-                if is_backup_file(file):
-                    all_files.append((full_path, display_name))
-        
-        logger.info(f"Total de archivos encontrados en {backup_dir}: {len(all_files)}")
-        
-        # Procesar los archivos encontrados
-        for full_path, display_name in all_files:
-            try:
-                stats = os.stat(full_path)
-                size_bytes = stats.st_size
-                
-                # Formato de tamaño legible
-                if size_bytes < 1024:
-                    size_str = f"{size_bytes} bytes"
-                elif size_bytes < 1024 * 1024:
-                    size_str = f"{size_bytes/1024:.2f} KB"
-                else:
-                    size_str = f"{size_bytes/(1024*1024):.2f} MB"
-                    
-                mod_time = datetime.fromtimestamp(stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
-                
-                backup_files.append({
-                    'name': display_name,
-                    'size': size_str,
-                    'modified': mod_time,
-                    'path': full_path
-                })
-                logger.debug(f"Archivo de backup encontrado: {display_name} ({size_str})")
-            except Exception as e:
-                logger.error(f"Error al procesar archivo {display_name}: {str(e)}")
-        
-        logger.info(f"Total de archivos de backup encontrados: {len(backup_files)}")
-        
-        # Ordenar por fecha de modificación (más reciente primero)
+        for file in os.listdir(backup_dir):
+            if file.startswith('.'):
+                continue
+            full_path = os.path.join(backup_dir, file)
+            if not os.path.isfile(full_path):
+                continue
+            # Solo archivos de backup por extensión
+            if not any(file.endswith(ext) for ext in ['.bak', '.backup', '.zip', '.tar', '.gz', '.sql', '.dump', '.old', '.back', '.tmp', '.swp', '~', '.csv', '.json']):
+                continue
+            stats = os.stat(full_path)
+            size_bytes = stats.st_size
+            if size_bytes < 1024:
+                size_str = f"{size_bytes} bytes"
+            elif size_bytes < 1024 * 1024:
+                size_str = f"{size_bytes/1024:.2f} KB"
+            else:
+                size_str = f"{size_bytes/(1024*1024):.2f} MB"
+            mod_time = datetime.fromtimestamp(stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+            backup_files.append({
+                'name': file,
+                'size': size_str,
+                'modified': mod_time,
+                'path': full_path
+            })
+        # Ordenar y limitar a 20 más recientes
         backup_files.sort(key=lambda x: x['modified'], reverse=True)
-        return backup_files
+        return backup_files[:20]
     except Exception as e:
         logger.error(f"Error al obtener archivos de backup: {str(e)}", exc_info=True)
         return []
 
 @admin_bp.route("/usuarios")
-# # @admin_required
+@admin_required
 def lista_usuarios():
     try:
-        # Obtener la lista de usuarios
-        users = list(get_users_collection().find())
-        
+        # Obtener el término de búsqueda
+        q = request.args.get('q', '').strip()
+        users_col = get_users_collection()
+        if q:
+            # Búsqueda insensible a mayúsculas/minúsculas en email o nombre de usuario
+            usuarios = list(users_col.find({
+                "$or": [
+                    {"email": {"$regex": q, "$options": "i"}},
+                    {"username": {"$regex": q, "$options": "i"}},
+                    {"nombre": {"$regex": q, "$options": "i"}}
+                ]
+            }))
+        else:
+            usuarios = list(users_col.find())
+        # Ordenar usuarios por nombre alfabéticamente
+        usuarios.sort(key=lambda u: u.get('nombre', '').lower())
         # Obtener catálogos para calcular cuántos tiene cada usuario
         from app.extensions import mongo
         collections_to_check = ['catalogs', 'spreadsheets']
-        
-        # Contar por created_by (email del usuario)
-        for user in users:
-            user_email = user.get("email")
-            if user_email:
-                # Contar catálogos en ambas colecciones
-                total_count = 0
-                for collection_name in collections_to_check:
-                    try:
-                        collection = mongo.db[collection_name]
-                        # Buscar por email en created_by, owner o email
-                        count = collection.count_documents({
-                            "$or": [
-                                {"created_by": user_email},
-                                {"owner": user_email},
-                                {"email": user_email}
-                            ]
-                        })
-                        total_count += count
-                        logger.info(f"[ADMIN] Usuario {user_email} tiene {count} catálogos en {collection_name}")
-                    except Exception as e:
-                        logger.error(f"Error al contar catálogos en {collection_name}: {str(e)}")
-                
-                user["num_catalogs"] = total_count
-                logger.info(f"[ADMIN] Usuario {user_email} tiene un total de {total_count} catálogos")
-            else:
-                user["num_catalogs"] = 0
-        
+        for user in usuarios:
+            posibles = set([
+                user.get("email"),
+                user.get("username"),
+                user.get("name"),
+                user.get("nombre")
+            ])
+            posibles = {v for v in posibles if v}
+            total_count = 0
+            for collection_name in collections_to_check:
+                try:
+                    collection = mongo.db[collection_name]
+                    query = {"$or": []}
+                    for val in posibles:
+                        query["$or"].extend([
+                            {"created_by": val},
+                            {"owner": val},
+                            {"owner_name": val},
+                            {"email": val},
+                            {"username": val},
+                            {"name": val}
+                        ])
+                    count = collection.count_documents(query)
+                    total_count += count
+                    logger.info(f"[ADMIN] Usuario {user.get('email')} tiene {count} catálogos en {collection_name}")
+                except Exception as e:
+                    logger.error(f"Error al contar catálogos en {collection_name}: {str(e)}")
+            user["num_catalogs"] = total_count
+            logger.info(f"[ADMIN] Usuario {user.get('email')} tiene un total de {total_count} catálogos")
         # Calcular estadísticas
         stats = {
-            "total": len(users),
+            "total": len(usuarios),
             "roles": {
-                "admin": sum(1 for u in users if u.get("role") == "admin"),
-                "normal": sum(1 for u in users if u.get("role") == "user"),
-                "no_role": sum(1 for u in users if not u.get("role"))
+                "admin": sum(1 for u in usuarios if u.get("role") == "admin"),
+                "normal": sum(1 for u in usuarios if u.get("role") == "user"),
+                "no_role": sum(1 for u in usuarios if not u.get("role"))
             }
         }
-        
-        return render_template("admin/users.html", users=users, stats=stats)
+        return render_template("admin/users.html", usuarios=usuarios, stats=stats)
     except Exception as e:
         logger.error(f"Error en lista_usuarios: {str(e)}", exc_info=True)
         flash(f"Error al cargar la lista de usuarios: {str(e)}", "error")
         return redirect(url_for('admin.dashboard_admin'))
+
 @admin_bp.route("/usuarios/<user_email>/catalogos")
-# # @admin_required
+@admin_required
 def ver_catalogos_usuario(user_email):
     try:
         # Verificar que el usuario existe
@@ -457,42 +458,42 @@ def ver_catalogos_usuario(user_email):
         if not user:
             flash(f"Usuario con email {user_email} no encontrado", "error")
             return redirect(url_for('admin.lista_usuarios'))
-        
-        # Obtener los catálogos del usuario de ambas colecciones
+        # Unificar criterio: buscar por todos los posibles identificadores
+        posibles = set([
+            user.get("email"),
+            user.get("username"),
+            user.get("name"),
+            user.get("nombre")
+        ])
+        posibles = {v for v in posibles if v}
         from app.extensions import mongo
         collections_to_check = ['catalogs', 'spreadsheets']
         all_catalogs = []
-        
         for collection_name in collections_to_check:
             try:
                 collection = mongo.db[collection_name]
-                # Buscar por email en created_by, owner o email
-                catalogs_cursor = collection.find({
-                    "$or": [
-                        {"created_by": user_email},
-                        {"owner": user_email},
-                        {"email": user_email}
-                    ]
-                })
-                
-                # Convertir el cursor a lista y añadir a los resultados
+                query = {"$or": []}
+                for val in posibles:
+                    query["$or"].extend([
+                        {"created_by": val},
+                        {"owner": val},
+                        {"owner_name": val},
+                        {"email": val},
+                        {"username": val},
+                        {"name": val}
+                    ])
+                catalogs_cursor = collection.find(query)
                 for catalog in catalogs_cursor:
-                    # Añadir información sobre la colección de origen
                     catalog['collection_source'] = collection_name
                     all_catalogs.append(catalog)
-                    
-                logger.info(f"[ADMIN] Encontrados {collection.count_documents({'$or': [{'created_by': user_email}, {'owner': user_email}, {'email': user_email}]})} catálogos en {collection_name} para {user_email}")
+                logger.info(f"[ADMIN] Encontrados {collection.count_documents(query)} catálogos en {collection_name} para {posibles}")
             except Exception as e:
                 logger.error(f"Error al buscar catálogos en {collection_name}: {str(e)}")
-        
-        # Usar la lista combinada de catálogos
         catalogs = all_catalogs
-        logger.info(f"[ADMIN] Total de catálogos encontrados para {user_email}: {len(catalogs)}")
-        
+        logger.info(f"[ADMIN] Total de catálogos encontrados para {posibles}: {len(catalogs)}")
         # Añadir _id_str a cada catálogo para facilitar su uso en las plantillas
         for catalog in catalogs:
             catalog['_id_str'] = str(catalog['_id'])
-            
             # Calcular el número de filas del catálogo
             if 'rows' in catalog:
                 catalog['row_count'] = len(catalog['rows'])
@@ -500,7 +501,6 @@ def ver_catalogos_usuario(user_email):
                 catalog['row_count'] = len(catalog['data'])
             else:
                 catalog['row_count'] = 0
-                
             # Formatear la fecha de creación
             if 'created_at' in catalog and catalog['created_at']:
                 if isinstance(catalog['created_at'], str):
@@ -509,7 +509,6 @@ def ver_catalogos_usuario(user_email):
                     catalog['created_at_formatted'] = catalog['created_at'].strftime('%d/%m/%Y %H:%M')
             else:
                 catalog['created_at_formatted'] = 'N/A'
-        
         return render_template("admin/catalogos_usuario.html", user=user, catalogs=catalogs)
     except Exception as e:
         logger.error(f"Error en ver_catalogos_usuario: {str(e)}", exc_info=True)
@@ -524,7 +523,7 @@ def ver_catalogos_usuario(user_email):
         return redirect(url_for("admin.lista_usuarios"))
 
 @admin_bp.route("/usuarios/catalogo/<catalog_id>")
-# # @admin_required
+@admin_required
 def ver_catalogo_admin(catalog_id):
     try:
         # Obtener el catálogo
@@ -546,14 +545,14 @@ def ver_catalogo_admin(catalog_id):
         return redirect(url_for('admin.lista_usuarios'))
 
 @admin_bp.route("/usuarios/delete/<user_id>", methods=["POST"])
-# # @admin_required
+@admin_required
 def eliminar_usuario(user_id):
     get_users_collection().delete_one({"_id": ObjectId(user_id)})
     flash("Usuario eliminado", "success")
     return redirect(url_for("admin.lista_usuarios"))
 
 @admin_bp.route("/usuarios/edit/<user_id>", methods=["GET", "POST"])
-# # @admin_required
+@admin_required
 def editar_usuario(user_id):
     try:
         users_col = get_users_collection()
@@ -652,7 +651,7 @@ def editar_usuario(user_id):
         return redirect(url_for("admin.lista_usuarios"))
 
 @admin_bp.route("/usuarios/create", methods=["GET", "POST"])
-# # @admin_required
+@admin_required
 def crear_usuario():
     if request.method == "POST":
         nombre = request.form.get("nombre")
@@ -695,48 +694,120 @@ def crear_usuario():
 
 @admin_bp.route("/backup/json")
 def backup_json():
+    from datetime import datetime
+    import tempfile
     catalog = get_catalogs_collection()
     data = list(catalog.find())
     for d in data:
         d["_id"] = str(d["_id"])
     output = io.StringIO()
-    json.dump(data, output, indent=4)
+    json.dump(data, output, indent=4, default=str)
     output.seek(0)
+    # Guardar el archivo en /backups/ con nombre único
+    backups_dir = os.path.join(os.getcwd(), "backups")
+    if not os.path.exists(backups_dir):
+        os.makedirs(backups_dir, exist_ok=True)
+    filename = f"catalog_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    backup_path = os.path.join(backups_dir, filename)
+    with open(backup_path, "w", encoding="utf-8") as f:
+        f.write(output.getvalue())
+    # Subir a Google Drive
+    try:
+        enlace_drive = upload_to_drive(backup_path)
+        os.remove(backup_path)
+        flash(f"Backup subido a Google Drive y eliminado localmente. <a href='{enlace_drive}' target='_blank'>Ver en Drive</a>", "success")
+        audit_log(f"Backup JSON subido a Drive por {session.get('user_id', session.get('username', 'desconocido'))} - {filename}")
+    except Exception as e:
+        flash(f"Error al subir el backup a Google Drive: {str(e)}. El archivo local no se ha eliminado.", "danger")
+        audit_log(f"Backup JSON local por {session.get('user_id', session.get('username', 'desconocido'))} - {filename} (fallo subida Drive: {str(e)})")
+    # Permitir descarga directa como antes
     return send_file(io.BytesIO(output.read().encode()), download_name="backup_catalog.json", as_attachment=True)
 
 @admin_bp.route("/backup/csv")
 def backup_csv():
+    import tempfile
+    from datetime import datetime
     catalog = get_catalogs_collection()
     data = list(catalog.find())
     if not data:
         flash("No hay datos para exportar", "warning")
         return redirect(url_for("admin.maintenance"))
-    headers = list(data[0].keys())
+    # Unificar todos los campos presentes en los documentos
+    all_fields = set()
+    for row in data:
+        all_fields.update(row.keys())
+    headers = list(all_fields)
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=headers)
     writer.writeheader()
     for row in data:
         row["_id"] = str(row["_id"])
-        writer.writerow(row)
+        row_filled = {k: row.get(k, "") for k in headers}
+        writer.writerow(row_filled)
     output.seek(0)
-    
-    # Registrar backup en métricas
-    backup_info = {
-        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "type": "csv",
-        "records": len(data)
-    }
-    if "backups" not in monitoring._app_metrics:
-        monitoring._app_metrics["backups"] = []
-    monitoring._app_metrics["backups"].append(backup_info)
-    monitoring.save_metrics()
-    
+    # Guardar el archivo en /backups/ con nombre único
+    backups_dir = os.path.join(os.getcwd(), "backups")
+    if not os.path.exists(backups_dir):
+        os.makedirs(backups_dir, exist_ok=True)
+    filename = f"catalog_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    backup_path = os.path.join(backups_dir, filename)
+    with open(backup_path, "w", encoding="utf-8") as f:
+        f.write(output.getvalue())
+    # Subir a Google Drive
+    try:
+        enlace_drive = upload_to_drive(backup_path)
+        os.remove(backup_path)
+        flash(f"Backup subido a Google Drive y eliminado localmente. <a href='{enlace_drive}' target='_blank'>Ver en Drive</a>", "success")
+        audit_log(f"Backup CSV subido a Drive por {session.get('user_id', session.get('username', 'desconocido'))} - {filename}")
+    except Exception as e:
+        flash(f"Error al subir el backup a Google Drive: {str(e)}. El archivo local no se ha eliminado.", "danger")
+        audit_log(f"Backup CSV local por {session.get('user_id', session.get('username', 'desconocido'))} - {filename} (fallo subida Drive: {str(e)})")
+    # Permitir descarga directa como antes
     return send_file(io.BytesIO(output.read().encode()), download_name="backup_catalog.csv", as_attachment=True)
 
+@admin_bp.route("/backups/cleanup", methods=["POST"])
+@admin_required
+def cleanup_old_backups():
+    """Elimina backups antiguos según la fecha o cantidad máxima permitida."""
+    days = int(request.form.get("days", 30))
+    max_files = int(request.form.get("max_files", 20))
+    backups_dir = os.path.join(os.getcwd(), "backups")
+    if not os.path.exists(backups_dir):
+        flash("No hay backups para limpiar", "info")
+        return redirect(url_for("admin.maintenance"))
+    files = [os.path.join(backups_dir, f) for f in os.listdir(backups_dir) if os.path.isfile(os.path.join(backups_dir, f))]
+    # Ordenar por fecha de modificación descendente
+    files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+    now = datetime.now()
+    removed = 0
+    # Eliminar archivos más antiguos que X días
+    for f in files:
+        mtime = datetime.fromtimestamp(os.path.getmtime(f))
+        if (now - mtime) > timedelta(days=days):
+            try:
+                os.remove(f)
+                removed += 1
+                logger.info(f"Backup eliminado por antigüedad: {f}")
+            except Exception as e:
+                logger.error(f"Error al eliminar backup {f}: {e}")
+    # Si hay más de max_files, eliminar los más antiguos
+    files = [os.path.join(backups_dir, f) for f in os.listdir(backups_dir) if os.path.isfile(os.path.join(backups_dir, f))]
+    if len(files) > max_files:
+        for f in files[max_files:]:
+            try:
+                os.remove(f)
+                removed += 1
+                logger.info(f"Backup eliminado por exceso de cantidad: {f}")
+            except Exception as e:
+                logger.error(f"Error al eliminar backup {f}: {e}")
+    flash(f"Backups antiguos eliminados: {removed}", "info")
+    audit_log(f"Limpieza de backups por {session.get('user_id', session.get('username', 'desconocido'))} - días: {days}, max_files: {max_files}, eliminados: {removed}")
+    return redirect(url_for("admin.maintenance"))
+
 @admin_bp.route("/cleanup_resets")
-# # @admin_required
+@admin_required
 def cleanup_resets():
-    result = get_resets_collection().delete_many({"used": True})
+    result = get_reset_tokens_collection().delete_many({"used": True})
     flash(f"Tokens eliminados: {result.deleted_count}", "info")
     
     # Registrar la limpieza en las métricas
@@ -754,7 +825,7 @@ def cleanup_resets():
 
 # API para limpieza de archivos temporales antiguos
 @admin_bp.route("/api/cleanup-temp", methods=["POST"])
-# # @admin_required
+@admin_required
 def api_cleanup_temp():
     days = request.form.get("days", 7, type=int)
     result = monitoring.cleanup_old_temp_files(days)
@@ -780,7 +851,7 @@ def api_cleanup_temp():
 
 # API para obtener el estado del sistema
 @admin_bp.route("/api/system-status")
-# # @admin_required
+@admin_required
 def api_system_status():
     try:
         # Obtener métricas del sistema
@@ -799,7 +870,7 @@ def api_system_status():
 
 # API para truncar archivos de log
 @admin_bp.route("/api/truncate-logs", methods=["POST"])
-# # @admin_required
+@admin_required
 def api_truncate_logs():
     try:
         # Obtener datos de la solicitud
@@ -845,7 +916,6 @@ def api_truncate_logs():
                             line_count = 10  # Mínimo 10 líneas
                     except (ValueError, TypeError):
                         line_count = 100  # Valor predeterminado si hay un error
-                        logger.warning(f"Valor de lineCount inválido, usando 100 como predeterminado")
                     
                     try:
                         with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -976,7 +1046,7 @@ def api_truncate_logs():
 
 # API para eliminar archivos de backup
 @admin_bp.route("/api/delete-backups", methods=["POST"])
-# # @admin_required
+@admin_required
 def api_delete_backups():
     try:
         # Obtener datos de la solicitud
@@ -1086,7 +1156,7 @@ def api_delete_backups():
 
 # Ruta para descargar un archivo de log específico
 @admin_bp.route("/logs/download/<filename>")
-# # @admin_required
+@admin_required
 def download_log(filename):
     try:
         # Validar el nombre del archivo
@@ -1112,7 +1182,7 @@ def download_log(filename):
 
 # Ruta para descargar múltiples archivos de log en un ZIP
 @admin_bp.route("/logs/download-multiple")
-# # @admin_required
+@admin_required
 def download_multiple_logs():
     try:
         files_param = request.args.get("files", "")
@@ -1150,7 +1220,7 @@ def download_multiple_logs():
         return redirect(url_for("admin.system_status"))
 
 @admin_bp.route("/notification-settings", methods=["GET", "POST"])
-# # @admin_required
+@admin_required
 def notification_settings():
     """Página de configuración de notificaciones"""
     if request.method == "POST":
@@ -1210,7 +1280,7 @@ def notification_settings():
     return render_template("admin/notification_settings.html", config=config)
 
 @admin_bp.route("/api/test-email", methods=["POST"])
-# # @admin_required
+@admin_required
 def test_email():
     """Enviar correo de prueba usando las credenciales del archivo .env"""
     email = request.form.get("email")
@@ -1285,27 +1355,25 @@ def test_email():
         logger.error(f"[ADMIN] Excepción al enviar correo de prueba a {email}: {str(e)}", exc_info=True)
         return jsonify({"success": False, "error": f"Error: {str(e)}"})
 
-
-
 @admin_bp.route("/verify-users")
-# # @admin_required
+@admin_required
 def verify_users():
     try:
-        users = list(get_users_collection().find())
+        usuarios = list(get_users_collection().find())
         
         # Contar usuarios verificados y no verificados
-        verified_count = sum(1 for user in users if user.get('verified', False))
-        unverified_count = len(users) - verified_count
+        verified_count = sum(1 for user in usuarios if user.get('verified', False))
+        unverified_count = len(usuarios) - verified_count
         
         # Estadísticas de usuarios
         stats = {
-            'total': len(users),
+            'total': len(usuarios),
             'verified': verified_count,
             'unverified': unverified_count
         }
         
         # Obtener usuarios no verificados para mostrarlos en la interfaz
-        unverified_users = [user for user in users if not user.get('verified', False)]
+        unverified_users = [user for user in usuarios if not user.get('verified', False)]
         
         return render_template('admin/verify_users.html', stats=stats, unverified_users=unverified_users)
     except Exception as e:
@@ -1314,7 +1382,7 @@ def verify_users():
         return redirect(url_for('admin.maintenance'))
 
 @admin_bp.route("/catalogos-usuario/<user_id>")
-# # @admin_required
+@admin_required
 def ver_catalogos_usuario_por_id(user_id):
     try:
         # Verificar que el usuario existe
@@ -1323,61 +1391,52 @@ def ver_catalogos_usuario_por_id(user_id):
             flash("Usuario no encontrado", "danger")
             return redirect(url_for("admin.lista_usuarios"))
 
-        # Obtener el email del usuario para buscar sus catálogos
-        user_email = usuario.get("email")
-        username = usuario.get("username")
-        
-        if not user_email:
-            flash("El usuario no tiene un email válido", "warning")
-            return redirect(url_for("admin.lista_usuarios"))
-            
-        logger.info(f"[ADMIN] Buscando catálogos para el usuario con ID: {user_id}, email: {user_email}, username: {username}")
-        
+        # Obtener todos los posibles identificadores del usuario
+        user_email = usuario.get("email", "")
+        username = usuario.get("username", "")
+        nombre = usuario.get("name", "")
+        posibles = set([user_email, username, nombre])
+        posibles = {v for v in posibles if v}
+        logger.info(f"[ADMIN] Buscando catálogos para el usuario con ID: {user_id}, posibles: {posibles}")
+
         # Obtener los catálogos del usuario de ambas colecciones
-        from app.extensions import mongo
         collections_to_check = ['catalogs', 'spreadsheets']
         all_catalogs = []
-        
+
         for collection_name in collections_to_check:
             try:
-                collection = mongo.db[collection_name]
-                # Buscar por email, username, owner y owner_name
-                catalogs_cursor = collection.find({
-                    "$or": [
-                        {"created_by": user_email},
-                        {"created_by": username},
-                        {"owner": user_email},
-                        {"owner_name": username},
-                        {"email": user_email}
-                    ]
-                })
-                
-                # Convertir el cursor a lista y añadir a los resultados
+                collection = get_db()[collection_name]
+                # Buscar por todos los campos posibles
+                query = {"$or": []}
+                for val in posibles:
+                    query["$or"].extend([
+                        {"created_by": val},
+                        {"owner": val},
+                        {"owner_name": val},
+                        {"email": val},
+                        {"username": val},
+                        {"name": val}
+                    ])
+                catalogs_cursor = collection.find(query)
                 for catalog in catalogs_cursor:
-                    # Añadir información sobre la colección de origen
                     catalog['collection_source'] = collection_name
                     catalog['_id_str'] = str(catalog['_id'])
                     all_catalogs.append(catalog)
-                    
-                logger.info(f"[ADMIN] Encontrados {collection.count_documents({'$or': [{'created_by': user_email}, {'created_by': username}, {'owner': user_email}, {'owner_name': username}, {'email': user_email}]})} catálogos en {collection_name} para {user_email}")
+                logger.info(f"[ADMIN] Encontrados {collection.count_documents(query)} catálogos en {collection_name} para {posibles}")
             except Exception as e:
                 logger.error(f"Error al buscar catálogos en {collection_name}: {str(e)}")
-        
-        # Usar la lista combinada de catálogos
+
         catalogs = all_catalogs
-        logger.info(f"[ADMIN] Total de catálogos encontrados para {user_email}: {len(catalogs)}")
-        
+        logger.info(f"[ADMIN] Total de catálogos encontrados para {posibles}: {len(catalogs)}")
+
         # Añadir información adicional a cada catálogo
         for catalog in catalogs:
-            # Calcular el número de filas del catálogo
             if 'rows' in catalog and catalog['rows'] is not None:
                 catalog['row_count'] = len(catalog['rows'])
             elif 'data' in catalog and catalog['data'] is not None:
                 catalog['row_count'] = len(catalog['data'])
             else:
                 catalog['row_count'] = 0
-                
-            # Formatear la fecha de creación
             if "created_at" in catalog and catalog["created_at"]:
                 try:
                     if hasattr(catalog["created_at"], "strftime"):
@@ -1396,62 +1455,26 @@ def ver_catalogos_usuario_por_id(user_id):
         flash(f"Error al cargar los catálogos del usuario: {str(e)}", "error")
         return redirect(url_for('admin.lista_usuarios'))
 
-@admin_bp.route("/catalogo/<catalog_id>")
-# # @admin_required
-def ver_catalogo_admin_detalle(catalog_id):
-    try:
-        logger.info(f"[ADMIN] Entrando en ver_catalogo_admin con catalog_id={catalog_id}")
-        
-        # Obtener la colección de catálogos
-        catalogs_collection = getattr(current_app, 'spreadsheets_collection', None)
-        if catalogs_collection is None:
-            from app.extensions import mongo
-            catalogs_collection = mongo.db.spreadsheets
-            
-        catalog = catalogs_collection.find_one({"_id": ObjectId(catalog_id)})
-        if not catalog:
-            logger.warning(f"[ADMIN] Catálogo no encontrado para id={catalog_id}")
-            flash("Catálogo no encontrado", "warning")
-            return render_template("admin/ver_catalogo.html", catalog=None, error="Catálogo no encontrado")
-            
-        # Añadir información adicional al catálogo
-        if "created_at" in catalog and catalog["created_at"]:
-            catalog["created_at_formatted"] = catalog["created_at"].strftime("%d/%m/%Y %H:%M")
-        else:
-            catalog["created_at_formatted"] = "Fecha desconocida"
-            
-        # Contar filas
-        catalog["row_count"] = len(catalog.get("data", []))
-            
-        logger.info(f"[ADMIN] Mostrando catálogo: {catalog['name'] if 'name' in catalog else 'Sin nombre'}")
-        return render_template("admin/ver_catalogo.html", catalog=catalog, error=None)
-    except Exception as e:
-        logger.error(f"Error en ver_catalogo_admin: {str(e)}", exc_info=True)
-        flash(f"Error al cargar el catálogo: {str(e)}", "error")
-        return redirect(url_for('admin.dashboard_admin'))
-
-@admin_bp.route("/catalogo/ver/<collection_source>/<catalog_id>")
-# # @admin_required
+@admin_bp.route("/catalogo/<collection_source>/<catalog_id>")
+@admin_required
 def ver_catalogo_unificado(collection_source, catalog_id):
+    logger.info(f"[ADMIN] Entrando en ver_catalogo_unificado con collection_source={collection_source}, catalog_id={catalog_id}")
     try:
-        logger.info(f"[ADMIN] Entrando en ver_catalogo_unificado con collection_source={collection_source}, catalog_id={catalog_id}")
-        
-        from app.extensions import mongo
-        
-        # Verificar que la colección solicitada existe
-        if collection_source not in ['catalogs', 'spreadsheets']:
-            flash(f"Colección {collection_source} no válida", "error")
-            return redirect(url_for('admin.dashboard_admin'))
-        
-        # Obtener el catálogo de la colección correspondiente
-        collection = mongo.db[collection_source]
+        db = get_db()
+        collection = db[collection_source]
         catalog = collection.find_one({"_id": ObjectId(catalog_id)})
-        
         if not catalog:
             logger.warning(f"[ADMIN] Catálogo no encontrado en {collection_source} para id={catalog_id}")
             flash("Catálogo no encontrado", "warning")
             return render_template("admin/ver_catalogo.html", catalog=None, error="Catálogo no encontrado")
-        
+        # Refuerzo: asegurar que headers siempre exista y sea lista
+        if 'headers' not in catalog or not isinstance(catalog['headers'], list):
+            catalog['headers'] = []
+        # Refuerzo: asegurar que rows siempre exista y sea lista
+        if ('rows' not in catalog or catalog['rows'] is None) and ('data' in catalog and isinstance(catalog['data'], list)):
+            catalog['rows'] = catalog['data']
+        elif 'rows' not in catalog or catalog['rows'] is None:
+            catalog['rows'] = []
         # Añadir información sobre la colección de origen
         catalog['collection_source'] = collection_source
         catalog['_id_str'] = str(catalog['_id'])
@@ -1526,29 +1549,34 @@ def ver_catalogo_unificado(collection_source, catalog_id):
 
         
         logger.info(f"[ADMIN] Mostrando catálogo desde {collection_source}: {catalog.get('name', 'Sin nombre')}")
-        return render_template("admin/ver_catalogo.html", catalog=catalog, error=None, collection_source=collection_source)
+        # Determinar return_url
+        return_url = request.referrer
+        # Intentar deducir el user_id para volver a la lista de catálogos del usuario
+        user_id = None
+        if 'created_by_id' in catalog and catalog['created_by_id']:
+            user_id = str(catalog['created_by_id'])
+        elif 'created_by' in catalog and catalog['created_by']:
+            user = db.users.find_one({"$or": [{"email": catalog['created_by']}, {"username": catalog['created_by']}]})
+            if user:
+                user_id = str(user['_id'])
+        if not return_url and user_id:
+            return_url = url_for('admin.ver_catalogos_usuario_por_id', user_id=user_id)
+        elif not return_url:
+            return_url = url_for('admin.dashboard_admin')
+        return render_template("admin/ver_catalogo.html", catalog=catalog, error=None, collection_source=collection_source, return_url=return_url)
     except Exception as e:
         logger.error(f"Error en ver_catalogo_unificado: {str(e)}", exc_info=True)
         flash(f"Error al cargar el catálogo: {str(e)}", "error")
         return redirect(url_for('admin.dashboard_admin'))
 
 @admin_bp.route("/catalogo/<collection_source>/<catalog_id>/editar", methods=["GET", "POST"])
-# # @admin_required
+@admin_required
 def editar_catalogo_admin(collection_source, catalog_id):
+    logger.info(f"[ADMIN] Entrando en editar_catalogo_admin con collection_source={collection_source}, catalog_id={catalog_id}")
     try:
-        logger.info(f"[ADMIN] Entrando en editar_catalogo_admin con collection_source={collection_source}, catalog_id={catalog_id}")
-        
-        from app.extensions import mongo
-        
-        # Verificar que la colección solicitada existe
-        if collection_source not in ['catalogs', 'spreadsheets']:
-            flash(f"Colección {collection_source} no válida", "error")
-            return redirect(url_for('admin.dashboard_admin'))
-        
-        # Obtener el catálogo de la colección correspondiente
-        collection = mongo.db[collection_source]
+        db = get_db()
+        collection = db[collection_source]
         catalog = collection.find_one({"_id": ObjectId(catalog_id)})
-        
         if not catalog:
             logger.warning(f"[ADMIN] Catálogo no encontrado en {collection_source} para id={catalog_id}")
             flash("Catálogo no encontrado", "warning")
@@ -1561,27 +1589,30 @@ def editar_catalogo_admin(collection_source, catalog_id):
         if request.method == "POST":
             name = request.form.get("name")
             description = request.form.get("description", "")
+            headers_raw = request.form.get("headers")
+            update_data = {
+                "name": name,
+                "description": description,
+                "updated_at": datetime.utcnow()
+            }
+            if headers_raw is not None:
+                headers = [h.strip() for h in headers_raw.split(",") if h.strip()]
+                update_data["headers"] = headers
             # Actualizar el catálogo en la colección correspondiente
             collection.update_one(
                 {"_id": ObjectId(catalog_id)}, 
-                {"$set": {
-                    "name": name,
-                    "description": description,
-                    "updated_at": datetime.datetime.utcnow()
-                }}
+                {"$set": update_data}
             )
             flash("Catálogo actualizado correctamente", "success")
-            
             # Intentar obtener el ID del usuario para redirigir
             user_id = None
             if 'created_by_id' in catalog and catalog['created_by_id']:
                 user_id = str(catalog['created_by_id'])
             elif 'created_by' in catalog and catalog['created_by']:
                 # Buscar el usuario por email o username
-                user = mongo.db.users.find_one({"$or": [{"email": catalog['created_by']}, {"username": catalog['created_by']}]})
+                user = db.users.find_one({"$or": [{"email": catalog['created_by']}, {"username": catalog['created_by']}]})
                 if user:
                     user_id = str(user['_id'])
-            
             if user_id:
                 return redirect(url_for("admin.ver_catalogos_usuario_por_id", user_id=user_id))
             else:
@@ -1594,20 +1625,13 @@ def editar_catalogo_admin(collection_source, catalog_id):
         return redirect(url_for('admin.dashboard_admin'))
 
 @admin_bp.route("/catalogo/<collection_source>/<catalog_id>/eliminar", methods=["POST"])
-# # @admin_required
+@admin_required
 def eliminar_catalogo_admin(collection_source, catalog_id):
     try:
         logger.info(f"[ADMIN] Entrando en eliminar_catalogo_admin con collection_source={collection_source}, catalog_id={catalog_id}")
         
-        from app.extensions import mongo
-        
-        # Verificar que la colección solicitada existe
-        if collection_source not in ['catalogs', 'spreadsheets']:
-            flash(f"Colección {collection_source} no válida", "error")
-            return redirect(url_for('admin.dashboard_admin'))
-        
-        # Obtener el catálogo de la colección correspondiente
-        collection = mongo.db[collection_source]
+        db = get_db()
+        collection = db[collection_source]
         catalog = collection.find_one({"_id": ObjectId(catalog_id)})
         
         if not catalog:
@@ -1632,6 +1656,90 @@ def eliminar_catalogo_admin(collection_source, catalog_id):
         flash(f"Error al eliminar el catálogo: {str(e)}", "error")
         return redirect(url_for('admin.dashboard_admin'))
 
+@admin_bp.route("/db-scripts", methods=["GET", "POST"])
+@admin_required
+def db_scripts():
+    import glob
+    import shlex
+    import time
+    scripts_dir = os.path.join(os.getcwd(), "tools", "db_utils")
+    # Blacklist de scripts peligrosos
+    blacklist = {"__init__.py", "google_drive_utils.py"}
+    scripts = [os.path.basename(f) for f in glob.glob(os.path.join(scripts_dir, "*.py"))
+               if not os.path.basename(f).startswith("_") and os.path.basename(f) not in blacklist]
+    result = None
+    error = None
+    selected_script = None
+    args = ""
+    duration = None
+    if request.method == "POST":
+        selected_script = request.form.get("script")
+        args = request.form.get("args", "")
+        if selected_script and selected_script.endswith(".py") and selected_script in scripts:
+            script_path = os.path.join(scripts_dir, selected_script)
+            cmd = ["python3", script_path]
+            if args:
+                cmd += shlex.split(args)
+            start_time = time.time()
+            try:
+                proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
+                out, err = proc.communicate()
+                duration = round(time.time() - start_time, 2)
+                result = out
+                error = err if err else None
+                # Registrar en log de auditoría
+                audit_log(f"Ejecución de script DB: {selected_script} args: {args} duración: {duration}s")
+            except Exception as e:
+                error = str(e)
+        else:
+            error = "Script no válido."
+    # Mensaje de advertencia de seguridad
+    warning = "⚠️ Ejecutar scripts desde la web puede ser peligroso. Usa solo scripts de confianza."
+    return render_template("admin/db_scripts.html", scripts=scripts, result=result, error=error, selected_script=selected_script, args=args, duration=duration, warning=warning)
+
+@admin_bp.route("/db-status")
+@admin_required
+def db_status():
+    status = {
+        "is_connected": False,
+        "error": None,
+        "databases": [],
+        "collections": [],
+        "server_info": "",
+    }
+    try:
+        client = get_mongo_client()
+        db = get_mongo_db()
+        if client is not None:
+            # Probar ping
+            try:
+                client.admin.command('ping')
+                status["is_connected"] = True
+            except Exception as e:
+                status["error"] = f"Ping fallido: {e}"
+            # Listar bases de datos
+            try:
+                status["databases"] = client.list_database_names()
+            except Exception as e:
+                status["error"] = f"Error al listar bases de datos: {e}"
+            # Listar colecciones de la BD actual
+            if db is not None:
+                try:
+                    status["collections"] = db.list_collection_names()
+                except Exception as e:
+                    status["error"] = f"Error al listar colecciones: {e}"
+            # Info del servidor
+            try:
+                info = client.server_info()
+                status["server_info"] = pprint.pformat(info, indent=2, width=120)
+            except Exception as e:
+                status["server_info"] = f"Error: {e}"
+        else:
+            status["error"] = get_last_error() or "Cliente MongoDB no inicializado"
+    except Exception as e:
+        status["error"] = f"Excepción crítica: {e}\n{traceback.format_exc()}"
+    return render_template("admin/db_status.html", status=status)
+
 admin_logs_bp = Blueprint('admin_logs', __name__)
 
 # Decorador para restringir acceso solo a admin
@@ -1646,44 +1754,193 @@ def admin_required_logs(f):
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs/flask_debug.log'))
 
 @admin_logs_bp.route('/admin/logs')
-# # @admin_required_logs
+@admin_required_logs
 def logs_manual():
     return render_template('logs_manual.html')
 
 @admin_logs_bp.route('/admin/logs/tail')
-# # @admin_required_logs
+@admin_required_logs
 def logs_tail():
+    import os
     n = int(request.args.get('n', 20))
-    with open(LOG_PATH, 'r') as f:
+    log_file = request.args.get('log_file', 'flask_debug.log')
+    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
+    log_path = os.path.join(logs_dir, log_file)
+    if not os.path.isfile(log_path):
+        return jsonify({'logs': [f'Archivo no encontrado: {log_file}\n']}), 404
+    with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
         lines = f.readlines()
     last_n_lines = lines[-n:] if len(lines) > n else lines
     return jsonify({'logs': last_n_lines})
 
 @admin_logs_bp.route('/admin/logs/search')
-# # @admin_required_logs
+@admin_required_logs
 def logs_search():
+    import os
     kw = request.args.get('kw', '').strip()
+    log_file = request.args.get('log_file', 'flask_debug.log')
+    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
+    log_path = os.path.join(logs_dir, log_file)
+    if not os.path.isfile(log_path):
+        return jsonify({'logs': [f'Archivo no encontrado: {log_file}\n']}), 404
     if not kw:
         return jsonify({'logs': []})
-    with open(LOG_PATH, 'r') as f:
+    with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
         lines = [l for l in f if kw.lower() in l.lower()]
     return jsonify({'logs': lines})
 
 @admin_logs_bp.route('/admin/logs/download')
-# # @admin_required_logs
+@admin_required_logs
 def logs_download():
-    return send_file(LOG_PATH, as_attachment=True, download_name='flask_debug.log')
+    import os
+    log_file = request.args.get('log_file', 'flask_debug.log')
+    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
+    log_path = os.path.join(logs_dir, log_file)
+    if not os.path.isfile(log_path):
+        return 'Archivo no encontrado', 404
+    return send_file(log_path, as_attachment=True, download_name=log_file)
 
 @admin_logs_bp.route('/admin/logs/clear', methods=['POST'])
-# # @admin_required_logs
+@admin_required_logs
 def logs_clear():
-    with open(LOG_PATH, 'w') as f:
+    import os
+    log_file = request.args.get('log_file', 'flask_debug.log')
+    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
+    log_path = os.path.join(logs_dir, log_file)
+    if not os.path.isfile(log_path):
+        return jsonify({'status': f'Archivo no encontrado: {log_file}'}), 404
+    with open(log_path, 'w') as f:
         f.truncate(0)
-    return jsonify({'status': 'Log limpiado correctamente'})
+    return jsonify({'status': f'Log {log_file} limpiado correctamente'})
 
 @admin_logs_bp.route('/admin/logs/size')
-# # @admin_required_logs
+@admin_required_logs
 def logs_size():
-    size = os.path.getsize(LOG_PATH)
-    backups = len([f for f in os.listdir(os.path.dirname(LOG_PATH)) if f.startswith('flask_debug.log.')])
+    import os
+    log_file = request.args.get('log_file', 'flask_debug.log')
+    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
+    log_path = os.path.join(logs_dir, log_file)
+    if not os.path.isfile(log_path):
+        return jsonify({'size': 0, 'backups': 0, 'error': 'Archivo no encontrado'}), 404
+    size = os.path.getsize(log_path)
+    backups = len([f for f in os.listdir(logs_dir) if f.startswith(log_file + '.')])
     return jsonify({'size': size, 'backups': backups})
+
+@admin_bp.route("/backups/list", methods=["GET", "POST"])
+@admin_required
+def backups_list():
+    backups_dir = os.path.join(os.getcwd(), "backups")
+    backup_files = get_backup_files(backups_dir)
+    if request.method == "POST":
+        # Borrado individual
+        filename = request.form.get("filename")
+        if filename and '..' not in filename and '/' not in filename:
+            file_path = os.path.join(backups_dir, filename)
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    flash(f"Backup {filename} eliminado correctamente", "success")
+                    audit_log(f"Backup eliminado manualmente por {session.get('user_id', session.get('username', 'desconocido'))} - {filename}")
+                except Exception as e:
+                    flash(f"Error al eliminar el backup: {str(e)}", "danger")
+            else:
+                flash("El archivo no existe", "warning")
+        else:
+            flash("Nombre de archivo no válido", "danger")
+        return redirect(url_for("admin.backups_list"))
+    return render_template("admin/backups_list.html", backup_files=backup_files)
+
+@admin_bp.route("/backups/download/<filename>")
+@admin_required
+def download_backup(filename):
+    backups_dir = os.path.join(os.getcwd(), "backups")
+    if '..' in filename or '/' in filename:
+        flash("Nombre de archivo no válido", "danger")
+        return redirect(url_for("admin.backups_list"))
+    file_path = os.path.join(backups_dir, filename)
+    if not os.path.exists(file_path):
+        flash("El archivo no existe", "warning")
+        return redirect(url_for("admin.backups_list"))
+    audit_log(f"Descarga de backup por {session.get('user_id', session.get('username', 'desconocido'))} - {filename}")
+    return send_file(file_path, as_attachment=True, download_name=filename)
+
+@admin_bp.route("/reset_gdrive_token", methods=["POST"])
+@admin_required
+def reset_gdrive_token_route():
+    import subprocess
+    import sys
+    try:
+        script_path = os.path.join(os.path.dirname(__file__), '../../tools/db_utils/google_drive_utils.py')
+        result = subprocess.run([sys.executable, script_path, '--reset-token'], capture_output=True, text=True)
+        if result.returncode == 0:
+            flash("Token de Google Drive eliminado correctamente. Sigue las instrucciones para regenerar el refresh_token.", "success")
+            flash(result.stdout, "info")
+        else:
+            flash(f"Error al eliminar el token: {result.stderr}", "danger")
+    except Exception as e:
+        flash(f"Error al ejecutar el reseteo de token: {str(e)}", "danger")
+    return redirect(url_for('admin.maintenance'))
+
+@admin_bp.route("/gdrive_upload_test", methods=["GET", "POST"])
+@admin_required
+def gdrive_upload_test():
+    import os
+    from werkzeug.utils import secure_filename
+    from tools.db_utils.google_drive_utils import upload_to_drive
+    uploaded_links = []
+    if request.method == "POST":
+        files = request.files.getlist("test_files")
+        if not files or files[0].filename == '':
+            flash("No se seleccionó ningún archivo.", "warning")
+            return redirect(url_for('admin.gdrive_upload_test'))
+        for file in files:
+            filename = secure_filename(file.filename)
+            temp_path = os.path.join("/tmp", filename)
+            file.save(temp_path)
+            try:
+                enlace = upload_to_drive(temp_path)
+                uploaded_links.append((filename, enlace))
+                flash(f"Archivo '{filename}' subido correctamente a Google Drive.", "success")
+            except Exception as e:
+                flash(f"Error al subir '{filename}': {str(e)}", "danger")
+            finally:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+    return render_template("admin/gdrive_upload_test.html", uploaded_links=uploaded_links)
+
+@admin_bp.route("/truncate_log", methods=["POST"])
+@admin_required
+def truncate_log_route():
+    import subprocess
+    import sys
+    log_file = request.form.get('log_file')
+    lines = request.form.get('lines')
+    date = request.form.get('date')
+    script_path = os.path.join(os.path.dirname(__file__), '../../tools/log_utils.py')
+    cmd = [sys.executable, script_path, '--file', log_file]
+    if lines:
+        cmd += ['--lines', lines]
+    elif date:
+        cmd += ['--date', date]
+    else:
+        flash('Debes indicar número de líneas o fecha.', 'warning')
+        return redirect(url_for('admin.maintenance'))
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            flash(result.stdout, 'success')
+        else:
+            flash(result.stderr, 'danger')
+    except Exception as e:
+        flash(f'Error al truncar el log: {str(e)}', 'danger')
+    return redirect(url_for('admin.maintenance'))
+
+app = None
+try:
+    from flask import current_app
+    app = current_app._get_current_object()
+except Exception:
+    import __main__
+    app = getattr(__main__, 'app', None)
+if app is not None:
+    app.register_blueprint(admin_logs_bp)

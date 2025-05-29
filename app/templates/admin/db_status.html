@@ -1,0 +1,49 @@
+{% extends 'admin/base.html' %}
+{% block title %}Estado de la conexión a MongoDB{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Estado de la conexión a MongoDB</h2>
+    {% if status.is_connected %}
+        <div class="alert alert-success">✅ Conexión activa a MongoDB</div>
+    {% else %}
+        <div class="alert alert-danger">❌ Sin conexión a MongoDB</div>
+    {% endif %}
+    {% if status.error %}
+        <div class="alert alert-warning"><strong>Error:</strong> {{ status.error }}</div>
+    {% endif %}
+    <div class="card mb-3">
+        <div class="card-header">Bases de datos disponibles</div>
+        <div class="card-body">
+            {% if status.databases %}
+                <ul>
+                {% for db in status.databases %}
+                    <li>{{ db }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <em>No se pudieron obtener las bases de datos.</em>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card mb-3">
+        <div class="card-header">Colecciones en la base de datos actual</div>
+        <div class="card-body">
+            {% if status.collections %}
+                <ul>
+                {% for col in status.collections %}
+                    <li>{{ col }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <em>No se pudieron obtener las colecciones.</em>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card mb-3">
+        <div class="card-header">Información del servidor MongoDB</div>
+        <div class="card-body">
+            <pre style="font-size: 0.95em;">{{ status.server_info }}</pre>
+        </div>
+    </div>
+</div>
+{% endblock %} 

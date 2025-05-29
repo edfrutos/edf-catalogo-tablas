@@ -95,3 +95,5 @@ coverage.xml
 .aws-sam/
 .cdk.staging/
 .qodo
+
+tools/_backup_scripts/

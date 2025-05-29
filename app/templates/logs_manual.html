@@ -1,12 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5">
-  <h2>Manual Interactivo de Gestión de Logs</h2>
+  <h2>Gestión de Logs</h2>
+  <form id="log-select-form" class="mb-3">
+    <label for="logfile" class="form-label">Selecciona un archivo de log:</label>
+    <select id="logfile" name="logfile" class="form-select" onchange="actualizarLogSeleccionado()">
+      <option value="">-- Selecciona un log --</option>
+      <option value="flask_debug.log">flask_debug.log</option>
+      <option value="app.log">app.log</option>
+      <option value="consola_terminal.log">consola_terminal.log</option>
+      <option value="gunicorn_error.log">gunicorn_error.log</option>
+      <option value="app_catalogo_completo_final.log">app_catalogo_completo_final.log</option>
+      <option value="app_catalogo_routes.log">app_catalogo_routes.log</option>
+      <option value="app_debug.log">app_debug.log</option>
+      <option value="flask_run_test.log">flask_run_test.log</option>
+      <option value="flask_test.log">flask_test.log</option>
+      <option value="startup.log">startup.log</option>
+      <option value="wsgi.log">wsgi.log</option>
+      <!-- Agrega más opciones según los logs existentes -->
+    </select>
+  </form>
   <div class="mb-3">
     <button class="btn btn-primary" onclick="verUltimos(50)">Ver últimos 50 registros</button>
     <button class="btn btn-secondary" onclick="buscarLogs()">Buscar por palabra clave</button>
     <button class="btn btn-success" onclick="descargarLog()">Descargar log</button>
-    <button class="btn btn-danger" onclick="limpiarLog()">Limpiar log</button>
+    <button class="btn btn-danger" onclick="mostrarModalTruncar()">Truncar log</button>
     <button class="btn btn-info" onclick="verTamano()">Ver tamaño y rotaciones</button>
   </div>
   <div class="mb-3">
@@ -14,41 +32,108 @@
   </div>
   <pre id="log-output" style="background:#222;color:#0f0;padding:1em;height:400px;overflow:auto"></pre>
 </div>
+
+<!-- Modal para truncar log -->
+<div class="modal fade" id="modalTruncar" tabindex="-1" aria-labelledby="modalTruncarLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formTruncar" onsubmit="truncarLog(event)">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTruncarLabel">Truncar log seleccionado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="numLineas" class="form-label">Truncar a las últimas N líneas:</label>
+            <input type="number" class="form-control" id="numLineas" name="numLineas" min="10" placeholder="Ej: 100">
+          </div>
+          <div class="mb-3">
+            <label for="fechaCorte" class="form-label">O truncar a partir de fecha (YYYY-MM-DD):</label>
+            <input type="date" class="form-control" id="fechaCorte" name="fechaCorte">
+          </div>
+          <div class="form-text">Rellena solo una de las dos opciones.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Truncar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
+let logSeleccionado = '';
+function actualizarLogSeleccionado() {
+  logSeleccionado = document.getElementById('logfile').value;
+}
+function getLogParam() {
+  if (!logSeleccionado) {
+    alert('Selecciona un archivo de log.');
+    return null;
+  }
+  return `?log_file=${encodeURIComponent(logSeleccionado)}`;
+}
 function verUltimos(n) {
-  fetch(`/admin/logs/tail?n=${n}`)
+  if (!getLogParam()) return;
+  fetch(`/admin/logs/tail${getLogParam()}&n=${n}`)
     .then(r => r.json())
     .then(d => {
       document.getElementById('log-output').textContent = d.logs.join('');
     });
 }
 function buscarLogs() {
+  if (!getLogParam()) return;
   const kw = document.getElementById('keyword').value;
   if (!kw) return alert('Introduce una palabra clave');
-  fetch(`/admin/logs/search?kw=${encodeURIComponent(kw)}`)
+  fetch(`/admin/logs/search${getLogParam()}&kw=${encodeURIComponent(kw)}`)
     .then(r => r.json())
     .then(d => {
       document.getElementById('log-output').textContent = d.logs.join('');
     });
 }
 function descargarLog() {
-  window.location = '/admin/logs/download';
+  if (!getLogParam()) return;
+  window.location = `/admin/logs/download${getLogParam()}`;
 }
-function limpiarLog() {
-  if (!confirm('¿Seguro que quieres limpiar el log?')) return;
-  fetch('/admin/logs/clear', {method:'POST'})
-    .then(r => r.json())
-    .then(d => {
-      alert(d.status);
+function mostrarModalTruncar() {
+  if (!getLogParam()) return;
+  var modal = new bootstrap.Modal(document.getElementById('modalTruncar'));
+  modal.show();
+}
+function truncarLog(event) {
+  event.preventDefault();
+  if (!getLogParam()) return;
+  const numLineas = document.getElementById('numLineas').value;
+  const fechaCorte = document.getElementById('fechaCorte').value;
+  if (!numLineas && !fechaCorte) {
+    alert('Debes indicar número de líneas o fecha.');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('log_file', logSeleccionado);
+  if (numLineas) formData.append('lines', numLineas);
+  if (fechaCorte) formData.append('date', fechaCorte);
+  fetch('/admin/truncate_log', {method:'POST', body:formData})
+    .then(r => r.text())
+    .then(() => {
+      alert('Log truncado correctamente');
+      var modal = bootstrap.Modal.getInstance(document.getElementById('modalTruncar'));
+      modal.hide();
       verUltimos(20);
     });
 }
 function verTamano() {
-  fetch('/admin/logs/size')
+  if (!getLogParam()) return;
+  fetch(`/admin/logs/size${getLogParam()}`)
     .then(r => r.json())
     .then(d => {
       document.getElementById('log-output').textContent = `Tamaño: ${d.size} bytes\nRotaciones: ${d.backups}`;
     });
 }
+// Inicializar log seleccionado al cargar
+window.onload = function() {
+  actualizarLogSeleccionado();
+};
 </script>
 {% endblock %} 

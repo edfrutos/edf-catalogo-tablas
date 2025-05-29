@@ -15,8 +15,10 @@
             <input type="file" class="form-control" id="imagenes" name="imagenes" multiple accept="image/*">
             <div class="form-text">Puede seleccionar hasta 3 imágenes. Formatos permitidos: JPG, PNG, GIF.</div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{{ url_for('main.ver_tabla', table_id=tabla._id) }}" class="btn btn-secondary">Cancelar</a>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('main.ver_tabla', table_id=tabla._id) }}" class="btn btn-secondary">Cancelar</a>
+        </div>
     </form>
 </div>
 {% endblock %}

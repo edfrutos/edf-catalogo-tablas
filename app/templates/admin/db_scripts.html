@@ -1,0 +1,57 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <h2 class="mb-4">Gestión de scripts de base de datos</h2>
+    <div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> {{ warning }}</div>
+    <form method="post" class="card p-3 mb-4 shadow-sm">
+        <div class="mb-3">
+            <label for="script" class="form-label">Script a ejecutar:</label>
+            <div class="input-group">
+                <select name="script" id="script" class="form-select" required>
+                    <option value="">-- Selecciona un script --</option>
+                    {% for script in scripts %}
+                        <option value="{{ script }}" {% if script == selected_script %}selected{% endif %}>{{ script }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" name="args" value="--help" class="btn btn-outline-secondary" title="Mostrar ayuda del script seleccionado">--help</button>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="args" class="form-label">Argumentos (opcional):</label>
+            <input type="text" name="args" id="args" class="form-control" value="{{ args|default('') }}" placeholder="--help o argumentos para el script">
+        </div>
+        <button type="submit" class="btn btn-primary">Ejecutar</button>
+    </form>
+
+    {% if scripts|length == 0 %}
+      <div class="alert alert-warning mt-3">No hay scripts disponibles en <code>tools/db_utils</code>.</div>
+    {% endif %}
+
+    {% if result or error %}
+        <hr>
+        <h4>Resultado de la ejecución</h4>
+        {% if duration %}
+            <div class="mb-2 text-muted">Duración: {{ duration }} segundos</div>
+        {% endif %}
+        {% if result %}
+            <div class="mb-2">
+                <strong>Salida estándar (stdout):</strong>
+                <pre style="background:#f8f9fa; border:1px solid #ccc; padding:1em; border-radius:6px;">{{ result }}</pre>
+            </div>
+        {% endif %}
+        {% if error %}
+            <div class="alert alert-danger"><strong>Salida de error (stderr):</strong><br><pre>{{ error }}</pre></div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %} 

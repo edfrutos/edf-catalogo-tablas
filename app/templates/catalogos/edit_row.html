@@ -29,9 +29,14 @@
     </div>
   </div>
   {% endif %}
-  <button type="submit" class="btn btn-success">Guardar</button>
+  <div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
+    <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=row_index) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+      <button type="submit" class="btn btn-danger">Eliminar</button>
+    </form>
+  </div>
 </form>
-<a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary mt-2">Cancelar</a>
 
 <!-- Modal for image preview -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">

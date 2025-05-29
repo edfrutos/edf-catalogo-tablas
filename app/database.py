@@ -1,3 +1,10 @@
+# Script: database.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 database.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 """
 Módulo para gestionar la conexión a la base de datos MongoDB de forma resiliente.
 Permite modo fallback y reconexión automática.
@@ -11,6 +18,7 @@ from pymongo import MongoClient
 from pymongo.errors import (ConnectionFailure, ServerSelectionTimeoutError, 
                            OperationFailure, NetworkTimeout)
 from config import MONGO_CONFIG, COLLECTION_USERS, COLLECTION_CATALOGOS, COLLECTION_RESET_TOKENS, COLLECTION_AUDIT_LOGS
+import certifi  # Añadir al inicio junto con los otros imports
 
 # Importar sistemas de caché y fallback
 from app.cache_system import cached, set_cache, get_cache
@@ -78,6 +86,8 @@ def initialize_db(app=None):
         config['connectTimeoutMS'] = 5000  # Timeout de conexión reducido
         config['socketTimeoutMS'] = 30000  # Timeout de socket reducido
         config['waitQueueTimeoutMS'] = 5000  # Espera máxima para obtener una conexión
+        if mongo_uri.startswith('mongodb+srv'):
+            config['tlsCAFile'] = certifi.where()
         
         # Intentar establecer la conexión
         _mongo_client = MongoClient(mongo_uri, **config)
@@ -98,12 +108,12 @@ def initialize_db(app=None):
         try:
             logging.info("Sincronizando datos para el modo fallback...")
             try:
-                sync_users_to_fallback(_mongo_db[COLLECTION_USERS].find({}, limit=100))
+                sync_users_to_fallback(_mongo_db[COLLECTION_USERS])
                 logging.info("Sincronización de usuarios completada (limitada a 100 documentos)")
             except Exception as e:
                 logging.error(f"Error al sincronizar usuarios para fallback: {str(e)}")
             try:
-                sync_catalogs_to_fallback(_mongo_db[COLLECTION_CATALOGOS].find({}, limit=100))
+                sync_catalogs_to_fallback(_mongo_db[COLLECTION_CATALOGOS])
                 logging.info("Sincronización de catálogos completada (limitada a 100 documentos)")
             except Exception as e:
                 logging.error(f"Error al sincronizar catálogos para fallback: {str(e)}")
@@ -222,17 +232,17 @@ def get_user_by_id(user_id):
         set_cache(f'user_id:{user_id}', fallback_user, ttl=3600)
     return fallback_user
 
-@cached(ttl=1800, key_prefix='catalogs')  # Aumentar TTL a 30 minutos para reducir consultas
+@cached(ttl=1800, key_prefix='spreadsheets')  # Aumentar TTL a 30 minutos para reducir consultas
 def get_catalogs_by_user(user_id):
     """Obtiene los catálogos de un usuario con caché y fallback"""
     # Verificar primero en la caché
-    cache_key = f'catalogs:{user_id}'
+    cache_key = f'spreadsheets:{user_id}'
     cached_catalogs = get_cache(cache_key)
     if cached_catalogs:
         return cached_catalogs
         
     # Primero intentamos obtener de MongoDB
-    catalogs = get_collection(COLLECTION_CATALOGOS)
+    catalogs = get_collection('spreadsheets')
     if catalogs:
         try:
             from bson.objectid import ObjectId
@@ -268,8 +278,8 @@ def get_users_collection():
     return get_collection(COLLECTION_USERS)
 
 def get_catalogs_collection():
-    """Obtiene la colección de catálogos"""
-    return get_collection(COLLECTION_CATALOGOS)
+    """Obtiene la colección de catálogos (unificado a spreadsheets)"""
+    return get_collection('spreadsheets')
 
 def get_reset_tokens_collection():
     """Obtiene la colección de tokens de restablecimiento de contraseña"""

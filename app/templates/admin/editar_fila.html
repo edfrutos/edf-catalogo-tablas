@@ -51,13 +51,12 @@
                             <div class="form-text">Formatos permitidos: JPG, JPEG, PNG, GIF. Tamaño máximo: 5MB.</div>
                         </div>
 
-                        <div class="mt-4 d-flex justify-content-between">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar cambios
-                            </button>
-                            <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancelar
-                            </a>
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                            <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
+                            <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=row_index) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </form>
                         </div>
                     </form>
                 </div>

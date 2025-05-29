@@ -19,6 +19,9 @@ from app.utils.spreadsheet_utils import get_spreadsheet_collection
 from app.utils.user_utils import get_user_by_username, get_user_by_email
 import re
 import uuid
+from app.crear_imagen_perfil_default import crear_imagen_perfil_default
+from app.utils.db_utils import get_db
+from app import notifications
 
 main_bp = Blueprint('main', __name__)
 logger = logging.getLogger(__name__)
@@ -35,11 +38,10 @@ def welcome():
     return render_template('welcome.html')
 
 @main_bp.route('/dashboard')
-# # @login_required
+@login_required
 def dashboard():
     try:
         role = session.get('role', 'user')
-        
         if role == 'admin':
             # Verificar si existe el endpoint admin.dashboard_admin
             try:
@@ -48,7 +50,7 @@ def dashboard():
                 logger.warning("Endpoint admin.dashboard_admin no encontrado, redirigiendo a dashboard_user")
                 return redirect(url_for('main.dashboard_user'))
         elif role == 'user':
-            return redirect(url_for('main.dashboard_user'))
+            return render_template('bienvenida_usuario.html')
         else:
             flash('Rol desconocido. Contacte con el administrador.', 'error')
             return redirect(url_for('main.welcome'))
@@ -60,45 +62,137 @@ def dashboard():
 
 @main_bp.route('/dashboard_user')
 def dashboard_user():
-    # Permitir acceso sin verificación de sesión, pero mostrar solo tablas del usuario
-    spreadsheets_collection = getattr(current_app, 'spreadsheets_collection', None)
-    if spreadsheets_collection is None and hasattr(current_app, 'db'):
-        spreadsheets_collection = current_app.db['spreadsheets']
-    if spreadsheets_collection is None:
-        flash('No se pudo acceder a las tablas del usuario. Contacte con el administrador.', 'error')
-        return redirect(url_for('main.dashboard'))
-        
-    # Obtener el nombre de usuario de la sesión o usar un valor predeterminado
-    owner = session.get('username') or session.get('email') or 'usuario_normal'
+    if session.get('role') == 'admin':
+        flash('Eres administrador. Redirigido a tu panel de administración.', 'info')
+        return redirect(url_for('admin.dashboard_admin'))
+    # Acceso solo a datos propios
+    username = session.get('username')
+    email = session.get('email')
+    nombre = session.get('nombre', username)
+    posibles = set([username, email, nombre])
+    posibles = {v for v in posibles if v}
     role = session.get('role', 'user')
-    
-    # Los administradores ven todas las tablas, los usuarios normales solo las suyas
-    if role == 'admin':
-        tablas = list(spreadsheets_collection.find().sort('created_at', -1))
-        logger.info(f"[ADMIN] Mostrando todas las tablas para el administrador {owner}")
-    else:
-        tablas = list(spreadsheets_collection.find({"owner": owner}).sort('created_at', -1))
-        logger.info(f"[USER] Mostrando solo las tablas del usuario {owner}")
-    
-    # Obtener catálogos del usuario
+    db = get_db()
+    print(f"[DEBUG] db: {db}")
+    print(f"[DEBUG] posibles: {posibles}")
+    if db is None:
+        flash('No se pudo acceder a la base de datos. Contacte con el administrador.', 'error')
+        return render_template("error.html", mensaje="No se pudo conectar a la base de datos. Contacte con el administrador.")
     try:
-        from app.extensions import mongo
-        if role == 'admin':
-            catalogs = list(mongo.db.catalogs.find())
-            logger.info(f"[ADMIN] Mostrando todos los catálogos para el administrador {owner}")
-        else:
-            catalogs = list(mongo.db.catalogs.find({"created_by": owner}))
-            logger.info(f"[USER] Mostrando solo los catálogos del usuario {owner}")
-        
-        # Agregar _id_str a cada catálogo para facilitar su uso en las plantillas
-        for catalog in catalogs:
-            catalog['_id_str'] = str(catalog['_id'])
+        tablas = []
+        catalogos = []
+        # Unificar criterio: buscar por todos los campos posibles
+        query = {"$or": []}
+        for val in posibles:
+            query["$or"].extend([
+                {"created_by": val},
+                {"owner": val},
+                {"owner_name": val},
+                {"email": val},
+                {"username": val},
+                {"name": val}
+            ])
+        try:
+            tablas = list(db['spreadsheets'].find(query).sort('created_at', -1))
+            print(f"[DEBUG] tablas: {tablas}")
+        except Exception as e:
+            print(f"[ERROR] Consulta a spreadsheets falló: {e}")
+            tablas = []
+        try:
+            catalogos = list(db['catalogs'].find(query).sort('created_at', -1))
+            print(f"[DEBUG] catalogos: {catalogos}")
+        except Exception as e:
+            print(f"[ERROR] Consulta a catalogs falló: {e}")
+            catalogos = []
+        print(f"[DASHBOARD_USER] Tablas encontradas: {len(tablas)} | Catálogos encontrados: {len(catalogos)}")
+        # Refuerzo: normalizar y serializar campos
+        def safe_str(val):
+            if isinstance(val, datetime):
+                return val.strftime('%Y-%m-%d %H:%M:%S')
+            return str(val) if val is not None else ''
+        for t in tablas:
+            t['tipo'] = 'spreadsheet'
+            # Unificación: sincronizar 'rows' y 'data'
+            if 'rows' in t and t['rows'] is not None:
+                t['data'] = t['rows']
+            elif 'data' in t and t['data'] is not None:
+                t['rows'] = t['data']
+            else:
+                t['data'] = []
+                t['rows'] = []
+            t['row_count'] = len(t['rows'])
+            t['_id'] = safe_str(t.get('_id'))
+            t['created_at'] = safe_str(t.get('created_at'))
+            t['owner'] = t.get('owner') or t.get('created_by') or t.get('owner_name') or t.get('email') or t.get('username') or t.get('name') or ''
+            t['name'] = t.get('name', '')
+            # Miniatura: primera imagen de la primera fila
+            t['miniatura'] = ''
+            if t['data'] and isinstance(t['data'][0], dict):
+                row = t['data'][0]
+                imagenes = []
+                if 'imagenes' in row and row['imagenes']:
+                    imagenes = row['imagenes'] if isinstance(row['imagenes'], list) else [row['imagenes']]
+                elif 'images' in row and row['images']:
+                    imagenes = row['images'] if isinstance(row['images'], list) else [row['images']]
+                elif 'imagen' in row and row['imagen']:
+                    imagenes = row['imagen'] if isinstance(row['imagen'], list) else [row['imagen']]
+                if imagenes:
+                    img = imagenes[0]
+                    if img.startswith('http'):
+                        t['miniatura'] = img
+                    else:
+                        from app.utils.s3_utils import get_s3_url
+                        s3_url = get_s3_url(img)
+                        if s3_url:
+                            t['miniatura'] = s3_url
+                        else:
+                            t['miniatura'] = url_for('static', filename=f'uploads/{img}')
+        for c in catalogos:
+            c['tipo'] = 'catalog'
+            # Unificación: sincronizar 'rows' y 'data'
+            if 'rows' in c and c['rows'] is not None:
+                c['data'] = c['rows']
+            elif 'data' in c and c['data'] is not None:
+                c['rows'] = c['data']
+            else:
+                c['data'] = []
+                c['rows'] = []
+            c['row_count'] = len(c['rows'])
+            c['_id'] = safe_str(c.get('_id'))
+            c['created_at'] = safe_str(c.get('created_at'))
+            c['owner'] = c.get('owner') or c.get('created_by') or c.get('owner_name') or c.get('email') or c.get('username') or c.get('name') or ''
+            c['name'] = c.get('name', '')
+            # Miniatura: primera imagen de la primera fila
+            c['miniatura'] = ''
+            if c['data'] and isinstance(c['data'][0], dict):
+                row = c['data'][0]
+                imagenes = []
+                if 'imagenes' in row and row['imagenes']:
+                    imagenes = row['imagenes'] if isinstance(row['imagenes'], list) else [row['imagenes']]
+                elif 'images' in row and row['images']:
+                    imagenes = row['images'] if isinstance(row['images'], list) else [row['images']]
+                elif 'imagen' in row and row['imagen']:
+                    imagenes = row['imagen'] if isinstance(row['imagen'], list) else [row['imagen']]
+                if imagenes:
+                    img = imagenes[0]
+                    if img.startswith('http'):
+                        c['miniatura'] = img
+                    else:
+                        from app.utils.s3_utils import get_s3_url
+                        s3_url = get_s3_url(img)
+                        if s3_url:
+                            c['miniatura'] = s3_url
+                        else:
+                            c['miniatura'] = url_for('static', filename=f'uploads/{img}')
+        registros = tablas + catalogos
+        if not registros:
+            flash('No tienes catálogos ni tablas asociados a tu usuario.', 'info')
+            return render_template('dashboard_unificado.html', registros=[])
+        return render_template('dashboard_unificado.html', registros=registros)
     except Exception as e:
-        logger.error(f"Error al obtener catálogos: {str(e)}")
-        catalogs = []
-        flash('No se pudieron cargar los catálogos. Contacte con el administrador.', 'warning')
-        
-    return render_template('dashboard_unificado.html', tablas=tablas, catalogs=catalogs)
+        print(f"[ERROR][DASHBOARD_USER] {e}")
+        flash('Error al cargar tus catálogos/tablas.', 'error')
+        return render_template('dashboard_unificado.html', registros=[])
 
 @main_bp.route("/editar/<id>", methods=["GET", "POST"])
 def editar(id):
@@ -155,7 +249,7 @@ def editar(id):
     )
 
 @main_bp.route('/ver_tabla/<table_id>')
-# # @login_required
+@login_required
 def ver_tabla(table_id):
     try:
         table = current_app.spreadsheets_collection.find_one({'_id': ObjectId(table_id)})
@@ -225,88 +319,56 @@ def ver_tabla(table_id):
         
         # Procesar las imágenes en cada fila
         for i, row in enumerate(table.get('data', [])):
+            if not isinstance(row, dict):
+                current_app.logger.warning(f"[VISIONADO] Fila {i} ignorada por no ser un dict: {row}")
+                continue
             current_app.logger.info(f"[DEBUG][VISIONADO] Procesando fila {i}: {row}")
             
-            # Inicializar el array de imágenes si no existe
-            if 'imagenes' not in row:
+            # Normalizar campo imagenes
+            if 'imagenes' not in row or row['imagenes'] is None:
                 row['imagenes'] = []
-            
-            # Asegurarse de que imagenes sea una lista
-            if row['imagenes'] and not isinstance(row['imagenes'], list):
+            elif isinstance(row['imagenes'], str):
                 row['imagenes'] = [row['imagenes']]
-                current_app.logger.info(f"[DEBUG][VISIONADO] Convertido campo 'imagenes' a lista: {row['imagenes']}")
-            
-            # Procesar imágenes en el campo 'images' (compatibilidad)
-            if 'images' in row and row['images']:
-                if not isinstance(row['images'], list):
-                    row['images'] = [row['images']]
-                    current_app.logger.info(f"[DEBUG][VISIONADO] Convertido campo 'images' a lista: {row['images']}")
-                
-                # Combinar images con imagenes si ambos existen
-                if 'imagenes' in row and row['imagenes']:
-                    row['imagenes'].extend(row['images'])
+            elif isinstance(row['imagenes'], int):
+                # Si es un entero, buscar en imagen_data
+                if 'imagen_data' in row and isinstance(row['imagen_data'], list):
+                    row['imagenes'] = row['imagen_data']
                 else:
-                    row['imagenes'] = row['images']
-                
-                current_app.logger.info(f"[DEBUG][VISIONADO] Combinadas imágenes de 'images' y 'imagenes': {row['imagenes']}")
-            
-            # Procesar imágenes en el campo 'imagen' (singular, compatibilidad)
-            if 'imagen' in row and row['imagen']:
-                if 'imagenes' not in row:
                     row['imagenes'] = []
-                if not isinstance(row['imagen'], list):
+            elif not isinstance(row['imagenes'], list):
+                row['imagenes'] = list(row['imagenes'])
+            # Compatibilidad: añadir images o imagen
+            if 'images' in row and row['images']:
+                if isinstance(row['images'], str):
+                    row['imagenes'].append(row['images'])
+                elif isinstance(row['images'], list):
+                    row['imagenes'].extend(row['images'])
+            if 'imagen' in row and row['imagen']:
+                if isinstance(row['imagen'], str):
                     row['imagenes'].append(row['imagen'])
-                else:
+                elif isinstance(row['imagen'], list):
                     row['imagenes'].extend(row['imagen'])
-                current_app.logger.info(f"[DEBUG][VISIONADO] Añadida imagen del campo 'imagen': {row['imagenes']}")
-            
-            # Crear un array con las URLs de las imágenes
+            # Eliminar duplicados y vacíos
+            row['imagenes'] = [img for img in set(row['imagenes']) if img and isinstance(img, str) and len(img) > 5]
+            # Construir imagen_urls
             row['imagen_urls'] = []
-            
-            # Procesar todas las imágenes
-            if 'imagenes' in row and row['imagenes']:
-                # Imprimir el tipo de dato de imagenes para depuración
-                current_app.logger.info(f"[DEBUG][VISIONADO] Tipo de dato de 'imagenes': {type(row['imagenes'])}")
-                current_app.logger.info(f"[DEBUG][VISIONADO] Contenido de 'imagenes': {row['imagenes']}")
-                
-                # Si imagenes es un entero o no es iterable, convertirlo a una lista
-                if isinstance(row['imagenes'], int):
-                    current_app.logger.info(f"[DEBUG][VISIONADO] 'imagenes' es un entero: {row['imagenes']}")
-                    # Crear una lista con el número de imágenes indicado
-                    num_imagenes = row['imagenes']
-                    # Buscar imágenes en otros campos
-                    if 'imagen_data' in row:
-                        current_app.logger.info(f"[DEBUG][VISIONADO] Encontrado campo 'imagen_data': {row['imagen_data']}")
-                        if isinstance(row['imagen_data'], list):
-                            row['imagenes'] = row['imagen_data']
-                        else:
-                            # Si no hay imágenes reales, crear una lista vacía
-                            row['imagenes'] = []
+            for img in row['imagenes']:
+                if img.startswith('http'):
+                    row['imagen_urls'].append(img)
+                else:
+                    # Intentar S3
+                    s3_url = get_s3_url(img)
+                    if s3_url:
+                        row['imagen_urls'].append(s3_url)
                     else:
-                        # Si no hay imágenes reales, crear una lista vacía
-                        row['imagenes'] = []
-                
-                # Procesar cada imagen
-                for img in row['imagenes']:
-                    if img and isinstance(img, str) and len(img) > 5:  # Verificar que el nombre de la imagen es válido
-                        # Intentar obtener la URL de S3 primero
-                        s3_url = get_s3_url(img)
-                        if s3_url:
-                            row['imagen_urls'].append(s3_url)
-                            current_app.logger.info(f"[DEBUG][VISIONADO] Imagen S3 encontrada: {img} -> {s3_url}")
-                        else:
-                            # Si no está en S3, usar la URL local
-                            local_url = url_for('static', filename=f'uploads/{img}')
-                            row['imagen_urls'].append(local_url)
-                            current_app.logger.info(f"[DEBUG][VISIONADO] Usando URL local para imagen: {img} -> {local_url}")
+                        local_url = url_for('static', filename=f'uploads/{img}')
+                        row['imagen_urls'].append(local_url)
+            # Si no hay imágenes, asegurar lista vacía
+            if not row['imagen_urls']:
+                row['imagen_urls'] = []
             
             current_app.logger.info(f"[DEBUG][VISIONADO] URLs de imágenes para fila {i}: {row.get('imagen_urls', [])}")
             current_app.logger.info(f"[DEBUG][VISIONADO] Total de imágenes en fila {i}: {len(row.get('imagen_urls', []))}")
-            
-            # Si no hay imágenes, asegurarse de que el campo imagenes exista pero vacío
-            if not row.get('imagen_urls'):
-                row['imagenes'] = []
-                row['imagen_urls'] = []
         
         return render_template('ver_tabla.html', table=table)
     except BuildError as e:
@@ -549,6 +611,15 @@ def editar_fila(tabla_id, fila_index):
     if not table_info:
         flash('Tabla no encontrada.', 'error')
         return redirect(url_for('main.tables'))
+    # Refuerzo: sincronizar 'rows' y 'data' y calcular número de filas
+    if 'rows' in table_info and table_info['rows'] is not None:
+        table_info['data'] = table_info['rows']
+    elif 'data' in table_info and table_info['data'] is not None:
+        table_info['rows'] = table_info['data']
+    else:
+        table_info['data'] = []
+        table_info['rows'] = []
+    table_info['row_count'] = len(table_info['rows'])
     
     # Verificar permisos: solo el propietario o admin puede editar filas
     username = session.get('username')
@@ -1220,15 +1291,51 @@ def delete_table(table_id):
         flash("Tabla no encontrada o no tiene permisos para eliminarla.", "error")
         return redirect(url_for("main.tables"))
 
-    filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], table["filename"])
-
-    if os.path.exists(filepath):
-        os.remove(filepath)
+    # Eliminar archivo físico solo si existe el campo 'filename'
+    filename = table.get('filename')
+    if filename:
+        filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
     current_app.spreadsheets_collection.delete_one({"_id": ObjectId(table_id)})
 
-    if session.get("selected_table") == table["filename"]:
+    if filename and session.get("selected_table") == filename:
         session.pop("selected_table", None)
 
     flash("Tabla eliminada exitosamente.", "success")
     return redirect(url_for("main.tables"))
+
+@main_bp.route('/guia-rapida')
+def guia_rapida():
+    """Guía rápida de uso para usuarios normales"""
+    return render_template('guia_rapida.html')
+
+@main_bp.route('/soporte', methods=['GET', 'POST'])
+def soporte():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '')
+        email = request.form.get('email', '')
+        mensaje = request.form.get('mensaje', '')
+        # Enviar email real a soporte
+        subject = f"[Soporte] Mensaje de {nombre} ({email})"
+        body_html = f"""
+        <h3>Nuevo mensaje de soporte recibido</h3>
+        <ul>
+            <li><strong>Nombre:</strong> {nombre}</li>
+            <li><strong>Email:</strong> {email}</li>
+        </ul>
+        <p><strong>Mensaje:</strong></p>
+        <div style='white-space: pre-line; border:1px solid #eee; padding:10px; background:#f9f9f9;'>{mensaje}</div>
+        <hr>
+        <small>Este mensaje fue enviado desde el formulario de soporte de la aplicación.</small>
+        """
+        # Destinatario: el correo de soporte configurado
+        recipients = ["admin@edefrutos2025.xyz"]
+        ok = notifications.send_email(subject, body_html, recipients)
+        if ok:
+            flash('Tu mensaje ha sido enviado. El equipo de soporte te contactará pronto.', 'success')
+        else:
+            flash('No se pudo enviar el mensaje. Intenta más tarde o contacta por email.', 'danger')
+        return redirect(url_for('main.guia_rapida'))
+    return render_template('soporte.html')

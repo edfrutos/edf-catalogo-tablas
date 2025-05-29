@@ -10,7 +10,7 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install --only-upgrade nginx apache2 php
 
 # Actualiza pip y dependencias Python (en tu entorno virtual)
-source /var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/activate
+source /.venv/bin/activate
 pip install --upgrade pip
 pip list --outdated
 pip install --upgrade <paquete>
@@ -74,7 +74,7 @@ mysqldump -u USUARIO -p NOMBRE_BD > /root/edefrutos.me-$(date +%F).sql
 
 ```bash
 # Archivos
-tar czvf /root/backup-edefrutos2025-$(date +%F).tar.gz /var/www/vhosts/edefrutos2025.xyz/httpdocs/
+tar czvf /root/backup-edefrutos2025-$(date +%F).tar.gz /
 
 # MongoDB Atlas: desde el panel web o usando mongodump si tienes acceso
 ```

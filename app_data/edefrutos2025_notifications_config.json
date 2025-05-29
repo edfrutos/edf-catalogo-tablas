@@ -1,13 +1,15 @@
 {
-  "enabled": false,
+  "enabled": true,
   "smtp": {
-    "server": "smtp.gmail.com",
+    "server": "smtp-relay.brevo.com",
     "port": 587,
-    "username": "",
-    "password": "",
+    "username": "admin@edefrutos.me",
+    "password": "Rmp3UXwsIkvA0c1d",
     "use_tls": true
   },
-  "recipients": [],
+  "recipients": [
+    "edfrutos@gmail.com"
+  ],
   "thresholds": {
     "cpu": 85,
     "memory": 85,
@@ -15,5 +17,8 @@
     "error_rate": 10
   },
   "cooldown_minutes": 60,
-  "last_alerts": {}
+  "last_alerts": {
+    "memory": "2025-05-29 21:23:50",
+    "cpu": "2025-05-26 10:15:12"
+  }
 }

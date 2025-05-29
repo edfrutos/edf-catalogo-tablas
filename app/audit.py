@@ -1,3 +1,10 @@
+# Script: audit.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 audit.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-05-28
+
 """
 Módulo de auditoría para el registro de acciones de usuarios y sistema.
 Proporciona funciones para registrar eventos y consultar el historial de auditoría.
