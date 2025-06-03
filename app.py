@@ -397,7 +397,7 @@ def create_app():
             print("[DEBUG][ensure_db] No se pudo asignar la base de datos en current_app")
     app.before_request(ensure_db)
 
-    print("[DEBUG][ADMIN] db:", getattr(current_app, "db", None))
+    # print("[DEBUG][ADMIN] db:", getattr(current_app, "db", None))
 
     return app
 

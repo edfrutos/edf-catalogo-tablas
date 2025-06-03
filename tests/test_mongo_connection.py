@@ -1,3 +1,10 @@
+# Script: test_mongo_connection.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 test_mongo_connection.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-06-03
+
 import certifi
 import os
 os.environ['SSL_CERT_FILE'] = certifi.where()
