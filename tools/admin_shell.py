@@ -18,6 +18,7 @@ import uuid
 import json
 import threading
 from datetime import datetime, timedelta
+import certifi
 
 # Configurar logging
 logging.basicConfig(
@@ -45,6 +46,8 @@ except ImportError as e:
 mongo_client = None
 mongo_db = None
 db_name = "app_catalogojoyero_nueva"  # Nombre por defecto
+
+os.environ['SSL_CERT_FILE'] = certifi.where()
 
 def connect_to_mongodb():
     """Establece conexión con MongoDB"""
@@ -84,7 +87,8 @@ def connect_to_mongodb():
             connectTimeoutMS=20000,
             socketTimeoutMS=30000,
             retryWrites=True,
-            retryReads=True
+            retryReads=True,
+            tlsCAFile=certifi.where()
         )
         
         # Verificar conexión con un ping

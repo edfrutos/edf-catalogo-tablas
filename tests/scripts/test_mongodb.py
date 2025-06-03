@@ -1,4 +1,7 @@
 import pymongo
+import certifi
+import os
+os.environ['SSL_CERT_FILE'] = certifi.where()
 from pymongo.errors import ConnectionFailure, AutoReconnect, ConfigurationError
 import time
 
@@ -7,7 +10,7 @@ MONGO_URI = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/
 
 def test_connection():
     try:
-        client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
         # Forzar la conexión
         print("Intentando conectar a MongoDB...")
         client.admin.command('ping')

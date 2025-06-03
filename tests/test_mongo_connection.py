@@ -1,3 +1,6 @@
+import certifi
+import os
+os.environ['SSL_CERT_FILE'] = certifi.where()
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
@@ -10,7 +13,7 @@ MONGO_URI = os.getenv('MONGO_URI')
 
 try:
     # Intentar conectar
-    client = MongoClient(MONGO_URI)
+    client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
     # Verificar conexión
     client.admin.command('ping')
     print("Conexión exitosa a MongoDB")

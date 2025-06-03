@@ -7,8 +7,11 @@ import json
 from bson import ObjectId
 from dotenv import load_dotenv
 from pymongo import MongoClient
+import certifi
 
 load_dotenv()
+
+os.environ['SSL_CERT_FILE'] = certifi.where()
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -18,7 +21,7 @@ class JSONEncoder(json.JSONEncoder):
 
 # Conectar directamente a MongoDB usando la URL de conexión
 mongo_uri = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/edf_catalogotablas')
-client = MongoClient(mongo_uri)
+client = MongoClient(mongo_uri, tlsCAFile=certifi.where())
 db = client.get_database()
 
 print('Estructura de un documento en catalogs:')

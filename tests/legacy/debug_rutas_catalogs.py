@@ -33,6 +33,8 @@ try:
 except ImportError:
     MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://edfrutos:3Utitwr3piFt4LVf@cluster0.abpvipa.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority&appName=Cluster0')
 
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 def conectar_mongodb():
     """Establece conexión con MongoDB y retorna el cliente y la base de datos."""
     try:

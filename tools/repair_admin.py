@@ -13,6 +13,7 @@ import logging
 from datetime import datetime
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash
+import certifi
 
 # Configuración de logging
 logging.basicConfig(
@@ -21,6 +22,8 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger("repair_admin")
+
+os.environ['SSL_CERT_FILE'] = certifi.where()
 
 def main():
     # Conectar a MongoDB
@@ -37,7 +40,7 @@ def main():
 
     try:
         logger.info(f"Conectando a MongoDB: {mongo_uri[:20]}...")
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
         client.admin.command('ping')
         logger.info("Conexión a MongoDB establecida correctamente")
         

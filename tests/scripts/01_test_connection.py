@@ -1,3 +1,6 @@
+import certifi
+import os
+os.environ['SSL_CERT_FILE'] = certifi.where()
 from pymongo import MongoClient
 
 # URI de conexión a MongoDB Atlas
@@ -5,7 +8,7 @@ uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_ca
 
 try:
     # Crear cliente de MongoDB
-    client = MongoClient(uri)
+    client = MongoClient(uri, tlsCAFile=certifi.where())
     # Probar conexión
     print("Conexión exitosa a MongoDB Atlas")
     # Listar bases de datos
