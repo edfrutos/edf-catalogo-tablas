@@ -1,0 +1,1 @@
+/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/tools/_backup_scripts/06_eliminar_duplicados_users.py

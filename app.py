@@ -32,7 +32,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 from redis import Redis
 from app.decorators import admin_required, login_required
-from tools.admin_utils.admin_utils import AdminUtils
+from tools.admin_utils.admin_utils import AdminUtils # type: ignore
 # Importar otros módulos de utilidad según sea necesario
 from scrypt import hash as scrypt_hash
 from openpyxl import Workbook  # <--- Importación correcta

@@ -1,0 +1,1 @@
+/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/tools/utils/iniciar_produccion.sh

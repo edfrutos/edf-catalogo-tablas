@@ -97,3 +97,19 @@ coverage.xml
 .qodo
 
 tools/_backup_scripts/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Respaldos automáticos y carpetas de backup
+backups/
+tools_backup_*/
+
+# Archivos temporales y de estructura grandes
+estriuctura_buid.txt
+estriuctura
+
+# Logs generales
+*.log

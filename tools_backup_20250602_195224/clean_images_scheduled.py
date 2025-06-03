@@ -1,0 +1,1 @@
+/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/tools/maintenance/clean_images_scheduled.py

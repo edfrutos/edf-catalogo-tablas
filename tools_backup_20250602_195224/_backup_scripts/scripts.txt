@@ -1,0 +1,122 @@
+.
+├── 00_update_catalogs.py
+├── 01_verificar_duplicados.py
+├── 02_verificar_duplicados.py
+├── 03_ver_guardado_rutas_en_MongoDB.py
+├── 05.-insertar_manualmente_un_documento.py
+├── 06.-asegurar_que_db_esta_bien_definido.py
+├── 07.-cambiar_definicion_de_coleccion_en_codigo.py
+├── 08.-verificar_coleccion_vacia.py
+├── admin_utils
+│   ├── admin_shell.py
+│   ├── admin_utils.py
+│   ├── create_admin.py
+│   ├── init_admin.py
+│   └── repair_admin.py
+├── app_runners
+│   ├── app_min.py
+│   ├── app_prueba_sesion.py
+│   ├── ejecutar_flask_directo.py
+│   ├── flask_app.py
+│   ├── run.py
+│   ├── simple_app.py
+│   └── simple.py
+├── aws_utils
+│   ├── configure_s3_access.py
+│   ├── list_buckets.py
+│   └── migrate_images_to_s3.py
+├── catalog_utils
+│   ├── arreglar_catalogos.py
+│   ├── convert_to_xlsx.py
+│   ├── direct_routes.py
+│   └── tables_direct.py
+├── catalog_utils.py
+├── check_admin_role.py
+├── check_db_atlas.py
+├── check_db.py
+├── check_env.py
+├── checker.py
+├── check_excel.py
+├── check_s3.py
+├── check_security_logs.py
+├── check_user_role.py
+├── check_users.py
+├── clean_images.py
+├── clean_images_scheduled.py
+├── cleanup_duplicates.py
+├── cleanup_record.md
+├── cleanup_users.py
+├── Comandos para configurar tu aplicación en el servidor.md
+├── db_utils
+│   ├── check_catalog.py
+│   ├── check_collections.py
+│   ├── check_db.py
+│   ├── conexion_MongoDB.py
+│   ├── init_db.py
+│   ├── list_users.py
+│   ├── migracion_catalogos.py
+│   ├── migrate_tables.py
+│   └── playground-1.mongodb.js
+├── debug_julia.py
+├── debug_mongo.py
+├── debug_new_table.py
+├── debug_passwords.py
+├── deployment
+├── detailed_users.py
+├── diagnose_s3_permissions.py
+├── image_utils
+│   └── crear_imagen_perfil_default.py
+├── __init__.py
+├── maintenance
+│   ├── daily_report.sh
+│   ├── final_cleanup.py
+│   ├── iniciar_app_directo.sh
+│   ├── iniciar_app_local.sh
+│   ├── iniciar_produccion.sh
+│   ├── maintenance.sh
+│   ├── manage_app.sh
+│   ├── monitor_socket.sh
+│   ├── organizar_archivos.py
+│   ├── run_gunicorn.sh
+│   ├── start_app.sh
+│   ├── start_gunicorn.sh
+│   ├── supervise_gunicorn.sh
+│   └── update.sh
+├── migrate_users_add_role.py
+├── migrate_users.py
+├── monitoring
+│   ├── advanced_monitor.py
+│   └── error_handling.py
+├── password_utils
+│   ├── desbloquear_usuario.py
+│   ├── migrate_passwords.py
+│   ├── reset_admin_completo.py
+│   ├── reset_admin_password.py
+│   ├── reset_admin.py
+│   ├── reset_password_bcrypt.py
+│   ├── reset_password_edefrutos.py
+│   ├── reset_passwords.py
+│   ├── unlock_user.py
+│   ├── update_password.py
+│   └── update_passwords.py
+├── __pycache__
+│   ├── __init__.cpython-38.pyc
+│   ├── test_app.cpython-38-pytest-8.3.5.pyc
+│   ├── test_login.cpython-38-pytest-8.3.5.pyc
+│   ├── test_mongodb.cpython-38-pytest-8.3.5.pyc
+│   ├── test_openpyxl.cpython-38-pytest-8.3.5.pyc
+│   ├── test_password.cpython-38-pytest-8.3.5.pyc
+│   ├── test_password_verify.cpython-38-pytest-8.3.5.pyc
+│   └── test_python.cpython-38-pytest-8.3.5.pyc
+├── scripts.txt
+├── session_utils
+│   ├── aplicar_configuracion_sesion.py
+│   ├── session_config.py
+│   └── session_fix.py
+├── show_admin_user.py
+├── system
+├── test_import.xlsx
+├── utils
+└── verificar_connect.py
+
+14 directories, 105 files

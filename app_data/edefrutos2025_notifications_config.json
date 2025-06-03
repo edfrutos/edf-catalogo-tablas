@@ -3,12 +3,12 @@
   "smtp": {
     "server": "smtp-relay.brevo.com",
     "port": 587,
-    "username": "admin@edefrutos.me",
-    "password": "Rmp3UXwsIkvA0c1d",
+    "username": "8e57cb001@smtp-brevo.com",
+    "password": "EGKZ7d861PBH2myg",
     "use_tls": true
   },
   "recipients": [
-    "edfrutos@gmail.com"
+    "admin@edefrutos.me"
   ],
   "thresholds": {
     "cpu": 85,
@@ -18,7 +18,7 @@
   },
   "cooldown_minutes": 60,
   "last_alerts": {
-    "memory": "2025-05-29 21:23:50",
-    "cpu": "2025-05-26 10:15:12"
+    "memory": "2025-06-03 18:28:59",
+    "cpu": "2025-05-31 11:47:57"
   }
 }

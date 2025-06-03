@@ -1,0 +1,1 @@
+/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/tools/db_utils/06.-asegurar_que_db_esta_bien_definido.py

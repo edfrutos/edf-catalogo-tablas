@@ -138,65 +138,39 @@ def execute_script():
         }), 500
 
 def get_script_path(script_path):
-    """Obtiene la ruta completa del script buscando en todas las ubicaciones posibles.
-    
-    Args:
-        script_path: Ruta relativa o absoluta del script
-        
-    Returns:
-        La ruta absoluta del script o None si no se encuentra
-    """
-    print(f"\n>>> get_script_path: Resolviendo ruta para: {script_path}")
-    
-    # Si la ruta ya es absoluta, verificar que existe
-    if os.path.isabs(script_path) and os.path.exists(script_path):
-        print(f">>> La ruta ya es absoluta y existe: {script_path}")
+    """Obtiene la ruta completa del script evitando duplicaciones de rutas"""
+    # Si ya es una ruta absoluta que contiene ROOT_DIR, usarla directamente
+    if os.path.isabs(script_path) and ROOT_DIR in script_path:
         return script_path
     
-    # Normalizar la ruta para evitar problemas
-    script_path = script_path.strip('/')
-    script_name = os.path.basename(script_path)
+    # Si es una ruta absoluta pero no contiene ROOT_DIR, usarla directamente
+    if os.path.isabs(script_path):
+        return script_path
     
-    # Lista de posibles ubicaciones donde buscar el script
-    possible_locations = [
+    # Lista de posibles ubicaciones para buscar el script
+    possible_paths = [
+        # Ruta directa
         os.path.join(ROOT_DIR, script_path),
-        os.path.join(TOOLS_DIR, script_path),
-        os.path.join(ROOT_DIR, 'tools', script_path)
+        # En directorio tools
+        os.path.join(ROOT_DIR, 'tools', script_path),
+        # En directorio scripts
+        os.path.join(ROOT_DIR, 'scripts', script_path),
     ]
     
-    # Buscar en ubicaciones definidas
-    for location in possible_locations:
-        print(f">>> Verificando ubicación: {location}")
-        if os.path.exists(location):
-            actual_path = os.path.abspath(location)
-            print(f">>> Script encontrado en: {actual_path}")
-            
-            # Verificar si es un enlace simbólico y resolverlo
-            if os.path.islink(actual_path):
-                real_path = os.path.realpath(actual_path)
-                print(f">>> Es un enlace simbólico que apunta a: {real_path}")
-                return real_path
-            
-            return actual_path
+    # Buscar en subdirectorios comunes
+    for subdir in ['maintenance', 'admin_utils', 'backup', 'monitoring', 'security', 'database']:
+        possible_paths.append(os.path.join(ROOT_DIR, 'tools', subdir, script_path))
+        possible_paths.append(os.path.join(ROOT_DIR, 'scripts', subdir, script_path))
     
-    # Si no se encuentra, buscar en subdirectorios de tools por nombre
-    print(f">>> Buscando en subdirectorios por nombre: {script_name}")
-    for root, dirs, files in os.walk(TOOLS_DIR):
-        if script_name in files:
-            found_path = os.path.abspath(os.path.join(root, script_name))
-            print(f">>> Script encontrado por nombre en: {found_path}")
-            
-            # Verificar si es un enlace simbólico y resolverlo
-            if os.path.islink(found_path):
-                real_path = os.path.realpath(found_path)
-                print(f">>> Es un enlace simbólico que apunta a: {real_path}")
-                return real_path
-            
-            return found_path
+    # Verificar cada ruta posible
+    for path in possible_paths:
+        if os.path.exists(path):
+            print(f"Script encontrado en: {path}")
+            return path
     
-    # No se encontró el script
-    print(f">>> ❌ Script no encontrado: {script_path}")
-    return None
+    # Si no se encuentra, devolver la ruta original
+    print(f"Script no encontrado: {script_path}")
+    return os.path.join(ROOT_DIR, script_path)
 
 @scripts_bp.route('/view/<path:script_path>')
 @admin_required
@@ -334,14 +308,22 @@ def tools_dashboard():
             print(f"Scripts encontrados en {category_id}: {len(category_scripts)}")
             
             for script_path in category_scripts:
-                # Obtener una descripción personalizada basada en el nombre del script
+                # Verificar que el script existe y es funcional
+                if not os.path.isfile(script_path):
+                    continue
                 script_name = os.path.basename(script_path)
                 script_ext = os.path.splitext(script_name)[1]
-                
+                # Solo mostrar .sh si es ejecutable, .py si es legible
+                if script_ext == '.sh' and not os.access(script_path, os.X_OK):
+                    continue
+                if script_ext == '.py':
+                    try:
+                        with open(script_path, 'r') as f:
+                            f.read(1)
+                    except Exception:
+                        continue
                 # Determinar el tipo de script y su descripción personalizada basada en el nombre del script
                 script_base = os.path.splitext(script_name)[0]
-                
-                # Descripciones detalladas para scripts comunes
                 descriptions = {
                     # Scripts de mantenimiento
                     'supervise_gunicorn': 'Supervisa y reinicia automáticamente el servidor Gunicorn si deja de funcionar',
@@ -375,33 +357,26 @@ def tools_dashboard():
                     'check_logs': 'Analiza logs del sistema en busca de errores',
                     'monitor_mongodb': 'Monitorea el rendimiento y disponibilidad de MongoDB'
                 }
-                
-                # Obtener descripción personalizada o usar una descripción genérica
                 if script_base in descriptions:
                     description = descriptions[script_base]
                 elif script_ext == '.sh':
                     description = f"Script de shell para {category_info['name']}"
                 else:  # .py
                     description = f"Script de Python para {category_info['name']}"
-                
-                # Añadir el script a la lista, pero usando una ruta relativa
-                # para evitar problemas de duplicación de URLs
                 rel_path = os.path.relpath(script_path, TOOLS_DIR)
                 print(f"Añadiendo script: {script_path} (ruta relativa: {rel_path})")
                 scripts.append({
                     'name': script_name,
-                    'path': rel_path,  # Usamos la ruta relativa en lugar de la absoluta
+                    'path': rel_path,
                     'category': category_id,
                     'description': description,
-                    'full_path': script_path  # Guardamos la ruta completa para referencia
+                    'full_path': script_path
                 })
         else:
             print(f"Directorio no encontrado: {path}")
-    
     print(f"Total de scripts encontrados: {len(scripts)}")
     if len(scripts) == 0:
         print("ADVERTENCIA: No se encontraron scripts para mostrar")
-    
     return render_template('admin/tools_dashboard.html', scripts=scripts, categories=script_categories)
 
 @scripts_bp.route('/run/<path:script_path>', methods=['POST'])

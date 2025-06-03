@@ -1,0 +1,14 @@
+client_config_backend: file
+client_config_file: credentials.json
+
+save_credentials: True
+save_credentials_backend: file
+save_credentials_file: token.json
+
+oauth_scope:
+  - https://www.googleapis.com/auth/drive
+
+get_refresh_token: True
+oauth_flow_params:
+  access_type: offline
+  prompt: consent 
