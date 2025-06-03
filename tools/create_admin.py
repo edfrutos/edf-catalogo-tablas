@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import scrypt
+import hashlib
 import base64
 from app.models import get_users_collection
 from datetime import datetime
@@ -17,9 +17,9 @@ def create_admin_user():
     # Generar salt y hash
     salt = base64.b64encode(b'adminsalt12345678').decode('utf-8').rstrip('=')  # Salt fijo para reproducibilidad
     password_hash = base64.b64encode(
-        scrypt.hash(password.encode('utf-8'), 
-                   base64.b64decode(salt + '=='),
-                   N=n, r=r, p=p)
+        hashlib.scrypt(password.encode('utf-8'), 
+                       salt=base64.b64decode(salt + '=='),
+                       n=n, r=r, p=p, dklen=64)
     ).decode('utf-8').rstrip('=')
     
     # Formato final del hash

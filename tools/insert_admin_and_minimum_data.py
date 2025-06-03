@@ -12,7 +12,7 @@ from pymongo.server_api import ServerApi
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 import certifi
-from scrypt import hash as scrypt_hash
+import hashlib
 import secrets
 
 # Cargar variables de entorno
@@ -31,7 +31,7 @@ db = client.get_database()  # Usar la base de datos por defecto de la URI
 
 def scrypt_hash_password(password):
     salt = secrets.token_hex(8)
-    hashed = scrypt_hash(password.encode('utf-8'), salt.encode('utf-8'), N=32768, r=8, p=1)
+    hashed = hashlib.scrypt(password.encode('utf-8'), salt=salt.encode('utf-8'), n=32768, r=8, p=1, dklen=64)
     return f"scrypt:32768:8:1${salt}${hashed.hex()}"
 
 # 1. Insertar usuario admin

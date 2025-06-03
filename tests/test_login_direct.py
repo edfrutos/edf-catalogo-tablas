@@ -10,7 +10,7 @@ from app.models import get_users_collection, find_user_by_email_or_name
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import base64
-import scrypt
+import hashlib
 import logging
 
 # Configurar logging
@@ -68,7 +68,7 @@ def verify_password_direct(password, stored_password, password_type=None):
             
             try:
                 # Verificar contraseña usando scrypt
-                password_hash = base64.b64encode(scrypt.hash(password.encode('utf-8'), salt, N=n, r=r, p=p)).decode('utf-8')
+                password_hash = base64.b64encode(hashlib.scrypt(password.encode('utf-8'), salt=salt, n=n, r=r, p=p, dklen=64)).decode('utf-8')
                 # Eliminar padding si existe
                 if password_hash.endswith('=='):
                     password_hash = password_hash[:-2]

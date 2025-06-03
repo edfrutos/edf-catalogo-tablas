@@ -8,7 +8,7 @@
 from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
-import scrypt
+import hashlib
 import base64
 
 def verify_password(password, stored_password):
@@ -37,7 +37,7 @@ def verify_password(password, stored_password):
         print(f"Salt en bytes: {salt_bytes.hex()}")
         
         # Generar hash de la contraseña proporcionada
-        password_hash = scrypt.hash(password.encode('utf-8'), salt_bytes, N=n, r=r, p=p).hex()
+        password_hash = hashlib.scrypt(password.encode('utf-8'), salt=salt_bytes, n=n, r=r, p=p, dklen=64).hex()
         print(f"Hash generado: {password_hash}")
         print(f"Coinciden los hashes: {password_hash == stored_hash}")
         

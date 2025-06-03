@@ -34,7 +34,7 @@ from redis import Redis
 from app.decorators import admin_required, login_required
 from tools.admin_utils.admin_utils import AdminUtils # type: ignore
 # Importar otros módulos de utilidad según sea necesario
-from scrypt import hash as scrypt_hash
+import hashlib
 from openpyxl import Workbook  # <--- Importación correcta
 from app.extensions import init_extensions
 
@@ -526,16 +526,12 @@ def verify_scrypt_password(stored_hash, provided_password):
         parts = stored_hash.split('$')
         if len(parts) != 4:
             return False
-            
         salt = parts[2]
-        stored_hash = parts[3]
-        
-        # Generar el hash de la contraseña proporcionada
-        new_hash = scrypt_hash(provided_password.encode('utf-8'), salt.encode('utf-8'),
-                              N=32768, r=8, p=1)
-        
+        stored_hash_val = parts[3]
+        # Generar el hash de la contraseña proporcionada usando hashlib.scrypt
+        new_hash = hashlib.scrypt(provided_password.encode('utf-8'), salt=salt.encode('utf-8'), n=32768, r=8, p=1, dklen=64)
         # Comparar los hashes
-        return stored_hash == new_hash.hex()
+        return stored_hash_val == new_hash.hex()
     except Exception as e:
         print(f"Error verificando contraseña: {str(e)}")
         return False

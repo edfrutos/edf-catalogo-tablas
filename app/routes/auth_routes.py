@@ -15,7 +15,7 @@ from app.models import (
 )
 import secrets
 from datetime import datetime, timedelta
-import scrypt
+import hashlib
 import base64
 import traceback
 import bcrypt
@@ -56,7 +56,6 @@ def verify_password(password, stored_password, password_type=None):
                     logger.debug("Verificación scrypt vía Werkzeug exitosa")
                     return True
             except Exception as e:
-                # Si el formato no es el esperado por Werkzeug, continuamos con validación manual
                 logger.debug("check_password_hash no aplicable para este hash scrypt: %s", str(e))
 
             # Extraer parámetros del hash scrypt
@@ -65,36 +64,27 @@ def verify_password(password, stored_password, password_type=None):
                 if len(parts) != 3:
                     logger.error("Formato scrypt inválido: %s", stored_password)
                     return False
-                    
-                # El formato es: scrypt:N:r:p$salt$hash
                 params = parts[0].split(':')  # [scrypt, N, r, p]
                 if len(params) != 4:
                     logger.error("Parámetros scrypt inválidos: %s", parts[0])
                     return False
-                    
                 n = int(params[1])  # 32768
                 r = int(params[2])  # 8
                 p = int(params[3])  # 1
-                
-                # Decodificar salt de base64
                 try:
                     salt = base64.b64decode(parts[1] + '==')
                 except Exception as e:
                     logger.error("Error decodificando salt: %s", str(e))
                     return False
-                    
                 stored_hash = parts[2]
-                
                 try:
-                    # Verificar contraseña usando scrypt
-                    hashed_bytes = scrypt.hash(password.encode('utf-8'), salt, N=n, r=r, p=p)
+                    # Verificar contraseña usando hashlib.scrypt
+                    hashed_bytes = hashlib.scrypt(password.encode('utf-8'), salt=salt, n=n, r=r, p=p, dklen=64)
                     # Determinar si el hash almacenado está en hex o base64
                     if all(ch in '0123456789abcdef' for ch in stored_hash.lower()):
                         password_hash = hashed_bytes.hex()
                     else:
-                        password_hash = base64.b64encode(hashed_bytes).decode('utf-8')
-                        # Eliminar padding '=' si existe
-                        password_hash = password_hash.rstrip('=')
+                        password_hash = base64.b64encode(hashed_bytes).decode('utf-8').rstrip('=')
                     logger.debug(f"Hash scrypt calculado: {password_hash} (hex? {'hex' if all(ch in '0123456789abcdef' for ch in stored_hash.lower()) else 'b64'})")
                     return password_hash == stored_hash
                 except Exception as e:
