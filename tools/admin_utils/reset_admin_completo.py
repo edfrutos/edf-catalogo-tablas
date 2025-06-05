@@ -1,0 +1,1 @@
+/var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/password_utils/reset_admin_completo.py

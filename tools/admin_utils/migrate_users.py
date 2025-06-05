@@ -5,7 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import logging
 from werkzeug.security import generate_password_hash, check_password_hash
-import hashlib
+import scrypt
 import base64
 from app.models import get_users_collection
 
@@ -46,7 +46,7 @@ def convert_scrypt_to_werkzeug(scrypt_hash, password):
         salt = bytes.fromhex(salt)
         
         # Verificar si la contraseña coincide con el hash scrypt
-        if hashlib.scrypt(password.encode('utf-8'), salt=salt, n=n, r=r, p=p, dklen=64).hex() == salt_and_hash.split('$')[1]:
+        if scrypt.hash(password.encode('utf-8'), salt, N=n, r=r, p=p).hex() == salt_and_hash.split('$')[1]:
             # Si coincide, generar un nuevo hash Werkzeug
             return generate_password_hash(password)
         

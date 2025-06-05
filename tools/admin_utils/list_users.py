@@ -1,0 +1,1 @@
+/var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/db_utils/list_users.py

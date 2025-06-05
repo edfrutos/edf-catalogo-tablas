@@ -34,7 +34,7 @@ from app.routes.main_routes import main_bp
 from app.routes.catalogs_routes import catalogs_bp
 from app.routes.catalog_images_routes import image_bp
 from app.routes.usuarios_routes import usuarios_bp
-from app.routes.admin_routes import admin_bp, admin_logs_bp
+from app.routes.admin_routes import admin_bp, admin_logs_bp, register_admin_blueprints
 from app.error_handlers import errors_bp
 from app.routes.emergency_access import emergency_bp
 from app.routes.scripts_routes import scripts_bp
@@ -104,17 +104,35 @@ def create_app():
     # Configurar logging
     setup_logging(app)
     
-    # Registrar Blueprints
-    app.register_blueprint(auth_bp, url_prefix='')
-    app.register_blueprint(main_bp)
-    app.register_blueprint(catalogs_bp)
-    app.register_blueprint(image_bp)
-    app.register_blueprint(usuarios_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(errors_bp)
-    app.register_blueprint(emergency_bp)
-    app.register_blueprint(admin_logs_bp)
-    app.register_blueprint(scripts_bp)
+    # Registrar blueprints con prefijos explícitos
+    blueprints = [
+        (auth_bp, ''),
+        (main_bp, ''),
+        (catalogs_bp, '/catalogs'),
+        (image_bp, '/images'),
+        (usuarios_bp, '/usuarios'),
+        (admin_bp, '/admin'),
+        (admin_logs_bp, '/admin'),  # Aseguramos que las rutas de logs estén bajo /admin
+        (errors_bp, ''),
+        (emergency_bp, '/emergency'),
+        (scripts_bp, '/tools')
+    ]
+    
+    # Registrar todos los blueprints
+    for bp, prefix in blueprints:
+        try:
+            app.register_blueprint(bp, url_prefix=prefix)
+            app.logger.info(f"Blueprint {bp.name} registrado correctamente con prefijo '{prefix}'")
+        except Exception as e:
+            app.logger.error(f"Error registrando blueprint {bp.name}: {str(e)}")
+    
+    # Registrar blueprints adicionales si existen
+    try:
+        from app.routes.admin_routes import register_admin_blueprints
+        if not register_admin_blueprints(app):
+            app.logger.warning("No se pudieron registrar los blueprints de administración adicionales")
+    except ImportError as e:
+        app.logger.error(f"Error importando register_admin_blueprints: {str(e)}")
     
     # Inicializar sistema de monitoreo
     try:

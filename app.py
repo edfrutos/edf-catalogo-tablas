@@ -32,7 +32,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 from redis import Redis
 from app.decorators import admin_required, login_required
-from tools.admin_utils.admin_utils import AdminUtils # type: ignore
+
 # Importar otros módulos de utilidad según sea necesario
 import hashlib
 from openpyxl import Workbook  # <--- Importación correcta
@@ -248,6 +248,7 @@ def create_app():
         
         app.logger.info("✅ Todos los blueprints de diagnóstico registrados correctamente")
     except Exception as e:
+        print(f"Error durante el registro de blueprints: {e}")
         app.logger.error(f"❌ Error al registrar blueprints de diagnóstico: {e}")
         app.logger.error(traceback.format_exc())
     
@@ -396,8 +397,6 @@ def create_app():
             current_app.spreadsheets_collection = None
             print("[DEBUG][ensure_db] No se pudo asignar la base de datos en current_app")
     app.before_request(ensure_db)
-
-    # print("[DEBUG][ADMIN] db:", getattr(current_app, "db", None))
 
     return app
 
