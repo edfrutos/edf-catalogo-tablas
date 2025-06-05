@@ -49,6 +49,62 @@ app_data/edefrutos2025_metrics.json
 app_data/*.json
 *_metrics.json
 *_stats.json
+
+# IGNORAR ARCHIVOS DE ENTORNO Y CONFIGURACIÓN
+# -------------------------------------------
+.venv310/
+.venv/
+venv310/
+venv/
+setup.py
+run.py
+
+# IGNORAR ARCHIVOS DE CONSTRUCCIÓN Y DISTRIBUCIÓN
+# -------------------------------------------
+build/
+dist/
+*.spec
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# IGNORAR ARCHIVOS DE SISTEMA
+# -------------------------------------------
+.DS_Store
+Thumbs.db
+
+# IGNORAR ARCHIVOS DE REGISTRO
+# -------------------------------------------
+logs/*
+*.log
+
+# IGNORAR ARCHIVOS DE ENTRENAMIENTO Y DATOS
+# -------------------------------------------
+*.csv
+*.xlsx
+*.xls
+*.db
+*.sqlite3
+
+# IGNORAR ARCHIVOS DE ENTORNO VIRTUAL
+# -------------------------------------------
+ENV/
+env/
+
+# IGNORAR ARCHIVOS DE CONFIGURACIÓN SENSIBLES
+# -------------------------------------------
+.env
+.env.*
+*.env
+backups/.env*
+backups/*/.env*
+*credentials*
+*secret*
+*api_key*
+*apikey*
+*password*
+*token*
 logs/gunicorn_access.log
 logs/flask_debug.log
 logs/gunicorn_error.log
