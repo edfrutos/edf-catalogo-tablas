@@ -1740,6 +1740,8 @@ def db_status():
         status["error"] = f"Excepción crítica: {e}\n{traceback.format_exc()}"
     return render_template("admin/db_status.html", status=status)
 
+# Definir el blueprint con el prefijo de URL correcto
+# Cambiamos el nombre a 'admin' para que coincida con el prefijo
 admin_logs_bp = Blueprint('admin_logs', __name__)
 
 # Decorador para restringir acceso solo a admin
@@ -1753,12 +1755,12 @@ def admin_required_logs(f):
 
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs/flask_debug.log'))
 
-@admin_logs_bp.route('/admin/logs')
+@admin_logs_bp.route('/logs')
 @admin_required_logs
 def logs_manual():
     return render_template('logs_manual.html')
 
-@admin_logs_bp.route('/admin/logs/tail')
+@admin_logs_bp.route('/logs/tail')
 @admin_required_logs
 def logs_tail():
     import os
@@ -1773,7 +1775,7 @@ def logs_tail():
     last_n_lines = lines[-n:] if len(lines) > n else lines
     return jsonify({'logs': last_n_lines})
 
-@admin_logs_bp.route('/admin/logs/search')
+@admin_logs_bp.route('/logs/search')
 @admin_required_logs
 def logs_search():
     import os
@@ -1789,7 +1791,7 @@ def logs_search():
         lines = [l for l in f if kw.lower() in l.lower()]
     return jsonify({'logs': lines})
 
-@admin_logs_bp.route('/admin/logs/download')
+@admin_logs_bp.route('/logs/download')
 @admin_required_logs
 def logs_download():
     import os
@@ -1800,7 +1802,7 @@ def logs_download():
         return 'Archivo no encontrado', 404
     return send_file(log_path, as_attachment=True, download_name=log_file)
 
-@admin_logs_bp.route('/admin/logs/clear', methods=['POST'])
+@admin_logs_bp.route('/logs/clear', methods=['POST'])
 @admin_required_logs
 def logs_clear():
     import os
@@ -1813,7 +1815,7 @@ def logs_clear():
         f.truncate(0)
     return jsonify({'status': f'Log {log_file} limpiado correctamente'})
 
-@admin_logs_bp.route('/admin/logs/size')
+@admin_logs_bp.route('/logs/size')
 @admin_required_logs
 def logs_size():
     import os
@@ -1935,6 +1937,17 @@ def truncate_log_route():
         flash(f'Error al truncar el log: {str(e)}', 'danger')
     return redirect(url_for('admin.maintenance'))
 
+# Función para registrar los blueprints
+def register_admin_blueprints(app):
+    """Registra los blueprints de administración en la aplicación Flask."""
+    try:
+        # No necesitamos registrar admin_logs_bp aquí ya que ya se registra en __init__.py
+        # con el prefijo correcto
+        return True
+    except Exception as e:
+        app.logger.error(f"Error registrando blueprints de admin: {str(e)}")
+        return False
+
 app = None
 try:
     from flask import current_app
@@ -1943,4 +1956,4 @@ except Exception:
     import __main__
     app = getattr(__main__, 'app', None)
 if app is not None:
-    app.register_blueprint(admin_logs_bp)
+    register_admin_blueprints(app)
