@@ -373,63 +373,6 @@ block content %}
   <div class="row">
     <div class="col-md-12 mb-4">
       <div class="card">
-        <div class="card-header bg-primary text-white">
-          <h4 class="card-title mb-0">Archivos Temporales</h4>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Cantidad</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.temp_files.count }}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Tamaño Total</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.temp_files.total_size_mb }} MB
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <button class="btn btn-warning" id="cleanupTempBtn">
-                    Limpiar archivos >2 días
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% if data.health.metrics.temp_files.count > 0 %}
-          <div class="mt-3">
-            <h5>Archivos (primeros 10)</h5>
-            <ul class="list-group">
-              {% for file in data.health.metrics.temp_files.files[:10] %}
-              <li class="list-group-item">{{ file }}</li>
-              {% endfor %} {% if data.health.metrics.temp_files.count > 10 %}
-              <li class="list-group-item text-muted">
-                ...y {{ data.health.metrics.temp_files.count - 10 }} más
-              </li>
-              {% endif %}
-            </ul>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-md-12 mb-4">
-      <div class="card">
         <div class="card-header bg-secondary text-white">
           <div class="d-flex justify-content-between">
             <h4 class="card-title mb-0">Detalles Técnicos</h4>

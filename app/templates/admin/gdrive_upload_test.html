@@ -1,25 +1,99 @@
-{% extends 'base.html' %} {% block title %}Subida de prueba a Google Drive{%
-endblock %} {% block content %}
+{% extends 'base.html' %}
+
+{% block title %}Subida de prueba a Google Drive{% endblock %}
+
+{% block content %}
 <div class="container mt-4">
-  <h2>Subida de prueba a Google Drive</h2>
-  <a href="{{ url_for('admin.maintenance') }}" class="btn btn-secondary mb-3"
-    >&larr; Volver al mantenimiento</a
-  >
-  {% if uploaded_links %}
-  <div class="alert alert-success">
-    <h5>Archivos subidos correctamente:</h5>
-    <ul>
-      {% for filename, enlace in uploaded_links %}
-      <li>
-        <strong>{{ filename }}</strong>:
-        <a href="{{ enlace }}" target="_blank">Ver en Google Drive</a>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
-  <div class="alert alert-info">
-    Puedes cerrar esta ventana y volver al panel de mantenimiento.
-  </div>
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-upload me-2"></i>Subida de prueba a Google Drive
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <!-- Mensajes flash -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Formulario de subida -->
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <div class="mb-3">
+                            <label for="test_files" class="form-label">Selecciona uno o más archivos para subir:</label>
+                            <input class="form-control" type="file" name="test_files" id="test_files" multiple required>
+                            <div class="form-text">Puedes seleccionar múltiples archivos manteniendo presionada la tecla Ctrl (Windows/Linux) o Cmd (Mac).</div>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('admin.maintenance') }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-1"></i> Volver al mantenimiento
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-cloud-upload-alt me-1"></i> Subir archivos
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Resultados de subida -->
+                    {% if uploaded_links %}
+                    <div class="mt-4">
+                        <h5 class="border-bottom pb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>Archivos subidos correctamente:
+                        </h5>
+                        <div class="table-responsive mt-2">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Archivo</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for filename, enlace in uploaded_links %}
+                                    <tr>
+                                        <td class="align-middle">
+                                            <i class="fas fa-file-alt me-2"></i>{{ filename }}
+                                        </td>
+                                        <td>
+                                            <a href="{{ enlace }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="fas fa-external-link-alt me-1"></i>Abrir en Drive
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> Los archivos se subirán a la carpeta 'Backups_CatalogoTablas' en tu Google Drive.
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Script para manejar la visualización del nombre del archivo -->
+<script>
+document.getElementById('test_files').addEventListener('change', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    if (this.files.length > 0) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fas fa-cloud-upload-alt me-1"></i> Subir ${this.files.length} archivo(s)`;
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-1"></i> Subir archivos';
+    }
+});
+</script>
 {% endblock %}

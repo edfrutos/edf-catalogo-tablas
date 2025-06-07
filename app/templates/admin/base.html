@@ -30,6 +30,17 @@
                 <li class="nav-item">
                     <a class="nav-link {% if 'catalogo' in request.endpoint or 'ver_catalogos_usuario' in request.endpoint %}active{% endif %}" href="{{ url_for('catalogs.list') }}">Catálogos/Tablas</a>
                 </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {% if 'db_' in request.endpoint %}active{% endif %}" href="#" id="dbDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Base de Datos
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="dbDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('admin.db_status') }}">Estado</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('admin.db_monitor') }}">Monitor en Tiempo Real</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('admin.db_backup') }}">Respaldo</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('admin.db_performance') }}">Rendimiento</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'admin.maintenance' %}active{% endif %}" href="{{ url_for('admin.maintenance') }}">Mantenimiento</a>
                 </li>

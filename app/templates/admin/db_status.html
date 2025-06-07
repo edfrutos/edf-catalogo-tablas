@@ -42,7 +42,56 @@
     <div class="card mb-3">
         <div class="card-header">Información del servidor MongoDB</div>
         <div class="card-body">
-            <pre style="font-size: 0.95em;">{{ status.server_info }}</pre>
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <tbody>
+                        <tr>
+                            <th style="width: 30%;">Versión de MongoDB</th>
+                            <td>{{ status.server_info.version }} {% if 'modules' in status.server_info and 'enterprise' in status.server_info.modules %}<span class="badge bg-primary">Enterprise</span>{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>Versión de Git</th>
+                            <td><code>{{ status.server_info.gitVersion }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Arquitectura</th>
+                            <td>{{ status.server_info.bits }} bits</td>
+                        </tr>
+                        <tr>
+                            <th>Motor JavaScript</th>
+                            <td>{{ status.server_info.javascriptEngine }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tamaño máximo de objeto BSON</th>
+                            <td>{{ "{:,}".format(status.server_info.maxBsonObjectSize) }} bytes ({{ "{:.1f}".format(status.server_info.maxBsonObjectSize/1024/1024) }} MB)</td>
+                        </tr>
+                        <tr>
+                            <th>Motores de almacenamiento</th>
+                            <td>
+                                {% for engine in status.server_info.storageEngines %}
+                                    <span class="badge bg-secondary me-1">{{ engine }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% if 'clusterTime' in status.server_info %}
+                        <tr>
+                            <th>Hora del clúster</th>
+                            <td>{{ status.server_info.clusterTime.as_datetime().strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Sección para depuración (opcional, se puede ocultar) -->
+            <div class="mt-4">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#rawServerInfo">
+                    Mostrar información técnica completa
+                </button>
+                <div class="collapse mt-2" id="rawServerInfo">
+                    <pre class="bg-light p-2" style="font-size: 0.8em;">{{ status.server_info|tojson(indent=2) }}</pre>
+                </div>
+            </div>
         </div>
     </div>
 </div>

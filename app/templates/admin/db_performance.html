@@ -1,0 +1,361 @@
+{% extends 'admin/base.html' %}
+{% block title %}Pruebas de Rendimiento de Base de Datos{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-speedometer2 me-2"></i>Pruebas de Rendimiento</h2>
+        <div>
+            <a href="{{ url_for('admin.db_performance') }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-repeat"></i> Actualizar
+            </a>
+        </div>
+    </div>
+
+    <!-- Panel de configuración -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-tools me-2"></i>Configuración de Pruebas
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.db_performance') }}">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="num_ops" class="form-label">Número de Operaciones</label>
+                                <input type="number" class="form-control" id="num_ops" name="num_ops" 
+                                       value="100" min="10" max="10000" required>
+                                <div class="form-text">Número total de operaciones a ejecutar (10-10,000)</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="batch_size" class="form-label">Tamaño de Lote</label>
+                                <input type="number" class="form-control" id="batch_size" name="batch_size" 
+                                       value="10" min="1" max="1000" required>
+                                <div class="form-text">Operaciones por lote (1-1,000)</div>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end mb-3">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-play-fill me-2"></i>Ejecutar Pruebas
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados de pruebas -->
+    {% if results and results.status != 'error' %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Resultados de las Pruebas</h5>
+                    {% if results and results.timestamp %}
+                    <span class="text-muted">{{ results.timestamp }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if results and results.status == 'error' %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            {{ results.message }}
+                        </div>
+                        {% if results.traceback %}
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#errorDetails" 
+                                    aria-expanded="false" aria-controls="errorDetails">
+                                Ver detalles del error
+                            </button>
+                            <div class="collapse mt-2" id="errorDetails">
+                                <div class="card card-body bg-light">
+                                    <pre class="mb-0">{{ results.traceback }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% elif results and results.metrics %}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card bg-light border-0 mb-4">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted mb-2">Operaciones Totales</h6>
+                                        <h2 class="text-primary">{{ "{:,}".format(results.operations) if results.operations is defined else 'N/A' }}</h2>
+                                        <small class="text-muted">{{ results.batch_size if results.batch_size is defined else 'N/A' }} por lote</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Tipo de Operación</th>
+                                                <th class="text-end">Tiempo Total</th>
+                                                <th class="text-end">Operaciones/seg</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><i class="bi bi-plus-circle-fill text-success me-2"></i>Inserción</td>
+                                                <td class="text-end">
+                                                    {% if results.metrics.insert and results.metrics.insert.time is defined %}
+                                                        {{ "%.4f"|format(results.metrics.insert.time) }}s
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-end">
+                                                    {% if results.metrics.insert and results.metrics.insert.ops_sec is defined %}
+                                                        {{ "%.2f"|format(results.metrics.insert.ops_sec) }}
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><i class="bi bi-search text-primary me-2"></i>Consulta</td>
+                                                <td class="text-end">
+                                                    {% if results.metrics.query and results.metrics.query.time is defined %}
+                                                        {{ "%.4f"|format(results.metrics.query.time) }}s
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-end">
+                                                    {% if results.metrics.query and results.metrics.query.ops_sec is defined %}
+                                                        {{ "%.2f"|format(results.metrics.query.ops_sec) }}
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><i class="bi bi-arrow-repeat text-warning me-2"></i>Actualización</td>
+                                                <td class="text-end">
+                                                    {% if results.metrics.update and results.metrics.update.time is defined %}
+                                                        {{ "%.4f"|format(results.metrics.update.time) }}s
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-end">
+                                                    {% if results.metrics.update and results.metrics.update.ops_sec is defined %}
+                                                        {{ "%.2f"|format(results.metrics.update.ops_sec) }}
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráfico de rendimiento -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <canvas id="performanceChart" height="100"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recomendaciones -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Recomendaciones</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group list-group-flush">
+                                            {% if results.metrics and results.metrics.insert and results.metrics.insert.ops_sec is defined 
+                                                and results.metrics.query and results.metrics.query.ops_sec is defined 
+                                                and results.metrics.update and results.metrics.update.ops_sec is defined %}
+                                                {% if results.metrics.insert and results.metrics.insert.time is defined and results.metrics.query and results.metrics.query.time is defined %}
+                                                {% if results.metrics.insert.time > results.metrics.query.time * 2 %}
+                                                <li class="list-group-item border-0 px-0">
+                                                    <i class="bi bi-info-circle-fill text-info me-2"></i>
+                                                    Las inserciones son más lentas que las consultas. Considera usar operaciones por lotes más grandes.
+                                                </li>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            {% if results.metrics.query and results.metrics.query.time is defined and results.metrics.query.time > 1 %}
+                                                <li class="list-group-item border-0 px-0">
+                                                    <i class="bi bi-lightning-charge-fill text-warning me-2"></i>
+                                                    Las consultas están tardando más de 1 segundo. Considera agregar índices a los campos de búsqueda frecuentes.
+                                                </li>
+                                            {% endif %}
+                                            
+                                            {% if results.metrics.update and results.metrics.update.time is defined and results.metrics.insert and results.metrics.insert.time is defined %}
+                                                {% if results.metrics.update.time > results.metrics.insert.time %}
+                                                <li class="list-group-item border-0 px-0">
+                                                    <i class="bi bi-arrow-repeat text-danger me-2"></i>
+                                                    Las actualizaciones son más lentas que las inserciones. Revisa si hay índices faltantes o bloqueos.
+                                                </li>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            {% if results.batch_size is defined %}
+                                                {% if results.batch_size > 100 %}
+                                                <li class="list-group-item border-0 px-0">
+                                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                    El tamaño de lote es adecuado para operaciones por lotes.
+                                                </li>
+                                                {% else %}
+                                                <li class="list-group-item border-0 px-0">
+                                                    <i class="bi bi-info-circle-fill text-info me-2"></i>
+                                                    Considera aumentar el tamaño de lote para mejorar el rendimiento en operaciones por lotes.
+                                                </li>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            {% else %}
+                                                <li class="list-group-item border-0 px-0">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    No hay suficientes datos para generar recomendaciones. Ejecuta las pruebas para ver recomendaciones personalizadas.
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center p-5">
+                    <i class="bi bi-graph-up-arrow" style="font-size: 3rem; color: #6c757d;"></i>
+                    <h4 class="mt-3">No hay resultados de pruebas disponibles</h4>
+                    <p class="text-muted">Configura y ejecuta las pruebas de rendimiento para ver los resultados.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#configModal">
+                        <i class="bi bi-play-fill me-2"></i>Ejecutar Pruebas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de configuración (para el botón del mensaje de bienvenida) -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configuración de Pruebas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.db_performance') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modal_num_ops" class="form-label">Número de Operaciones</label>
+                        <input type="number" class="form-control" id="modal_num_ops" name="num_ops" 
+                               value="100" min="10" max="10000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_batch_size" class="form-label">Tamaño de Lote</label>
+                        <input type="number" class="form-control" id="modal_batch_size" name="batch_size" 
+                               value="10" min="1" max="1000" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-play-fill me-2"></i>Iniciar Pruebas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if results and results.status == 'success' %}
+    // Configurar gráfico de rendimiento
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Inserción', 'Consulta', 'Actualización'],
+            datasets: [{
+                label: 'Operaciones por segundo',
+                data: [
+                    {{ "%.2f"|format(results.metrics.insert.ops_sec) }},
+                    {{ "%.2f"|format(results.metrics.query.ops_sec) }},
+                    {{ "%.2f"|format(results.metrics.update.ops_sec) }}
+                ],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.7)',   // Verde para inserción
+                    'rgba(23, 162, 184, 0.7)',   // Azul para consulta
+                    'rgba(255, 193, 7, 0.7)'     // Amarillo para actualización
+                ],
+                borderColor: [
+                    'rgba(40, 167, 69, 1)',
+                    'rgba(23, 162, 184, 1)',
+                    'rgba(255, 193, 7, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Rendimiento de Operaciones (operaciones/segundo)'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw.toFixed(2) + ' ops/seg';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Operaciones por Segundo'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Tipo de Operación'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+
+    // Configurar tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}
