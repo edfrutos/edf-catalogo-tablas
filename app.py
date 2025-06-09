@@ -431,17 +431,19 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # ==============================================
 
 logging.basicConfig(
-    filename=os.path.join(ROOT_DIR, "app_debug.log"),
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.WARNING,  # Solo mostrar WARNING y superiores
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 
-# También log a consola (útil en desarrollo)
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-logging.getLogger('').addHandler(console_handler)
+# Reducir verbosidad de dependencias
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+logging.getLogger('pymongo').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
+logging.getLogger('boto3').setLevel(logging.ERROR)
+logging.getLogger('botocore').setLevel(logging.ERROR)
 
 # Manejo de excepciones no capturadas
 def handle_exception(exc_type, exc_value, exc_traceback):

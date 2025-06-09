@@ -1,1 +1,0 @@
-/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/tools/_backup_scripts/04_limpieza_automatizada.py

@@ -1,1 +1,0 @@
-/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/tools/utils/07.-cambiar_definicion_de_coleccion_en_codigo.py

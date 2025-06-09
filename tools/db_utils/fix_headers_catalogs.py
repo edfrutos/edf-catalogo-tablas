@@ -2,7 +2,7 @@
 # Script: fix_headers_catalogs.py
 # Descripción: Repara los encabezados de la colección indicada (por defecto 'catalogs').
 # Uso: python3 fix_headers_catalogs.py [--collection catalogs]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Equipo de Desarrollo - 2025-05-28
 
 import os
 import certifi

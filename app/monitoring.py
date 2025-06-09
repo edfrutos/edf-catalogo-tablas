@@ -135,6 +135,9 @@ def check_system_health():
             }
         }
         
+        # Actualizar métricas de caché
+        update_cache_metrics()
+        
         # Verificar si hay condiciones de alerta (umbrales ajustados para reducir alertas innecesarias)
         if cpu_usage > 95:
             logger.warning(f"Alerta: Alto uso de CPU: {cpu_usage}%")

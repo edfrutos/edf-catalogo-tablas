@@ -4,7 +4,7 @@
 # Uso: python3 migrate_catalogs_to_spreadsheets.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Equipo de Desarrollo - 2025-05-28
 
 import os
 import certifi

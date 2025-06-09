@@ -1,1 +1,0 @@
-/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/tools/utils/05.-insertar_manualmente_un_documento.py

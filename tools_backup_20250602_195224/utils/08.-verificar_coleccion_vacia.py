@@ -1,1 +1,0 @@
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/root/08.-verificar_coleccion_vacia.py

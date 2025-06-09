@@ -1,1 +1,0 @@
-/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/tools/db_utils/03_ver_guardado_rutas_en_MongoDB.py

@@ -2,7 +2,7 @@
 # Script: fix_owner_catalogs.py
 # Descripción: Reasigna el propietario de catálogos/tablas de un usuario a otro.
 # Uso: python3 fix_owner_catalogs.py --old_owner <email/username> --new_owner <email/username>
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Equipo de Desarrollo - 2025-05-28
 
 import os
 import certifi

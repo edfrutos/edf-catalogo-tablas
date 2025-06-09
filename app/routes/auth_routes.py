@@ -2,6 +2,8 @@
 
 import logging
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
+from flask_login import login_user
+from app.models.user import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Message
 from app.extensions import mail
@@ -141,8 +143,15 @@ def register():
             flash('Ese email ya está registrado.', 'error')
             return redirect(url_for('auth.register'))
 
-        # Generar hash de contraseña usando Werkzeug
-        hashed_password = generate_password_hash(password)
+        # Generar hash de contraseña usando Werkzeug con parámetros scrypt optimizados
+        hashed_password = generate_password_hash(
+            password,
+            method='scrypt',
+            salt_length=16,
+            n=16384,  # Número de iteraciones (más bajo para mejor rendimiento)
+            r=8,      # Factor de bloqueo
+            p=1       # Factor de paralelización
+        )
         
         # Crear documento de usuario
         nuevo_usuario = {
@@ -166,23 +175,35 @@ def register():
             result = users_collection.insert_one(nuevo_usuario)
             logger.info(f"Usuario registrado correctamente: {email}")
             
-            # Iniciar sesión automáticamente
+            # Si llegamos aquí, la autenticación fue exitosa
             session['user_id'] = str(result.inserted_id)
-            session['username'] = nombre
-            session['email'] = email
-            session['role'] = "user"
+            session['email'] = nuevo_usuario['email']
             session['logged_in'] = True
+            session['role'] = nuevo_usuario.get('role', 'user')
+            session.permanent = True  # Hacer la sesión permanente
             
-            flash('¡Registro exitoso!', 'success')
+            # Actualizar último inicio de sesión
+            users_collection.update_one(
+                {'_id': result.inserted_id},
+                {'$set': {'ultimo_login': datetime.utcnow()}, 
+                 '$inc': {'login_count': 1}},
+                upsert=True
+            )
             
-            # Redireccionar según el rol del usuario
+            logger.info(f"Usuario {email} ha iniciado sesión exitosamente")
+            
+            # Manejar redirección después de login
+            next_page = request.args.get('next')
+            if next_page:
+                logger.info(f"Redirigiendo a la página solicitada: {next_page}")
+                return redirect(next_page)
+                
+            # Redirigir según el rol si no hay página de destino
             if session.get('role') == 'admin':
-                logger.info("Redirigiendo a panel de administración")
                 return redirect(url_for('admin.dashboard_admin'))
             else:
-                logger.info("Redirigiendo a dashboard de usuario")
                 return redirect(url_for('main.dashboard'))
-            
+                
         except Exception as e:
             logger.error(f"Error registrando usuario: {str(e)}")
             flash('Error interno del servidor. Por favor intenta nuevamente.', 'error')
@@ -220,11 +241,71 @@ def login():
             return redirect(url_for('auth.login'))
 
         logger.info(f"Buscando usuario en la base de datos: {email}")
+        
+        # Obtener la colección de usuarios
         users_collection = getattr(current_app, 'users_collection', None)
         if users_collection is None and hasattr(current_app, 'mongo'):
             users_collection = current_app.mongo.db.users
-        usuario = find_user_by_email_or_name(email)
+            
+        # Buscar usuario por username, email o nombre (campo 'nombre')
+        logger.info(f"Buscando usuario con identificador: {email}")
+        usuario = None
+        campo_match = None
+
+        users = list(users_collection.find().limit(200))
+        input_normalized = email.lower().strip()
+        
+        # 1. Buscar por username
+        for u in users:
+            username = u.get('username')
+            username_normalized = username.lower().strip() if username else ''
+            if username and username_normalized == input_normalized:
+                usuario = u
+                campo_match = 'username'
+                logger.info(f"[LOGIN] Match exacto por username: {username}")
+                break
+        # 2. Buscar por email si no se encontró por username
+        if not usuario:
+            for u in users:
+                email_u = u.get('email')
+                email_normalized_u = email_u.lower().strip() if email_u else ''
+                if email_u and email_normalized_u == input_normalized:
+                    usuario = u
+                    campo_match = 'email'
+                    logger.info(f"[LOGIN] Match exacto por email: {email_u}")
+                    break
+        # 3. Buscar por nombre si no se encontró por username ni email
+        if not usuario:
+            for u in users:
+                nombre_u = u.get('nombre')
+                nombre_normalized_u = nombre_u.lower().strip() if nombre_u else ''
+                if nombre_u and nombre_normalized_u == input_normalized:
+                    usuario = u
+                    campo_match = 'nombre'
+                    logger.info(f"[LOGIN] Match exacto por nombre: {nombre_u}")
+                    break
+        # 4. Intentar con formato de email si input no tiene @ y no se encontró usuario
+        if not usuario and '@' not in input_normalized:
+            email_with_domain = f"{input_normalized}@dominio.com"
+            for u in users:
+                email_u = u.get('email')
+                email_normalized_u = email_u.lower().strip() if email_u else ''
+                if email_u and email_normalized_u == email_with_domain:
+                    usuario = u
+                    campo_match = 'email_con_dominio'
+                    logger.info(f"[LOGIN] Match exacto por email generado: {email_with_domain}")
+                    break
+        # 5. Si aún no se encuentra, logs de depuración
+        if not usuario:
+            logger.warning("Usuario no encontrado, mostrando primeros 5 usuarios en la base de datos:")
+            for i, u in enumerate(users[:5], 1):
+                logger.warning(f"Usuario {i}: email={u.get('email')}, username={u.get('username')}, nombre={u.get('nombre')}, tipo_username={type(u.get('username'))}")
+            
         logger.info(f"[LOGIN] Usuario recuperado de la base de datos: {usuario}")
+        if usuario:
+            logger.info(f"Tipo de búsqueda: {'email' if '@' in email else 'username'}")
+            logger.info(f"Campos del usuario - email: {usuario.get('email')}, username: {usuario.get('username')}")
+        
 
         if not usuario:
             logger.warning(f"Usuario no encontrado: {email}")
@@ -317,29 +398,33 @@ def login():
 
             # Limpiar la sesión anterior si existe
             session.clear()
-
-            # Restaurar todos los datos necesarios en la sesión
             session.permanent = True
-            session['user_id'] = str(usuario.get('_id', ''))
-            session['email'] = usuario.get('email', '')
-            session['username'] = usuario.get('username') or usuario.get('nombre') or 'usuario'
-            session['role'] = usuario.get('role', 'user')
-            session['logged_in'] = True
-            
-            # Establecer hora de inicio de sesión para rastreo
+            # Solo datos mínimos en sesión, el resto lo maneja Flask-Login
             session['login_time'] = datetime.utcnow().isoformat()
             session['client_ip'] = request.remote_addr
 
-            # Forzar guardado de sesión y envío de cookie
-            session.modified = True
-            
-            # Registrar información detallada para depuración
-            logger.info(f"[LOGIN] Sesión establecida para usuario: {session.get('username')} (ID: {session.get('user_id')})")
-            logger.info(f"[LOGIN] Datos completos de sesión: {dict(session)}")
-            logger.debug(f"[LOGIN] Cookies de sesión: {request.cookies}")
-            logger.debug(f"[LOGIN] Configuración de sesión: COOKIE_NAME={current_app.config.get('SESSION_COOKIE_NAME')}, SECURE={current_app.config.get('SESSION_COOKIE_SECURE')}")
-            
-            # Registrar en la base de datos el inicio de sesión exitoso
+            # Crear objeto User y autenticar con Flask-Login
+            user_obj = User(usuario)
+            login_user(user_obj)
+
+            # Guardar datos clave en la sesión para el menú y perfil
+            session['usuario'] = str(usuario.get('_id'))
+            session['username'] = usuario.get('username', '')
+            session['nombre'] = usuario.get('nombre', '')
+            session['email'] = usuario.get('email', '')
+            session['role'] = usuario.get('role', '')
+            session['user_id'] = str(usuario.get('_id'))  # Compatibilidad decorador
+            session['logged_in'] = True  # Compatibilidad decorador
+
+            logger.info(f"Sesión iniciada exitosamente para {usuario.get('email')}")
+
+            # Manejar redirección después de login
+            next_page = request.args.get('next')
+            if next_page:
+                logger.info(f"Redirigiendo a la página solicitada: {next_page}")
+                return redirect(next_page)
+
+            # Registrar el historial de login
             try:
                 users_collection.update_one(
                     {'_id': usuario['_id']},
@@ -353,34 +438,23 @@ def login():
                 )
             except Exception as e:
                 logger.error(f"Error al registrar historial de login: {str(e)}")
-                # No interrumpir el flujo por este error
+                pass
 
-            # Redirección según rol
-            next_url = request.args.get('next')
-            safe_redirect = False
-            if next_url:
-                # Si el admin intenta ir a una ruta que no es admin, forzar /admin/
-                if usuario.get('role') == 'admin' and not next_url.startswith('/admin'):
-                    logger.info(f"Forzando redirección a panel de administración para admin, ignorando next: {next_url}")
-                    response = redirect('/admin/')
-                elif 'login' not in next_url.lower():
-                    safe_redirect = True
-                    logger.info(f"Redirigiendo a URL next (segura): {next_url}")
-                    response = redirect(next_url)
-                else:
-                    logger.warning(f"Evitando redirección circular a: {next_url}")
-            if not safe_redirect:
-                if usuario.get('role') == 'admin':
-                    logger.info(f"Redirigiendo a panel de administración (por defecto)")
-                    response = redirect('/admin/')
-                else:
-                    logger.info(f"Redirigiendo a dashboard para usuario normal: {usuario.get('email')}")
-                    response = redirect(url_for('main.dashboard'))
+            # Redirigir según el rol
+            if user_obj.is_admin:
+                logger.info("Redirigiendo a panel de administración")
+                response = redirect(url_for('admin.dashboard_admin'))
+            else:
+                logger.info("Redirigiendo a dashboard principal")
+                response = redirect(url_for('main.dashboard'))
+
+            # Configurar cabeceras de respuesta
             response.headers.update({
                 'Cache-Control': 'no-cache, no-store, must-revalidate, private',
                 'Pragma': 'no-cache',
                 'Expires': '0'
             })
+
             logger.info(f"Login exitoso para: {email}")
             return response
 
@@ -465,14 +539,35 @@ def forgot_password():
             flash('Debes ingresar tu nombre o correo.', 'error')
             return redirect(url_for('auth.forgot_password'))
 
+        # Obtener la colección de usuarios
         users_collection = getattr(current_app, 'users_collection', None)
         if users_collection is None and hasattr(current_app, 'mongo'):
             users_collection = current_app.mongo.db.users
-        user = find_user_by_email_or_name(usuario_input)
+            
+        logger.debug("Colección de usuarios: %s", users_collection)
+        
+        # Buscar el usuario por email o nombre
+        try:
+            from app.models import find_user_by_email_or_name
+            user = find_user_by_email_or_name(usuario_input)
+            logger.debug("Resultado de búsqueda para %s: %s", usuario_input, user)
+        except Exception as e:
+            logger.exception("Error al buscar el usuario")
+            flash('Ocurrió un error al buscar el usuario. Por favor, inténtalo de nuevo.', 'error')
+            return redirect(url_for('auth.forgot_password'))
 
         if not user:
-            logger.warning("Usuario no encontrado en recuperación: %s", usuario_input)
-            flash('No se encontró ningún usuario con ese nombre o email.', 'error')
+            logger.warning("Usuario no encontrado: %s", usuario_input)
+            # Verificar si hay usuarios en la base de datos
+            try:
+                user_count = users_collection.count_documents({})
+                logger.debug("Total de usuarios en la base de datos: %d", user_count)
+                if user_count == 0:
+                    logger.warning("La colección de usuarios está vacía")
+            except Exception as e:
+                logger.exception("Error al contar usuarios")
+                
+            flash('No se encontró ningún usuario con ese nombre o email. Verifica que esté correctamente escrito.', 'error')
             return redirect(url_for('auth.forgot_password'))
 
         token = secrets.token_urlsafe(32)
@@ -575,7 +670,14 @@ def reset_password(token):
                 return render_template('reset_password_form.html', token=token)
             
             # Generar nuevo hash de contraseña usando Werkzeug
-            hashed_password = generate_password_hash(new_pass)
+            hashed_password = generate_password_hash(
+                new_pass,
+                method='scrypt',
+                salt_length=16,
+                n=16384,  # Número de iteraciones (más bajo para mejor rendimiento)
+                r=8,      # Factor de bloqueo
+                p=1       # Factor de paralelización
+            )
             
             # Actualizar contraseña del usuario
             users_collection.update_one(

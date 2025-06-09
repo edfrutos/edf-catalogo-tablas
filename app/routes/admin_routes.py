@@ -8,7 +8,10 @@
 from functools import wraps
 import logging
 import re
+import subprocess
+import time
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, make_response, jsonify, current_app, abort
+from flask_login import current_user
 from bson import ObjectId
 from app.database import (get_reset_tokens_collection, get_users_collection,
                       get_audit_logs_collection, get_catalogs_collection, get_mongo_client, get_mongo_db, get_last_error)
@@ -33,7 +36,44 @@ import traceback
 import pprint
 import psutil
 import platform
-from flask import session
+
+def log_action(action, message, details=None, user_id=None, collection=None):
+    """
+    Registra una acción en el log de auditoría.
+    
+    Args:
+        action (str): Nombre de la acción (ej: 'backup_created', 'user_updated')
+        message (str): Mensaje descriptivo de la acción
+        details (dict, optional): Detalles adicionales de la acción
+        user_id (str, optional): ID del usuario que realizó la acción
+        collection (str, optional): Nombre de la colección relacionada
+    """
+    try:
+        # Obtener el ID de usuario actual si no se proporciona
+        if not user_id and hasattr(current_user, 'id'):
+            user_id = str(current_user.id)
+            
+        # Crear el documento de log
+        log_entry = {
+            'action': action,
+            'message': message,
+            'details': details or {},
+            'user_id': user_id,
+            'collection': collection,
+            'ip_address': request.remote_addr if request else None,
+            'user_agent': request.headers.get('User-Agent') if request else None,
+            'timestamp': datetime.utcnow()
+        }
+        
+        # Insertar en la colección de auditoría
+        audit_logs = get_audit_logs_collection()
+        audit_logs.insert_one(log_entry)
+        
+        # También registrar en el log de la aplicación
+        current_app.logger.info(f"[AUDIT] {action}: {message}")
+        
+    except Exception as e:
+        current_app.logger.error(f"Error al registrar en el log de auditoría: {str(e)}", exc_info=True)
 
 # Importar nuestro módulo de monitoreo
 from app import monitoring
@@ -154,34 +194,7 @@ def dashboard_admin():
         logger.error(f"Error en dashboard_admin: {str(e)}")
         return render_template("error.html", error=f"Error en el panel de administración: {str(e)}"), 500
 
-@admin_bp.route("/maintenance")
-@admin_required
-def maintenance():
-    try:
-        # Obtener estadísticas de archivos temporales
-        monitoring.check_temp_files()
-        temp_stats = monitoring._app_metrics["temp_files"]
-        
-        # Obtener estadísticas de caché
-        cache_stats = monitoring._app_metrics["cache_status"]
-        
-        # Obtener espacio en disco disponible
-        monitoring.check_system_health()
-        disk_stats = monitoring._app_metrics["system_status"]["disk_usage"]
-        
-        # Preparar datos para la plantilla
-        maintenance_data = {
-            "temp_files": temp_stats,
-            "cache": cache_stats,
-            "disk": disk_stats,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        
-        return render_template("admin/maintenance.html", data=maintenance_data)
-    except Exception as e:
-        logger.error(f"Error en maintenance: {str(e)}")
-        flash("Error al cargar la página de mantenimiento", "danger")
-        return redirect(url_for('admin.dashboard_admin'))
+# Removed duplicate maintenance route - using dedicated maintenance blueprint instead
 
 @admin_bp.route("/system-status")
 @admin_required
@@ -315,6 +328,17 @@ def get_system_status_data(full=False):
             "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "memory": {}
         }
+
+from flask import jsonify, Blueprint, request
+
+# ...
+
+@admin_bp.route('/logs/list')
+@admin_required
+def logs_list():
+    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
+    log_files = get_log_files(logs_dir)
+    return jsonify({'status': 'success', 'files': [f['name'] for f in log_files]})
 
 def get_log_files(logs_dir):
     """Obtiene la lista de archivos de log disponibles (máx 20 más recientes)"""
@@ -1350,7 +1374,7 @@ def test_email():
                 return jsonify({"success": True})
             else:
                 logger.error(f"[ADMIN] Error al enviar correo de prueba a {email}. Ambos métodos fallaron.")
-                return jsonify({"success": False, "error": f"Error directo: {str(direct_err)}. Error en método normal: Resultado falso sin excepción."})
+                return jsonify({"success": False, "error": f"Error directo: {str(direct_err)}. Error en método normal: Resultado falso sin excepción. Revisa los logs para más detalles."})
     except Exception as e:
         logger.error(f"[ADMIN] Excepción al enviar correo de prueba a {email}: {str(e)}", exc_info=True)
         return jsonify({"success": False, "error": f"Error: {str(e)}"})
@@ -1379,7 +1403,7 @@ def verify_users():
     except Exception as e:
         logger.error(f"Error en verify_users: {str(e)}", exc_info=True)
         flash(f"Error al verificar usuarios: {str(e)}", "error")
-        return redirect(url_for('admin.maintenance'))
+        return redirect(url_for('maintenance.maintenance_dashboard'))
 
 @admin_bp.route("/catalogos-usuario/<user_id>")
 @admin_required
@@ -1659,86 +1683,581 @@ def eliminar_catalogo_admin(collection_source, catalog_id):
 @admin_bp.route("/db-scripts", methods=["GET", "POST"])
 @admin_required
 def db_scripts():
+    """
+    Maneja la ejecución de scripts de base de datos desde la interfaz de administración.
+    
+    Permite ejecutar scripts de mantenimiento de la base de datos con argumentos opcionales.
+    Incluye medidas de seguridad para prevenir ejecución de comandos maliciosos.
+    """
     import glob
     import shlex
     import time
+    import subprocess
+    from datetime import datetime
+    
+    # Configuración de directorios
     scripts_dir = os.path.join(os.getcwd(), "tools", "db_utils")
-    # Blacklist de scripts peligrosos
+    
+    # Lista de scripts permitidos (solo .py y que no empiecen con _)
     blacklist = {"__init__.py", "google_drive_utils.py"}
-    scripts = [os.path.basename(f) for f in glob.glob(os.path.join(scripts_dir, "*.py"))
-               if not os.path.basename(f).startswith("_") and os.path.basename(f) not in blacklist]
+    scripts = []
+    
+    # Obtener información detallada de cada script
+    for script_path in glob.glob(os.path.join(scripts_dir, "*.py")):
+        script_name = os.path.basename(script_path)
+        if script_name.startswith("_") or script_name in blacklist:
+            continue
+            
+        # Obtener descripción del script (primera línea de comentario)
+        description = "Sin descripción"
+        try:
+            with open(script_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith('#') and 'descripci' in line.lower():
+                        description = line.lstrip('#').strip()
+                        break
+        except Exception as e:
+            description = f"Error al leer descripción: {str(e)}"
+            
+        scripts.append({
+            'name': script_name,
+            'path': script_path,
+            'description': description,
+            'last_modified': datetime.fromtimestamp(os.path.getmtime(script_path)).strftime('%Y-%m-%d %H:%M')
+        })
+    
+    # Ordenar scripts por nombre
+    scripts = sorted(scripts, key=lambda x: x['name'])
+    
+    # Variables para el formulario
     result = None
     error = None
     selected_script = None
     args = ""
     duration = None
+    
+    # Procesar envío del formulario
     if request.method == "POST":
         selected_script = request.form.get("script")
-        args = request.form.get("args", "")
-        if selected_script and selected_script.endswith(".py") and selected_script in scripts:
-            script_path = os.path.join(scripts_dir, selected_script)
-            cmd = ["python3", script_path]
-            if args:
-                cmd += shlex.split(args)
-            start_time = time.time()
-            try:
-                proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
-                out, err = proc.communicate()
-                duration = round(time.time() - start_time, 2)
-                result = out
-                error = err if err else None
-                # Registrar en log de auditoría
-                audit_log(f"Ejecución de script DB: {selected_script} args: {args} duración: {duration}s")
-            except Exception as e:
-                error = str(e)
-        else:
+        args = request.form.get("args", "").strip()
+        
+        # Validar script seleccionado
+        if not selected_script or not selected_script.endswith(".py"):
             error = "Script no válido."
+        else:
+            # Verificar que el script esté en la lista permitida
+            script_info = next((s for s in scripts if s['name'] == selected_script), None)
+            if not script_info:
+                error = "Script no permitido."
+            else:
+                # Construir comando de forma segura
+                cmd = ["python3", script_info['path']]
+                
+                # Validar y añadir argumentos
+                if args:
+                    try:
+                        # Validar argumentos (solo permitir ciertos caracteres)
+                        if not all(c.isalnum() or c in ' -_=.' for c in args):
+                            raise ValueError("Caracteres no permitidos en los argumentos")
+                            
+                        # Añadir argumentos de forma segura
+                        cmd.extend(shlex.split(args))
+                    except Exception as e:
+                        error = f"Error en los argumentos: {str(e)}"
+                
+                # Ejecutar el script
+                if not error:
+                    start_time = time.time()
+                    try:
+                        # Ejecutar con timeout de 5 minutos
+                        proc = subprocess.Popen(
+                            cmd,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            text=True,
+                            cwd=scripts_dir  # Ejecutar desde el directorio del script
+                        )
+                        
+                        try:
+                            out, err = proc.communicate(timeout=300)  # 5 minutos de timeout
+                            duration = round(time.time() - start_time, 2)
+                            result = out
+                            error = err if err and err.strip() else None
+                            
+                            # Registrar en log de auditoría
+                            audit_log(
+                                f"Ejecución de script DB: {selected_script} "
+                                f"args: {args} duración: {duration}s"
+                            )
+                            
+                            # Añadir mensaje de éxito
+                            flash(f"Script ejecutado correctamente en {duration} segundos.", "success")
+                            
+                        except subprocess.TimeoutExpired:
+                            proc.kill()
+                            error = "El script excedió el tiempo máximo de ejecución (5 minutos)"
+                            
+                    except Exception as e:
+                        error = f"Error al ejecutar el script: {str(e)}"
+    
     # Mensaje de advertencia de seguridad
-    warning = "⚠️ Ejecutar scripts desde la web puede ser peligroso. Usa solo scripts de confianza."
-    return render_template("admin/db_scripts.html", scripts=scripts, result=result, error=error, selected_script=selected_script, args=args, duration=duration, warning=warning)
+    warning = (
+        "⚠️ ADVERTENCIA: La ejecución de scripts puede afectar la base de datos. "
+        "Asegúrate de entender lo que hace el script antes de ejecutarlo. "
+        "Se recomienda probar en un entorno de desarrollo primero."
+    )
+    
+    return render_template(
+        "admin/db_scripts.html",
+        scripts=scripts,
+        result=result,
+        error=error,
+        selected_script=selected_script,
+        args=args,
+        duration=duration,
+        warning=warning
+    )
 
-@admin_bp.route("/db-status")
+@admin_bp.route('/db-status')
 @admin_required
 def db_status():
+    """Muestra el estado de la conexión a MongoDB"""
+    client = get_mongo_client()
     status = {
-        "is_connected": False,
-        "error": None,
-        "databases": [],
-        "collections": [],
-        "server_info": "",
+        'is_connected': False,
+        'error': None,
+        'databases': [],
+        'collections': [],
+        'server_info': None,
+        'server_status': {}
     }
+    
+    try:
+        # Probar conexión
+        client.admin.command('ping')
+        status['is_connected'] = True
+        
+        # Obtener información de la base de datos
+        status['databases'] = client.list_database_names()
+        
+        # Obtener colecciones de la base de datos actual
+        db = get_mongo_db()
+        if db is not None:
+            try:
+                status['collections'] = db.list_collection_names()
+            except Exception as e:
+                current_app.logger.error(f"Error al obtener colecciones: {str(e)}")
+                status['collections'] = []
+                status['error'] = f"Error al obtener colecciones: {str(e)}"
+        
+        # Obtener información del servidor y convertir objetos no serializables
+        def convert_timestamps(obj):
+            from bson import Timestamp
+            from bson.objectid import ObjectId
+            from datetime import datetime
+            
+            if isinstance(obj, (list, tuple)):
+                return [convert_timestamps(item) for item in obj]
+            elif isinstance(obj, dict):
+                return {k: convert_timestamps(v) for k, v in obj.items()}
+            elif isinstance(obj, Timestamp):
+                return {
+                    'timestamp': obj.time,
+                    'increment': obj.inc,
+                    'as_datetime': datetime.fromtimestamp(obj.time).isoformat(),
+                    '_type': 'Timestamp'
+                }
+            elif isinstance(obj, ObjectId):
+                return str(obj)
+            elif isinstance(obj, bytes):
+                # Convertir bytes a string si es posible, o a una representación en base64
+                try:
+                    return obj.decode('utf-8')
+                except UnicodeDecodeError:
+                    import base64
+                    return {
+                        '_type': 'bytes',
+                        'base64': base64.b64encode(obj).decode('ascii'),
+                        'length': len(obj)
+                    }
+            elif hasattr(obj, 'isoformat'):  # Para objetos datetime
+                return obj.isoformat()
+            elif hasattr(obj, 'items'):  # Para objetos tipo dict
+                return {str(k): convert_timestamps(v) for k, v in obj.items()}
+            elif hasattr(obj, '__dict__'):  # Para objetos con __dict__
+                return convert_timestamps(obj.__dict__)
+            elif isinstance(obj, (int, float, str, bool, type(None))):
+                return obj
+            else:
+                # Para cualquier otro tipo, devolver su representación como string
+                return str(obj)
+        
+        # Obtener y procesar la información del servidor
+        server_info = client.server_info()
+        status['server_info'] = convert_timestamps(server_info)
+        
+        # Obtener y procesar estadísticas del servidor
+        try:
+            server_status = client.admin.command('serverStatus')
+            status['server_status'] = convert_timestamps(server_status)
+        except Exception as e:
+            status['server_status'] = {'error': f'No se pudo obtener el estado del servidor: {str(e)}'}
+            
+    except Exception as e:
+        status['error'] = f"Error al conectar con MongoDB: {str(e)}"
+        current_app.logger.error(f"Error en db_status: {str(e)}\n{traceback.format_exc()}")
+    return render_template("admin/db_status.html", status=status)
+
+@admin_bp.route('/db/monitor')
+@admin_required
+def db_monitor():
+    """Página de monitoreo en tiempo real de la base de datos"""
+    client = get_mongo_client()
+    status = {'is_connected': False, 'error': None, 'stats': {}, 'server_status': {}}
+    
+    try:
+        # Verificar conexión
+        client.admin.command('ping')
+        status['is_connected'] = True
+        
+        # Obtener estadísticas básicas
+        db = get_mongo_db()
+        if db is not None:
+            try:
+                status['stats'] = db.command('dbstats')
+            except Exception as e:
+                current_app.logger.error(f"Error al obtener estadísticas de la base de datos: {str(e)}")
+                status['error'] = f"Error al obtener estadísticas: {str(e)}"
+        
+        # Obtener estado del servidor
+        server_status = client.admin.command('serverStatus')
+        status['server_status'] = server_status
+        
+        # Inicializar contadores de operaciones si no existen
+        if 'opcounters' not in session:
+            session['opcounters'] = {
+                'query': 0,
+                'insert': 0,
+                'update': 0,
+                'delete': 0,
+                'getmore': 0,
+                'command': 0
+            }
+        
+        # Guardar timestamp de la última actualización
+        session['last_update'] = time.time()
+        
+        # Obtener operaciones lentas (últimas 10)
+        try:
+            current_ops = client.admin.command('currentOp')
+            if current_ops and 'inprog' in current_ops:
+                slow_ops = [
+                    op for op in current_ops['inprog'] 
+                    if op.get('secs_running', 0) > 1 and 
+                    (op.get('op') in ['query', 'insert', 'update', 'remove'] or 'findAndModify' in str(op.get('command', {})))
+                ]
+                status['slow_ops'] = slow_ops[:10]
+            else:
+                status['slow_ops'] = []
+        except Exception as e:
+            current_app.logger.error(f"Error al obtener operaciones lentas: {str(e)}")
+            status['slow_ops'] = []
+        
+    except Exception as e:
+        status['error'] = f"Error al obtener estadísticas: {str(e)}"
+        current_app.logger.error(f"Error en db_monitor: {str(e)}\n{traceback.format_exc()}")
+    
+    return render_template("admin/db_monitor.html", status=status)
+
+# Variables globales para el seguimiento de operaciones
+last_ops = {}
+last_update = time.time()
+
+@admin_bp.route('/api/db/ops')
+@admin_required
+def get_db_ops():
+    """
+    Endpoint para obtener estadísticas de operaciones en tiempo real.
+    Usa variables globales para el seguimiento entre solicitudes.
+    """
+    global last_ops, last_update
+    
     try:
         client = get_mongo_client()
-        db = get_mongo_db()
-        if client is not None:
-            # Probar ping
-            try:
-                client.admin.command('ping')
-                status["is_connected"] = True
-            except Exception as e:
-                status["error"] = f"Ping fallido: {e}"
-            # Listar bases de datos
-            try:
-                status["databases"] = client.list_database_names()
-            except Exception as e:
-                status["error"] = f"Error al listar bases de datos: {e}"
-            # Listar colecciones de la BD actual
-            if db is not None:
-                try:
-                    status["collections"] = db.list_collection_names()
-                except Exception as e:
-                    status["error"] = f"Error al listar colecciones: {e}"
-            # Info del servidor
-            try:
-                info = client.server_info()
-                status["server_info"] = pprint.pformat(info, indent=2, width=120)
-            except Exception as e:
-                status["server_info"] = f"Error: {e}"
-        else:
-            status["error"] = get_last_error() or "Cliente MongoDB no inicializado"
+        server_status = client.admin.command('serverStatus')
+        
+        # Obtener contadores actuales
+        current_ops = server_status.get('opcounters', {})
+        current_time = time.time()
+        
+        # Calcular operaciones por segundo
+        time_diff = current_time - last_update
+        ops_per_sec = {}
+        
+        if last_ops and time_diff > 0:
+            for op_type in ['query', 'insert', 'update', 'delete', 'getmore', 'command']:
+                if op_type in current_ops and op_type in last_ops:
+                    ops_diff = current_ops[op_type] - last_ops[op_type]
+                    ops_per_sec[op_type] = round(ops_diff / time_diff, 2)
+        
+        # Actualizar estado para la próxima solicitud
+        last_ops = current_ops
+        last_update = current_time
+        
+        # Obtener información de memoria
+        memory = server_status.get('mem', {})
+        
+        # Obtener información de conexiones
+        connections = server_status.get('connections', {})
+        
+        # Obtener operaciones lentas
+        current_op = client.admin.current_op()
+        slow_ops = []
+        if 'inprog' in current_op:
+            for op in current_op['inprog']:
+                if 'secs_running' in op and op['secs_running'] > 1:  # Operaciones que llevan más de 1 segundo
+                    slow_ops.append({
+                        'opid': op.get('opid'),
+                        'secs_running': op.get('secs_running'),
+                        'op': op.get('op'),
+                        'ns': op.get('ns'),
+                        'client': op.get('client')
+                    })
+        
+        return jsonify({
+            'success': True,
+            'ops_per_sec': ops_per_sec,
+            'memory': memory,
+            'connections': connections,
+            'slow_ops': slow_ops[:10],  # Devolver solo las 10 operaciones más lentas
+            'timestamp': current_time
+        })
+        
     except Exception as e:
-        status["error"] = f"Excepción crítica: {e}\n{traceback.format_exc()}"
-    return render_template("admin/db_status.html", status=status)
+        current_app.logger.error(f"Error en get_db_ops: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+def get_backup_dir():
+    """Obtiene el directorio de respaldos, asegurando que exista"""
+    backup_dir = os.path.abspath(os.path.join(current_app.root_path, '..', 'backups'))
+    os.makedirs(backup_dir, exist_ok=True)
+    return backup_dir
+
+@admin_bp.route('/db/backup', methods=['GET', 'POST'])
+@admin_required
+def db_backup():
+    """Maneja la creación y gestión de respaldos"""
+    try:
+        backup_dir = get_backup_dir()
+        
+        # Verificar permisos de escritura
+        if not os.access(backup_dir, os.W_OK):
+            raise Exception(f"No se tienen permisos de escritura en {backup_dir}")
+            
+        # Verificar espacio en disco (mínimo 1GB libre)
+        disk_usage = shutil.disk_usage(backup_dir)
+        if disk_usage.free < 1024**3:  # 1GB
+            raise Exception("Espacio en disco insuficiente (se requiere al menos 1GB libre)")
+        
+        if request.method == 'POST':
+            try:
+                # Generar nombre de archivo con timestamp
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                backup_file = os.path.join(backup_dir, f'mongodb_backup_{timestamp}.gz')
+                
+                # Ejecutar mongodump
+                mongo_uri = current_app.config['MONGO_URI']
+                cmd = [
+                    'mongodump',
+                    f'--uri={mongo_uri}',
+                    '--gzip',
+                    f'--archive={backup_file}'
+                ]
+                
+                current_app.logger.info(f"Ejecutando comando de respaldo: {' '.join(cmd)}")
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                
+                if result.returncode != 0:
+                    error_msg = f"Error en mongodump: {result.stderr}"
+                    current_app.logger.error(error_msg)
+                    raise Exception(error_msg)
+                
+                # Verificar que el archivo se creó correctamente
+                if not os.path.exists(backup_file) or os.path.getsize(backup_file) == 0:
+                    raise Exception("El archivo de respaldo no se creó correctamente")
+                
+                flash('Respaldo creado correctamente', 'success')
+                audit_log(f"Respaldo creado: {os.path.basename(backup_file)}")
+                
+                # Limpiar respaldos antiguos (mantener los 5 más recientes)
+                try:
+                    backups = sorted(
+                        [f for f in os.listdir(backup_dir) 
+                         if f.startswith('mongodb_backup_') and f.endswith('.gz')],
+                        reverse=True
+                    )
+                    for old_backup in backups[5:]:
+                        try:
+                            os.remove(os.path.join(backup_dir, old_backup))
+                            current_app.logger.info(f"Respaldo antiguo eliminado: {old_backup}")
+                        except Exception as e:
+                            current_app.logger.error(f"Error al eliminar respaldo {old_backup}: {str(e)}")
+                except Exception as e:
+                    current_app.logger.error(f"Error al limpiar respaldos antiguos: {str(e)}")
+                    # No fallar la operación principal si falla la limpieza
+                
+            except Exception as e:
+                current_app.logger.error(f"Error al crear respaldo: {str(e)}\n{traceback.format_exc()}")
+                flash(f'Error al crear el respaldo: {str(e)}', 'error')
+                # Intentar eliminar el archivo parcial si existe
+                if 'backup_file' in locals() and os.path.exists(backup_file):
+                    try:
+                        os.remove(backup_file)
+                    except:
+                        pass
+        
+        # Función auxiliar para obtener información de archivos
+        def get_file_info(filepath):
+            from collections import namedtuple
+            FileInfo = namedtuple('FileInfo', ['exists', 'size', 'mtime'])
+            
+            try:
+                if not os.path.exists(filepath):
+                    return FileInfo(False, 0, None)
+                    
+                stat = os.stat(filepath)
+                return FileInfo(
+                    exists=True,
+                    size=stat.st_size,
+                    mtime=datetime.fromtimestamp(stat.st_mtime)
+                )
+            except Exception as e:
+                current_app.logger.error(f"Error al obtener info de archivo {filepath}: {str(e)}")
+                return FileInfo(False, 0, None)
+        
+        # Listar respaldos existentes
+        backups = []
+        try:
+            if os.path.exists(backup_dir):
+                backups = sorted(
+                    [f for f in os.listdir(backup_dir) 
+                     if f.startswith('mongodb_backup_') and f.endswith('.gz')],
+                    reverse=True
+                )
+        except Exception as e:
+            current_app.logger.error(f"Error al listar respaldos: {str(e)}")
+            flash('Error al listar los respaldos existentes', 'error')
+        
+        # Obtener el conteo de respaldos en Google Drive
+        drive_backups_count = 0
+        try:
+            db = get_db()
+            drive_backups_count = db.backups.count_documents({})
+        except Exception as e:
+            current_app.logger.error(f"Error al contar respaldos en Drive: {str(e)}")
+            # No mostramos error al usuario para no interrumpir la funcionalidad principal
+        
+        # Pasar las variables necesarias a la plantilla
+        return render_template(
+            'admin/db_backup.html',
+            backups=backups,
+            backup_dir=backup_dir,
+            get_file_info=get_file_info,
+            drive_backups_count=drive_backups_count
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Error en db_backup: {str(e)}\n{traceback.format_exc()}")
+        flash(f'Error en la operación de respaldo: {str(e)}', 'error')
+        return render_template('admin/db_backup.html', backups=[])
+
+@admin_bp.route('/db/performance', methods=['GET', 'POST'])
+@admin_required
+def db_performance():
+    """Ejecuta y muestra pruebas de rendimiento"""
+    results = None
+    
+    if request.method == 'POST':
+        try:
+            # Obtener parámetros del formulario
+            num_ops = int(request.form.get('num_ops', 100))
+            batch_size = int(request.form.get('batch_size', 10))
+            
+            # Ejecutar pruebas de rendimiento
+            db = get_mongo_db()
+            test_collection = db.performance_test
+            
+            # Limpiar colección de prueba
+            test_collection.drop()
+            
+            # Prueba de inserción
+            start_time = time.time()
+            for i in range(0, num_ops, batch_size):
+                batch = [{'value': j, 'timestamp': datetime.utcnow()} 
+                        for j in range(i, min(i + batch_size, num_ops))]
+                test_collection.insert_many(batch)
+            insert_time = time.time() - start_time
+            
+            # Prueba de consulta
+            start_time = time.time()
+            for _ in range(num_ops):
+                list(test_collection.find().limit(10))
+            query_time = time.time() - start_time
+            
+            # Prueba de actualización
+            start_time = time.time()
+            for i in range(0, num_ops, batch_size):
+                test_collection.update_many(
+                    {'_id': {'$in': [doc['_id'] for doc in test_collection.find().skip(i).limit(batch_size)]}},
+                    {'$set': {'updated': True}}
+                )
+            update_time = time.time() - start_time
+            
+            # Limpiar
+            test_collection.drop()
+            
+            # Crear métricas con los resultados
+            insert_metrics = {
+                'time': insert_time,
+                'ops_sec': num_ops / insert_time if insert_time > 0 else 0
+            }
+            query_metrics = {
+                'time': query_time,
+                'ops_sec': num_ops / query_time if query_time > 0 else 0
+            }
+            update_metrics = {
+                'time': update_time,
+                'ops_sec': num_ops / update_time if update_time > 0 else 0
+            }
+            
+            # Estructurar los resultados según lo esperado por la plantilla
+            results = {
+                'status': 'success',
+                'operations': num_ops,
+                'batch_size': batch_size,
+                'metrics': {
+                    'insert': insert_metrics,
+                    'query': query_metrics,
+                    'update': update_metrics
+                },
+                'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+        except Exception as e:
+            results = {
+                'status': 'error',
+                'message': f'Error al ejecutar pruebas: {str(e)}',
+                'traceback': traceback.format_exc()
+            }
+            current_app.logger.error(f"Error en db_performance: {str(e)}\n{results['traceback']}")
+    
+    return render_template('admin/db_performance.html', results=results)
 
 # Definir el blueprint con el prefijo de URL correcto
 # Cambiamos el nombre a 'admin' para que coincida con el prefijo
@@ -1758,22 +2277,75 @@ LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs/f
 @admin_logs_bp.route('/logs')
 @admin_required_logs
 def logs_manual():
-    return render_template('logs_manual.html')
+    return render_template('admin/logs_manual.html')
 
 @admin_logs_bp.route('/logs/tail')
 @admin_required_logs
 def logs_tail():
     import os
+    from datetime import datetime
+    
+    # Obtener parámetros
     n = int(request.args.get('n', 20))
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
     log_file = request.args.get('log_file', 'flask_debug.log')
+    
     logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
     log_path = os.path.join(logs_dir, log_file)
+    
     if not os.path.isfile(log_path):
-        return jsonify({'logs': [f'Archivo no encontrado: {log_file}\n']}), 404
-    with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
-        lines = f.readlines()
-    last_n_lines = lines[-n:] if len(lines) > n else lines
-    return jsonify({'logs': last_n_lines})
+        return jsonify({'logs': [f'Archivo no encontrado: {log_file}\n'], 'error': 'Archivo no encontrado'}), 404
+    
+    try:
+        with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+            
+        # Si se especifican fechas, filtrar por rango
+        if date_from or date_to:
+            filtered_lines = []
+            date_format = '%Y-%m-%d'
+            
+            if date_from:
+                date_from = datetime.strptime(date_from, date_format).date()
+            if date_to:
+                date_to = datetime.strptime(date_to, date_format).date()
+            
+            for line in lines:
+                # Extraer la fecha del log (asumiendo formato de fecha al inicio de la línea)
+                log_date_str = ' '.join(line.split()[:2])  # Toma los dos primeros segmentos (fecha y hora)
+                try:
+                    log_datetime = datetime.strptime(log_date_str, '%Y-%m-%d %H:%M:%S,%f')
+                    log_date = log_datetime.date()
+                    
+                    # Aplicar filtros de fecha
+                    if date_from and log_date < date_from:
+                        continue
+                    if date_to and log_date > date_to:
+                        continue
+                        
+                    filtered_lines.append(line)
+                except ValueError:
+                    # Si no se puede extraer la fecha, incluir la línea por defecto
+                    filtered_lines.append(line)
+            
+            # Aplicar límite de líneas si se especificó
+            result_lines = filtered_lines[-n:] if n > 0 else filtered_lines
+        else:
+            # Si no hay filtro de fechas, simplemente tomar las últimas N líneas
+            result_lines = lines[-n:] if n > 0 else lines
+            
+        return jsonify({
+            'logs': result_lines,
+            'total_lines': len(lines),
+            'filtered_lines': len(result_lines)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'logs': [f'Error al leer el archivo de log: {str(e)}\n'],
+            'error': str(e)
+        }), 500
 
 @admin_logs_bp.route('/logs/search')
 @admin_required_logs
@@ -1881,7 +2453,7 @@ def reset_gdrive_token_route():
             flash(f"Error al eliminar el token: {result.stderr}", "danger")
     except Exception as e:
         flash(f"Error al ejecutar el reseteo de token: {str(e)}", "danger")
-    return redirect(url_for('admin.maintenance'))
+    return redirect(url_for('maintenance.maintenance_dashboard'))
 
 @admin_bp.route("/gdrive_upload_test", methods=["GET", "POST"])
 @admin_required
@@ -1900,8 +2472,15 @@ def gdrive_upload_test():
             temp_path = os.path.join("/tmp", filename)
             file.save(temp_path)
             try:
-                enlace = upload_to_drive(temp_path)
-                uploaded_links.append((filename, enlace))
+                result = upload_to_drive(temp_path)
+                if result.get('success'):
+                    # Extraer solo la URL del resultado
+                    file_url = result.get('file_url', '#')
+                    uploaded_links.append((filename, file_url))
+                else:
+                    # Si hay error, mostramos el mensaje de error
+                    error_msg = result.get('error', 'Error desconocido')
+                    flash(f"Error al subir '{filename}': {error_msg}", "danger")
                 flash(f"Archivo '{filename}' subido correctamente a Google Drive.", "success")
             except Exception as e:
                 flash(f"Error al subir '{filename}': {str(e)}", "danger")
@@ -1909,6 +2488,233 @@ def gdrive_upload_test():
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
     return render_template("admin/gdrive_upload_test.html", uploaded_links=uploaded_links)
+
+@admin_bp.route("/backup/upload-to-drive/<filename>", methods=["POST"])
+@admin_required
+def upload_backup_to_drive(filename):
+    """
+    Sube un archivo de respaldo a Google Drive y lo elimina localmente si tiene éxito.
+    
+    Args:
+        filename (str): Nombre del archivo de respaldo a subir
+        
+    Returns:
+        JSON: Respuesta con el resultado de la operación
+    """
+    import os
+    from flask import jsonify, current_app
+    from werkzeug.utils import secure_filename
+    from tools.db_utils.google_drive_utils import upload_to_drive
+    
+    try:
+        # Validar el nombre del archivo
+        if '..' in filename or '/' in filename:
+            current_app.logger.warning(f"Intento de acceso a ruta no permitida: {filename}")
+            return jsonify({
+                'success': False,
+                'error': 'Nombre de archivo no válido',
+                'message': 'El nombre del archivo contiene caracteres no permitidos.'
+            }), 400
+            
+        # Construir la ruta completa del archivo usando la función get_backup_dir()
+        backup_dir = get_backup_dir()
+        file_path = os.path.join(backup_dir, secure_filename(filename))
+        
+        # Verificar que el archivo existe
+        if not os.path.exists(file_path):
+            current_app.logger.warning(f"Archivo no encontrado: {file_path}")
+            return jsonify({
+                'success': False,
+                'error': 'Archivo no encontrado',
+                'message': f'El archivo {filename} no existe en el servidor.'
+            }), 404
+            
+        # Obtener información del archivo local
+        file_size = os.path.getsize(file_path)
+        file_info = {
+            'filename': filename,
+            'file_size': file_size,
+            'local_path': file_path,
+            'last_modified': os.path.getmtime(file_path)
+        }
+        
+        current_app.logger.info(f"Iniciando subida a Google Drive: {file_info}")
+        
+        # Subir a Google Drive
+        result = upload_to_drive(file_path)
+        
+        if result.get('success'):
+            # Obtener la URL de descarga directa
+            file_id = result.get('file_id')
+            download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+            web_view_url = result.get('file_url')  # Usar la URL de vista web que ya viene de upload_to_drive
+            
+            # Guardar metadatos en la base de datos
+            backup_metadata = {
+                'filename': filename,
+                'file_id': file_id,
+                'file_size': file_size,
+                'download_url': download_url,
+                'web_view_url': web_view_url,
+                'uploaded_at': datetime.utcnow(),
+                'uploaded_by': current_user.id if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
+                'status': 'uploaded',
+                'folder_name': result.get('folder_name', 'Backups_CatalogoTablas')
+            }
+            
+            # Insertar en la colección de respaldos
+            db = get_db()
+            db.backups.insert_one(backup_metadata)
+            
+            # Eliminar el archivo local si la subida fue exitosa
+            try:
+                os.remove(file_path)
+                current_app.logger.info(f"Archivo {filename} eliminado localmente después de subir a Google Drive")
+                
+                # Registrar la acción en el log de auditoría
+                log_action(
+                    action='backup_uploaded_to_drive',
+                    message=f'Backup subido a Google Drive: {filename} ({file_size/1024/1024:.2f} MB)',
+                    details={
+                        'file_id': file_id,
+                        'file_name': filename,
+                        'file_size': file_size,
+                        'drive_folder': result.get('folder_name', 'Backups_CatalogoTablas'),
+                        'download_url': download_url,
+                        'web_view_url': web_view_url
+                    },
+                    user_id=current_user.id if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
+                    collection='backups'
+                )
+                
+                # Preparar respuesta exitosa
+                response_data = {
+                    'success': True,
+                    'message': 'El respaldo se ha subido correctamente a Google Drive y se ha eliminado localmente.',
+                    'file_info': {
+                        'filename': filename,
+                        'file_id': file_id,
+                        'file_size': file_size,
+                        'file_size_mb': round(file_size / (1024 * 1024), 2),
+                        'download_url': download_url,
+                        'web_view_url': web_view_url,
+                        'uploaded_at': backup_metadata['uploaded_at'].isoformat(),
+                        'folder_name': result.get('folder_name', 'Backups_CatalogoTablas')
+                    }
+                }
+                
+                current_app.logger.info(f"Subida a Google Drive completada: {response_data}")
+                return jsonify(response_data)
+                
+            except Exception as e:
+                error_msg = f"Error al eliminar el archivo local {filename}: {str(e)}"
+                current_app.logger.error(error_msg, exc_info=True)
+                
+                # Registrar el error en el log de auditoría
+                log_action(
+                    action='backup_upload_error',
+                    message=f'Error al eliminar archivo local después de subir a Google Drive: {filename}',
+                    details={
+                        'error': str(e),
+                        'file_name': filename,
+                        'file_size': file_size,
+                        'drive_folder': result.get('folder_name', 'Backups_CatalogoTablas')
+                    },
+                    user_id=current_user.id if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
+                    collection='backups'
+                )
+                
+                # Si falla la eliminación local, la subida a Drive fue exitosa, así que lo consideramos un éxito parcial
+                return jsonify({
+                    'success': True,
+                    'warning': 'El archivo se subió a Google Drive pero no se pudo eliminar localmente.',
+                    'error': error_msg,
+                    'file_info': {
+                        'filename': result.get('filename'),
+                        'file_id': result.get('file_id'),
+                        'download_url': result.get('download_url'),
+                        'web_view_url': result.get('web_view_url'),
+                        'folder_name': result.get('folder_name')
+                    }
+                }), 207  # Código 207 Multi-Status para éxito parcial
+                
+        else:
+            error_msg = f"Error al subir a Google Drive: {result.get('error')}"
+            current_app.logger.error(error_msg)
+            
+            # Registrar el error en el log de auditoría
+            log_action(
+                action='backup_upload_failed',
+                message=f'Error al subir archivo a Google Drive: {filename}',
+                details={
+                    'error': result.get('error', 'Error desconocido'),
+                    'file_name': filename,
+                    'file_size': file_size
+                },
+                user_id=current_user.id if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
+                collection='backups'
+            )
+            
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Error desconocido'),
+                'message': 'El archivo no se pudo subir a Google Drive. Por favor, inténtalo de nuevo.'
+            }), 500
+            
+    except Exception as e:
+        error_msg = f"Error inesperado en upload_backup_to_drive: {str(e)}"
+        current_app.logger.error(error_msg, exc_info=True)
+        
+        # Registrar el error inesperado en el log de auditoría
+        log_action(
+            action='backup_upload_error',
+            message=f'Error inesperado al subir archivo a Google Drive: {filename}',
+            details={
+                'error': str(e),
+                'file_name': filename,
+                'traceback': traceback.format_exc()
+            },
+            user_id=current_user.id if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated else None,
+            collection='backups'
+        )
+        
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': 'Ocurrió un error inesperado al procesar la solicitud.',
+            'details': str(e) if current_app.config.get('DEBUG') else None
+        }), 500
+
+@admin_bp.route("/drive-backups")
+@admin_required
+def list_drive_backups():
+    """
+    Muestra una lista de todos los respaldos almacenados en Google Drive.
+    """
+    try:
+        db = get_db()
+        # Obtener todos los respaldos ordenados por fecha de subida descendente
+        backups = list(db.backups.find().sort('uploaded_at', -1))
+        
+        # Convertir ObjectId a string para JSON
+        for backup in backups:
+            backup['_id'] = str(backup['_id'])
+            if 'uploaded_by' in backup and backup['uploaded_by']:
+                # Obtener información del usuario que subió el respaldo
+                user = db.users.find_one({'_id': ObjectId(backup['uploaded_by'])})
+                if user:
+                    backup['uploaded_by_name'] = user.get('username', 'Desconocido')
+            
+        return render_template(
+            'admin/drive_backups.html',
+            backups=backups,
+            title='Respaldo en Google Drive',
+            active_page='drive_backups'
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error al listar respaldos de Google Drive: {str(e)}", exc_info=True)
+        flash('Error al cargar la lista de respaldos de Google Drive', 'error')
+        return redirect(url_for('main.dashboard'))
 
 @admin_bp.route("/truncate_log", methods=["POST"])
 @admin_required
@@ -1926,7 +2732,7 @@ def truncate_log_route():
         cmd += ['--date', date]
     else:
         flash('Debes indicar número de líneas o fecha.', 'warning')
-        return redirect(url_for('admin.maintenance'))
+        return redirect(url_for('maintenance.maintenance_dashboard'))
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
@@ -1935,17 +2741,20 @@ def truncate_log_route():
             flash(result.stderr, 'danger')
     except Exception as e:
         flash(f'Error al truncar el log: {str(e)}', 'danger')
-    return redirect(url_for('admin.maintenance'))
+    return redirect(url_for('maintenance.maintenance_dashboard'))
 
 # Función para registrar los blueprints
 def register_admin_blueprints(app):
-    """Registra los blueprints de administración en la aplicación Flask."""
+    """
+    Función para registrar blueprints adicionales de administración.
+    Nota: admin_logs_bp ya está registrado en __init__.py
+    """
     try:
-        # No necesitamos registrar admin_logs_bp aquí ya que ya se registra en __init__.py
+        # No es necesario registrar admin_logs_bp aquí ya que ya está registrado en __init__.py
         # con el prefijo correcto
         return True
     except Exception as e:
-        app.logger.error(f"Error registrando blueprints de admin: {str(e)}")
+        app.logger.error(f"Error en register_admin_blueprints: {str(e)}")
         return False
 
 app = None

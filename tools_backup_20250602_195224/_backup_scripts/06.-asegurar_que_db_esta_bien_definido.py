@@ -1,9 +1,0 @@
-#!/usr/bin/env python3
-from pymongo import MongoClient
-
-# Conectar a MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client["app_catalogojoyero_nueva"]  # Asegurar que la base de datos es correcta
-
-# Imprimir colecciones disponibles
-print("Colecciones disponibles en MongoDB:", db.list_collection_names())

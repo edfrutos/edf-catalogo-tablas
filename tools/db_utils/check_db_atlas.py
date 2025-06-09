@@ -3,5 +3,5 @@
 # Uso: python3 check_db_atlas.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-06-05
+# Autor: EDF Equipo de Desarrollo - 2025-06-05
 

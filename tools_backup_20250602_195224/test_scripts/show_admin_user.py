@@ -1,1 +1,0 @@
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/root/show_admin_user.py

@@ -145,50 +145,8 @@ block content %}
           <h4 class="card-title mb-0">Estadísticas de Caché</h4>
         </div>
         <div class="card-body">
-          <div class="row">
-            <div class="col-6">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Tasa de aciertos</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.cache_status.hit_rate }}%
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Tamaño</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.cache_status.size }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-6">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Aciertos</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.cache_status.hit_count }}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Fallos</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.cache_status.miss_count }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+
+
         </div>
       </div>
     </div>
@@ -234,16 +192,33 @@ block content %}
           </div>
           {% if data.health.metrics.temp_files.count > 0 %}
           <div class="mt-3">
-            <h5>Archivos (primeros 10)</h5>
-            <ul class="list-group">
-              {% for file in data.health.metrics.temp_files.files[:10] %}
-              <li class="list-group-item">{{ file }}</li>
-              {% endfor %} {% if data.health.metrics.temp_files.count > 10 %}
-              <li class="list-group-item text-muted">
-                ...y {{ data.health.metrics.temp_files.count - 10 }} más
-              </li>
-              {% endif %}
-            </ul>
+            <h5>Archivos temporales</h5>
+            <form id="deleteTempFilesForm">
+              <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th scope="col"><input type="checkbox" id="selectAllTempFiles"></th>
+                      <th scope="col">Archivo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for file in data.health.metrics.temp_files.files[:20] %}
+                    <tr>
+                      <td><input type="checkbox" name="temp_files" value="{{ file }}"></td>
+                      <td>{{ file }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+                {% if data.health.metrics.temp_files.count > 20 %}
+                  <div class="text-muted small mb-2">
+                    ...y {{ data.health.metrics.temp_files.count - 20 }} más archivos no listados.
+                  </div>
+                {% endif %}
+              </div>
+              <button type="submit" class="btn btn-danger btn-sm mt-2">Eliminar seleccionados</button>
+            </form>
           </div>
           {% endif %}
         </div>
@@ -321,50 +296,8 @@ block content %}
           <h4 class="card-title mb-0">Estadísticas de Caché</h4>
         </div>
         <div class="card-body">
-          <div class="row">
-            <div class="col-6">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Tasa de aciertos</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.cache_status.hit_rate }}%
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Tamaño</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.cache_status.size }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-6">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Aciertos</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.cache_status.hit_count }}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="card bg-light mb-3">
-                <div class="card-body text-center">
-                  <h5 class="card-title">Fallos</h5>
-                  <p class="card-text fs-4">
-                    {{ data.health.metrics.cache_status.miss_count }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+
+
         </div>
       </div>
     </div>
@@ -789,11 +722,11 @@ block content %}
             headers: {
               "Content-Type": "application/x-www-form-urlencoded",
             },
-            body: "days=7",
+            body: "days=2",
           })
             .then((response) => response.json())
             .then((data) => {
-              alert(data.message);
+              alert(data.message || "Limpieza completada");
               location.reload();
             })
             .catch((error) => {
@@ -801,6 +734,46 @@ block content %}
               alert("Error al limpiar archivos temporales");
             });
         }
+      });
+    }
+
+    // Manejo del formulario de eliminación de archivos temporales seleccionados
+    const deleteTempFilesForm = document.getElementById("deleteTempFilesForm");
+    if (deleteTempFilesForm) {
+      deleteTempFilesForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const checked = Array.from(deleteTempFilesForm.querySelectorAll('input[name="temp_files"]:checked'));
+        if (checked.length === 0) {
+          alert("Selecciona al menos un archivo para eliminar.");
+          return;
+        }
+        if (!confirm("¿Seguro que deseas eliminar los archivos seleccionados?")) return;
+        const files = checked.map(cb => cb.value);
+        fetch("/admin/api/delete-temp-files", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ files }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            alert(data.message || "Eliminación completada");
+            location.reload();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error al eliminar archivos temporales");
+          });
+      });
+    }
+
+    // Select all checkbox
+    const selectAllTempFiles = document.getElementById("selectAllTempFiles");
+    if (selectAllTempFiles) {
+      selectAllTempFiles.addEventListener("change", function () {
+        const checkboxes = document.querySelectorAll('input[name="temp_files"]');
+        checkboxes.forEach(cb => cb.checked = selectAllTempFiles.checked);
       });
     }
 

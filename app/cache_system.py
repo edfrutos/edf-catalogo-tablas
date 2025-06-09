@@ -32,6 +32,10 @@ _cache_lock = threading.RLock()
 _cache_file = None  # Desactivamos el archivo de respaldo para evitar problemas de permisos
 _max_cache_size = 100  # Reducido a 100 para minimizar el uso de memoria
 
+# Contadores de estadísticas
+_cache_hit_count = 0
+_cache_miss_count = 0
+
 # No necesitamos crear el directorio /tmp ya que siempre existe
 
 def set_cache(key, value, ttl=1800):  # TTL reducido a 30 minutos por defecto
@@ -98,10 +102,11 @@ def get_cache(key):
     Returns:
         El valor almacenado o None si no existe o ha expirado
     """
-    global _memory_cache
+    global _memory_cache, _cache_hit_count, _cache_miss_count
     
     with _cache_lock:
         if key not in _memory_cache:
+            _cache_miss_count += 1
             return None
         
         cache_item = _memory_cache[key]
@@ -109,9 +114,11 @@ def get_cache(key):
         # Verificar si el valor ha expirado
         if time.time() > cache_item['expires_at']:
             del _memory_cache[key]
+            _cache_miss_count += 1
             logging.debug(f"Valor expirado en caché: {key}")
             return None
         
+        _cache_hit_count += 1
         logging.debug(f"Valor recuperado de caché: {key}")
         return cache_item['value']
 
@@ -227,6 +234,24 @@ def cached(ttl=3600, key_prefix=''):
             return result
         return wrapper
     return decorator
+
+
+def get_cache_stats():
+    """
+    Devuelve estadísticas de la caché: hits, misses, hit_rate, tamaño actual.
+    """
+    global _memory_cache, _cache_hit_count, _cache_miss_count
+    size = len(_memory_cache)
+    hits = _cache_hit_count
+    misses = _cache_miss_count
+    total = hits + misses
+    hit_rate = (hits / total) * 100 if total > 0 else 0.0
+    return {
+        'hit_count': hits,
+        'miss_count': misses,
+        'hit_rate': round(hit_rate, 2),
+        'size': size
+    }
 
 # Cargar la caché desde disco al iniciar
 _load_cache_from_disk()

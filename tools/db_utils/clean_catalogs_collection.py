@@ -2,7 +2,7 @@
 # Script: clean_catalogs_collection.py
 # Descripción: Borra todos los documentos de la colección 'catalogs'.
 # Uso: python3 clean_catalogs_collection.py [--force]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Equipo de Desarrollo - 2025-05-28
 
 import os
 import certifi

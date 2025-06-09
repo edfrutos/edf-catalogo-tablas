@@ -4,7 +4,7 @@
 # Uso: python3 verify_catalogojoyero.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Equipo de Desarrollo - 2025-05-28
 
 from pymongo import MongoClient
 import certifi

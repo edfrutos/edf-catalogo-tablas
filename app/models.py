@@ -1,6 +1,7 @@
 # app/models.py
 
 import os
+import re
 import logging
 from bson.objectid import ObjectId
 
@@ -57,41 +58,62 @@ def get_tables_collection():
 
 
 def find_user_by_email_or_name(identifier):
-    """Busca un usuario por email o nombre de usuario en múltiples colecciones"""
-    print(f"[DEBUG] Buscando usuario: {identifier}")
+    """Busca un usuario por email, nombre de usuario o nombre real (insensible a mayúsculas y espacios)"""
     if not identifier:
-        print("[DEBUG] Identificador vacío")
         return None
-        
-    identifier = identifier.lower()
+
+    # Normalizar el identificador
+    identifier = identifier.lower().strip()
     collection = get_users_collection()
-    print(f"[DEBUG] Colección de usuarios: {collection}")
+
     if collection is None:
         logger.error("No se pudo obtener la colección de usuarios")
-        print("[DEBUG] No se pudo obtener la colección de usuarios")
         return None
-        
-    fields = ["email", "username", "nombre"]
-    for field in fields:
-        user = collection.find_one({field: {"$regex": f"^{identifier}$", "$options": "i"}})
-        print(f"[DEBUG] Buscando por {field}: {user}")
-        if user:
-            logger.info(f"Usuario encontrado por campo {field}")
-            print(f"[DEBUG] Usuario encontrado por campo {field}: {user}")
-            return user
+
+    # 1. Búsqueda exacta insensible a mayúsculas y espacios para username/email/nombre
+    # Usamos regex exacto con ^ $ y opción 'i' (sin re.escape)
     user = collection.find_one({
         "$or": [
-            {"email": {"$regex": identifier, "$options": "i"}},
-            {"username": {"$regex": identifier, "$options": "i"}},
-            {"nombre": {"$regex": identifier, "$options": "i"}}
+            {"email": {"$regex": f"^{identifier}$", "$options": "i"}},
+            {"username": {"$regex": f"^{identifier}$", "$options": "i"}},
+            {"nombre": {"$regex": f"^{identifier}$", "$options": "i"}},
         ]
     })
-    print(f"[DEBUG] Búsqueda flexible: {user}")
     if user:
-        logger.info("Usuario encontrado con búsqueda flexible")
-        print(f"[DEBUG] Usuario encontrado con búsqueda flexible: {user}")
+        # Log which field matched
+        match_field = None
+        for field in ["email", "username", "nombre"]:
+            value = user.get(field, "")
+            if isinstance(value, str) and value.lower().strip() == identifier:
+                match_field = field
+                break
+        logger.info(f"[find_user_by_email_or_name] Usuario encontrado por {match_field if match_field else 'algún campo'}: {user.get('email', user.get('username', user.get('nombre', '')))}")
         return user
-    print("[DEBUG] Usuario no encontrado")
+
+    # 2. Búsqueda parcial si el input es suficientemente largo
+    if len(identifier) > 3:
+        user = collection.find_one({
+            "$or": [
+                {"email": {"$regex": identifier, "$options": "i"}},
+                {"username": {"$regex": identifier, "$options": "i"}},
+                {"nombre": {"$regex": identifier, "$options": "i"}},
+            ]
+        })
+        if user:
+            logger.info(f"[find_user_by_email_or_name] Usuario encontrado por búsqueda parcial: {user.get('email', user.get('username', user.get('nombre', '')))}")
+            return user
+
+    # 3. Si no tiene @, probar dominios comunes
+    if '@' not in identifier:
+        common_domains = ['@gmail.com', '@hotmail.com', '@yahoo.com', '@outlook.com', '@dominio.com']
+        for domain in common_domains:
+            email = f"{identifier}{domain}"
+            user = collection.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}})
+            if user:
+                logger.info(f"[find_user_by_email_or_name] Usuario encontrado con dominio {domain}: {user.get('email')}")
+                return user
+
+    logger.warning(f"Usuario no encontrado con identificador: {identifier}")
     return None
 def find_reset_token(token):
     return get_resets_collection().find_one({"token": token})

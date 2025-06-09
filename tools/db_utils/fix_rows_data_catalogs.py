@@ -2,7 +2,7 @@
 # Script: fix_rows_data_catalogs.py
 # Descripción: Sincroniza los campos rows/data en catálogos o spreadsheets.
 # Uso: python3 fix_rows_data_catalogs.py [--collection catalogs|spreadsheets|ambas]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Equipo de Desarrollo - 2025-05-28
 
 import os
 import certifi

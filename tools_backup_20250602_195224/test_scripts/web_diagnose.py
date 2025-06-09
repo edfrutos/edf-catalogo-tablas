@@ -1,1 +1,0 @@
-/var/www/vhosts/edefrutos2025.xyz/httpdocs/tools/monitoring/web_diagnose.py

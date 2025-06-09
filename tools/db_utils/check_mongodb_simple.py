@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Script simplificado para verificar la conexión a MongoDB
 # Creado: 18/05/2025
+# Autor: EDF Equipo de Desarrollo - 2025-06-05
 
 import os
 import sys

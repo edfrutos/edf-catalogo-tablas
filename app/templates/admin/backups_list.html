@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-4">
   <h1>Backups existentes</h1>
-  <a href="{{ url_for('admin.maintenance') }}" class="btn btn-link mb-3">&larr; Volver a mantenimiento</a>
+  <a href="{{ url_for('maintenance.maintenance_dashboard') }}" class="btn btn-link mb-3">&larr; Volver a mantenimiento</a>
   {% if backup_files %}
   <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle">

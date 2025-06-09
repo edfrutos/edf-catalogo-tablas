@@ -27,17 +27,24 @@ def setup_logging(app):
     formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s')
     handler.setFormatter(formatter)
     
-    # Establecer nivel de log a WARNING para reducir verbosidad
-    handler.setLevel(logging.WARNING)
+    # Establecer nivel de log a ERROR para reducir verbosidad
+    handler.setLevel(logging.ERROR)
     
     # Configurar el logger de la aplicación
     app.logger.addHandler(handler)
-    app.logger.setLevel(logging.WARNING)
+    app.logger.setLevel(logging.ERROR)
     
-    # No registrar mensajes de info en producción
+    # En modo DEBUG, mostrar solo mensajes IMPORTANTES (WARNING o superior)
     if app.config.get('DEBUG'):
-        app.logger.setLevel(logging.INFO)
-        handler.setLevel(logging.INFO)
+        app.logger.setLevel(logging.WARNING)
+        handler.setLevel(logging.WARNING)
+    
+    # Deshabilitar logs de dependencias
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    logging.getLogger('pymongo').setLevel(logging.ERROR)
+    logging.getLogger('urllib3').setLevel(logging.ERROR)
+    logging.getLogger('boto3').setLevel(logging.ERROR)
+    logging.getLogger('botocore').setLevel(logging.ERROR)
     
     # Configurar manejo de excepciones para mensajes de error graves
     # Esto asegura que los errores críticos se registren siempre

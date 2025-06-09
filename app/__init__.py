@@ -3,6 +3,7 @@
 import os
 import logging
 from flask import Flask, session
+from flask_login import LoginManager
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from werkzeug.exceptions import HTTPException
@@ -29,15 +30,19 @@ if use_s3:
         os.environ['USE_S3'] = 'false'
 
 # Importar blueprints fuera de la función
-from app.routes.auth_routes import auth_bp
-from app.routes.main_routes import main_bp
-from app.routes.catalogs_routes import catalogs_bp
-from app.routes.catalog_images_routes import image_bp
-from app.routes.usuarios_routes import usuarios_bp
-from app.routes.admin_routes import admin_bp, admin_logs_bp, register_admin_blueprints
-from app.error_handlers import errors_bp
-from app.routes.emergency_access import emergency_bp
-from app.routes.scripts_routes import scripts_bp
+from .routes.main_routes import main_bp
+from .routes.admin_routes import admin_bp, admin_logs_bp, register_admin_blueprints
+from .routes.auth_routes import auth_bp
+from .routes.maintenance_routes import maintenance_bp
+from .routes.catalogs_routes import catalogs_bp
+from .routes.catalog_images_routes import image_bp
+from .routes.usuarios_routes import usuarios_bp
+from .error_handlers import errors_bp
+from .routes.emergency_access import emergency_bp
+from .routes.scripts_routes import scripts_bp
+
+# Importar filtros personalizados
+from app.filters import init_app as init_filters
 
 # Definir instancias de MongoDB para uso posterior
 client = None
@@ -96,7 +101,26 @@ def create_app():
         # Programamos un intento de reconexión en segundo plano
         schedule_reconnect(delay=30, app=app)
     
-    # Ya no usamos Flask-Session, sino el sistema integrado de Flask
+    # Inicializar Flask-Login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    
+    # Configurar el cargador de usuarios para Flask-Login
+    from app.models.user import User
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        if user_id is None:
+            return None
+        user_data = app.users_collection.find_one({"email": user_id})
+        if not user_data:
+            return None
+        return User(user_data)
+    
+    # Inicializar filtros personalizados
+    init_filters(app)
+    
     # Inicializar extensiones
     from app.extensions import init_extensions
     init_extensions(app)
@@ -104,27 +128,63 @@ def create_app():
     # Configurar logging
     setup_logging(app)
     
-    # Registrar blueprints con prefijos explícitos
+    # Registrar blueprints principales primero
     blueprints = [
-        (auth_bp, ''),
         (main_bp, ''),
+        (auth_bp, ''),
         (catalogs_bp, '/catalogs'),
         (image_bp, '/images'),
         (usuarios_bp, '/usuarios'),
+        (errors_bp, '')
+    ]
+    
+    # Registrar blueprints de administración después
+    admin_blueprints = [
         (admin_bp, '/admin'),
-        (admin_logs_bp, '/admin'),  # Aseguramos que las rutas de logs estén bajo /admin
-        (errors_bp, ''),
-        (emergency_bp, '/emergency'),
+        (admin_logs_bp, '/admin'),
         (scripts_bp, '/tools')
     ]
     
-    # Registrar todos los blueprints
+    # Registrar el blueprint de mantenimiento con su propio prefijo
+    maintenance_blueprints = [
+        (maintenance_bp, '/admin/maintenance')
+    ]
+    
+    app.logger.info(f"Registrando blueprints principales. Total: {len(blueprints)}")
+    
+    # Registrar blueprints principales
     for bp, prefix in blueprints:
         try:
+            app.logger.info(f"Registrando blueprint: name={bp.name}, prefix={prefix}")
             app.register_blueprint(bp, url_prefix=prefix)
             app.logger.info(f"Blueprint {bp.name} registrado correctamente con prefijo '{prefix}'")
         except Exception as e:
             app.logger.error(f"Error registrando blueprint {bp.name}: {str(e)}")
+    
+    # Registrar blueprints de administración
+    app.logger.info(f"Registrando blueprints de administración. Total: {len(admin_blueprints)}")
+    for bp, prefix in admin_blueprints:
+        try:
+            app.logger.info(f"Registrando blueprint de admin: name={bp.name}, prefix={prefix}")
+            app.register_blueprint(bp, url_prefix=prefix)
+            app.logger.info(f"Blueprint de admin {bp.name} registrado correctamente con prefijo '{prefix}'")
+        except Exception as e:
+            app.logger.error(f"Error registrando blueprint de admin {bp.name}: {str(e)}")
+    
+    # Registrar blueprints de mantenimiento
+    app.logger.info(f"Registrando blueprints de mantenimiento. Total: {len(maintenance_blueprints)}")
+    for bp, prefix in maintenance_blueprints:
+        try:
+            app.logger.info(f"Registrando blueprint de mantenimiento: name={bp.name}, prefix={prefix}")
+            app.register_blueprint(bp, url_prefix=prefix)
+            app.logger.info(f"Blueprint de mantenimiento {bp.name} registrado correctamente con prefijo '{prefix}'")
+            # Mostrar las rutas registradas para mantenimiento
+            app.logger.info("Rutas registradas para mantenimiento:")
+            for rule in app.url_map.iter_rules():
+                if rule.endpoint.startswith('maintenance.'):
+                    app.logger.info(f"  - {rule.endpoint} -> {rule}")
+        except Exception as e:
+            app.logger.error(f"Error registrando blueprint de mantenimiento {bp.name}: {str(e)}")
     
     # Registrar blueprints adicionales si existen
     try:
