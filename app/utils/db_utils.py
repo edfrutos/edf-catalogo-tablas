@@ -19,7 +19,7 @@ def get_db():
                 db = get_mongo_db()
                 if db is not None:
                     current_app.db = db
-                    current_app.logger.info("[get_db] Reconexión a MongoDB exitosa.")
+                    
                 else:
                     current_app.logger.error("[get_db] Reconexión fallida: get_mongo_db() devolvió None.")
             else:

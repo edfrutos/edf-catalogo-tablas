@@ -1,24 +1,26 @@
 {
   "enabled": true,
   "smtp": {
-    "server": "smtp-relay.brevo.com",
+    "server": "smtp.example.com",
     "port": 587,
-    "username": "8e57cb001@smtp-brevo.com",
-    "password": "EGKZ7d861PBH2myg",
+    "username": "admin@example.com",
+    "password": "testpass123",
     "use_tls": true
   },
   "recipients": [
-    "admin@edefrutos.me"
+    "admin@example.com",
+    "otro@example.com"
   ],
   "thresholds": {
-    "cpu": 85,
-    "memory": 85,
+    "cpu": 80,
+    "memory": 90,
     "disk": 85,
-    "error_rate": 10
+    "error_rate": 5
   },
   "cooldown_minutes": 60,
   "last_alerts": {
     "memory": "2025-06-06 10:45:02",
-    "cpu": "2025-06-09 16:28:50"
+    "cpu": "2025-06-17 17:17:14",
+    "database": "2025-06-16 12:33:30"
   }
 }

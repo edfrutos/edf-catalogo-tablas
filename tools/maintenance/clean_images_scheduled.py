@@ -48,7 +48,7 @@ class Config:
     
     # Configuración de MongoDB
     MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-    MONGO_DB = os.getenv("MONGO_DB", "app_catalogojoyero_nueva")
+    MONGODB_DB = os.getenv("MONGODB_DB", "app_catalogojoyero_nueva")
     
     # Modo: 'move' para mover archivos, 'delete' para eliminarlos directamente
     CLEANUP_MODE = os.getenv("CLEANUP_MODE", "move")

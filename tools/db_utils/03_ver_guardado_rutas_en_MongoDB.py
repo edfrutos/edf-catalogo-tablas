@@ -204,7 +204,8 @@ def main():
         
         # Conectar a MongoDB
         client = connect_to_mongodb()
-        db = client.get_database()
+        db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
+        db = client[db_name]
         collection = db[args.collection]
         
         # Inicializar validador

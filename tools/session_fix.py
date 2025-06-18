@@ -16,8 +16,9 @@ load_dotenv()
 
 # Conectar a MongoDB
 MONGO_URI = os.getenv('MONGO_URI')
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
 client = MongoClient(MONGO_URI)
-db = client["app_catalogojoyero_nueva"]
+db = client[db_name]
 users = db["users"]
 sessions = db["flask_session"]  # Colección donde Flask puede guardar sesiones
 

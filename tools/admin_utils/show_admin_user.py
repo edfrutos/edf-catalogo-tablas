@@ -6,11 +6,11 @@ from app.models import get_users_collection
 load_dotenv()
 
 MONGO_URI = os.getenv('MONGO_URI')
-DB_NAME = os.getenv('MONGO_DBNAME', 'app_catalogojoyero_nueva')
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
 COLLECTION = 'users'
 
 client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
+db = client[db_name]
 users = get_users_collection()
 
 admin = users.find_one({'email': 'admin@example.com'})

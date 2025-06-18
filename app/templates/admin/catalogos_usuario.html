@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>{% if user is defined %}Catálogos/Tablas de {{ user.nombre or user.username or user.email }}{% else %}Catálogos de Usuario{% endif %}</h1>
         <div>
-            <a href="{{ url_for('admin.dashboard_admin') }}" class="btn btn-secondary">
+            <a href="{{ url_for('admin.lista_usuarios') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver a la lista de usuarios
             </a>
         </div>

@@ -1,0 +1,96 @@
+{% extends 'admin/base.html' %}
+{% block title %}Utilidades y Scripts del Proyecto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <h2>Utilidades y Scripts del Proyecto</h2>
+      <p>Esta página muestra un resumen de los archivos disponibles en los directorios <b>scripts/</b>, <b>tests/</b> y <b>tools/</b>.</p>
+    </div>
+    <div class="col-md-3">
+      <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" id="searchInput" placeholder="Buscar archivos...">
+      </div>
+      <select class="form-select mb-3" id="fileTypeFilter">
+        <option value="">Todos los tipos</option>
+        <option value="py">Python (.py)</option>
+        <option value="sh">Shell (.sh)</option>
+        <option value="txt">Texto (.txt)</option>
+      </select>
+    </div>
+    <div class="col-md-3 text-end">
+      <button class="btn btn-outline-secondary" id="prevPageBtn" disabled>&lt; Página anterior</button>
+      <span id="pageInfo" class="mx-2">Página 1</span>
+      <button class="btn btn-outline-secondary" id="nextPageBtn">Página siguiente &gt;</button>
+    </div>
+  </div>
+<ul class="nav nav-tabs mb-3" id="scriptsTabs">
+  <li class="nav-item"><a class="nav-link active" id="tab-scripts" href="#" data-dir="scripts">scripts/</a></li>
+  <li class="nav-item"><a class="nav-link" id="tab-tests" href="#" data-dir="tests">tests/</a></li>
+  <li class="nav-item"><a class="nav-link" id="tab-tools" href="#" data-dir="tools">tools/</a></li>
+</ul>
+<table class="table table-striped" id="filesTable">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Tipo</th>
+      <th>Tamaño</th>
+      <th>Modificado</th>
+      <th>Descripción</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal para mostrar resultado de ejecución -->
+<div class="modal fade" id="runModal" tabindex="-1" aria-labelledby="runModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="runModalLabel">Resultado de ejecución</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="runWarning" class="alert alert-warning d-none"></div>
+        <pre id="runOutput" style="white-space: pre-wrap;"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para argumentos -->
+<div class="modal fade" id="argsModal" tabindex="-1" aria-labelledby="argsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="argsModalLabel">Ejecutar script con argumentos</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form id="argsForm">
+          <div class="mb-3">
+            <label for="argsInput" class="form-label">Argumentos (separados por espacio)</label>
+            <input type="text" class="form-control" id="argsInput" placeholder="--help o argumentos">
+            <input type="hidden" id="argsScriptPath">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="runWithArgsBtn">Ejecutar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/scripts_tools.js') }}"></script>
+{% endblock %}

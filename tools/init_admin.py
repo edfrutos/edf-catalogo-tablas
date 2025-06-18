@@ -7,8 +7,9 @@ import datetime
 
 load_dotenv()
 uri = os.getenv('MONGO_URI')
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
 client = MongoClient(uri, tls=True)
-db = client['edefrutos']
+db = client[db_name]
 users = db['users']
 
 # Verificar si ya existe el usuario admin

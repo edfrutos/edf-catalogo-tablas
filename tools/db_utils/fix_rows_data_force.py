@@ -11,8 +11,9 @@ import certifi
 from pymongo import MongoClient
 
 MONGO_URI = os.getenv('MONGO_URI')
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
 client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
-db = client.get_database()
+db = client[db_name]
 
 print('--- SINCRONIZACIÓN FORZADA rows/data EN CATÁLOGOS (AMBOS DIFERENTES) ---')
 

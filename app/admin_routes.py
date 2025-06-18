@@ -11,12 +11,12 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 # -------------------------------------------
 # DASHBOARD ADMINISTRATIVO
 # -------------------------------------------
-# @admin_bp.route("/dashboard")
+# @admin_bp.route("/admin/maintenance/dashboard")
 # def admin_dashboard():
 #     if not check_admin():
 #         flash("Acceso no autorizado.", "error")
 #         return redirect(url_for("main.home"))
-#     return render_template("admin/dashboard.html")
+#     return render_template("admin/maintenance/dashboard.html")
 
 # -------------------------------------------
 # GESTIÓN DE USUARIOS

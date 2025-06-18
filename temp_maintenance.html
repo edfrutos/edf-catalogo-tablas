@@ -3,11 +3,59 @@
 {% block title %}Mantenimiento del Sistema{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 d-flex flex-column align-items-center">
     <h1>Panel de Mantenimiento</h1>
     
-    <div class="row">
-        <div class="col-md-6 mb-4">
+    <div class="d-flex justify-content-center align-items-center w-100" style="min-height: 60vh;">
+      <div class="row w-100 justify-content-center">
+  <div class="col-12 col-md-5 d-flex justify-content-center mb-4">
+    <!-- Tarjeta 1: Herramientas de Mantenimiento (contenido original aquí) -->
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h4 class="card-title mb-0">Herramientas de Mantenimiento</h4>
+      </div>
+      <div class="card-body">
+        <div class="list-group">
+          <a href="{{ url_for('admin.system_status') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="bi bi-graph-up"></i> Estado del sistema
+              <small class="d-block text-muted">Monitorear rendimiento y recursos</small>
+            </div>
+          </a>
+          <a href="{{ url_for('admin.notification_settings') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="bi bi-bell"></i> Configuración de alertas
+              <small class="d-block text-muted">Configurar notificaciones por email</small>
+            </div>
+            <span class="badge bg-primary rounded-pill">Ver</span>
+          </a>
+          <a href="{{ url_for('admin.backup_json') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="bi bi-download"></i> Exportar catálogo (JSON)
+              <small class="d-block text-muted">Backup completo en formato JSON</small>
+            </div>
+            <span class="badge bg-success rounded-pill">Descargar</span>
+          </a>
+          <a href="{{ url_for('admin.backup_csv') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="bi bi-file-earmark-spreadsheet"></i> Exportar catálogo (CSV)
+              <small class="d-block text-muted">Backup en formato CSV para hojas de cálculo</small>
+            </div>
+            <span class="badge bg-success rounded-pill">Descargar</span>
+          </a>
+          <a href="{{ url_for('admin.cleanup_resets') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <i class="bi bi-trash"></i> Limpiar tokens de recuperación
+              <small class="d-block text-muted">Eliminar tokens utilizados o caducados</small>
+            </div>
+          </a>
+          <!-- ... resto de la lista ... -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-5 d-flex justify-content-center mb-4">
+    <!-- Tarjeta 2: Resumen de Estado (contenido original aquí) -->
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h4 class="card-title mb-0">Herramientas de Mantenimiento</h4>
@@ -59,15 +107,13 @@
                             <div>
                                 <i class="bi bi-trash"></i> Eliminar archivos temporales
                                 <small class="d-block text-muted">Limpiar archivos con más de 2 días de antigüedad</small>
-                            </div>
-                            <span class="badge bg-danger rounded-pill">Ejecutar</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-6 mb-4">
+        <div class="col-12 col-md-5 d-flex justify-content-center mb-4">
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h4 class="card-title mb-0">Resumen de Estado</h4>

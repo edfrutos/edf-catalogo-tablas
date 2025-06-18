@@ -10,8 +10,9 @@ import certifi
 load_dotenv()
 
 # Conectar a MongoDB
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
 client = MongoClient(os.getenv('MONGO_URI'), tlsCAFile=certifi.where())
-db = client['app_catalogojoyero_nueva']
+db = client[db_name]
 users_collection = db['users']
 spreadsheets_collection = db['spreadsheets']
 

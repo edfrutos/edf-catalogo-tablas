@@ -31,37 +31,18 @@ def index():
     # Redirigir a welcome si no está logueado
     if 'user_id' not in session:
         return redirect(url_for('main.welcome'))
-    return redirect(url_for('main.dashboard'))
+    return redirect(url_for('main.dashboard_user'))
 
 @main_bp.route('/welcome')
 def welcome():
     return render_template('welcome.html')
 
-@main_bp.route('/dashboard')
-@login_required
-def dashboard():
-    try:
-        role = session.get('role', 'user')
-        if role == 'admin':
-            # Verificar si existe el endpoint admin.dashboard_admin
-            try:
-                return redirect(url_for('admin.dashboard_admin'))
-            except BuildError:
-                logger.warning("Endpoint admin.dashboard_admin no encontrado, redirigiendo a dashboard_user")
-                return redirect(url_for('main.dashboard_user'))
-        elif role == 'user':
-            return render_template('bienvenida_usuario.html')
-        else:
-            flash('Rol desconocido. Contacte con el administrador.', 'error')
-            return redirect(url_for('main.welcome'))
-    except Exception as e:
-        logger.error(f"Error en dashboard: {str(e)}", exc_info=True)
-        flash("Error al cargar el dashboard. Por favor intente nuevamente.", "error")
-        # Asegurarse de que siempre devuelva una respuesta válida
-        return render_template('welcome.html')
-
-@main_bp.route('/dashboard_user')
+@main_bp.route('/admin/maintenance/dashboard_user')
 def dashboard_user():
+    # Protección: requerir login
+    if not session.get('username') and not session.get('user_id'):
+        flash('Debe iniciar sesión para acceder al dashboard de usuario', 'warning')
+        return redirect(url_for('auth.login', next=request.url))
     if session.get('role') == 'admin':
         flash('Eres administrador. Redirigido a tu panel de administración.', 'info')
         return redirect(url_for('admin.dashboard_admin'))
@@ -253,7 +234,7 @@ def editar(id):
 def ver_tabla(table_id):
     try:
         table = current_app.spreadsheets_collection.find_one({'_id': ObjectId(table_id)})
-        current_app.logger.info(f"[DEBUG][VISIONADO] Tabla encontrada: {table}")
+        
         
         # Asegurarse de que el propietario esté disponible
         if 'owner' not in table and 'owner_name' in table:
@@ -965,7 +946,7 @@ def tables():
     """Redirige las solicitudes de la antigua ruta /tables a la nueva ruta /catalogs.
     Esta función mantiene la compatibilidad con enlaces antiguos.
     """
-    current_app.logger.info("Redirigiendo desde /tables a /catalogs")
+    
     flash("La funcionalidad de Tablas ha sido integrada en Catálogos", "info")
     
     # Redirigir a la lista de catálogos

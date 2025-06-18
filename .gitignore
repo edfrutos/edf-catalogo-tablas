@@ -167,6 +167,30 @@ dist/
 backups/
 tools_backup_*/
 
+# Archivo# Basura temporal de limpieza
+basura/
+
+# Archivos de credenciales y tokens adicionales
+tools/db_utils/credentials.json
+tools/db_utils/token.pickle
+tools/maintenance/mi_config.json
+
+# Archivos temporales y de subida
+app/static/uploads/
+app/static/imagenes_subidas/
+tools/image_utils/app/static/uploads/
+
+# Logs adicionales
+scripts/logs/
+scripts/maintenance/logs/
+tools/maintenance/logs/
+tools/db_utils/mongodb_backup.log
+
+# Archivos de prueba y limpieza
+clean_project.py
+app/static/___prueba_cascade.txt
+cookies.txt
+
 # Archivos temporales y de estructura grandes
 estriuctura_buid.txt
 estriuctura

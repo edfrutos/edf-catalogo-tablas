@@ -14,8 +14,9 @@ parser.add_argument('--force', action='store_true', help="Confirma el borrado si
 args = parser.parse_args()
 
 MONGO_URI = os.getenv('MONGO_URI')
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
 client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
-db = client.get_database()
+db = client[db_name]
 
 print('--- BORRADO SEGURO DE LA COLECCIÓN catalogs ---')
 

@@ -66,6 +66,9 @@ def initialize_db(app=None):
     """Inicializa la conexión a MongoDB"""
     global _mongo_client, _mongo_db, _is_connected, _last_error
     
+    if app:
+        pass
+    
     mongo_uri = os.getenv('MONGO_URI')
     if not mongo_uri:
         if app:
@@ -75,7 +78,6 @@ def initialize_db(app=None):
         return False
     
     try:
-        logging.info(f"Iniciando conexión a MongoDB: {mongo_uri[:20]}...")
         
         # Configuración optimizada para menor consumo de recursos
         config = MONGO_CONFIG.copy()
@@ -86,7 +88,17 @@ def initialize_db(app=None):
         config['connectTimeoutMS'] = 5000  # Timeout de conexión reducido
         config['socketTimeoutMS'] = 30000  # Timeout de socket reducido
         config['waitQueueTimeoutMS'] = 5000  # Espera máxima para obtener una conexión
+        # Usar siempre tlsCAFile (certifi) si la URI es de tipo mongodb+srv (Atlas SSL)
         if mongo_uri.startswith('mongodb+srv'):
+            config['tlsCAFile'] = certifi.where()
+
+        # Fuerza configuración robusta SSL en entorno de tests
+        is_testing = (
+            os.environ.get('FLASK_ENV') == 'testing' or
+            (app and getattr(app, 'config', {}).get('TESTING', False))
+        )
+        if is_testing:
+            config['tls'] = True
             config['tlsCAFile'] = certifi.where()
         
         # Intentar establecer la conexión
@@ -100,21 +112,17 @@ def initialize_db(app=None):
         _is_connected = True
         _last_error = None
         
-        logging.info(f"Conexión a MongoDB establecida correctamente. BD: {_mongo_db.name}")
-        if app:
-            app.logger.info(f"Conexión a MongoDB establecida correctamente. BD: {_mongo_db.name}")
-        
         # Sincronizar datos para el fallback
         try:
-            logging.info("Sincronizando datos para el modo fallback...")
+            
             try:
                 sync_users_to_fallback(_mongo_db[COLLECTION_USERS])
-                logging.info("Sincronización de usuarios completada (limitada a 100 documentos)")
+                
             except Exception as e:
                 logging.error(f"Error al sincronizar usuarios para fallback: {str(e)}")
             try:
                 sync_catalogs_to_fallback(_mongo_db[COLLECTION_CATALOGOS])
-                logging.info("Sincronización de catálogos completada (limitada a 100 documentos)")
+                
             except Exception as e:
                 logging.error(f"Error al sincronizar catálogos para fallback: {str(e)}")
         except Exception as e:
@@ -193,7 +201,6 @@ def get_user_by_email(email):
             logging.error(f"Error al buscar usuario por email: {str(e)}")
     
     # Si no se encuentra o hay error, usamos el fallback
-    logging.info(f"Usando fallback para buscar usuario por email: {email}")
     fallback_user = get_fallback_user_by_email(email)
     if fallback_user:
         set_cache(f'user:{email}', fallback_user, ttl=3600)
@@ -226,7 +233,6 @@ def get_user_by_id(user_id):
             logging.error(f"Error al buscar usuario por ID: {str(e)}")
     
     # Si no se encuentra o hay error, usamos el fallback
-    logging.info(f"Usando fallback para buscar usuario por ID: {user_id}")
     fallback_user = get_fallback_user_by_id(user_id)
     if fallback_user:
         set_cache(f'user_id:{user_id}', fallback_user, ttl=3600)

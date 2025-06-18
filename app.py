@@ -87,11 +87,17 @@ def leer_datos_excel(filepath):
 load_dotenv()
 
 def create_app():
+    print("DEBUG: create_app ejecutado")
     """Crea y configura la aplicación Flask"""
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
     TEMPLATE_DIR = os.path.join(ROOT_DIR, "app", "templates")
     app = Flask(__name__, template_folder=TEMPLATE_DIR)
-    
+
+    # --- Registrar blueprint de imágenes ---
+    from app.routes.images_routes import images_bp
+    app.register_blueprint(images_bp)
+    print("DEBUG: images_bp registrado en app")
+
     # Cargar configuración desde config.py primero
     app.config.from_object('config.Config')
     
@@ -390,12 +396,10 @@ def create_app():
             current_app.users_collection = db["users"]
             current_app.resets_collection = db["password_resets"]
             current_app.spreadsheets_collection = db["spreadsheets"]
-            print("[DEBUG][ensure_db] Base de datos y colecciones asignadas correctamente en current_app")
         else:
             current_app.users_collection = None
             current_app.resets_collection = None
             current_app.spreadsheets_collection = None
-            print("[DEBUG][ensure_db] No se pudo asignar la base de datos en current_app")
     app.before_request(ensure_db)
 
     return app
@@ -802,17 +806,6 @@ def descargar_excel():
 # 🖼️ RUTA PARA SERVIR IMÁGENES SUBIDAS
 # ==============================================
 
-@app.route("/imagenes_subidas/<filename>")
-def uploaded_images(filename):
-    s3_param = request.args.get('s3')
-    
-    if s3_param == 'true':
-        url = get_s3_url(filename)
-        if url:
-            return redirect(url)
-        return "❌ Error al acceder al archivo en S3", 404
-    
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 # ==============================================
 # 🔢 RENOMBRAR REGISTROS AUTOMÁTICAMENTE

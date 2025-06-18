@@ -1,3 +1,10 @@
+# Script: database.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 database.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-06-09
+
 from pymongo import MongoClient
 from bson import ObjectId
 from flask import current_app
@@ -31,10 +38,13 @@ def get_mongo_client():
     return client
 
 def get_mongo_db():
-    """Obtiene la base de datos de MongoDB."""
+    """
+    Obtiene la base de datos de MongoDB.
+    """
     global db
     client = get_mongo_client()
-    return client.get_database(os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva'))
+    db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
+    return client[db_name]
 
 def get_users_collection():
     """Obtiene la colección de usuarios."""

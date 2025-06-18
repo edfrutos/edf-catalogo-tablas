@@ -19,23 +19,31 @@ usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 
 @usuarios_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    print("[DEBUG][REGISTER] users_collection:", getattr(current_app, 'users_collection', None))
+    
     users_collection = getattr(current_app, 'users_collection', None)
-    print("[DEBUG][REGISTER] session:", dict(session))
+    
     if request.method == 'POST':
         if users_collection is None:
             flash('Error de conexión a la base de datos.', 'danger')
             return redirect(url_for('usuarios.register'))
+        import random, string
         email = request.form['email']
         password = request.form['password']
         hashed_pw = generate_password_hash(password)
+        # Generar username único basado en el email
+        base_username = email.split('@')[0]
+        username = base_username
+        # Si ya existe, añadir sufijo aleatorio
+        while users_collection.find_one({'username': username}):
+            sufijo = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+            username = f"{base_username}_{sufijo}"
 
         if users_collection.find_one({'email': email}):
             flash('Este correo ya está registrado.', 'warning')
         else:
-            users_collection.insert_one({'email': email, 'password': hashed_pw})
+            users_collection.insert_one({'email': email, 'password': hashed_pw, 'username': username})
             flash('Registro exitoso. Ya puedes iniciar sesión.', 'success')
-            return redirect(url_for('usuarios.login'))
+            return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html')
 
@@ -45,7 +53,7 @@ def logout():
     session.clear()
     print("[DEBUG][LOGOUT] session after clear:", dict(session))
     flash('Sesión cerrada correctamente.', 'info')
-    return redirect(url_for('usuarios.login'))
+    return redirect(url_for('auth.login'))
 
 @usuarios_bp.route('/forgot', methods=['GET', 'POST'])
 def forgot():
@@ -71,7 +79,7 @@ def edit():
     print("[DEBUG][EDIT] session:", dict(session))
     if 'user_id' not in session:
         flash('Debes iniciar sesión.', 'warning')
-        return redirect(url_for('usuarios.login'))
+        return redirect(url_for('auth.login'))
     if users_collection is None:
         flash('Error de conexión a la base de datos.', 'danger')
         return redirect(url_for('main.dashboard'))

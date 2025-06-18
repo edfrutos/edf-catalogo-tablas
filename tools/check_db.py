@@ -7,10 +7,11 @@ import certifi
 load_dotenv()
 
 # Intentar conectar a MongoDB
-uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
+uri = os.getenv('MONGO_URI')
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
 try:
     client = MongoClient(uri, tls=True, tlsCAFile=certifi.where())
-    db = client['app_catalogojoyero_nueva']
+    db = client[db_name]
     users = db['users']
     
     # Verificar si hay usuarios

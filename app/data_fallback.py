@@ -74,7 +74,7 @@ def save_catalog_data(catalogs):
     try:
         with open(CATALOG_DATA_FILE, 'w') as f:
             json.dump(catalogs, f)
-        logging.info(f"Datos de catálogos guardados: {len(catalogs)} catálogos")
+        
         return True
     except Exception as e:
         logging.error(f"Error al guardar datos de catálogos: {str(e)}")

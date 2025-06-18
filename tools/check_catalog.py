@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Configuración de MongoDB
-mongo_uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
-client = MongoClient(mongo_uri)
-db = client.app_catalogojoyero_nueva
+MONGO_URI = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
+client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+db = client[db_name]
 
 def is_valid_object_id(id_str):
     """Verifica si una cadena es un ObjectId válido"""

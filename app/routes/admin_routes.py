@@ -16,7 +16,7 @@ from bson import ObjectId
 from app.database import (get_reset_tokens_collection, get_users_collection,
                       get_audit_logs_collection, get_catalogs_collection, get_mongo_client, get_mongo_db, get_last_error)
 from app.audit import audit_log
-from app.auth_utils import admin_required
+from app.routes.maintenance_routes import admin_required
 import app.monitoring as monitoring
 import app.notifications as notifications
 from datetime import datetime, timedelta
@@ -81,11 +81,44 @@ from app import monitoring
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
+
+
+@admin_bp.route('/scripts-tools')
+def scripts_tools_overview():
+    import os
+    # Verificar si el usuario está logueado y es admin usando session
+    if 'user_id' not in session or not session.get('logged_in', False):
+        flash('Debes iniciar sesión para acceder.', 'warning')
+        return redirect(url_for('auth.login', next=request.url))
+    # Verificar si el usuario tiene rol de admin
+    if session.get('role') != 'admin':
+        flash('No tienes permisos para acceder a esta sección.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    def list_dir_names(path):
+        base = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+        full = os.path.join(base, path)
+        if not os.path.isdir(full):
+            return []
+        items = []
+        for name in sorted(os.listdir(full)):
+            if name.startswith('.'):
+                continue
+            items.append(name + ('/' if os.path.isdir(os.path.join(full, name)) else ''))
+        return items
+    scripts_list = list_dir_names('scripts')
+    tests_list = list_dir_names('tests')
+    tools_list = list_dir_names('tools')
+    return render_template('admin/scripts_tools_overview.html', scripts_list=scripts_list, tests_list=tests_list, tools_list=tools_list)
+
+
 @admin_bp.route("/")
 @admin_required
 def dashboard_admin():
+    # Mostrar advertencia si el sistema de monitoreo no está disponible
+    if not getattr(current_app, "monitoring_enabled", False):
+        flash("El sistema de monitoreo no está disponible actualmente. Contacte con el administrador.", "warning")
     db = get_db()
-    print(f"[DEBUG][ADMIN] db: {db}")
     if db is None:
         flash('No se pudo acceder a la base de datos. Contacte con el administrador.', 'error')
         return render_template("error.html", mensaje="No se pudo conectar a la base de datos. Contacte con el administrador.")
@@ -102,13 +135,12 @@ def dashboard_admin():
         total_usuarios = len(usuarios)
         try:
             tablas = list(db['spreadsheets'].find().sort('created_at', -1))
-            print(f"[DEBUG][ADMIN] tablas: {tablas}")
         except Exception as e:
             print(f"[ERROR][ADMIN] Consulta a spreadsheets falló: {e}")
             tablas = []
         try:
             catalogos = list(db['catalogs'].find().sort('created_at', -1))
-            print(f"[DEBUG][ADMIN] catalogos: {catalogos}")
+
         except Exception as e:
             print(f"[ERROR][ADMIN] Consulta a catalogs falló: {e}")
             catalogos = []
@@ -221,7 +253,10 @@ def system_status():
         t6 = time.time()
         print(f"[DEBUG][STATUS] get_backup_files: {t6-t5:.2f}s")
         print(f"[DEBUG][STATUS] TOTAL system-status: {time.time()-t0:.2f}s")
-        return render_template('admin/system_status.html', data=data, log_files=log_files, backup_files=backup_files)
+        # Pasar cache_stats y temp_files como variables independientes para el template
+        cache_stats = data.get('cache_stats')
+        temp_files = data.get('temp_files')
+        return render_template('admin/system_status.html', data=data, log_files=log_files, backup_files=backup_files, cache_stats=cache_stats, temp_files=temp_files)
     except Exception as e:
         logger.error(f"Error en system_status: {str(e)}", exc_info=True)
         flash("Error al obtener el estado del sistema", "danger")
@@ -239,16 +274,18 @@ def system_status_report():
     response.headers['Content-Disposition'] = 'attachment; filename=system_status_report.json'
     return response
 
+from app.cache_system import get_cache_stats
+
+from app.routes.temp_files_utils import list_temp_files, delete_temp_files
+
 def get_system_status_data(full=False):
     import time
     t0 = time.time()
     try:
-        print("[DEBUG][STATUS] Inicio get_system_status_data")
         # Obtener informe completo de estado (NO recalcular nada costoso aquí)
         t1 = time.time()
         health_report = monitoring.get_health_status()
         t2 = time.time()
-        print(f"[DEBUG][STATUS] get_health_status: {t2-t1:.2f}s")
         # Obtener estadísticas de solicitudes
         request_stats = monitoring._app_metrics["request_stats"]
         # Calcular uptime
@@ -302,13 +339,16 @@ def get_system_status_data(full=False):
             'top_processes': top_processes,
             'platform': platform_info
         }
+        temp_files_list = list_temp_files()
         status_data = {
             "health": health_report,
             "uptime": uptime_str,
             "request_stats": request_stats,
             "database": monitoring._app_metrics["database_status"],
             "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "memory": mem_breakdown
+            "memory": mem_breakdown,
+            "cache_stats": get_cache_stats(),
+            "temp_files": temp_files_list
         }
         if full:
             status_data['raw_psutil'] = {
@@ -316,7 +356,6 @@ def get_system_status_data(full=False):
                 'system': dict(system_mem._asdict()),
                 'swap': dict(swap_mem._asdict()),
             }
-        print(f"[DEBUG][STATUS] TOTAL get_system_status_data: {time.time()-t0:.2f}s")
         return status_data
     except Exception as e:
         logger.error(f"Error en get_system_status_data: {str(e)}", exc_info=True)
@@ -755,7 +794,7 @@ def backup_csv():
     data = list(catalog.find())
     if not data:
         flash("No hay datos para exportar", "warning")
-        return redirect(url_for("admin.maintenance"))
+        return redirect(url_for("maintenance.maintenance_dashboard"))
     # Unificar todos los campos presentes en los documentos
     all_fields = set()
     for row in data:
@@ -798,7 +837,7 @@ def cleanup_old_backups():
     backups_dir = os.path.join(os.getcwd(), "backups")
     if not os.path.exists(backups_dir):
         flash("No hay backups para limpiar", "info")
-        return redirect(url_for("admin.maintenance"))
+        return redirect(url_for("maintenance.maintenance_dashboard"))
     files = [os.path.join(backups_dir, f) for f in os.listdir(backups_dir) if os.path.isfile(os.path.join(backups_dir, f))]
     # Ordenar por fecha de modificación descendente
     files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
@@ -826,7 +865,7 @@ def cleanup_old_backups():
                 logger.error(f"Error al eliminar backup {f}: {e}")
     flash(f"Backups antiguos eliminados: {removed}", "info")
     audit_log(f"Limpieza de backups por {session.get('user_id', session.get('username', 'desconocido'))} - días: {days}, max_files: {max_files}, eliminados: {removed}")
-    return redirect(url_for("admin.maintenance"))
+    return redirect(url_for("maintenance.maintenance_dashboard"))
 
 @admin_bp.route("/cleanup_resets")
 @admin_required
@@ -845,9 +884,20 @@ def cleanup_resets():
     })
     monitoring.save_metrics()
     
-    return redirect(url_for("admin.maintenance"))
+    return redirect(url_for("maintenance.maintenance_dashboard"))
 
 # API para limpieza de archivos temporales antiguos
+@admin_bp.route("/delete-temp-files", methods=["POST"])
+@admin_required
+def delete_temp_files_route():
+    selected = request.form.getlist('temp_files')
+    if not selected:
+        flash("No se seleccionaron archivos para borrar", "warning")
+        return redirect(url_for('admin.system_status'))
+    removed = delete_temp_files(selected)
+    flash(f"Archivos temporales eliminados: {removed}", "success")
+    return redirect(url_for('admin.system_status'))
+
 @admin_bp.route("/api/cleanup-temp", methods=["POST"])
 @admin_required
 def api_cleanup_temp():
@@ -1055,18 +1105,19 @@ def api_truncate_logs():
                 "status": "partial",
                 "message": f"Se procesaron {len(processed_files)} archivos con éxito. Errores en {len(error_files)} archivos.",
                 "processed": processed_files,
-                "errors": error_files
+                "error_files": error_files
             })
         else:
             return jsonify({
                 "status": "success",
                 "message": f"Se truncaron {len(processed_files)} archivos de log correctamente.",
-                "processed": processed_files
+                "processed": processed_files,
+                "error_files": []
             })
             
     except Exception as e:
         logger.error(f"Error en api_truncate_logs: {str(e)}", exc_info=True)
-        return jsonify({"status": "error", "message": f"Error al truncar logs: {str(e)}"})
+        return jsonify({"status": "error", "message": f"Error al truncar logs: {str(e)}", "error_files": []})
 
 # API para eliminar archivos de backup
 @admin_bp.route("/api/delete-backups", methods=["POST"])
@@ -1165,13 +1216,14 @@ def api_delete_backups():
                 "status": "partial",
                 "message": f"Se eliminaron {len(processed_files)} archivos, pero hubo errores con {len(error_files)} archivos",
                 "processed": processed_files,
-                "errors": error_files
+                "error_files": error_files
             })
         else:
             return jsonify({
                 "status": "success",
                 "message": f"Se eliminaron {len(processed_files)} archivos correctamente",
-                "processed": processed_files
+                "processed": processed_files,
+                "error_files": []
             })
     
     except Exception as e:
@@ -1248,37 +1300,45 @@ def download_multiple_logs():
 def notification_settings():
     """Página de configuración de notificaciones"""
     if request.method == "POST":
-        # Actualizar configuración
+        # Validar campos obligatorios y tipos
+        required_fields = [
+            "smtp_server", "smtp_port", "smtp_username",
+            "threshold_cpu", "threshold_memory", "threshold_disk", "threshold_error_rate", "cooldown"
+        ]
+        missing_fields = [f for f in required_fields if not request.form.get(f)]
+        int_fields = ["smtp_port", "threshold_cpu", "threshold_memory", "threshold_disk", "threshold_error_rate", "cooldown"]
+        invalid_ints = []
+        for f in int_fields:
+            val = request.form.get(f)
+            if val is not None and val != "":
+                try:
+                    int(val)
+                except Exception:
+                    invalid_ints.append(f)
+            else:
+                invalid_ints.append(f)
+        if missing_fields or invalid_ints:
+            flash(f"Error: Faltan campos obligatorios o valores inválidos: {', '.join(set(missing_fields + invalid_ints))}", "danger")
+            return redirect(url_for("admin.notification_settings"))
+
         enabled = request.form.get("enable_notifications") == "on"
-        
-        # Configuración SMTP
         smtp_settings = {
             "server": request.form.get("smtp_server"),
             "port": int(request.form.get("smtp_port")),
             "username": request.form.get("smtp_username"),
             "use_tls": request.form.get("smtp_tls") == "on"
         }
-        
-        # Solo actualizar contraseña si se proporciona una nueva
         password = request.form.get("smtp_password")
         if password:
             smtp_settings["password"] = password
-        
-        # Procesar destinatarios (filtrar entradas vacías)
         recipients = [r for r in request.form.getlist("recipients") if r.strip()]
-        
-        # Umbrales
         thresholds = {
             "cpu": int(request.form.get("threshold_cpu")),
             "memory": int(request.form.get("threshold_memory")),
             "disk": int(request.form.get("threshold_disk")),
             "error_rate": int(request.form.get("threshold_error_rate"))
         }
-        
-        # Tiempo entre alertas
         cooldown = int(request.form.get("cooldown"))
-        
-        # Guardar configuración
         if notifications.update_settings(
             enabled=enabled,
             smtp_settings=smtp_settings,
@@ -1287,7 +1347,6 @@ def notification_settings():
             cooldown=cooldown
         ):
             flash("Configuración de notificaciones actualizada correctamente", "success")
-            # Registrar acción de auditoría
             audit_log("notification_settings_updated", details={
                 "enabled": enabled,
                 "smtp_server": smtp_settings["server"],
@@ -1295,12 +1354,8 @@ def notification_settings():
             })
         else:
             flash("Error al guardar la configuración de notificaciones", "danger")
-        
         return redirect(url_for("admin.notification_settings"))
-    
-    # Obtener configuración actual
     config = notifications.get_settings()
-    
     return render_template("admin/notification_settings.html", config=config)
 
 @admin_bp.route("/api/test-email", methods=["POST"])
@@ -1384,26 +1439,48 @@ def test_email():
 def verify_users():
     try:
         usuarios = list(get_users_collection().find())
-        
         # Contar usuarios verificados y no verificados
         verified_count = sum(1 for user in usuarios if user.get('verified', False))
         unverified_count = len(usuarios) - verified_count
-        
         # Estadísticas de usuarios
         stats = {
             'total': len(usuarios),
             'verified': verified_count,
             'unverified': unverified_count
         }
-        
         # Obtener usuarios no verificados para mostrarlos en la interfaz
         unverified_users = [user for user in usuarios if not user.get('verified', False)]
-        
         return render_template('admin/verify_users.html', stats=stats, unverified_users=unverified_users)
     except Exception as e:
         logger.error(f"Error en verify_users: {str(e)}", exc_info=True)
         flash(f"Error al verificar usuarios: {str(e)}", "error")
         return redirect(url_for('maintenance.maintenance_dashboard'))
+
+@admin_bp.route("/bulk_user_action", methods=["POST"])
+@admin_required
+def bulk_user_action():
+    try:
+        user_ids = request.form.getlist("user_ids")
+        action = request.form.get("action")
+        users_col = get_users_collection()
+        if not user_ids or not action:
+            flash("Debes seleccionar usuarios y una acción.", "warning")
+            return redirect(url_for("admin.verify_users"))
+        from bson import ObjectId
+        object_ids = [ObjectId(uid) for uid in user_ids if uid]
+        if action == "verify":
+            result = users_col.update_many({"_id": {"$in": object_ids}}, {"$set": {"verified": True}})
+            flash(f"{result.modified_count} usuarios verificados.", "success")
+        elif action == "delete":
+            result = users_col.delete_many({"_id": {"$in": object_ids}})
+            flash(f"{result.deleted_count} usuarios eliminados.", "success")
+        else:
+            flash("Acción no reconocida.", "danger")
+        return redirect(url_for("admin.verify_users"))
+    except Exception as e:
+        logger.error(f"Error en bulk_user_action: {str(e)}", exc_info=True)
+        flash(f"Error al procesar la acción masiva: {str(e)}", "danger")
+        return redirect(url_for("admin.verify_users"))
 
 @admin_bp.route("/catalogos-usuario/<user_id>")
 @admin_required
@@ -2086,15 +2163,21 @@ def db_backup():
                 if result.returncode != 0:
                     error_msg = f"Error en mongodump: {result.stderr}"
                     current_app.logger.error(error_msg)
-                    raise Exception(error_msg)
+                    return jsonify({
+                        'status': 'error',
+                        'message': error_msg
+                    }), 500
                 
                 # Verificar que el archivo se creó correctamente
                 if not os.path.exists(backup_file) or os.path.getsize(backup_file) == 0:
-                    raise Exception("El archivo de respaldo no se creó correctamente")
+                    error_msg = "El archivo de respaldo no se creó correctamente"
+                    current_app.logger.error(error_msg)
+                    return jsonify({
+                        'status': 'error',
+                        'message': error_msg
+                    }), 500
                 
-                flash('Respaldo creado correctamente', 'success')
                 audit_log(f"Respaldo creado: {os.path.basename(backup_file)}")
-                
                 # Limpiar respaldos antiguos (mantener los 5 más recientes)
                 try:
                     backups = sorted(
@@ -2111,16 +2194,27 @@ def db_backup():
                 except Exception as e:
                     current_app.logger.error(f"Error al limpiar respaldos antiguos: {str(e)}")
                     # No fallar la operación principal si falla la limpieza
-                
+                # Devolver JSON con URL de descarga
+                download_url = url_for('admin.download_backup', filename=os.path.basename(backup_file))
+                return jsonify({
+                    'status': 'success',
+                    'download_url': download_url
+                })
             except Exception as e:
                 current_app.logger.error(f"Error al crear respaldo: {str(e)}\n{traceback.format_exc()}")
-                flash(f'Error al crear el respaldo: {str(e)}', 'error')
                 # Intentar eliminar el archivo parcial si existe
                 if 'backup_file' in locals() and os.path.exists(backup_file):
                     try:
                         os.remove(backup_file)
                     except:
                         pass
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e)
+                }), 500
+            # No continuar con render_template después de POST
+            # (el frontend espera solo JSON)
+            
         
         # Función auxiliar para obtener información de archivos
         def get_file_info(filepath):
@@ -2163,7 +2257,7 @@ def db_backup():
             current_app.logger.error(f"Error al contar respaldos en Drive: {str(e)}")
             # No mostramos error al usuario para no interrumpir la funcionalidad principal
         
-        # Pasar las variables necesarias a la plantilla
+        # Solo renderizar plantilla en GET
         return render_template(
             'admin/db_backup.html',
             backups=backups,
@@ -2525,6 +2619,7 @@ def upload_backup_to_drive(filename):
             current_app.logger.warning(f"Archivo no encontrado: {file_path}")
             return jsonify({
                 'success': False,
+                'status': 'error',
                 'error': 'Archivo no encontrado',
                 'message': f'El archivo {filename} no existe en el servidor.'
             }), 404

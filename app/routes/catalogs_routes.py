@@ -36,6 +36,10 @@ def is_valid_object_id(id_str):
 def check_catalog_permission(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # Protección: requerir login antes de cualquier otra comprobación
+        if not session.get('username') and not session.get('user_id'):
+            flash('Debe iniciar sesión para acceder al catálogo', 'warning')
+            return redirect(url_for('auth.login', next=request.url))
         catalog_id = kwargs.get('catalog_id')
         if not catalog_id:
             current_app.logger.error("ID de catálogo no proporcionado")
@@ -619,9 +623,13 @@ def delete_catalog(catalog_id, catalog):
             current_app.logger.info(f"Segundo intento de eliminación: {result.deleted_count} documento(s) eliminado(s)")
             
             if result.deleted_count > 0:
-                flash(f"Catálogo '{catalog_name}' eliminado correctamente", "success")
+                current_app.logger.warning(f"[FLASH] Eliminado: Catálogo '{catalog_name}' eliminado correctamente. (success)")
+                flash(f"Catálogo '{catalog_name}' eliminado correctamente.", "success")
+                current_app.logger.warning(f"[FLASH] Ejecutado flash success para catálogo eliminado")
             else:
-                flash("No se pudo eliminar el catálogo. Es posible que ya haya sido eliminado.", "warning")
+                current_app.logger.warning("[FLASH] No se pudo eliminar catálogo o ya fue eliminado. (warning)")
+                flash("Catálogo no se pudo eliminar o ya fue eliminado.", "warning")
+                current_app.logger.warning(f"[FLASH] Ejecutado flash warning para catálogo no eliminado")
     except Exception as e:
         current_app.logger.error(f"Error al eliminar catálogo {catalog_id}: {str(e)}", exc_info=True)
         flash(f"Error al eliminar catálogo: {str(e)}", "danger")

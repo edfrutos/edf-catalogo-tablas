@@ -13,7 +13,6 @@ from app.routes.debug_routes import debug_bp
 from app.routes.admin_diagnostic import admin_diagnostic_bp
 from app.routes.diagnostico import diagnostico_bp
 
-print("✅ Todos los blueprints de diagnóstico importados correctamente")
 
 # Exportar los blueprints para que sean accesibles al importar desde app.routes
 __all__ = [

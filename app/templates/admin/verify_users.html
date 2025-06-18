@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
 {% block title %}Verificación de Usuarios{% endblock %}
 
@@ -51,39 +51,45 @@
         </div>
         <div class="card-body">
           {% if unverified_users %}
+          <form id="bulkActionForm" method="post" action="{{ url_for('admin.bulk_user_action') }}">
+            <div class="mb-2">
+              <button type="submit" name="action" value="verify" class="btn btn-success btn-sm">Verificar seleccionados</button>
+              <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm">Eliminar seleccionados</button>
+            </div>
             <div class="table-responsive">
               <table class="table table-striped">
                 <thead>
                   <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
                     <th>Nombre</th>
                     <th>Email</th>
                     <th>Fecha de Registro</th>
-                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for user in unverified_users %}
-                    <tr>
-                      <td>{{ user.nombre }}</td>
-                      <td>{{ user.email }}</td>
-                      <td>
-                        {% if user.created_at %}
-                          {{ user.created_at.strftime('%d/%m/%Y %H:%M') }}
-                        {% else %}
-                          Desconocida
-                        {% endif %}
-                      </td>
-                      <td>
-                        <form action="{{ url_for('admin.editar_usuario', user_id=user._id) }}" method="post" class="d-inline">
-                          <input type="hidden" name="verified" value="true">
-                          <button type="submit" class="btn btn-sm btn-success">Verificar</button>
-                        </form>
-                      </td>
-                    </tr>
+                  <tr>
+                    <td><input type="checkbox" name="user_ids" value="{{ user._id }}"></td>
+                    <td>{{ user.nombre }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                      {% if user.created_at %}
+                        {{ user.created_at.strftime('%d/%m/%Y %H:%M') }}
+                      {% else %}
+                        Desconocida
+                      {% endif %}
+                    </td>
+                  </tr>
                   {% endfor %}
                 </tbody>
               </table>
             </div>
+          </form>
+          <script>
+            document.getElementById('selectAll').addEventListener('change', function() {
+              document.querySelectorAll('input[name="user_ids"]').forEach(cb => cb.checked = this.checked);
+            });
+          </script>
           {% else %}
             <div class="alert alert-info">
               No hay usuarios pendientes de verificación.

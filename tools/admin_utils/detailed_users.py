@@ -10,8 +10,9 @@ from app.models import get_users_collection
 load_dotenv()
 
 # Conectar a MongoDB
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
 client = MongoClient(os.getenv('MONGO_URI'))
-db = client['app_catalogojoyero_nueva']
+db = client[db_name]
 users_collection = get_users_collection()
 spreadsheets_collection = db['spreadsheets']
 

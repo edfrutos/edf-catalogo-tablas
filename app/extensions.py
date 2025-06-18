@@ -20,7 +20,7 @@ def init_extensions(app):
             # Forzar el uso de certifi para los certificados
             mongo.init_app(app, tlsCAFile=certifi.where())
             catalog_collection = mongo.db.catalogo_tablas
-            app.logger.info("MongoDB inicializado correctamente")
+            
         except Exception as e:
             app.logger.error(f"Error al inicializar MongoDB: {e}")
             app.logger.warning("Continuando sin MongoDB - algunas funcionalidades estarán limitadas")

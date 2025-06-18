@@ -31,15 +31,17 @@ if use_s3:
 
 # Importar blueprints fuera de la función
 from .routes.main_routes import main_bp
-from .routes.admin_routes import admin_bp, admin_logs_bp, register_admin_blueprints
+from .routes.admin_routes import admin_bp, admin_logs_bp
 from .routes.auth_routes import auth_bp
 from .routes.maintenance_routes import maintenance_bp
 from .routes.catalogs_routes import catalogs_bp
 from .routes.catalog_images_routes import image_bp
+from .routes.images_routes import images_bp  # Blueprint para /imagenes_subidas/<filename> (ahora llamado uploaded_images)
 from .routes.usuarios_routes import usuarios_bp
 from .error_handlers import errors_bp
 from .routes.emergency_access import emergency_bp
 from .routes.scripts_routes import scripts_bp
+from .routes.scripts_tools_routes import scripts_tools_bp
 
 # Importar filtros personalizados
 from app.filters import init_app as init_filters
@@ -49,8 +51,13 @@ client = None
 db = None
 
 def create_app():
-    app = Flask(__name__)
-    
+    import os
+    app = Flask(
+        __name__,
+        static_folder=os.path.join(os.path.dirname(__file__), "static"),
+        static_url_path="/static"
+    )
+
     # Configurar clave secreta para sesiones
     app.secret_key = os.getenv('SECRET_KEY', 'edf_secret_key_2025')
     
@@ -113,6 +120,10 @@ def create_app():
     def load_user(user_id):
         if user_id is None:
             return None
+        # Protección defensiva: si la colección no está inicializada, lanza excepción clara
+        if not hasattr(app, 'users_collection') or app.users_collection is None:
+            app.logger.error("[CRÍTICO] users_collection no está inicializada. Verifica la conexión a MongoDB antes de autenticar usuarios.")
+            raise Exception("users_collection no está inicializada. No se puede autenticar usuarios sin conexión a la base de datos.")
         user_data = app.users_collection.find_one({"email": user_id})
         if not user_data:
             return None
@@ -139,37 +150,33 @@ def create_app():
     ]
     
     # Registrar blueprints de administración después
-    admin_blueprints = [
-        (admin_bp, '/admin'),
-        (admin_logs_bp, '/admin'),
-        (scripts_bp, '/tools')
-    ]
-    
+    # Registro de blueprints de administración (sin duplicados)
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(admin_logs_bp, url_prefix='/admin')
+    app.register_blueprint(scripts_bp, url_prefix='/tools')
+    app.register_blueprint(scripts_tools_bp)  # Usa su url_prefix propio
+
     # Registrar el blueprint de mantenimiento con su propio prefijo
     maintenance_blueprints = [
         (maintenance_bp, '/admin/maintenance')
     ]
     
-    app.logger.info(f"Registrando blueprints principales. Total: {len(blueprints)}")
-    
     # Registrar blueprints principales
     for bp, prefix in blueprints:
         try:
-            app.logger.info(f"Registrando blueprint: name={bp.name}, prefix={prefix}")
             app.register_blueprint(bp, url_prefix=prefix)
-            app.logger.info(f"Blueprint {bp.name} registrado correctamente con prefijo '{prefix}'")
         except Exception as e:
             app.logger.error(f"Error registrando blueprint {bp.name}: {str(e)}")
-    
-    # Registrar blueprints de administración
-    app.logger.info(f"Registrando blueprints de administración. Total: {len(admin_blueprints)}")
-    for bp, prefix in admin_blueprints:
+
+    # Registrar blueprint de test de sesión SOLO en testing o desarrollo
+    if app.config.get('TESTING') or app.config.get('ENV') == 'development' or os.environ.get('FLASK_ENV') in ('development', 'testing'):
         try:
-            app.logger.info(f"Registrando blueprint de admin: name={bp.name}, prefix={prefix}")
-            app.register_blueprint(bp, url_prefix=prefix)
-            app.logger.info(f"Blueprint de admin {bp.name} registrado correctamente con prefijo '{prefix}'")
+            from app.routes.test_session_routes import test_session_bp
+            app.register_blueprint(test_session_bp)
+            app.logger.info("Blueprint test_session_bp registrado para tests y desarrollo")
         except Exception as e:
-            app.logger.error(f"Error registrando blueprint de admin {bp.name}: {str(e)}")
+            app.logger.error(f"No se pudo registrar test_session_bp: {e}")
+    
     
     # Registrar blueprints de mantenimiento
     app.logger.info(f"Registrando blueprints de mantenimiento. Total: {len(maintenance_blueprints)}")
@@ -185,6 +192,13 @@ def create_app():
                     app.logger.info(f"  - {rule.endpoint} -> {rule}")
         except Exception as e:
             app.logger.error(f"Error registrando blueprint de mantenimiento {bp.name}: {str(e)}")
+
+    # Registrar blueprint de emergencia (emergency_bp) sin prefijo
+    try:
+        app.register_blueprint(emergency_bp)
+        app.logger.info("Blueprint de emergencia (emergency_bp) registrado correctamente.")
+    except Exception as e:
+        app.logger.error(f"Error registrando blueprint de emergencia: {str(e)}")
     
     # Registrar blueprints adicionales si existen
     try:
@@ -194,12 +208,21 @@ def create_app():
     except ImportError as e:
         app.logger.error(f"Error importando register_admin_blueprints: {str(e)}")
     
+    # Registrar blueprint de imágenes subidas para /imagenes_subidas/<filename>
+    try:
+        app.register_blueprint(images_bp)
+        print("DEBUG: uploaded_images_bp registrado en app (ruta /imagenes_subidas/<filename>)")
+    except Exception as e:
+        print(f"ERROR registrando uploaded_images_bp: {e}")
+
     # Inicializar sistema de monitoreo
     try:
         from app import monitoring
         monitoring_thread = monitoring.init_app(app, client)
+        app.monitoring_enabled = True
         app.logger.info("Sistema de monitoreo inicializado correctamente")
     except Exception as e:
+        app.monitoring_enabled = False
         app.logger.error(f"Error al inicializar el sistema de monitoreo: {str(e)}")
     
     # Ruta de test de sesión
@@ -213,7 +236,7 @@ def create_app():
     @app.before_request
     def log_cookie():
         from flask import request
-        app.logger.info(f"[COOKIES] Cookie recibida: {request.cookies}")
+        
     
     # Log de la cookie enviada en la respuesta
     @app.after_request
@@ -251,5 +274,3 @@ def setup_logging(app):
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(logging.INFO)
     app.logger.addHandler(stream_handler)
-
-    app.logger.info("Logging inicializado correctamente.")

@@ -122,7 +122,7 @@ def register():
         if session.get('role') == 'admin':
             return redirect('/admin/')
         else:
-            return redirect(url_for('main.dashboard'))
+            return redirect(url_for('main.dashboard_user'))
     if request.method == 'POST':
         nombre = request.form.get('nombre', '').strip()
         email = request.form.get('email', '').strip().lower()
@@ -202,7 +202,7 @@ def register():
             if session.get('role') == 'admin':
                 return redirect(url_for('admin.dashboard_admin'))
             else:
-                return redirect(url_for('main.dashboard'))
+                return redirect(url_for('main.dashboard_user'))
                 
         except Exception as e:
             logger.error(f"Error registrando usuario: {str(e)}")
@@ -218,7 +218,7 @@ def login():
         if session.get('role') == 'admin':
             return redirect('/admin/')
         else:
-            return redirect(url_for('main.dashboard'))
+            return redirect(url_for('main.dashboard_user'))
     try:
         # Log de la función completa al inicio
         logger.debug(f"==== FUNCIÓN LOGIN INICIADA ====\nMétodo: {request.method}\nURL: {request.url}\nReferrer: {request.referrer}\nIP: {request.remote_addr}\nUser-Agent: {request.user_agent}")
@@ -301,7 +301,6 @@ def login():
             for i, u in enumerate(users[:5], 1):
                 logger.warning(f"Usuario {i}: email={u.get('email')}, username={u.get('username')}, nombre={u.get('nombre')}, tipo_username={type(u.get('username'))}")
             
-        logger.info(f"[LOGIN] Usuario recuperado de la base de datos: {usuario}")
         if usuario:
             logger.info(f"Tipo de búsqueda: {'email' if '@' in email else 'username'}")
             logger.info(f"Campos del usuario - email: {usuario.get('email')}, username: {usuario.get('username')}")
@@ -446,7 +445,7 @@ def login():
                 response = redirect(url_for('admin.dashboard_admin'))
             else:
                 logger.info("Redirigiendo a dashboard principal")
-                response = redirect(url_for('main.dashboard'))
+                response = redirect(url_for('main.dashboard_user'))
 
             # Configurar cabeceras de respuesta
             response.headers.update({
