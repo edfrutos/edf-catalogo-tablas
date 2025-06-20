@@ -109,6 +109,7 @@ backups/*/.env*
 logs/gunicorn_access.log
 logs/flask_debug.log
 logs/gunicorn_error.log
+sensitive_backup/
 
 # -------------------------------------------
 # IGNORAR ARCHIVOS DE RESPALDO Y TEMPORALES ESPECÍFICOS

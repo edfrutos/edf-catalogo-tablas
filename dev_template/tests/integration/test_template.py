@@ -1,3 +1,10 @@
+# Script: test_template.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 test_template.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: EDF Developer - 2025-06-20
+
 import pytest
 
 def test_template_basico(client):

@@ -1,3 +1,10 @@
+# Script: test_plantilla_avanzada.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 test_plantilla_avanzada.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: EDF Developer - 2025-06-20
+
 import pytest
 
 @pytest.fixture
