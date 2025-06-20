@@ -3,7 +3,7 @@
 # Uso: python3 data_fallback.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Developer - 2025-05-28
 
 """
 Sistema de fallback de datos para cuando la conexión a MongoDB no está disponible.

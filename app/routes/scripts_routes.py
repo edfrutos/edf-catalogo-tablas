@@ -11,6 +11,27 @@ from functools import wraps
 from flask import Blueprint, render_template, jsonify, request, abort, session, redirect, url_for, flash, current_app, send_file
 from functools import wraps
 
+# === Utilidad para extraer la descripción de scripts ===
+def extract_description(script_path):
+    """
+    Extrae la línea de descripción de la cabecera de un script (.py o .sh).
+    Busca una línea que empiece por '# Descripción:' y devuelve el texto.
+    Lee solo las primeras 10 líneas para evitar errores de iterador.
+    """
+    try:
+        with open(script_path, 'r', encoding='utf-8') as f:
+            for i, line in enumerate(f):
+                if i > 9:
+                    break
+                if line.strip().startswith('# Descripción:'):
+                    return line.strip().replace('# Descripción:', '').strip()
+                # Para scripts bash con comentarios tipo '# Descripción:'
+                if line.strip().startswith('#') and 'Descripción:' in line:
+                    return line.strip().split('Descripción:')[1].strip()
+    except Exception as e:
+        print(f"Error al extraer descripción de {script_path}: {e}")
+    return ''
+
 # Definición local del decorador admin_required
 def admin_required(f):
     @wraps(f)
@@ -32,6 +53,38 @@ TOOLS_DIR = os.path.join(ROOT_DIR, 'tools')
 # Crear el blueprint
 scripts_bp = Blueprint('scripts', __name__, url_prefix='/admin/tools')
 
+@scripts_bp.route('/api/scripts_metadata')
+@admin_required
+def scripts_metadata():
+    """
+    Devuelve un JSON con todos los scripts agrupados por categoría, extrayendo la descripción de la cabecera.
+    """
+    import os
+    import fnmatch
+    CATEGORIES = ['admin_utils', 'db_utils', 'diagnostico', 'maintenance']
+    TOOLS_DIR = os.path.join(ROOT_DIR, 'tools')
+    resultado = []
+    for categoria in CATEGORIES:
+        cat_dir = os.path.join(TOOLS_DIR, categoria)
+        if not os.path.isdir(cat_dir):
+            continue
+        scripts = []
+        for fname in os.listdir(cat_dir):
+            if fnmatch.fnmatch(fname, '*.py') or fnmatch.fnmatch(fname, '*.sh'):
+                script_path = os.path.join(cat_dir, fname)
+                descripcion = extract_description(script_path)
+                if not descripcion:
+                    descripcion = 'Sin descripción'
+                scripts.append({
+                    'nombre': fname,
+                    'descripcion': descripcion
+                })
+        resultado.append({
+            'categoria': categoria,
+            'scripts': scripts
+        })
+    return jsonify(resultado)
+
 # Ruta alternativa para ejecutar scripts sin path variables
 @scripts_bp.route('/execute', methods=['POST'])
 @admin_required
@@ -41,12 +94,20 @@ def execute_script():
         # Obtener la ruta del script desde los parámetros del formulario o JSON
         if request.is_json:
             data = request.get_json()
-            script_path = data.get('script_path', '')
+            # Compatibilidad: aceptar 'rel_path' o 'script_path'
+            script_path = data.get('rel_path') or data.get('script_path') or ''
         else:
-            script_path = request.form.get('script_path', '')
+            script_path = request.form.get('rel_path') or request.form.get('script_path') or ''
+        
+        # Validación estricta: solo rutas relativas, sin '..' ni barra inicial
+        if not script_path or '..' in script_path or script_path.startswith('/'):
+            print(f"[execute_script] Rechazado script_path no permitido: {script_path}")
+            return jsonify({'error': 'Ruta no permitida (solo rutas relativas sin barra inicial)', 'script': script_path}), 400
         
         print(f"\n=== Iniciando ejecución de script (método alternativo) ===")
-        print(f"Script solicitado: {script_path}")
+        print(f"Script solicitado (rel_path): {script_path}")
+        abs_script_path = os.path.join(TOOLS_DIR if not os.path.isabs(script_path) else '', script_path)
+        print(f"Ruta absoluta construida: {abs_script_path}")
         print(f"URL completa: {request.url}")
         print(f"Método: {request.method}")
         print(f"Headers: {dict(request.headers)}")
@@ -207,177 +268,8 @@ def view_script_content(script_path):
 @scripts_bp.route('/')
 @admin_required
 def tools_dashboard():
-    """Ruta para acceder al gestor de scripts del sistema"""
-    # Definir el directorio de scripts principal (ahora usando el directorio de herramientas)
-    tools_dir = TOOLS_DIR
-    
-    # Definir las categorías de scripts y sus subdirectorios
-    script_categories = {
-        'maintenance': {
-            'name': 'Mantenimiento',
-            'description': 'Scripts para iniciar, supervisar y mantener la aplicación',
-            'path': os.path.join(tools_dir, 'maintenance'),
-            'color': 'primary'
-        },
-        'admin_utils': {
-            'name': 'Utilidades de Admin',
-            'description': 'Scripts para administración del sistema',
-            'path': os.path.join(tools_dir, 'admin_utils'),
-            'color': 'danger'
-        },
-        'app_runners': {
-            'name': 'Ejecutores de App',
-            'description': 'Scripts para ejecutar diferentes versiones de la aplicación',
-            'path': os.path.join(tools_dir, 'app_runners'),
-            'color': 'success'
-        },
-        'aws_utils': {
-            'name': 'Utilidades AWS',
-            'description': 'Scripts para interactuar con servicios de AWS',
-            'path': os.path.join(tools_dir, 'aws_utils'),
-            'color': 'warning'
-        },
-        'catalog_utils': {
-            'name': 'Utilidades de Catálogo',
-            'description': 'Scripts para gestionar catálogos',
-            'path': os.path.join(tools_dir, 'catalog_utils'),
-            'color': 'info'
-        },
-        'test_scripts': {
-            'name': 'Scripts de Prueba',
-            'description': 'Scripts simples para probar la funcionalidad',
-            'path': os.path.join(tools_dir, 'test_scripts'),
-            'color': 'secondary'
-        },
-        'db_utils': {
-            'name': 'Utilidades de BD',
-            'description': 'Scripts para gestionar la base de datos',
-            'path': os.path.join(tools_dir, 'db_utils'),
-            'color': 'secondary'
-        },
-        'image_utils': {
-            'name': 'Utilidades de Imágenes',
-            'description': 'Scripts para procesar imágenes',
-            'path': os.path.join(tools_dir, 'image_utils'),
-            'color': 'dark'
-        },
-        'monitoring': {
-            'name': 'Monitoreo',
-            'description': 'Scripts para monitorear el sistema',
-            'path': os.path.join(tools_dir, 'monitoring'),
-            'color': 'warning'
-        },
-        'password_utils': {
-            'name': 'Utilidades de Contraseñas',
-            'description': 'Scripts para gestionar contraseñas',
-            'path': os.path.join(tools_dir, 'password_utils'),
-            'color': 'danger'
-        },
-        'session_utils': {
-            'name': 'Utilidades de Sesión',
-            'description': 'Scripts para gestionar sesiones',
-            'path': os.path.join(tools_dir, 'session_utils'),
-            'color': 'warning'
-        },
-        'root': {
-            'name': 'Scripts Raíz',
-            'description': 'Scripts en el directorio raíz',
-            'path': os.path.join(tools_dir, 'root'),
-            'color': 'secondary'
-        }
-    }
-    
-    # Recopilar todos los scripts
-    scripts = []
-    
-    # Procesar cada categoría
-    for category_id, category_info in script_categories.items():
-        path = category_info['path']
-        print(f"Buscando scripts en: {path}")
-        
-        if os.path.exists(path):
-            # Buscar scripts .sh y .py
-            scripts_sh = glob.glob(os.path.join(path, '*.sh'))
-            scripts_py = glob.glob(os.path.join(path, '*.py'))
-            category_scripts = scripts_sh + scripts_py
-            
-            # Si es la categoría 'root', excluir scripts que están en subdirectorios
-            if category_id == 'root':
-                category_scripts = [s for s in category_scripts if os.path.dirname(s) == path]
-            
-            print(f"Scripts encontrados en {category_id}: {len(category_scripts)}")
-            
-            for script_path in category_scripts:
-                # Verificar que el script existe y es funcional
-                if not os.path.isfile(script_path):
-                    continue
-                script_name = os.path.basename(script_path)
-                script_ext = os.path.splitext(script_name)[1]
-                # Solo mostrar .sh si es ejecutable, .py si es legible
-                if script_ext == '.sh' and not os.access(script_path, os.X_OK):
-                    continue
-                if script_ext == '.py':
-                    try:
-                        with open(script_path, 'r') as f:
-                            f.read(1)
-                    except Exception:
-                        continue
-                # Determinar el tipo de script y su descripción personalizada basada en el nombre del script
-                script_base = os.path.splitext(script_name)[0]
-                descriptions = {
-                    # Scripts de mantenimiento
-                    'supervise_gunicorn': 'Supervisa y reinicia automáticamente el servidor Gunicorn si deja de funcionar',
-                    'supervise_gunicorn_web': 'Supervisa el servidor web Gunicorn con interfaz web de monitoreo',
-                    'monitor_socket': 'Monitorea los sockets de red para detectar problemas de conexión',
-                    'update': 'Actualiza el código de la aplicación desde el repositorio',
-                    'iniciar_app_directo': 'Inicia la aplicación en modo directo sin Gunicorn',
-                    'start_gunicorn': 'Inicia el servidor Gunicorn con la configuración óptima',
-                    'setup_monitoring_cron': 'Configura tareas programadas para monitoreo del sistema',
-                    'iniciar_produccion': 'Inicia la aplicación en modo producción con todas las optimizaciones',
-                    'restart_server': 'Reinicia todos los servicios del servidor',
-                    'daily_report': 'Genera un informe diario del estado del sistema',
-                    
-                    # Scripts de DB utils
-                    'fix_mongodb_connection': 'Repara la conexión a MongoDB en caso de problemas',
-                    'fix_mongodb_atlas': 'Configura o repara la conexión a MongoDB Atlas',
-                    
-                    # Scripts de admin utils
-                    'cleanup_backups': 'Limpia archivos de respaldo antiguos conservando los más recientes',
-                    'fix_script_permissions': 'Corrige permisos de ejecución en scripts del sistema',
-                    
-                    # Scripts para sesiones
-                    'session_fix': 'Soluciona problemas con sesiones de usuario',
-                    'session_config': 'Configura opciones avanzadas de sesiones',
-                    
-                    # Scripts de imágenes
-                    'migrate_images_to_s3': 'Migra imágenes locales a almacenamiento S3',
-                    'clean_images': 'Elimina imágenes no utilizadas para liberar espacio',
-                    
-                    # Scripts de monitoreo
-                    'check_logs': 'Analiza logs del sistema en busca de errores',
-                    'monitor_mongodb': 'Monitorea el rendimiento y disponibilidad de MongoDB'
-                }
-                if script_base in descriptions:
-                    description = descriptions[script_base]
-                elif script_ext == '.sh':
-                    description = f"Script de shell para {category_info['name']}"
-                else:  # .py
-                    description = f"Script de Python para {category_info['name']}"
-                rel_path = os.path.relpath(script_path, TOOLS_DIR)
-                print(f"Añadiendo script: {script_path} (ruta relativa: {rel_path})")
-                scripts.append({
-                    'name': script_name,
-                    'path': rel_path,
-                    'category': category_id,
-                    'description': description,
-                    'full_path': script_path
-                })
-        else:
-            print(f"Directorio no encontrado: {path}")
-    print(f"Total de scripts encontrados: {len(scripts)}")
-    if len(scripts) == 0:
-        print("ADVERTENCIA: No se encontraron scripts para mostrar")
-    return render_template('admin/tools_dashboard.html', scripts=scripts, categories=script_categories)
+    """Ruta para acceder al gestor de scripts del sistema (/admin/tools/) (renderiza la plantilla, la lógica de scripts es vía JS/API)"""
+    return render_template('admin/tools_dashboard.html')
 
 @scripts_bp.route('/run/<path:script_path>', methods=['POST'])
 @admin_required
@@ -456,28 +348,38 @@ def run_script(script_path):
             print(f"Salida estándar: {stdout[:100]}..." if len(stdout) > 100 else f"Salida estándar: {stdout}")
             print(f"Error estándar: {stderr[:100]}..." if len(stderr) > 100 else f"Error estándar: {stderr}")
             
-            result = {
-                'script': os.path.basename(script_path),
-                'exit_code': exit_code,
-                'output': stdout,
-                'error': stderr,
-                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            }
-            
-            return jsonify(result)
+            # Formato de salida legible en texto plano
+            output_text = (
+                f"=== Resultado de la ejecución ===\n"
+                f"Script: {os.path.basename(script_path)}\n"
+                f"Código de salida: {exit_code}\n"
+                f"\n--- Salida estándar (stdout) ---\n"
+                f"{stdout}\n"
+                f"--- Fin de stdout ---\n"
+                f"\n--- Salida de error (stderr) ---\n"
+                f"{stderr}\n"
+                f"--- Fin de stderr ---\n"
+                f"\nFecha y hora: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            )
+            from flask import Response
+            return Response(output_text, mimetype='text/plain')
         except subprocess.TimeoutExpired:
             print(f"\n❌ Timeout al ejecutar el script: {abs_script_path}")
-            return jsonify({
-                'script': os.path.basename(script_path),
-                'error': 'El script tardó demasiado tiempo en ejecutarse (más de 30 segundos)',
-                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            }), 408
+            output_text = (
+                f"ERROR: El script tardó demasiado tiempo en ejecutarse (más de 30 segundos)\n"
+                f"Script: {os.path.basename(script_path)}\n"
+                f"Fecha y hora: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            )
+            from flask import Response
+            return Response(output_text, mimetype='text/plain'), 408
     except Exception as e:
         print(f"\n❌ Excepción al ejecutar el script: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({
-            'script': os.path.basename(script_path),
-            'error': f'Error al ejecutar el script: {str(e)}',
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }), 500
+        from flask import Response
+        output_text = (
+            f"ERROR: Excepción al ejecutar el script: {str(e)}\n"
+            f"Script: {os.path.basename(script_path)}\n"
+            f"Fecha y hora: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        )
+        return Response(output_text, mimetype='text/plain'), 500

@@ -3,7 +3,7 @@
 # Uso: python3 admin_routes.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Developer - 2025-05-28
 
 from functools import wraps
 import logging
@@ -1133,7 +1133,8 @@ def api_delete_backups():
         delete_criteria = data.get("deleteCriteria", "selected")
         
         if delete_criteria == "selected" and not backup_files:
-            return jsonify({"status": "error", "message": "No se especificaron archivos de backup para eliminar"})
+            from flask import abort
+            abort(400, description="No se especificaron archivos de backup para eliminar")
         
         # Verificar que los archivos existen y son válidos
         backup_dir = os.path.abspath(os.path.join(os.getcwd(), 'backups'))
@@ -2450,9 +2451,10 @@ def logs_search():
     logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
     log_path = os.path.join(logs_dir, log_file)
     if not os.path.isfile(log_path):
-        return jsonify({'logs': [f'Archivo no encontrado: {log_file}\n']}), 404
+        from flask import abort
+        abort(404, description=f'Archivo no encontrado: {log_file}')
     if not kw:
-        return jsonify({'logs': []})
+        return jsonify({'logs': []})  # Esto es éxito, no error, se mantiene igual.
     with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
         lines = [l for l in f if kw.lower() in l.lower()]
     return jsonify({'logs': lines})
@@ -2826,6 +2828,9 @@ def truncate_log_route():
     elif date:
         cmd += ['--date', date]
     else:
+        # Si la petición es AJAX o JSON, responde con JSON
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({"status": "error", "message": "Debes indicar número de líneas o fecha."}), 400
         flash('Debes indicar número de líneas o fecha.', 'warning')
         return redirect(url_for('maintenance.maintenance_dashboard'))
     try:

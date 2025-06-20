@@ -3,7 +3,7 @@
 # Uso: python3 maintenance_routes.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-06-09
+# Autor: EDF Developer - 2025-06-09
 
 """
 Maintenance Routes for Admin Dashboard
@@ -97,13 +97,13 @@ def view_log():
         lines = 40
     logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs'))
     if not log_file:
-        return jsonify({'status': 'error', 'message': 'Archivo no especificado'}), 400
+        abort(400, description='Archivo no especificado')
     # Evitar path traversal
     safe_path = os.path.abspath(os.path.join(logs_dir, log_file))
     if not safe_path.startswith(logs_dir):
-        return jsonify({'status': 'error', 'message': 'Ruta de log no permitida'}), 400
-    if not os.path.isfile(safe_path):
-        return jsonify({'status': 'error', 'message': 'Archivo no encontrado'}), 404
+        abort(400, description='Ruta de log no permitida')
+    if not os.path.exists(logs_dir):
+        abort(404, description='Directorio de logs no encontrado')
     try:
         with open(safe_path, 'r', encoding='utf-8', errors='replace') as f:
             all_lines = f.readlines()
@@ -376,19 +376,22 @@ def run_task():
     import getpass
     # Rate limiting simple por IP (1 petición cada 5 segundos)
     if not hasattr(flask.g, '_last_task_run'):
-        if not hasattr(flask.current_app, 'rate_limit_task'): flask.current_app.rate_limit_task = {}
+        if not hasattr(flask.current_app, 'rate_limit_task'):
+            flask.current_app.rate_limit_task = {}
         flask.g._last_task_run = flask.current_app.rate_limit_task
     ip = flask.request.remote_addr
     now = time.time()
     if ip in flask.g._last_task_run and now - flask.g._last_task_run[ip] < 2:
-        return jsonify({'status': 'error', 'message': 'Demasiadas peticiones. Espera unos segundos.'}), 429
+        from flask import abort
+        abort(429, description='Demasiadas peticiones. Espera unos segundos.')
     flask.g._last_task_run[ip] = now
     # ---
     task = request.form.get('task') or request.json.get('task')
     user = getpass.getuser() if hasattr(getpass, 'getuser') else 'admin'
     if task not in scheduled_tasks_state:
         print(f"[AUDITORÍA] {datetime.now()} | Usuario: {user} | IP: {ip} | Tarea: {task} | Resultado: ERROR (Tarea desconocida)")
-        return jsonify({'status': 'error', 'message': 'Tarea desconocida.'}), 400
+        from flask import abort
+        abort(400, description='Tarea desconocida.')
     # Simula la ejecución de la tarea
     try:
         if task == 'cleanup':
@@ -406,8 +409,8 @@ def run_task():
     except Exception as e:
         scheduled_tasks_state[task]['estado'] = 'ERROR'
         scheduled_tasks_state[task]['ultima_ejecucion'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        return jsonify({'status': 'error', 'message': str(e)})
+        from flask import abort
+        abort(500, description=f'Error inesperado: {str(e)}')
 
 
 

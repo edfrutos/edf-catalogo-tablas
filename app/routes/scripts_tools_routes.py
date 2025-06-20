@@ -136,6 +136,11 @@ def list_files():
         logger.error(f"Error en list_files: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@scripts_tools_bp.errorhandler(404)
+def scripts_tools_api_not_found(error):
+    # Devuelve JSON en errores 404 para endpoints de la API
+    return jsonify({'error': error.description if hasattr(error, 'description') else 'No encontrado'}), 404
+
 @scripts_tools_bp.route('/run', methods=['POST'])
 def run_script():
     # Verificar si el usuario es admin
@@ -145,11 +150,15 @@ def run_script():
     rel_path = data.get('rel_path')
     args = data.get('args', [])
     shell = bool(data.get('shell', False))
+    # Refuerza la validación: nunca aceptar paths absolutos
     if not rel_path or '..' in rel_path or rel_path.startswith('/'):
-        return jsonify({'success': False, 'error': 'Ruta no permitida'}), 400
+        from flask import abort
+        abort(400, description='Ruta no permitida (solo rutas relativas sin barra inicial)')
     abs_path = os.path.join(BASE_PATH, rel_path)
+    print(f'[run_script] rel_path recibido: {rel_path} | abs_path construido: {abs_path}')
     if not os.path.isfile(abs_path):
-        return jsonify({'success': False, 'error': 'Archivo no encontrado'}), 404
+        from flask import abort
+        abort(404, description=f'No es un archivo regular: {abs_path}')
     # Solo permitir .py y .sh, advertir si es .sh
     if abs_path.endswith('.py'):
         cmd = ['python3', abs_path] + args
@@ -171,7 +180,8 @@ def run_script():
             'warning': warning
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        from flask import abort
+        abort(500, description=f'Error inesperado: {str(e)}')
 
 @scripts_tools_bp.route('/download', methods=['GET'])
 def download_file():

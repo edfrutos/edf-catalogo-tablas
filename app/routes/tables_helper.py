@@ -3,7 +3,7 @@
 # Uso: python3 tables_helper.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Developer - 2025-05-28
 
 """
 Módulo auxiliar para garantizar el acceso a la ruta /tables/

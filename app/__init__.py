@@ -42,6 +42,7 @@ from .error_handlers import errors_bp
 from .routes.emergency_access import emergency_bp
 from .routes.scripts_routes import scripts_bp
 from .routes.scripts_tools_routes import scripts_tools_bp
+from .routes.dev_template import bp_dev_template
 
 # Importar filtros personalizados
 from app.filters import init_app as init_filters
@@ -50,13 +51,17 @@ from app.filters import init_app as init_filters
 client = None
 db = None
 
-def create_app():
+def create_app(testing=False):
     import os
     app = Flask(
         __name__,
         static_folder=os.path.join(os.path.dirname(__file__), "static"),
         static_url_path="/static"
     )
+    if testing:
+        app.config["TESTING"] = True
+        app.config["WTF_CSRF_ENABLED"] = False  # Si usas Flask-WTF
+
 
     # Configurar clave secreta para sesiones
     app.secret_key = os.getenv('SECRET_KEY', 'edf_secret_key_2025')
@@ -153,7 +158,7 @@ def create_app():
     # Registro de blueprints de administración (sin duplicados)
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(admin_logs_bp, url_prefix='/admin')
-    app.register_blueprint(scripts_bp, url_prefix='/tools')
+    app.register_blueprint(scripts_bp)
     app.register_blueprint(scripts_tools_bp)  # Usa su url_prefix propio
 
     # Registrar el blueprint de mantenimiento con su propio prefijo
@@ -167,6 +172,31 @@ def create_app():
             app.register_blueprint(bp, url_prefix=prefix)
         except Exception as e:
             app.logger.error(f"Error registrando blueprint {bp.name}: {str(e)}")
+    # Registrar blueprint de plantilla de desarrollo
+    app.register_blueprint(bp_dev_template)
+
+    # ---
+    # Error handlers globales para API (devuelven JSON en endpoints tipo /api/ o si se acepta JSON)
+    def api_error_handler(error):
+        from flask import request, jsonify
+        code = getattr(error, 'code', 500)
+        message = getattr(error, 'description', str(error))
+        # Si es petición a API o acepta JSON
+        if request.path.startswith('/api/') or request.is_json or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({
+                'status': 'error',
+                'message': message
+            }), code
+        # Si no, deja que el handler por defecto actúe
+        return error
+    for err_code in [400, 401, 403, 404, 429, 500]:
+        app.register_error_handler(err_code, api_error_handler)
+    # ---
+    # Handler explícito para 404 que renderiza plantilla personalizada
+    from flask import render_template
+    @app.errorhandler(404)
+    def page_not_found(error):
+        return render_template('error/404.html'), 404
 
     # Registrar blueprint de test de sesión SOLO en testing o desarrollo
     if app.config.get('TESTING') or app.config.get('ENV') == 'development' or os.environ.get('FLASK_ENV') in ('development', 'testing'):

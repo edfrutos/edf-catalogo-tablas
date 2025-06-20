@@ -227,38 +227,42 @@
     }
 
     /**
-     * Ejecuta un script con o sin argumentos
-     * @param {string} rel_path - Ruta relativa del script
-     * @param {Array} args - Argumentos para el script (opcional)
-     * @param {boolean} isShell - Indica si es un script shell
+     * Procesa la respuesta de ejecución de un script
+     * @param {Object} resp - Respuesta del servidor
      */
     function executeScript(rel_path, args, isShell) {
-      // Validar parámetros
+      // Validar y sanear la ruta
       if (!rel_path) {
         console.error('Ruta de script no válida');
         return;
       }
-      
-      // Preparar datos para la petición
-      const requestData = {
-        rel_path: rel_path
-      };
-      
+      // Sanea cualquier slash inicial por robustez
+    while (rel_path.startsWith('/')) rel_path = rel_path.slice(1);
+    // Log para depuración
+    console.log('[executeScript] rel_path enviado al backend:', rel_path);
+
+    // Preparar datos para la petición
+    // El backend espera la clave 'rel_path' (NO 'script_path')
+    const requestData = {
+      rel_path: rel_path
+    };
+
       // Añadir argumentos y tipo de shell si es necesario
       if (args && args.length) {
         requestData.args = args;
       }
-      
+
       if (isShell) {
         requestData.shell = true;
       }
-      
+
       // Mostrar modal con indicador de carga
       $('#runOutput').text('Ejecutando...');
       $('#runWarning').addClass('d-none').text('');
       $('#runModal').modal('show');
-      
+
       // Realizar petición AJAX
+      // IMPORTANTE: El backend solo acepta 'rel_path' en JSON
       $.ajax({
         url: '/admin/scripts-tools-api/run',
         method: 'POST',
@@ -274,87 +278,40 @@
           ));
         }
       });
-    }
+  // Cambio de pestaña (scripts, tests, tools)
+  $('#scriptsTabs .nav-link').click(function(e) {
+    e.preventDefault();
+    $('#scriptsTabs .nav-link').removeClass('active');
+    $(this).addClass('active');
+    scriptTools.currentDir = $(this).data('dir');
+    scriptTools.currentPage = 1;
+    loadFiles();
+  });
   
-    // Inicializar la aplicación
-    function init() {
-      // Cargar archivos al iniciar
+  // Filtro de búsqueda
+  $('#searchInput').on('input', function() {
+    renderTable(scriptTools.currentDir);
+  });
+  
+  // Filtro por tipo de archivo
+  $('#fileTypeFilter').on('change', function() {
+    scriptTools.currentFileType = $(this).val();
+    scriptTools.currentPage = 1;
+    loadFiles();
+  });
+  
+  // Navegación de páginas
+  $('#prevPageBtn').click(function() {
+    if (scriptTools.currentPage > 1) { 
+      scriptTools.currentPage--; 
+      loadFiles(); 
+    }
+  });
+  
+  $('#nextPageBtn').click(function() {
+    if (!scriptTools.isLastPage) {
+      scriptTools.currentPage++; 
       loadFiles();
-      
-      // Cambio de pestaña (scripts, tests, tools)
-      $('#scriptsTabs .nav-link').click(function(e) {
-        e.preventDefault();
-        $('#scriptsTabs .nav-link').removeClass('active');
-        $(this).addClass('active');
-        scriptTools.currentDir = $(this).data('dir');
-        scriptTools.currentPage = 1;
-        loadFiles();
-      });
-      
-      // Filtro de búsqueda
-      $('#searchInput').on('input', function() {
-        renderTable(scriptTools.currentDir);
-      });
-      
-      // Filtro por tipo de archivo
-      $('#fileTypeFilter').on('change', function() {
-        scriptTools.currentFileType = $(this).val();
-        scriptTools.currentPage = 1;
-        loadFiles();
-      });
-      
-      // Navegación de páginas
-      $('#prevPageBtn').click(function() {
-        if (scriptTools.currentPage > 1) { 
-          scriptTools.currentPage--; 
-          loadFiles(); 
-        }
-      });
-      
-      $('#nextPageBtn').click(function() {
-        if (!scriptTools.isLastPage) {
-          scriptTools.currentPage++; 
-          loadFiles();
-        }
-      });
-      
-      // Ejecutar script sin argumentos
-      $('#filesTable').on('click', '.run-script-btn', function() {
-        const rel_path = $(this).data('path');
-        const type = $(this).data('type');
-        executeScript(rel_path, null, type === 'sh');
-      });
-      
-      // Abrir modal para ejecutar con argumentos
-      $('#filesTable').on('click', '.run-args-btn', function() {
-        const rel_path = $(this).data('path');
-        const type = $(this).data('type');
-        
-        // Limpiar y preparar modal
-        $('#argsScriptPath').val(rel_path);
-        $('#argsInput').val('');
-        $('#argsModal').modal('show');
-        $('#runWithArgsBtn').data('type', type);
-      });
-      
-      // Ejecutar script con argumentos
-      $('#runWithArgsBtn').click(function() {
-        const rel_path = $('#argsScriptPath').val();
-        // Dividir por espacios y filtrar valores vacíos
-        const args = $('#argsInput').val().trim().split(/\s+/).filter(Boolean);
-        const type = $(this).data('type');
-        
-        // Cerrar modal de argumentos
-        $('#argsModal').modal('hide');
-        
-        // Ejecutar script
-        executeScript(rel_path, args, type === 'sh');
-      });
-      
-      // Añadir indicadores de carga a los modales
-      $('#runModal').on('shown.bs.modal', function() {
-        if ($('#runOutput').text() === 'Ejecutando...') {
-          $('#runOutput').append('\n\nEsperando respuesta del servidor...');
         }
       });
     }

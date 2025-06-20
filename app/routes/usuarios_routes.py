@@ -3,7 +3,7 @@
 # Uso: python3 usuarios_routes.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Developer - 2025-05-28
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash

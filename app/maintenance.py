@@ -3,7 +3,7 @@
 # Uso: python3 maintenance.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-06-09
+# Autor: EDF Developer - 2025-06-09
 
 import os
 import json

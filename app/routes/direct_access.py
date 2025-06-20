@@ -3,7 +3,7 @@
 # Uso: python3 direct_access.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Developer - 2025-05-28
 
 """
 Módulo para acceso directo al panel de administración

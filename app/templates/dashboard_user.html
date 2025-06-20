@@ -63,6 +63,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
+{{ super() }}
 <script>
 function confirmarAccion(event, mensaje) {
     if (!confirm(mensaje)) {

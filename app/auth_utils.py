@@ -3,7 +3,7 @@
 # Uso: python3 auth_utils.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Developer - 2025-05-28
 
 """
 Utilidades de autenticación y autorización para la aplicación.

@@ -29,68 +29,20 @@
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                         <input type="text" id="searchInput" class="form-control" placeholder="Buscar scripts por nombre o descripción...">
                     </div>
-                    <div class="btn-group mb-3 category-filter">
+                    <div class="btn-group mb-3 category-filter" id="categoryFilterContainer">
+                        <!-- Botones de categorías serán inyectados dinámicamente por JS -->
                         <button class="btn btn-outline-primary active" data-category="all">Todos</button>
-                        {% for category_id, category in categories.items() %}
-                        <button class="btn btn-outline-{{ category.color }}" data-category="{{ category_id }}">{{ category.name }}</button>
-                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row" id="scriptGrid">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="col-12 mb-4">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
-                <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
-        
-        {% for script in scripts %}
-        <div class="col-md-6 col-lg-4 mb-4 script-card" data-category="{{ script.category }}">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">{{ script.name }}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="script-path text-muted small mb-2">
-                        <code>{{ script.path }}</code>
-                    </div>
-                    <div class="script-description mb-3">
-                        {{ script.description }}
-                    </div>
-                    <div class="script-category mb-3">
-                        <span class="badge bg-{{ categories[script.category].color }}">
-                            {{ categories[script.category].name }}
-                        </span>
-                    </div>
-                </div>
-                <div class="card-footer bg-white border-top-0">
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('scripts.view_script_content', script_path=script.path) }}" class="btn btn-outline-primary">
-                            <i class="fas fa-eye me-1"></i> Ver Contenido
-                        </a>
-                        <button class="btn btn-outline-success run-script-btn" data-path="{{ script.path }}">
-                            <i class="fas fa-play me-1"></i> Ejecutar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="row" id="scriptAccordionContainer">
+        <!-- Aquí se inyectará dinámicamente el acordeón de scripts por JS -->
     </div>
 
-    {% if not scripts %}
-    <div class="row">
+    <div class="row" id="noScriptsAlert" style="display:none;">
         <div class="col-12">
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -98,7 +50,6 @@
             </div>
         </div>
     </div>
-    {% endif %}
 </div>
 
 <!-- Modal para ver el contenido del script -->
@@ -137,6 +88,320 @@
 
 {% block scripts %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const scriptAccordionContainer = document.getElementById('scriptAccordionContainer');
+    const searchInput = document.getElementById('searchInput');
+
+    let scriptsData = [];
+    let filteredData = [];
+
+    // Función para cargar los scripts desde la API
+    function loadScripts() {
+        fetch('/admin/tools/api/scripts_metadata')
+            .then(response => response.json())
+            .then(data => {
+                scriptsData = data;
+                filteredData = data;
+                renderAccordion(data);
+            })
+            .catch(err => {
+                scriptAccordionContainer.innerHTML = '<div class="alert alert-danger">Error al cargar los scripts: ' + err + '</div>';
+            });
+    }
+
+    // Renderiza el acordeón de scripts agrupados por categoría
+    function renderAccordion(data) {
+        if (!data || data.length === 0) {
+            scriptAccordionContainer.innerHTML = '<div class="alert alert-warning">No se encontraron scripts en el sistema.</div>';
+            return;
+        }
+        let html = '<div class="accordion" id="toolsAccordion">';
+        data.forEach((cat, idx) => {
+            const catId = 'cat_' + idx;
+            html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading_${catId}">
+                    <button class="accordion-button${idx === 0 ? '' : ' collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_${catId}" aria-expanded="${idx === 0 ? 'true' : 'false'}" aria-controls="collapse_${catId}">
+                        ${cat.categoria} <span class="badge bg-secondary ms-2">${cat.scripts.length}</span>
+                    </button>
+                </h2>
+                <div id="collapse_${catId}" class="accordion-collapse collapse${idx === 0 ? ' show' : ''}" aria-labelledby="heading_${catId}" data-bs-parent="#toolsAccordion">
+                    <div class="accordion-body">
+                        <ul class="list-group">
+                        ${cat.scripts.map(script => `
+                            <li class="list-group-item d-flex justify-content-between align-items-start flex-wrap">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">${script.nombre}</div>
+                                    <div class="text-muted small">${script.descripcion}</div>
+                                </div>
+                                <button class="btn btn-sm btn-success run-script-btn" data-category="${cat.categoria}" data-script="${script.nombre}"><i class="fas fa-play"></i> Ejecutar</button>
+<button class="btn btn-sm btn-outline-secondary ms-1 args-script-btn" data-category="${cat.categoria}" data-script="${script.nombre}"><i class="fas fa-terminal"></i> Args</button>
+                            </li>
+                        `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        scriptAccordionContainer.innerHTML = html;
+        setRunScriptListeners();
+    }
+
+    // Filtra los scripts por búsqueda
+    function filterScripts() {
+        const query = (searchInput.value || '').toLowerCase();
+        if (!query) {
+            filteredData = scriptsData;
+        } else {
+            filteredData = scriptsData.map(cat => {
+                const filteredScripts = cat.scripts.filter(script =>
+                    script.nombre.toLowerCase().includes(query) ||
+                    script.descripcion.toLowerCase().includes(query) ||
+                    cat.categoria.toLowerCase().includes(query)
+                );
+                return {categoria: cat.categoria, scripts: filteredScripts};
+            }).filter(cat => cat.scripts.length > 0);
+        }
+        renderAccordion(filteredData);
+    }
+
+    // Añadir listeners para ejecutar scripts
+    function setRunScriptListeners() {
+        document.querySelectorAll('.run-script-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const categoria = btn.getAttribute('data-category');
+                const scriptName = btn.getAttribute('data-script');
+                window.currentScriptArgs = [];
+                ejecutarScript(categoria, scriptName);
+            });
+        });
+        // Botón Args
+        document.querySelectorAll('.args-script-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const categoria = btn.getAttribute('data-category');
+                const scriptName = btn.getAttribute('data-script');
+                showArgsModal(categoria, scriptName);
+            });
+        });
+    }
+
+    // Modal Args
+    async function showArgsModal(categoria, scriptName) {
+        // Paso 1: Ejecutar el script con '--help' y obtener la salida
+        let helpOutput = '';
+        try {
+            helpOutput = await obtenerAyudaScript(categoria, scriptName);
+        } catch (e) {
+            helpOutput = '';
+        }
+
+        // Paso 2: Analizar la salida y construir campos
+        const campos = parsearAyuda(helpOutput);
+        let modal = document.getElementById('argsModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.innerHTML = `
+            <div class="modal fade" id="argsModal" tabindex="-1" aria-labelledby="argsModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="argsModalLabel">Parámetros para el script</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                  </div>
+                  <div class="modal-body" id="argsModalBody">
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="runWithArgsBtn">Ejecutar con argumentos</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+            document.body.appendChild(modal);
+        }
+        // Generar campos dinámicamente
+        const body = document.getElementById('argsModalBody');
+        if (campos.length) {
+            body.innerHTML = campos.map(c =>
+                `<div class="mb-2">
+                    <label class="form-label">${c.label}${c.required ? ' *' : ''}</label>
+                    <input type="${c.type}" class="form-control" id="arg_${c.name}" placeholder="${c.placeholder || ''}" ${c.required ? 'required' : ''}>
+                </div>`
+            ).join('');
+        } else {
+            body.innerHTML = `<input type="text" id="argsInput" class="form-control mb-2" placeholder="Introduce argumentos separados por espacio">`;
+        }
+        // Mostrar modal
+        const bsModal = new bootstrap.Modal(document.getElementById('argsModal'));
+        bsModal.show();
+        // Ejecutar con argumentos
+        document.getElementById('runWithArgsBtn').onclick = function() {
+            let args = [];
+            if (campos.length) {
+                for (const c of campos) {
+                    const val = document.getElementById('arg_' + c.name).value.trim();
+                    if (c.required && !val) {
+                        alert(`El campo ${c.label} es obligatorio.`);
+                        return;
+                    }
+                    if (val) args.push(c.flag, val);
+                }
+            } else {
+                const val = document.getElementById('argsInput').value.trim();
+                args = val ? val.split(/\s+/) : [];
+            }
+            window.currentScriptArgs = args;
+            bsModal.hide();
+            ejecutarScript(categoria, scriptName);
+            setTimeout(()=>{ window.currentScriptArgs = []; }, 5000);
+        };
+    }
+
+    // Ejecuta el script con --help y obtiene la salida
+    function obtenerAyudaScript(categoria, scriptName) {
+        return new Promise((resolve, reject) => {
+            window.currentScriptArgs = ['--help'];
+            // Sobrescribimos temporalmente la función de mostrar salida
+            const original = window.scriptOutput;
+            let salida = '';
+            window.scriptOutput = { set textContent(txt) { salida = txt; }, get textContent() { return salida; } };
+            ejecutarScript(categoria, scriptName);
+            setTimeout(() => {
+                window.scriptOutput = original;
+                resolve(salida);
+            }, 1200); // Espera a que llegue la salida
+        });
+    }
+
+    // Intenta parsear la ayuda de argparse/click/typer
+    function parsearAyuda(helpText) {
+        if (!helpText) return [];
+        const lines = helpText.split('\n');
+        const campos = [];
+        const argRegex = /^(\s+)?(--\w[\w-]*)[ =\[]?(\w+)?\]?\s+(.*)$/;
+        for (let i = 0; i < lines.length; i++) {
+            const m = argRegex.exec(lines[i]);
+            if (m) {
+                const flag = m[2];
+                const name = (m[3] || flag.replace(/^--/, ''));
+                const desc = m[4] || '';
+                let type = 'text';
+                if (/email/i.test(name)) type = 'email';
+                else if (/pass/i.test(name)) type = 'password';
+                else if (/num|count|id|port|int/i.test(name)) type = 'number';
+                campos.push({
+                    flag,
+                    name,
+                    label: flag,
+                    type,
+                    required: /required/i.test(desc) || /obligatorio/i.test(desc),
+                    placeholder: desc.trim()
+                });
+            }
+        }
+        return campos;
+    }
+
+    // Modal para mostrar resultados
+    let scriptModal = null;
+    let scriptOutput = null;
+    if (!document.getElementById('scriptResultModal')) {
+        const modalHtml = `
+        <div class="modal fade" id="scriptResultModal" tabindex="-1" aria-labelledby="scriptResultModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="scriptResultModalLabel">Resultado de la ejecución</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body">
+                <pre id="scriptModalOutput" class="bg-dark text-light p-3 rounded" style="min-height:200px;"></pre>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    scriptModal = new bootstrap.Modal(document.getElementById('scriptResultModal'));
+    scriptOutput = document.getElementById('scriptModalOutput');
+
+    // Ejecutar script y mostrar resultado en el modal
+    function ejecutarScript(categoria, scriptName) {
+        scriptOutput.textContent = 'Ejecutando script...';
+        scriptModal.show();
+        // Construir ruta relativa del script (sin barra inicial)
+        let scriptPath = `tools/${categoria}/${scriptName}`;
+        scriptPath = scriptPath.replace(/^\/+/, '');
+        console.log('[ejecutarScript] script_path enviado al backend:', scriptPath);
+        // Si hay argumentos, inclúyelos en el body
+        let args = window.currentScriptArgs || [];
+        let body = { script_path: scriptPath };
+        if (args.length) body.args = args;
+        fetch('/admin/tools/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(body)
+        })
+        .then(resp => {
+            if (resp.ok && resp.headers.get('content-type').includes('text/plain')) {
+                return resp.text();
+            } else if (resp.ok) {
+                return resp.json().then(json => json.error || JSON.stringify(json));
+            } else {
+                return resp.text().then(txt => 'Error HTTP: ' + resp.status + '\n' + txt);
+            }
+        })
+        .then(output => {
+            // Si la respuesta es JSON, intenta parsear y mostrar solo el campo relevante
+            try {
+                const obj = typeof output === "string" ? JSON.parse(output) : output;
+                if (obj && typeof obj === "object" && ("output" in obj || "error" in obj)) {
+                    let txt = "";
+                    if (obj.output) txt += obj.output;
+                    if (obj.error) txt += "\n[ERROR] " + obj.error;
+                    if (obj.exit_code !== undefined) txt += `\n[Exit code: ${obj.exit_code}]`;
+                    scriptOutput.textContent = txt.trim();
+                } else {
+                    scriptOutput.textContent = output;
+                }
+            } catch (e) {
+                scriptOutput.textContent = output;
+            }
+        })
+        .catch(err => {
+            scriptOutput.textContent = 'Error al ejecutar el script: ' + err;
+        });
+    }
+
+    // Función para obtener el token CSRF (si aplica)
+    function getCsrfToken() {
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) return metaTag.getAttribute('content');
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith('csrf_token=')) {
+                return cookie.substring('csrf_token='.length, cookie.length);
+            }
+        }
+        return '';
+    }
+
+    // Eventos
+    if (searchInput) {
+        searchInput.addEventListener('input', filterScripts);
+    }
+
+    // Inicial
+    loadScripts();
+});
     document.addEventListener('DOMContentLoaded', function() {
         // Referencias a elementos del DOM
         const searchInput = document.getElementById('searchInput');

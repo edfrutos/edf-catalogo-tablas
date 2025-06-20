@@ -3,7 +3,7 @@
 # Uso: python3 filters.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-06-07
+# Autor: EDF Developer - 2025-06-07
 
 from datetime import datetime
 

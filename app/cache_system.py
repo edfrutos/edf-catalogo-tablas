@@ -3,7 +3,7 @@
 # Uso: python3 cache_system.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Autor: EDF Developer - 2025-05-28
 
 """
 Sistema de caché en memoria para reducir la dependencia en MongoDB.

@@ -1,0 +1,107 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Testing Interactivo - Plantilla Desarrollo{% endblock %}
+
+{% block content %}
+<div class="container test-list">
+  <h1 class="mb-4">Testing Interactivo</h1>
+  <div class="mb-3">
+    <a class="btn btn-outline-primary doc-link" href="https://docs.pytest.org/en/stable/" target="_blank"><i class="bi bi-book"></i> Pytest Docs</a>
+    <a class="btn btn-outline-success doc-link" href="https://pymongo.readthedocs.io/en/stable/examples/tls.html" target="_blank"><i class="bi bi-book"></i> MongoDB Testing</a>
+    <a class="btn btn-outline-secondary" href="/dev-template/readme"><i class="bi bi-file-earmark-text"></i> Ver README</a>
+    {% if session['role'] == 'admin' %}
+      <button class="btn btn-outline-warning ms-2" id="update-tests-readme-btn"><i class="bi bi-arrow-repeat"></i> Actualizar README de tests</button>
+    {% endif %}
+  </div>
+  <div id="update-readme-alert" style="display:none;"></div>
+
+<div class="accordion mb-4" id="accordionTests">
+    {% for dir, scripts in test_dirs.items() %}
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="heading-{{ loop.index }}">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapse-{{ loop.index }}" aria-expanded="false"
+              aria-controls="collapse-{{ loop.index }}">
+        <i class="bi bi-folder"></i> {{ dir }}
+      </button>
+    </h2>
+    <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse"
+         aria-labelledby="heading-{{ loop.index }}" data-bs-parent="#accordionTests">
+      <div class="accordion-body">
+        <ul class="list-group">
+          {% for script in scripts %}
+            <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+              <div>
+                <span><i class="bi bi-file-earmark-code"></i> <strong>{{ script.name }}</strong></span>
+                {% if script.desc %}<div class="text-muted small">{{ script.desc }}</div>{% endif %}
+              </div>
+              <div class="mt-2 mt-md-0">
+                <button class="btn btn-sm btn-primary run-test-btn" data-test="{{ script.path }}"><i class="bi bi-play"></i> Ejecutar</button>
+                <button class="btn btn-sm btn-outline-secondary ms-1 params-btn" data-script="{{ script.path }}" data-scriptname="{{ script.name }}"><i class="bi bi-sliders"></i> Parámetros</button>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+  <!-- Modal para parámetros (solo uno, fuera del ul) -->
+  <div class="modal fade" id="paramsModal" tabindex="-1" aria-labelledby="paramsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="paramsModalLabel">Ejecutar script con parámetros</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2"><strong id="paramsScriptName"></strong></div>
+          <div class="mb-2 text-secondary small" id="paramsHelpBlock"></div>
+          <input type="text" class="form-control" id="paramsInput" placeholder="Introduce parámetros, ej: --help" autocomplete="off">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="runWithParamsBtn">Ejecutar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generador de plantilla de test -->
+  <div class="accordion mb-4" id="accordionTestGenerator">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="heading-gen">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-gen" aria-expanded="false" aria-controls="collapse-gen">
+          <i class="bi bi-magic"></i> Generador de plantilla de test para modelo/endpoint
+        </button>
+      </h2>
+      <div id="collapse-gen" class="accordion-collapse collapse" aria-labelledby="heading-gen" data-bs-parent="#accordionTestGenerator">
+        <div class="accordion-body">
+          <form id="test-template-generator-form" class="mb-3">
+
+            <div class="mb-2">
+              <label for="model-endpoint-name" class="form-label">Nombre del modelo o endpoint</label>
+              <input type="text" class="form-control" id="model-endpoint-name" placeholder="usuarios, productos, /api/mi_endpoint..." required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-lightning"></i> Generar plantilla</button>
+          </form>
+          <div id="generated-template-block" style="display:none;">
+            <label class="form-label">Código sugerido:</label>
+            <pre><code id="generated-template-code" class="language-python"></code></pre>
+            <button class="btn btn-outline-success btn-sm mt-2" id="copy-template-btn"><i class="bi bi-clipboard"></i> Copiar código</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-success mb-3" id="run-all-tests"><i class="bi bi-play-fill"></i> Ejecutar TODOS los tests</button>
+  <a class="btn btn-outline-info mb-3" href="/dev-template/report" id="download-report"><i class="bi bi-download"></i> Descargar último reporte HTML</a>
+  <div id="test-result-container"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/testing.js') }}"></script>
+{% endblock %}

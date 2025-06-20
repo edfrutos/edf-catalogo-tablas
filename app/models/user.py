@@ -3,7 +3,7 @@
 # Uso: python3 user.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-06-09
+# Autor: EDF Developer - 2025-06-09
 
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash

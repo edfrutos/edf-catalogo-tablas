@@ -14,9 +14,11 @@ from app.routes.admin_diagnostic import admin_diagnostic_bp
 from app.routes.diagnostico import diagnostico_bp
 
 
+from app.routes.dev_template import bp_dev_template
+
 # Exportar los blueprints para que sean accesibles al importar desde app.routes
 __all__ = [
     'main_bp', 'auth_bp', 'catalogs_bp', 'image_bp', 'usuarios_bp',
     'admin_bp', 'errors_bp', 'emergency_bp', 'debug_bp',
-    'admin_diagnostic_bp', 'diagnostico_bp'
+    'admin_diagnostic_bp', 'diagnostico_bp', 'bp_dev_template'
 ]

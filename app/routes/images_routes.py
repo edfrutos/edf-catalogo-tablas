@@ -1,3 +1,10 @@
+# Script: images_routes.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 images_routes.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: EDF Developer - 2025-06-18
+
 from flask import Blueprint, send_from_directory, redirect, request
 from app.utils.s3_utils import get_s3_url
 from flask import current_app

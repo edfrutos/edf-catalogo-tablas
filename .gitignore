@@ -25,6 +25,7 @@ backups/*/.env*
 *apikey*
 *password*
 *token*
+dev_template/tests/legacy/config_debug.py
 
 # -------------------------------------------
 # IGNORAR ARCHIVOS Y CARPETAS TEMPORALES
@@ -132,6 +133,7 @@ mi_config.json
 token.pickle
 *.json
 *.pickle
+tools/basura/
 
 # -------------------------------------------
 # IGNORAR ARCHIVOS DE IDEs (Visual Studio Code, PyCharm, etc.)
@@ -140,6 +142,8 @@ token.pickle
 .idea/
 *.sublime-project
 *.sublime-workspace
+.windsurf-settings.json
+.cspell.json
 
 # -------------------------------------------
 # IGNORAR TEST OUTPUTS

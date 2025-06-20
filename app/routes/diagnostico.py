@@ -114,10 +114,7 @@ def login_directo():
             usuario = users_collection.find_one({'role': 'admin'})
             
         if not usuario:
-            return jsonify({
-                'status': 'error',
-                'message': 'No se encontró ningún usuario administrador'
-            })
+            abort(404, description='No se encontró usuario admin')
             
         # Establecer sesión
         session.clear()
@@ -142,10 +139,8 @@ def login_directo():
         
     except Exception as e:
         logger.error(f"Error en login_directo: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({
-            'status': 'error',
-            'message': f'Error: {str(e)}'
-        }), 500
+        from flask import abort
+        abort(500, description=f'Error: {str(e)}')
 
 # Ruta para verificar acceso de administrador
 @diagnostico_bp.route('/admin_check')
