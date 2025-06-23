@@ -145,6 +145,7 @@ tools/basura/
 *.sublime-workspace
 .windsurf-settings.json
 .cspell.json
+.markdownlint.json
 
 # -------------------------------------------
 # IGNORAR TEST OUTPUTS

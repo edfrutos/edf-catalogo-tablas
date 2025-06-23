@@ -58,13 +58,14 @@ Cada subdirectorio incluye un README con ejemplos y propósito.
 | `integration/test_mongo.py` | Script: test_mongo.py |
 | `integration/test_mongo_connection.py` | Script: test_mongo_connection.py |
 | `integration/test_mongodb_integration.py` | Script: test_mongodb.py |
-| `integration/test_plantilla_avanzada.py` | Crea un usuario de prueba en la colección users y lo elimina al final. |
+| `integration/test_plantilla_avanzada.py` | Script: test_plantilla_avanzada.py |
 | `integration/test_s3_cors.py` | !/usr/bin/env python3 |
 | `integration/test_session_direct.py` | !/usr/bin/env python3 |
 | `integration/test_session_integration.py` | Script: test_session.py |
 | `integration/test_session_simple.py` | !/usr/bin/env python3 |
-| `integration/test_template.py` | Test plantilla: verifica que el endpoint raíz responde y contiene texto esperado. |
+| `integration/test_template.py` | Script: test_template.py |
 | `integration/test_upload_simple.py` | !/usr/bin/env python3 |
+| `legacy/config_debug.py` | !/usr/bin/env python3 |
 | `legacy/debug_rutas_catalogs.py` | !/usr/bin/env python3 |
 | `legacy/diagnostico_acceso.py` | !/usr/bin/env python3 |
 | `legacy/diagnostico_catalogs.py` | !/usr/bin/env python3 |

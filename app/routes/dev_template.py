@@ -65,7 +65,7 @@ def show_readme():
 {% block title %}Plantilla Desarrollo{% endblock %}
 
 {% block content %}
-<a href="/admin" class="btn btn-link mt-3"><i class="bi bi-arrow-right"></i> Volver al panel</a>
+<a href="/admin" class="btn btn-link mt-3"><i class="bi bi-arrow-left"></i> Volver al panel</a>
       <div class="container">
         <h1 class="mb-4">Plantilla de Desarrollo</h1>
         <div class="card p-4 mb-3">
