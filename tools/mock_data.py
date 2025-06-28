@@ -5,7 +5,7 @@
 Script: mock_data.py
 Descripción: Proporciona datos simulados cuando MongoDB no está disponible
 Uso: Importar las funciones necesarias
-Autor: Eduardo de Frutos - 2025
+Autor: Eugenio de Frutos - 2025
 """
 
 import os

@@ -205,3 +205,6 @@ estriuctura
 
 # Logs generales
 *.log
+
+# Archivos grandes generados
+generated-docs/
