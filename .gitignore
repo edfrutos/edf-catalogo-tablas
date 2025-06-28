@@ -43,6 +43,8 @@ temp_files_to_remove/
 flask_session/
 logs/*
 flask.log
+exportados/
+docs/
 
 # IGNORAR ARCHIVOS DE MÉTRICAS Y MONITOREO
 # -------------------------------------------
@@ -98,8 +100,6 @@ env/
 .env
 .env.*
 *.env
-backups/.env*
-backups/*/.env*
 *credentials*
 *secret*
 *api_key*
