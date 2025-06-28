@@ -208,3 +208,6 @@ estriuctura
 
 # Archivos grandes generados
 generated-docs/
+
+# Archivos temporales de Git
+.git-rewrite/
