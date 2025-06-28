@@ -22,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Configuración
-BASE_URL = "http://127.0.0.1:8002"
+BASE_URL = "http://127.0.0.1:5001"
 ADMIN_EMAIL = "admin@example.com"
 ADMIN_PASSWORD = "admin123"
 

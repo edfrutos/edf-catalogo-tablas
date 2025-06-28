@@ -1,5 +1,5 @@
 # Script: test_catalogs_crud_func.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: [El script es un conjunto de pruebas automatizadas (tests) para verificar el correcto funcionamiento de las operaciones CRUD (Crear, Leer, Actualizar y Borrar) sobre los catálogos en una aplicación web basada en Flask.]
 # Uso: python3 test_catalogs_crud_func.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]

@@ -61,28 +61,81 @@ def scripts_metadata():
     """
     import os
     import fnmatch
-    CATEGORIES = ['admin_utils', 'db_utils', 'diagnostico', 'maintenance']
+    
     TOOLS_DIR = os.path.join(ROOT_DIR, 'tools')
     resultado = []
+    
+    print(f"[scripts_metadata] Buscando scripts en: {TOOLS_DIR}")
+    
+    # Primero, agregar scripts del directorio raíz tools/
+    scripts_root = []
+    if os.path.isdir(TOOLS_DIR):
+        print(f"[scripts_metadata] Procesando directorio raíz: {TOOLS_DIR}")
+        for fname in os.listdir(TOOLS_DIR):
+            if fnmatch.fnmatch(fname, '*.py') or fnmatch.fnmatch(fname, '*.sh'):
+                script_path = os.path.join(TOOLS_DIR, fname)
+                if os.path.isfile(script_path):  # Asegurar que es un archivo, no directorio
+                    descripcion = extract_description(script_path)
+                    if not descripcion:
+                        descripcion = 'Sin descripción'
+                    scripts_root.append({
+                        'nombre': fname,
+                        'descripcion': descripcion
+                    })
+                    print(f"[scripts_metadata] Script encontrado en raíz: {fname}")
+        
+        if scripts_root:
+            resultado.append({
+                'categoria': 'Scripts Principales',
+                'scripts': scripts_root
+            })
+            print(f"[scripts_metadata] {len(scripts_root)} scripts encontrados en directorio raíz")
+    
+    # Luego, procesar subdirectorios
+    CATEGORIES = ['admin_utils', 'db_utils', 'diagnostico', 'maintenance']
+    
     for categoria in CATEGORIES:
         cat_dir = os.path.join(TOOLS_DIR, categoria)
+        print(f"[scripts_metadata] Procesando categoría: {categoria} en {cat_dir}")
+        
         if not os.path.isdir(cat_dir):
+            print(f"[scripts_metadata] Directorio no existe: {cat_dir}")
             continue
+            
         scripts = []
-        for fname in os.listdir(cat_dir):
-            if fnmatch.fnmatch(fname, '*.py') or fnmatch.fnmatch(fname, '*.sh'):
-                script_path = os.path.join(cat_dir, fname)
-                descripcion = extract_description(script_path)
-                if not descripcion:
-                    descripcion = 'Sin descripción'
-                scripts.append({
-                    'nombre': fname,
-                    'descripcion': descripcion
-                })
-        resultado.append({
-            'categoria': categoria,
-            'scripts': scripts
-        })
+        try:
+            for fname in os.listdir(cat_dir):
+                if fnmatch.fnmatch(fname, '*.py') or fnmatch.fnmatch(fname, '*.sh'):
+                    script_path = os.path.join(cat_dir, fname)
+                    if os.path.isfile(script_path):  # Asegurar que es un archivo
+                        descripcion = extract_description(script_path)
+                        if not descripcion:
+                            descripcion = 'Sin descripción'
+                        scripts.append({
+                            'nombre': fname,
+                            'descripcion': descripcion
+                        })
+                        print(f"[scripts_metadata] Script encontrado en {categoria}: {fname}")
+        except Exception as e:
+            print(f"[scripts_metadata] Error procesando {categoria}: {e}")
+            continue
+        
+        if scripts:  # Solo agregar categorías que tienen scripts
+            resultado.append({
+                'categoria': categoria,
+                'scripts': scripts
+            })
+            print(f"[scripts_metadata] {len(scripts)} scripts encontrados en {categoria}")
+    
+    print(f"[scripts_metadata] Total de categorías con scripts: {len(resultado)}")
+    
+    # Si no se encontraron scripts en ninguna parte, devolver mensaje de debug
+    if not resultado:
+        print(f"[scripts_metadata] ¡ERROR! No se encontraron scripts en ninguna categoría")
+        print(f"[scripts_metadata] Verificando existencia de TOOLS_DIR: {os.path.exists(TOOLS_DIR)}")
+        if os.path.exists(TOOLS_DIR):
+            print(f"[scripts_metadata] Contenido de TOOLS_DIR: {os.listdir(TOOLS_DIR)[:10]}...")  # Primeros 10
+    
     return jsonify(resultado)
 
 # Ruta alternativa para ejecutar scripts sin path variables
@@ -200,38 +253,50 @@ def execute_script():
 
 def get_script_path(script_path):
     """Obtiene la ruta completa del script evitando duplicaciones de rutas"""
+    print(f"[get_script_path] Buscando script: {script_path}")
+    
     # Si ya es una ruta absoluta que contiene ROOT_DIR, usarla directamente
     if os.path.isabs(script_path) and ROOT_DIR in script_path:
+        print(f"[get_script_path] Ruta absoluta válida: {script_path}")
         return script_path
     
     # Si es una ruta absoluta pero no contiene ROOT_DIR, usarla directamente
     if os.path.isabs(script_path):
+        print(f"[get_script_path] Ruta absoluta externa: {script_path}")
         return script_path
     
-    # Lista de posibles ubicaciones para buscar el script
-    possible_paths = [
-        # Ruta directa
-        os.path.join(ROOT_DIR, script_path),
-        # En directorio tools
-        os.path.join(ROOT_DIR, 'tools', script_path),
-        # En directorio scripts
-        os.path.join(ROOT_DIR, 'scripts', script_path),
-    ]
+    # Limpiar la ruta de script_path
+    script_path = script_path.strip('/')
     
-    # Buscar en subdirectorios comunes
-    for subdir in ['maintenance', 'admin_utils', 'backup', 'monitoring', 'security', 'database']:
-        possible_paths.append(os.path.join(ROOT_DIR, 'tools', subdir, script_path))
-        possible_paths.append(os.path.join(ROOT_DIR, 'scripts', subdir, script_path))
+    # Lista de posibles ubicaciones para buscar el script
+    possible_paths = []
+    
+    # 1. Si el script_path ya incluye "tools/", usarlo directamente
+    if script_path.startswith('tools/'):
+        possible_paths.append(os.path.join(ROOT_DIR, script_path))
+    else:
+        # 2. Buscar en directorio tools raíz
+        possible_paths.append(os.path.join(ROOT_DIR, 'tools', script_path))
+        
+        # 3. Buscar en subdirectorios específicos
+        subdirs = ['admin_utils', 'db_utils', 'diagnostico', 'maintenance']
+        for subdir in subdirs:
+            possible_paths.append(os.path.join(ROOT_DIR, 'tools', subdir, script_path))
+    
+    # 4. Ruta directa desde ROOT_DIR
+    possible_paths.append(os.path.join(ROOT_DIR, script_path))
+    
+    print(f"[get_script_path] Rutas a verificar: {possible_paths}")
     
     # Verificar cada ruta posible
     for path in possible_paths:
-        if os.path.exists(path):
-            print(f"Script encontrado en: {path}")
+        if os.path.exists(path) and os.path.isfile(path):
+            print(f"[get_script_path] Script encontrado en: {path}")
             return path
     
-    # Si no se encuentra, devolver la ruta original
-    print(f"Script no encontrado: {script_path}")
-    return os.path.join(ROOT_DIR, script_path)
+    # Si no se encuentra, devolver None para indicar error
+    print(f"[get_script_path] Script no encontrado: {script_path}")
+    return None
 
 @scripts_bp.route('/view/<path:script_path>')
 @admin_required

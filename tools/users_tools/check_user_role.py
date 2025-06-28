@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# Script: check_user.py
+# Descripción: Comprobar el rol de usuario
+# Uso: python3 check_user_role.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: EDF Developer - 2025-06-09
+
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os

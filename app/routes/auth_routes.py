@@ -312,9 +312,12 @@ def login():
             return redirect(url_for('auth.login'))
         
         # NUEVO: Redirigir a cambio de contraseña si es necesario
-        if usuario.get('password') == 'RESET_REQUIRED' or usuario.get('must_change_password'):
+        if (usuario.get('password') == 'RESET_REQUIRED' or 
+            usuario.get('must_change_password') or 
+            usuario.get('temp_password') or 
+            usuario.get('password_reset_required')):
             session['force_password_user_id'] = str(usuario['_id'])
-            flash('Debes crear una nueva contraseña antes de continuar.', 'warning')
+            flash('Tienes una contraseña temporal. Debes crear una nueva contraseña antes de continuar.', 'warning')
             return redirect(url_for('usuarios.force_password_change'))
         
         logger.info(f"Usuario encontrado: {email}")

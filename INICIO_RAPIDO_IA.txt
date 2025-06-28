@@ -1,0 +1,20 @@
+INSTRUCCIÓN RÁPIDA PARA IA - COPIA Y PEGA AL INICIO DE CADA CONVERSACIÓN:
+
+Lee y aplica las preferencias de comunicación del archivo config/preferencias_comunicación.md. Comunícate siempre en español de España durante toda nuestra conversación.
+
+---
+
+ALTERNATIVA MÁS DETALLADA:
+
+Hola, por favor:
+1. Lee el archivo config/preferencias_comunicación.md
+2. Aplica las preferencias de comunicación especificadas
+3. Comunícate conmigo en español de España durante toda la sesión
+4. Mantén un estilo profesional y estructurado en tus respuestas
+
+---
+
+UBICACIÓN DE ARCHIVOS:
+- Preferencias detalladas: config/preferencias_comunicación.md
+- Instrucciones completas: docs/INSTRUCCIONES_IA.md
+- Este archivo: INICIO_RAPIDO_IA.txt (en la raíz del proyecto)

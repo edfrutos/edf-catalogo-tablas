@@ -9,6 +9,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.decorators import admin_required
 from bson.objectid import ObjectId
+from datetime import datetime
 import logging
 
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
@@ -173,8 +174,11 @@ def force_password_change():
         users_collection.update_one(
             {'_id': user['_id']},
             {'$set': {
-                'password': generate_password_hash(new_password),
-                'must_change_password': False
+                'password': generate_password_hash(new_password, method='pbkdf2:sha256'),
+                'must_change_password': False,
+                'temp_password': False,
+                'password_reset_required': False,
+                'password_updated_at': datetime.utcnow().isoformat()
             }}
         )
         session.pop('force_password_user_id', None)

@@ -2358,14 +2358,8 @@ def db_performance():
 # Cambiamos el nombre a 'admin' para que coincida con el prefijo
 admin_logs_bp = Blueprint('admin_logs', __name__)
 
-# Decorador para restringir acceso solo a admin
-def admin_required_logs(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in') or session.get('role') != 'admin':
-            abort(403)
-        return f(*args, **kwargs)
-    return decorated_function
+# Decorador para restringir acceso solo a admin (importamos el decorador principal)
+from app.decorators import admin_required as admin_required_logs
 
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../logs/flask_debug.log'))
 

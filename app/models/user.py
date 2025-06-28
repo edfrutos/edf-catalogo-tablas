@@ -27,7 +27,7 @@ class User(UserMixin):
         self.last_login = user_data.get('last_login')
     
     def get_id(self):
-        return self.email
+        return self.id
     
     @property
     def is_admin(self):

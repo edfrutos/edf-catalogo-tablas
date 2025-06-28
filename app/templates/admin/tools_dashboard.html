@@ -306,17 +306,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Modal para mostrar resultados
     let scriptModal = null;
     let scriptOutput = null;
-    if (!document.getElementById('scriptResultModal')) {
+    
+    // Función para inicializar el modal de forma segura
+    function initializeScriptModal() {
+        // Eliminar modal existente si hay conflictos
+        const existingModal = document.getElementById('scriptResultModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Crear el modal con un ID único
+        const modalId = 'scriptResultModal_' + Date.now();
+        const outputId = 'scriptModalOutput_' + Date.now();
+        
         const modalHtml = `
-        <div class="modal fade" id="scriptResultModal" tabindex="-1" aria-labelledby="scriptResultModalLabel" aria-hidden="true">
+        <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Label" aria-hidden="true">
           <div class="modal-dialog modal-lg">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title" id="scriptResultModalLabel">Resultado de la ejecución</h5>
+                <h5 class="modal-title" id="${modalId}Label">Resultado de la ejecución</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
               </div>
               <div class="modal-body">
-                <pre id="scriptModalOutput" class="bg-dark text-light p-3 rounded" style="min-height:200px;"></pre>
+                <pre id="${outputId}" class="bg-dark text-light p-3 rounded" style="min-height:200px;"></pre>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -324,13 +336,35 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
           </div>
         </div>`;
+        
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Obtener referencias inmediatamente después de la inserción
+        const scriptResultModal = document.getElementById(modalId);
+        const scriptModalOutput = document.getElementById(outputId);
+        
+        if (scriptResultModal && scriptModalOutput) {
+            scriptModal = new bootstrap.Modal(scriptResultModal);
+            scriptOutput = scriptModalOutput;
+            console.log('Modal elements initialized successfully with IDs:', modalId, outputId);
+            return true;
+        } else {
+            console.error('Failed to create modal elements');
+            return false;
+        }
     }
-    scriptModal = new bootstrap.Modal(document.getElementById('scriptResultModal'));
-    scriptOutput = document.getElementById('scriptModalOutput');
+    
+    // Inicializar el modal
+    initializeScriptModal();
 
     // Ejecutar script y mostrar resultado en el modal
     function ejecutarScript(categoria, scriptName) {
+        // Reinicializar el modal cada vez que se ejecuta un script
+        if (!initializeScriptModal()) {
+            console.error('Failed to initialize modal, cannot execute script');
+            return;
+        }
+        
         scriptOutput.textContent = 'Ejecutando script...';
         scriptModal.show();
         // Construir ruta relativa del script (sin barra inicial)
@@ -359,6 +393,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(output => {
+            // Verificar que scriptOutput sigue existiendo
+            if (!scriptOutput) {
+                console.error('scriptOutput element not found during output update');
+                return;
+            }
+            
             // Si la respuesta es JSON, intenta parsear y mostrar solo el campo relevante
             try {
                 const obj = typeof output === "string" ? JSON.parse(output) : output;
@@ -376,7 +416,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(err => {
-            scriptOutput.textContent = 'Error al ejecutar el script: ' + err;
+            // Verificar que scriptOutput sigue existiendo
+            if (scriptOutput) {
+                scriptOutput.textContent = 'Error al ejecutar el script: ' + err;
+            } else {
+                console.error('scriptOutput element not found during error handling:', err);
+            }
         });
     }
 

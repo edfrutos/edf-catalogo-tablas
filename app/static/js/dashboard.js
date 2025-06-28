@@ -142,7 +142,7 @@ $(function () {
           '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generando...'
         );
       $.ajax({
-        url: "/admin/db/backup",
+        url: "/admin/maintenance/api/backup",
         method: "POST",
         success: function (response) {
           if (response.status === "success" && response.download_url) {
@@ -206,7 +206,7 @@ $(function () {
       const formData = new FormData();
       formData.append("backup_file", file);
       $.ajax({
-        url: "/admin/db/restore",
+        url: "/admin/maintenance/api/restore",
         method: "POST",
         data: formData,
         processData: false,
@@ -232,7 +232,7 @@ $(function () {
         complete: function () {
           btn
             .prop("disabled", false)
-            .html('<i class="bi bi-arrow-down"></i> Restaurar Backup');
+            .html('<i class="bi bi-arrow-counterclockwise"></i> Restaurar Backup');
         },
       });
     });
@@ -289,7 +289,7 @@ $(function () {
           '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Restaurando...'
         );
       $.ajax({
-        url: "/admin/db/restore",
+        url: "/admin/maintenance/api/restore",
         method: "POST",
         data: { drive_url: url },
         success: function (response) {

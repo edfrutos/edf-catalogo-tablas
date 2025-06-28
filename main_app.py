@@ -91,15 +91,24 @@ def create_app():
     """Crea y configura la aplicación Flask"""
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
     TEMPLATE_DIR = os.path.join(ROOT_DIR, "app", "templates")
-    app = Flask(__name__, template_folder=TEMPLATE_DIR)
+    STATIC_DIR = os.path.join(ROOT_DIR, "app", "static")
+    app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR, static_url_path='/static')
 
     # --- Registrar blueprint de imágenes ---
     from app.routes.images_routes import images_bp
     app.register_blueprint(images_bp)
     print("DEBUG: images_bp registrado en app")
 
-    # Cargar configuración desde config.py primero
-    app.config.from_object('config.Config')
+    # Cargar configuración apropiada según el entorno
+    if getattr(sys, 'frozen', False):
+        # Aplicación empaquetada - usar configuración embebida
+        from app.config_embedded import EmbeddedConfig
+        app.config.from_object(EmbeddedConfig)
+        print("DEBUG: Usando configuración embebida para aplicación empaquetada")
+    else:
+        # Desarrollo - usar configuración normal
+        app.config.from_object('config.Config')
+        print("DEBUG: Usando configuración normal para desarrollo")
     
     # CONFIGURACIÓN DE SESIÓN DIRECTA - Garantiza funcionamiento correcto
     # Esta configuración tiene prioridad sobre cualquier otra
@@ -135,6 +144,10 @@ def create_app():
     # Inicializar Flask-Session (debe estar después de configurar app.config)
     Session(app)
     app.logger.info("✅ Flask-Session inicializado correctamente")
+    
+    # Inicializar extensiones (Flask-Login, Flask-Mail, etc.)
+    init_extensions(app)
+    app.logger.info("✅ Extensiones inicializadas correctamente (Flask-Login, Flask-Mail, etc.)")
     
     # Configurar sesión permanente por defecto
     @app.before_request
@@ -203,10 +216,20 @@ def create_app():
     @app.route('/static/<path:filename>')
     def custom_static(filename):
         try:
-            return send_from_directory('static', filename)
+            static_dir = os.path.join(ROOT_DIR, 'app', 'static')
+            app.logger.info(f"Intentando servir archivo estático: {filename} desde {static_dir}")
+            
+            # Verificar que el archivo existe
+            full_path = os.path.join(static_dir, filename)
+            if not os.path.exists(full_path):
+                app.logger.error(f"Archivo no encontrado: {full_path}")
+                abort(404)
+            
+            return send_from_directory(static_dir, filename)
         except Exception as e:
             app.logger.error(f"Error sirviendo archivo estático {filename}: {str(e)}")
-            return str(e), 500
+            app.logger.error(f"Ruta completa: {os.path.join(static_dir, filename)}")
+            abort(404)
 
     # --- Decorador para rutas protegidas ---
     # def login_required(f):
@@ -224,19 +247,26 @@ def create_app():
     from app.routes.catalogs_routes import catalogs_bp
     from app.routes.catalog_images_routes import image_bp
     from app.routes.usuarios_routes import usuarios_bp
-    from app.routes.admin_routes import admin_bp
+    from app.routes.admin_routes import admin_bp, admin_logs_bp  # Importar también admin_logs_bp
     from app.routes.error_routes import errors_bp
     from app.routes.emergency_access import emergency_bp
     from app.routes.debug_routes import debug_bp  # Blueprint para diagnóstico de sesiones
     from app.routes.admin_diagnostic import admin_diagnostic_bp  # Blueprint para diagnóstico de administrador
     from app.routes.diagnostico import diagnostico_bp  # Blueprint para diagnóstico simplificado
+    from app.routes.scripts_routes import scripts_bp  # Blueprint para gestión de scripts
+    from app.routes.maintenance_routes import maintenance_bp  # Blueprint para mantenimiento
+    from app.routes.dev_template import bp_dev_template  # Blueprint para plantilla de desarrollo
     print("ANTES DE BLUEPRINTS", app.db)
-    app.register_blueprint(auth_bp, url_prefix='')
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(main_bp)
     app.register_blueprint(catalogs_bp)
     app.register_blueprint(image_bp)
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(admin_logs_bp, url_prefix='/admin')  # Registrar admin_logs_bp
+    app.register_blueprint(scripts_bp)  # Blueprint para gestión de scripts (/admin/tools)
+    app.register_blueprint(maintenance_bp, url_prefix='/admin')  # Blueprint para mantenimiento
+    app.register_blueprint(bp_dev_template)  # Blueprint para plantilla de desarrollo
     app.register_blueprint(errors_bp)
     app.register_blueprint(emergency_bp)  # <-- REGISTRO DE EMERGENCIA
     print("DESPUÉS DE BLUEPRINTS", app.db)
@@ -407,9 +437,14 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    # Leer el modo debug de la variable de entorno (por defecto False)
-    debug_mode = os.getenv('FLASK_DEBUG', '0') in ('1', 'true', 'True')
-    app.run(debug=debug_mode, host='0.0.0.0', port=5001)
+    import sys
+    port = 5001
+    if len(sys.argv) > 1 and sys.argv[1] == '--port' and len(sys.argv) > 2:
+        try:
+            port = int(sys.argv[2])
+        except ValueError:
+            port = 5001
+    app.run(debug=True, host='0.0.0.0', port=port)
 
 # ==============================================
 # 📄 INICIALIZACIÓN DE VARIABLES GLOBALES
@@ -534,12 +569,18 @@ def verify_scrypt_password(stored_hash, provided_password):
         salt = parts[2]
         stored_hash_val = parts[3]
         # Generar el hash de la contraseña proporcionada usando hashlib.scrypt
-        new_hash = hashlib.scrypt(provided_password.encode('utf-8'), salt=salt.encode('utf-8'), n=32768, r=8, p=1, dklen=64)
+        # Parámetros corregidos: n=16384, r=8, p=1 (valores más seguros y compatibles)
+        new_hash = hashlib.scrypt(provided_password.encode('utf-8'), salt=salt.encode('utf-8'), n=16384, r=8, p=1, dklen=64)
         # Comparar los hashes
         return stored_hash_val == new_hash.hex()
     except Exception as e:
-        print(f"Error verificando contraseña: {str(e)}")
-        return False
+        print(f"Error verificando contraseña scrypt: {str(e)}")
+        # Si falla scrypt, intentar con werkzeug como fallback
+        try:
+            return check_password_hash(stored_hash, provided_password)
+        except Exception as e2:
+            print(f"Error verificando contraseña con werkzeug: {str(e2)}")
+            return False
 
 # ==============================================
 # 📋 RUTAS PRINCIPALES (Tablas, Catálogo, Archivos)
@@ -1098,4 +1139,3 @@ def login():
         else:
             flash('Usuario o contraseña incorrectos', 'error')
     return render_template('login.html')
-

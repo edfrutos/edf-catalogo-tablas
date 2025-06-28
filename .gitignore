@@ -135,6 +135,8 @@ token.pickle
 *.json
 *.pickle
 tools/basura/
+mcp-server-demo/
+node_modules/
 
 # -------------------------------------------
 # IGNORAR ARCHIVOS DE IDEs (Visual Studio Code, PyCharm, etc.)
