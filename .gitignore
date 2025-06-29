@@ -211,3 +211,8 @@ generated-docs/
 
 # Archivos temporales de Git
 .git-rewrite/
+
+# -------------------------------------------
+# IGNORAR GEMINI CLI
+# -------------------------------------------
+gemini-cli/

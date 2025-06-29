@@ -254,8 +254,17 @@ def system_status():
         print(f"[DEBUG][STATUS] get_backup_files: {t6-t5:.2f}s")
         print(f"[DEBUG][STATUS] TOTAL system-status: {time.time()-t0:.2f}s")
         # Pasar cache_stats y temp_files como variables independientes para el template
-        cache_stats = data.get('cache_stats')
-        temp_files = data.get('temp_files')
+        cache_stats = data.get('cache_stats', {})
+        temp_files = data.get('temp_files', {'count': 0, 'total_size_mb': 0, 'files': []})
+        
+        # Asegurar que data.health.metrics tenga la estructura correcta
+        if 'health' not in data:
+            data['health'] = {'metrics': {}}
+        if 'metrics' not in data['health']:
+            data['health']['metrics'] = {}
+        if 'temp_files' not in data['health']['metrics']:
+            data['health']['metrics']['temp_files'] = temp_files
+            
         return render_template('admin/system_status.html', data=data, log_files=log_files, backup_files=backup_files, cache_stats=cache_stats, temp_files=temp_files)
     except Exception as e:
         logger.error(f"Error en system_status: {str(e)}", exc_info=True)

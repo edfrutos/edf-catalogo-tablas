@@ -225,8 +225,20 @@ def get_health_status():
     # Determinar el estado general basado en criterios múltiples
     if not _app_metrics["database_status"]["is_available"]:
         health_report["status"] = "degraded"
-    if (_app_metrics["system_status"].get("cpu_usage", 0) > 90 or 
-            _app_metrics["system_status"].get("memory_usage", {}).get("percent", 0) > 90):
+    
+    # Verificar uso de CPU
+    cpu_usage = _app_metrics["system_status"].get("cpu_usage", 0)
+    if cpu_usage > 90:
+        health_report["status"] = "at_risk"
+    
+    # Verificar uso de memoria - manejar tanto int como dict
+    memory_usage = _app_metrics["system_status"].get("memory_usage", 0)
+    if isinstance(memory_usage, dict):
+        memory_percent = memory_usage.get("percent", 0)
+    else:
+        memory_percent = memory_usage
+    
+    if memory_percent > 90:
         health_report["status"] = "at_risk"
     error_rate = 0
     total_requests = _app_metrics["request_stats"].get("total_requests", 0)
