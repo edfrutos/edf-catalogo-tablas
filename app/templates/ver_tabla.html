@@ -97,7 +97,7 @@
                           <img src="{{ img_url }}" alt="Imagen" class="img-thumbnail catalog-image" 
                                style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
                                onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                               onerror="this.src='/static/img/image-error.svg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                               onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
                                loading="lazy">
                         </div>
                       </a>
@@ -148,7 +148,7 @@
           </div>
           <img id="imagenModalSrc" src="" alt="Imagen" 
                onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-               onerror="this.src='/static/img/image-error.svg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';">
+               onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'; this.style.opacity='1'; this.previousElementSibling.style.display='none';">
         </div>
       </div>
       <div class="modal-footer">
@@ -223,7 +223,7 @@ mostrarPagina(1);
 // Función para manejar errores de carga de imágenes
 document.addEventListener('DOMContentLoaded', function() {
     // Crear una imagen de error por defecto si no existe
-    const errorImgPath = '/static/img/image-error.svg';
+    const errorImgPath = '{{ url_for('static', filename='img/image-error.svg') }}';
     fetch(errorImgPath)
         .catch(() => {
             // Si la imagen de error no existe, crear un canvas con un icono de error

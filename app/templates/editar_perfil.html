@@ -5,11 +5,7 @@
   <h2>Editar perfil</h2>
   <form method="post" enctype="multipart/form-data">
     <div class="mb-3 text-center">
-      {% if user.foto_perfil %}
-        <img src="{{ url_for('static', filename='imagenes_subidas/' ~ user.foto_perfil) }}" alt="Foto de perfil" class="rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
-      {% else %}
-        <img src="{{ url_for('static', filename='default_profile.png') }}" alt="Sin foto" class="rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
-      {% endif %}
+      <img src="{{ user.foto_perfil_url }}" alt="Foto de perfil" class="rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
     </div>
     <div class="mb-3">
       <label for="nombre" class="form-label">Nombre</label>

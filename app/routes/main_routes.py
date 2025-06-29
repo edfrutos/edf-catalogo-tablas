@@ -122,11 +122,17 @@ def dashboard_user():
                     if img.startswith('http'):
                         t['miniatura'] = img
                     else:
-                        from app.utils.s3_utils import get_s3_url
-                        s3_url = get_s3_url(img)
-                        if s3_url:
-                            t['miniatura'] = s3_url
+                        # Verificar si S3 está habilitado
+                        use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
+                        if use_s3:
+                            from app.utils.s3_utils import get_s3_url
+                            s3_url = get_s3_url(img)
+                            if s3_url:
+                                t['miniatura'] = s3_url
+                            else:
+                                t['miniatura'] = url_for('static', filename=f'uploads/{img}')
                         else:
+                            # Usar URL local directamente
                             t['miniatura'] = url_for('static', filename=f'uploads/{img}')
         for c in catalogos:
             c['tipo'] = 'catalog'
@@ -159,11 +165,17 @@ def dashboard_user():
                     if img.startswith('http'):
                         c['miniatura'] = img
                     else:
-                        from app.utils.s3_utils import get_s3_url
-                        s3_url = get_s3_url(img)
-                        if s3_url:
-                            c['miniatura'] = s3_url
+                        # Verificar si S3 está habilitado
+                        use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
+                        if use_s3:
+                            from app.utils.s3_utils import get_s3_url
+                            s3_url = get_s3_url(img)
+                            if s3_url:
+                                c['miniatura'] = s3_url
+                            else:
+                                c['miniatura'] = url_for('static', filename=f'uploads/{img}')
                         else:
+                            # Usar URL local directamente
                             c['miniatura'] = url_for('static', filename=f'uploads/{img}')
         registros = tablas + catalogos
         if not registros:
@@ -337,11 +349,18 @@ def ver_tabla(table_id):
                 if img.startswith('http'):
                     row['imagen_urls'].append(img)
                 else:
-                    # Intentar S3
-                    s3_url = get_s3_url(img)
-                    if s3_url:
-                        row['imagen_urls'].append(s3_url)
+                    # Verificar si S3 está habilitado
+                    use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
+                    if use_s3:
+                        # Intentar S3 solo si está habilitado
+                        s3_url = get_s3_url(img)
+                        if s3_url:
+                            row['imagen_urls'].append(s3_url)
+                        else:
+                            local_url = url_for('static', filename=f'uploads/{img}')
+                            row['imagen_urls'].append(local_url)
                     else:
+                        # Usar URL local directamente
                         local_url = url_for('static', filename=f'uploads/{img}')
                         row['imagen_urls'].append(local_url)
             # Si no hay imágenes, asegurar lista vacía
@@ -449,6 +468,29 @@ def perfil():
             except Exception as e:
                 logger.error(f"Error al crear imagen predeterminada: {str(e)}", exc_info=True)
         
+        # Procesar la URL de la foto de perfil
+        if 'foto_perfil' in user and user['foto_perfil']:
+            foto_perfil = user['foto_perfil']
+            if foto_perfil.startswith('http'):
+                # Ya es una URL completa
+                user['foto_perfil_url'] = foto_perfil
+            else:
+                # Verificar si S3 está habilitado
+                use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
+                if use_s3:
+                    from app.utils.s3_utils import get_s3_url
+                    s3_url = get_s3_url(foto_perfil)
+                    if s3_url:
+                        user['foto_perfil_url'] = s3_url
+                    else:
+                        user['foto_perfil_url'] = url_for('static', filename=f'uploads/{foto_perfil}')
+                else:
+                    # Usar URL local directamente
+                    user['foto_perfil_url'] = url_for('static', filename=f'uploads/{foto_perfil}')
+        else:
+            # Usar imagen predeterminada
+            user['foto_perfil_url'] = url_for('static', filename='default_profile.png')
+        
         return render_template('perfil.html', user=user)
     except Exception as e:
         logger.error(f"Error al cargar perfil: {str(e)}", exc_info=True)
@@ -520,11 +562,9 @@ def editar_perfil():
         
         # Asegurarse de que existe la carpeta de uploads
         uploads_folder = os.path.join(current_app.root_path, 'static', 'uploads')
-        imagenes_subidas_folder = os.path.join(current_app.root_path, 'static', 'imagenes_subidas')
         
-        # Crear las carpetas si no existen
+        # Crear la carpeta si no existe
         os.makedirs(uploads_folder, exist_ok=True)
-        os.makedirs(imagenes_subidas_folder, exist_ok=True)
         
         # Asegurar que existe la imagen de perfil predeterminada
         default_profile_path = os.path.join(current_app.root_path, 'static', 'default_profile.png')
@@ -545,8 +585,25 @@ def editar_perfil():
                 try:
                     # Guardar la imagen
                     filename = secure_filename(f"{uuid.uuid4().hex}_{profile_image.filename}")
-                    filepath = os.path.join(imagenes_subidas_folder, filename)
+                    filepath = os.path.join(uploads_folder, filename)
                     profile_image.save(filepath)
+                    
+                    # Subir a S3 si está habilitado
+                    use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
+                    if use_s3:
+                        try:
+                            from app.utils.s3_utils import upload_file_to_s3
+                            logger.info(f"Subiendo foto de perfil a S3: {filename}")
+                            result = upload_file_to_s3(filepath, filename)
+                            if result['success']:
+                                logger.info(f"Foto de perfil subida a S3: {result['url']}")
+                                # Eliminar el archivo local después de subirlo a S3
+                                os.remove(filepath)
+                                logger.info(f"Foto de perfil eliminada del servidor local después de subirla a S3: {filename}")
+                            else:
+                                logger.error(f"Error al subir foto de perfil a S3: {result.get('error')}")
+                        except Exception as e:
+                            logger.error(f"Error al procesar subida de foto de perfil a S3: {str(e)}", exc_info=True)
                     
                     # Actualizar el campo foto_perfil en el usuario
                     update_data["foto_perfil"] = filename
@@ -581,6 +638,29 @@ def editar_perfil():
             return redirect(url_for('main.perfil'))
     
     # Para peticiones GET, mostrar el formulario con los datos actuales
+    # Procesar la URL de la foto de perfil
+    if 'foto_perfil' in user and user['foto_perfil']:
+        foto_perfil = user['foto_perfil']
+        if foto_perfil.startswith('http'):
+            # Ya es una URL completa
+            user['foto_perfil_url'] = foto_perfil
+        else:
+            # Verificar si S3 está habilitado
+            use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
+            if use_s3:
+                from app.utils.s3_utils import get_s3_url
+                s3_url = get_s3_url(foto_perfil)
+                if s3_url:
+                    user['foto_perfil_url'] = s3_url
+                else:
+                    user['foto_perfil_url'] = url_for('static', filename=f'uploads/{foto_perfil}')
+            else:
+                # Usar URL local directamente
+                user['foto_perfil_url'] = url_for('static', filename=f'uploads/{foto_perfil}')
+    else:
+        # Usar imagen predeterminada
+        user['foto_perfil_url'] = url_for('static', filename='default_profile.png')
+    
     return render_template('editar_perfil.html', user=user)
 
 @main_bp.route('/editar_fila/<tabla_id>/<int:fila_index>', methods=['GET', 'POST'])
