@@ -6,10 +6,73 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { background: #f8f9fa; }
         .navbar-brand { font-weight: bold; }
         .nav-admin .nav-link.active { font-weight: bold; color: #0d6efd !important; }
+        
+        /* Estilos responsive */
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                max-height: 80vh;
+                overflow-y: auto;
+                transition: all 0.3s ease-in-out;
+            }
+            .navbar-collapse:not(.show) {
+                display: block;
+                height: 0 !important;
+                padding: 0;
+                overflow: hidden;
+            }
+            .navbar-nav .dropdown-menu {
+                background-color: transparent;
+                border: none;
+                padding-left: 1rem;
+                margin-top: 0;
+                margin-bottom: 0.5rem;
+            }
+            .navbar-nav .dropdown-item {
+                color: rgba(255,255,255,.55);
+                padding: 0.5rem 1rem;
+                transition: all 0.2s ease;
+            }
+            .navbar-nav .dropdown-item:hover {
+                color: rgba(255,255,255,.75);
+                background-color: rgba(255,255,255,.1);
+                padding-left: 1.5rem;
+            }
+            .nav-admin {
+                padding-bottom: 1rem;
+                border-bottom: 1px solid rgba(255,255,255,.1);
+                margin-bottom: 1rem;
+            }
+            .navbar-toggler {
+                border: 2px solid rgba(255,255,255,.1);
+                padding: .5rem .75rem;
+                transition: all 0.3s ease;
+            }
+            .navbar-toggler:hover {
+                background-color: rgba(255,255,255,.1);
+            }
+            .navbar-toggler:focus {
+                box-shadow: 0 0 0 0.25rem rgba(255,255,255,.25);
+            }
+            .nav-link {
+                padding: 0.7rem 1rem;
+                transition: all 0.2s ease;
+            }
+            .nav-link:hover {
+                background-color: rgba(255,255,255,.1);
+                padding-left: 1.5rem;
+            }
+            .dropdown-toggle::after {
+                transition: transform 0.2s ease;
+            }
+            .dropdown-toggle[aria-expanded="true"]::after {
+                transform: rotate(180deg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -21,85 +84,85 @@
     </button>
     <div class="collapse navbar-collapse" id="adminNavbar">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 nav-admin">
+        <!-- Dashboard Principal -->
         <li class="nav-item">
-          <a class="nav-link " href="/admin/tools/">
-          <!-- <a class="nav-link {% if request.endpoint == 'admin.scripts_tools_overview' %}active{% endif %}" href="{{ url_for('admin.scripts_tools_overview') }}"> -->
-            <i class="bi bi-gear"></i> Scripts & Herramientas
+          <a class="nav-link {% if request.endpoint == 'admin.dashboard_admin' %}active{% endif %}" href="{{ url_for('admin.dashboard_admin') }}">
+            <i class="bi bi-speedometer2"></i> Dashboard
           </a>
         </li>
-        <!-- <li class="nav-item">
-          <a class="nav-link " href="/admin/tools/">
-              <i class="fas fa-tools"></i> Scripts
-          </a>
-      </li> -->
-        <li class="nav-item">
-          <a class="nav-link {% if request.endpoint == 'admin.dashboard_admin' %}active{% endif %}" href="{{ url_for('admin.dashboard_admin') }}">Dashboard</a>
-        </li>
+        
+        <!-- Gestión de Contenido -->
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {% if 'maintenance' in request.endpoint %}active{% endif %}" href="#" id="maintenanceNavbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Mantenimiento
+          <a class="nav-link dropdown-toggle {% if request.endpoint == 'admin.lista_usuarios' or 'catalogo' in request.endpoint or 'ver_catalogos_usuario' in request.endpoint %}active{% endif %}" href="#" id="contentDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-people"></i> Gestión
           </a>
-          <ul class="dropdown-menu" aria-labelledby="maintenanceNavbarDropdown">
-            <li><a class="dropdown-item" href="{{ url_for('maintenance.maintenance_dashboard') }}">Dashboard</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('maintenance.maintenance_home') }}">Herramientas</a></li>
+          <ul class="dropdown-menu" aria-labelledby="contentDropdown">
+            <li><a class="dropdown-item" href="{{ url_for('admin.lista_usuarios') }}"><i class="bi bi-person-lines-fill"></i> Usuarios</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('catalogs.list') }}"><i class="bi bi-table"></i> Catálogos/Tablas</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.verify_users') }}"><i class="bi bi-person-check"></i> Verificar Usuarios</a></li>
           </ul>
-          
         </li>
-        <li class="nav-item">
-          <a class="nav-link {% if request.endpoint == 'admin.lista_usuarios' %}active{% endif %}" href="{{ url_for('admin.lista_usuarios') }}">Usuarios</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% if 'catalogo' in request.endpoint or 'ver_catalogos_usuario' in request.endpoint %}active{% endif %}" href="{{ url_for('catalogs.list') }}">Catálogos/Tablas</a>
-        </li>
+
+        <!-- Base de Datos -->
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle {% if 'db_' in request.endpoint %}active{% endif %}" href="#" id="dbDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Base de Datos
+            <i class="bi bi-database"></i> Base de Datos
           </a>
           <ul class="dropdown-menu" aria-labelledby="dbDropdown">
-            <li><a class="dropdown-item" href="{{ url_for('admin.db_status') }}">Estado</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin.db_monitor') }}">Monitor en Tiempo Real</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin.db_backup') }}">Respaldo</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin.db_performance') }}">Rendimiento</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.db_status') }}"><i class="bi bi-activity"></i> Estado</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.db_monitor') }}"><i class="bi bi-graph-up"></i> Monitor</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.db_backup') }}"><i class="bi bi-shield-check"></i> Respaldo</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.db_performance') }}"><i class="bi bi-speedometer"></i> Rendimiento</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.db_scripts') }}"><i class="bi bi-code-slash"></i> Scripts DB</a></li>
           </ul>
         </li>
+
+        <!-- Herramientas y Scripts -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-gear"></i> Herramientas
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
+            <li><a class="dropdown-item" href="/admin/tools/"><i class="bi bi-tools"></i> Scripts & Herramientas</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('maintenance.maintenance_dashboard') }}"><i class="bi bi-wrench"></i> Mantenimiento</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('maintenance.maintenance_home') }}"><i class="bi bi-gear-wide-connected"></i> Herramientas Mant.</a></li>
+          </ul>
+        </li>
+
+        <!-- Backups -->
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle {% if 'backup' in request.endpoint %}active{% endif %}" href="#" id="backupDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Backups
+            <i class="bi bi-archive"></i> Backups
           </a>
           <ul class="dropdown-menu" aria-labelledby="backupDropdown">
-            <li><a class="dropdown-item" href="{{ url_for('admin.backup_csv') }}">Backup CSV</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin.backup_json') }}">Backup JSON</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.backup_csv') }}"><i class="bi bi-filetype-csv"></i> Backup CSV</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.backup_json') }}"><i class="bi bi-filetype-json"></i> Backup JSON</a></li>
           </ul>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.system_status') }}">Estado del sistema</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin_logs.logs_manual') }}">Logs</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.notification_settings') }}">Notificaciones</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% if request.endpoint == 'admin.db_scripts' %}active{% endif %}" href="{{ url_for('admin.db_scripts') }}">Scripts DB</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.verify_users') }}">Verificar usuarios</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.db_status') }}">
-            <i class="bi bi-database"></i> Diagnóstico MongoDB
-          </a>
-        </li>
+
+        <!-- Sistema y Monitoreo -->
         <li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="devTemplateDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    <i class="bi bi-lightbulb"></i> Plantilla Desarrollo
-  </a>
-  <ul class="dropdown-menu" aria-labelledby="devTemplateDropdown">
-    <li><a class="dropdown-item" href="/dev-template/readme"><i class="bi bi-file-earmark-text"></i> README Testing</a></li>
-    <li><a class="dropdown-item" href="/dev-template/testing"><i class="bi bi-rocket"></i> Testing Interactivo</a></li>
-  </ul>
-</li>
+          <a class="nav-link dropdown-toggle" href="#" id="systemDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-cpu"></i> Sistema
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="systemDropdown">
+            <li><a class="dropdown-item" href="{{ url_for('admin.system_status') }}"><i class="bi bi-info-circle"></i> Estado del Sistema</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin_logs.logs_manual') }}"><i class="bi bi-journal-text"></i> Logs</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.notification_settings') }}"><i class="bi bi-bell"></i> Notificaciones</a></li>
+          </ul>
+        </li>
+
+        <!-- Desarrollo -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="devTemplateDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-lightbulb"></i> <span class="d-lg-none">Desarrollo</span><span class="d-none d-lg-inline">Dev</span>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="devTemplateDropdown">
+            <li><a class="dropdown-item" href="/dev-template/readme"><i class="bi bi-file-earmark-text"></i> README Testing</a></li>
+            <li><a class="dropdown-item" href="/dev-template/testing"><i class="bi bi-rocket"></i> Testing Interactivo</a></li>
+          </ul>
+        </li>
       </ul>
       <div class="d-flex">
         <div class="dropdown">
