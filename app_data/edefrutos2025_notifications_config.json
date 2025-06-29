@@ -1,15 +1,15 @@
 {
   "enabled": true,
   "smtp": {
-    "server": "smtp.example.com",
+    "server": "smtp.gmail.com",
     "port": 587,
-    "username": "admin@example.com",
-    "password": "testpass123",
+    "username": "edfrutos@gmail.com",
+    "password": "augk nqxg yfog joto",
     "use_tls": true
   },
   "recipients": [
-    "admin@example.com",
-    "otro@example.com"
+    "edfrutos@gmail.com",
+    "edefrutos@me.com"
   ],
   "thresholds": {
     "cpu": 80,
