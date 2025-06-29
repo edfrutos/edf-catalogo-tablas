@@ -9,16 +9,20 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install dependencies
         run: pip install -r requirements.txt pyinstaller
+
       - name: Build App
-        run: pyinstaller edf_catalogotablas.spec
+        run: pyinstaller EDF_CatalogoDeTablas.spec
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: EDFCatalogoTablas.app
-          path: dist/EDFCatalogoTablas.app
+          name: EDF_CatalogoDeTablas.app
+          path: dist/EDF_CatalogoDeTablas.app
