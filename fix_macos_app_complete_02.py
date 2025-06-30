@@ -1,3 +1,10 @@
+# Script: fix_macos_app_complete_02.py
+# Descripción: [Explica brevemente qué hace el script]
+# Uso: python3 fix_macos_app_complete_02.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: [Tu nombre o equipo] - 2025-06-30
+
 import os
 import sys
 import logging
