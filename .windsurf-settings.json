@@ -11,5 +11,8 @@
     "editor.quickSuggestions": false,
     "editor.snippetSuggestions": "none",
     "editor.suggest.showWords": false
-  }
+  },
+  "windsurf.ai.terminal.showFullOutput": true,
+  "windsurf.ai.session.preserveCommands": true,
+  "windsurf.ai.debug.enabled": true
 }

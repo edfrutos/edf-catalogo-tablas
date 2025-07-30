@@ -1,5 +1,5 @@
 # Script: tables_helper.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: [Módulo auxiliar para garantizar el acceso a la ruta /tables/Este módulo proporciona rutas alternativas y funciones de manejo para solucionar problemas con la visualización de tablas.]
 # Uso: python3 tables_helper.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
@@ -18,6 +18,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime
 import certifi  # Añadido para certificados SSL
+from app.database import get_mongo_db
 
 # Configuración de logging
 logger = logging.getLogger(__name__)
@@ -25,26 +26,7 @@ logger = logging.getLogger(__name__)
 # Crear blueprint
 tables_helper_bp = Blueprint('tables_helper', __name__, url_prefix='/tables_helper')
 
-# Conexión a MongoDB
-def get_db():
-    try:
-        # Intentar conexión a MongoDB Atlas primero
-        MONGO_URI = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
-        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
-        client.server_info()  # Verificar conexión
-        logger.info("✅ Conexión a MongoDB Atlas exitosa")
-        return client.get_database()
-    except Exception as e:
-        try:
-            # Si falla, intentar con MongoDB local
-            MONGO_URI = "mongodb://localhost:27017/edefrutos"
-            client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
-            client.server_info()
-            logger.info("✅ Conexión a MongoDB local exitosa")
-            return client.get_database()
-        except Exception as e2:
-            logger.error(f"❌ Error al conectar a MongoDB: {e2}")
-            return None
+# Usar la función centralizada de conexión a MongoDB
 
 # Ruta auxiliar para listar tablas de forma alternativa
 @tables_helper_bp.route('/')
@@ -59,7 +41,7 @@ def list_tables():
         logger.info(f"Acceso a lista de tablas por: {email} (ID: {user_id}, Rol: {role})")
         
         # Obtener la base de datos
-        db = get_db()
+        db = get_mongo_db()
         if not db:
             return render_template('admin/tables_emergency.html', 
                                 message="Error de conexión a MongoDB", 

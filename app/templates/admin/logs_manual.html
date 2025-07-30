@@ -1,25 +1,32 @@
 {% extends 'admin/base.html' %}
 {% block content %}
 <div class="container mt-5">
-  <h2>Gestión de Logs</h2>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Gestión de Logs</h2>
+    <div>
+      <button class="btn btn-outline-primary" id="refreshLogsList" onclick="actualizarListaLogs()" title="Actualizar lista de logs">
+        <i class="bi bi-arrow-clockwise"></i> Actualizar Lista
+      </button>
+      <div class="form-check form-switch d-inline-block ms-3">
+        <input class="form-check-input" type="checkbox" id="autoRefreshSwitch" checked>
+        <label class="form-check-label" for="autoRefreshSwitch">
+          Actualización automática (30s)
+        </label>
+      </div>
+    </div>
+  </div>
+  
   <form id="log-select-form" class="mb-3">
     <label for="logfile" class="form-label">Selecciona un archivo de log:</label>
-    <select id="logfile" name="logfile" class="form-select" onchange="actualizarLogSeleccionado()">
-      <option value="">-- Selecciona un log --</option>
-      <option value="flask_debug.log">flask_debug.log</option>
-      <option value="app.log">app.log</option>
-      <option value="consola_terminal.log">consola_terminal.log</option>
-      <option value="gunicorn_error.log">gunicorn_error.log</option>
-      <option value="app_catalogo_completo_final.log">app_catalogo_completo_final.log</option>
-      <option value="app_catalogo_routes.log">app_catalogo_routes.log</option>
-      <option value="app_debug.log">app_debug.log</option>
-      <option value="flask_run_test.log">flask_run_test.log</option>
-      <option value="flask_test.log">flask_test.log</option>
-      <option value="startup.log">startup.log</option>
-      <option value="wsgi.log">wsgi.log</option>
-      <!-- Agrega más opciones según los logs existentes -->
-    </select>
+    <div class="input-group">
+      <select id="logfile" name="logfile" class="form-select" onchange="actualizarLogSeleccionado()">
+        <option value="">-- Selecciona un log --</option>
+        <!-- Las opciones se cargarán dinámicamente -->
+      </select>
+      <span class="input-group-text" id="logFileCount">Cargando...</span>
+    </div>
   </form>
+  
   <div class="card mb-3">
     <div class="card-header">
       <h5 class="mb-0">Filtros de visualización</h5>
@@ -74,7 +81,23 @@
     </div>
   </div>
   <div id="filter-info" class="alert alert-info d-none"></div>
-  <pre id="log-output" style="background:#222;color:#0f0;padding:1em;height:400px;overflow:auto"></pre>
+  
+  <div class="card mb-3">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Contenido del Log</h5>
+      <div>
+        <button class="btn btn-sm btn-outline-light" id="copyLogsBtn" onclick="copyLogsToClipboard()" title="Copiar al portapapeles">
+          <i class="bi bi-clipboard"></i> Copiar al portapapeles
+        </button>
+        <button class="btn btn-sm btn-outline-light" onclick="descargarLog()" title="Descargar log">
+          <i class="bi bi-download"></i> Descargar
+        </button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <pre id="log-output" style="background:#222;color:#0f0;padding:1em;height:70vh;overflow:auto;margin:0"></pre>
+    </div>
+  </div>
 </div>
 
 <!-- Modal para truncar log -->
@@ -302,16 +325,192 @@ function verTamano() {
       document.getElementById('log-output').textContent = `Tamaño: ${d.size} bytes\nRotaciones: ${d.backups}`;
     });
 }
-// Inicializar al cargar la página
+
+function copyLogsToClipboard() {
+  const logOutput = document.getElementById('log-output');
+  const textToCopy = logOutput.textContent;
+  
+  navigator.clipboard.writeText(textToCopy)
+    .then(() => {
+      // Mostrar mensaje de éxito
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-success alert-dismissible fade show';
+      alertDiv.innerHTML = `
+        <strong>¡Copiado!</strong> El contenido del log ha sido copiado al portapapeles.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      `;
+      
+      // Insertar alerta antes del div de filtros
+      const filterInfo = document.getElementById('filter-info');
+      filterInfo.parentNode.insertBefore(alertDiv, filterInfo);
+      
+      // Auto-cerrar después de 3 segundos
+      setTimeout(() => {
+        alertDiv.remove();
+      }, 3000);
+    })
+    .catch(err => {
+      console.error('Error al copiar al portapapeles:', err);
+      alert('No se pudo copiar al portapapeles. Error: ' + err);
+    });
+}
+
+// Variables para la actualización automática
+let autoRefreshInterval = null;
+let logFilesList = [];
+
+// Función para actualizar la lista de logs
+function actualizarListaLogs() {
+  const refreshBtn = document.getElementById('refreshLogsList');
+  const logFileCount = document.getElementById('logFileCount');
+  
+  // Mostrar estado de carga
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Actualizando...';
+  logFileCount.textContent = 'Actualizando...';
+  
+  fetch('/admin/logs/list')
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        logFilesList = data.files;
+        actualizarSelectLogs(data.files);
+        logFileCount.textContent = `${data.files.length} archivos`;
+        
+        // Mostrar mensaje de éxito temporal
+        mostrarMensajeTemporal('Lista de logs actualizada correctamente', 'success');
+      } else {
+        throw new Error('Error en la respuesta del servidor');
+      }
+    })
+    .catch(error => {
+      console.error('Error al actualizar lista de logs:', error);
+      logFileCount.textContent = 'Error al cargar';
+      mostrarMensajeTemporal('Error al actualizar la lista de logs', 'danger');
+    })
+    .finally(() => {
+      // Restaurar botón
+      refreshBtn.disabled = false;
+      refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Actualizar Lista';
+    });
+}
+
+// Función para actualizar el select con los archivos de log
+function actualizarSelectLogs(files) {
+  const select = document.getElementById('logfile');
+  const selectedValue = select.value; // Preservar selección actual
+  
+  // Limpiar opciones existentes
+  select.innerHTML = '<option value="">-- Selecciona un log --</option>';
+  
+  // Añadir nuevas opciones
+  files.forEach(file => {
+    const option = document.createElement('option');
+    option.value = file;
+    option.textContent = file;
+    select.appendChild(option);
+  });
+  
+  // Restaurar selección si el archivo aún existe
+  if (selectedValue && files.includes(selectedValue)) {
+    select.value = selectedValue;
+  }
+}
+
+// Función para mostrar mensajes temporales
+function mostrarMensajeTemporal(mensaje, tipo) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+  alertDiv.innerHTML = `
+    ${mensaje}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+  `;
+  
+  // Insertar al inicio del contenedor
+  const container = document.querySelector('.container');
+  container.insertBefore(alertDiv, container.firstChild);
+  
+  // Auto-cerrar después de 3 segundos
+  setTimeout(() => {
+    if (alertDiv.parentNode) {
+      alertDiv.remove();
+    }
+  }, 3000);
+}
+
+// Función para configurar la actualización automática
+function configurarActualizacionAutomatica() {
+  const autoRefreshSwitch = document.getElementById('autoRefreshSwitch');
+  
+  function iniciarActualizacionAutomatica() {
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+    }
+    
+    autoRefreshInterval = setInterval(() => {
+      if (autoRefreshSwitch.checked) {
+        actualizarListaLogs();
+      }
+    }, 30000); // 30 segundos
+  }
+  
+  function detenerActualizacionAutomatica() {
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+    }
+  }
+  
+  // Event listener para el switch
+  autoRefreshSwitch.addEventListener('change', function() {
+    if (this.checked) {
+      iniciarActualizacionAutomatica();
+      mostrarMensajeTemporal('Actualización automática activada (cada 30 segundos)', 'info');
+    } else {
+      detenerActualizacionAutomatica();
+      mostrarMensajeTemporal('Actualización automática desactivada', 'warning');
+    }
+  });
+  
+  // Iniciar automáticamente si está activado
+  if (autoRefreshSwitch.checked) {
+    iniciarActualizacionAutomatica();
+  }
+}
+
+// Añadir estilos CSS para la animación de rotación
+const style = document.createElement('style');
+style.textContent = `
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);
+
+// Modificar la función window.onload existente
 window.onload = function() {
-  actualizarLogSeleccionado();
+  // Cargar lista inicial de logs
+  actualizarListaLogs();
+  
+  // Configurar actualización automática
+  configurarActualizacionAutomatica();
   
   // Establecer fecha por defecto (hoy) en el campo de fecha hasta
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('dateTo').value = today;
   
-  // Cargar los logs iniciales
-  verUltimos(50);
+  // Cargar los logs iniciales después de un breve delay
+  setTimeout(() => {
+    if (logSeleccionado) {
+      verUltimos(50);
+    }
+  }, 1000);
+  
   updateFilterInfo();
   
   // Permitir usar Enter en el campo de búsqueda
@@ -321,5 +520,12 @@ window.onload = function() {
     }
   });
 };
+
+// Limpiar interval al salir de la página
+window.addEventListener('beforeunload', function() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+  }
+});
 </script>
-{% endblock %} 
+{% endblock %}

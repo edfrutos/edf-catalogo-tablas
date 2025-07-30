@@ -157,7 +157,7 @@ function mostrarImagenModal(imagenUrl) {
                             </div>
                             <img id="imagenModalSrc" src="" alt="Imagen" 
                                  onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                 onerror="this.src='/static/img/image-error.png'; this.style.opacity='1'; this.previousElementSibling.style.display='none';">
+                                 onerror="this.src='/static/img/image-error.svg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -189,7 +189,7 @@ function mostrarImagenModal(imagenUrl) {
 // Función para manejar errores de carga de imágenes
 document.addEventListener('DOMContentLoaded', function() {
     // Crear una imagen de error por defecto si no existe
-    const errorImgPath = '/static/img/image-error.png';
+    const errorImgPath = "/static/img/image-error.svg";
     fetch(errorImgPath)
         .catch(() => {
             // Si la imagen de error no existe, crear un canvas con un icono de error

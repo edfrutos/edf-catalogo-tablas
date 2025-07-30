@@ -7,27 +7,27 @@
 
 import os
 import boto3
-import certifi
 from botocore.exceptions import ClientError
 from flask import current_app as app
 
 # Configuración de AWS
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_REGION = os.getenv('AWS_REGION')
-S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 
 # Inicializar cliente de S3
 s3_client = boto3.client(
-    's3',
+    "s3",
     aws_access_key_id=AWS_ACCESS_KEY_ID,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name=AWS_REGION
+    region_name=AWS_REGION,
 )
 
 # -------------------------------
 # FUNCIONES PARA AWS S3
 # -------------------------------
+
 
 def upload_file_to_s3(file_path, object_name=None, delete_local=True):
     """Sube un archivo a AWS S3.
@@ -55,6 +55,7 @@ def upload_file_to_s3(file_path, object_name=None, delete_local=True):
         app.logger.error(f"Error al subir archivo a S3: {e}")
         return None
 
+
 def delete_file_from_s3(object_name):
     """Elimina un archivo de S3."""
     try:
@@ -63,6 +64,7 @@ def delete_file_from_s3(object_name):
     except ClientError as e:
         app.logger.error(f"Error al eliminar archivo de S3: {e}")
         return False
+
 
 def get_s3_url(object_name, expiration=3600):
     """Genera una URL prefirmada para un objeto en S3 (acceso temporal).
@@ -76,9 +78,9 @@ def get_s3_url(object_name, expiration=3600):
     """
     try:
         url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': S3_BUCKET_NAME, 'Key': object_name},
-            ExpiresIn=expiration
+            "get_object",
+            Params={"Bucket": S3_BUCKET_NAME, "Key": object_name},
+            ExpiresIn=expiration,
         )
         return url
     except ClientError as e:

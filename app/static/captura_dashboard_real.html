@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura Dashboard Real - Elementos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .found { background-color: #d4edda; border-color: #c3e6cb; }
+        .not-found { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .code { background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0; }
+        h1, h2, h3 { color: #333; }
+        .timestamp { color: #666; font-size: 0.9em; }
+        .url-info { background: #e9ecef; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .element-details { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Captura Dashboard Real - Verificación de Elementos</h1>
+        <p><strong>Propósito:</strong> Capturar el estado real del dashboard de mantenimiento</p>
+        
+        <div class="section info">
+            <h3>📊 INFORMACIÓN DE CAPTURA</h3>
+            <div class="timestamp">⏰ Timestamp: <span id="timestamp"></span></div>
+            <div class="url-info">🌐 URL actual: <span id="current-url"></span></div>
+            <div>🎯 jQuery versión: <span id="jquery-version"></span></div>
+        </div>
+
+        <div class="section" id="verification-section">
+            <h3>✅ VERIFICACIÓN DE ELEMENTOS PRINCIPALES:</h3>
+            <div id="element-checks"></div>
+        </div>
+
+        <div class="section" id="backup-section">
+            <h3>💾 SECCIÓN DE BACKUP:</h3>
+            <div id="backup-details"></div>
+        </div>
+
+        <div class="section" id="modal-section">
+            <h3>🪟 MODALES DISPONIBLES:</h3>
+            <div id="modal-details"></div>
+        </div>
+
+        <div class="section" id="dom-structure">
+            <h3>🏗️ ESTRUCTURA DEL DOM:</h3>
+            <div id="dom-info"></div>
+        </div>
+
+        <div class="section" id="javascript-events">
+            <h3>⚡ EVENTOS JAVASCRIPT:</h3>
+            <div id="js-events"></div>
+        </div>
+
+        <div class="section" id="console-logs">
+            <h3>📝 LOGS DE CONSOLA:</h3>
+            <div id="console-output"></div>
+        </div>
+
+        <div class="section info">
+            <h3>✅ CAPTURA COMPLETADA</h3>
+            <div id="completion-status">🎯 Verificación en progreso...</div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Información básica
+            $('#timestamp').text(new Date().toLocaleString());
+            $('#current-url').text(window.location.href);
+            $('#jquery-version').text($.fn.jquery || 'No disponible');
+            
+            // Elementos a verificar
+            const elementsToCheck = [
+                '#restoreDriveBtn',
+                '#restoreDriveModal', 
+                '#backupBtn',
+                '#restoreBtn',
+                '#backupSection',
+                '.backup-section',
+                '[data-bs-target="#restoreDriveModal"]'
+            ];
+            
+            let elementChecks = '';
+            elementsToCheck.forEach(selector => {
+                const element = $(selector);
+                const exists = element.length > 0;
+                const visible = exists ? element.is(':visible') : false;
+                const classes = exists ? element.attr('class') || 'sin-clases' : 'N/A';
+                const id = exists ? element.attr('id') || 'sin-id' : 'N/A';
+                
+                elementChecks += `
+                    <div class="element-details ${exists ? 'found' : 'not-found'}">
+                        <strong>${selector}:</strong> ${exists ? '✅ ENCONTRADO' : '❌ NO ENCONTRADO'}<br>
+                        ${exists ? `
+                            • Visible: ${visible ? '✅ SÍ' : '❌ NO'}<br>
+                            • ID: ${id}<br>
+                            • Clases: ${classes}<br>
+                            • Texto: ${element.text().substring(0, 50)}...<br>
+                            • HTML: ${element.prop('outerHTML').substring(0, 100)}...
+                        ` : ''}
+                    </div>
+                `;
+            });
+            $('#element-checks').html(elementChecks);
+            
+            // Detalles de la sección de backup
+            const backupSection = $('#backupSection, .backup-section');
+            let backupDetails = '';
+            if (backupSection.length > 0) {
+                backupDetails = `
+                    <div class="found">
+                        ✅ Sección de backup encontrada<br>
+                        • Selector: ${backupSection.selector}<br>
+                        • Elementos hijos: ${backupSection.children().length}<br>
+                        • Botones dentro: ${backupSection.find('button').length}<br>
+                        • Enlaces dentro: ${backupSection.find('a').length}<br>
+                    </div>
+                `;
+                
+                // Listar todos los botones en la sección
+                backupSection.find('button, a').each(function(index) {
+                    const btn = $(this);
+                    backupDetails += `
+                        <div class="element-details">
+                            <strong>Botón ${index + 1}:</strong><br>
+                            • ID: ${btn.attr('id') || 'sin-id'}<br>
+                            • Clases: ${btn.attr('class') || 'sin-clases'}<br>
+                            • Texto: ${btn.text().trim()}<br>
+                            • data-bs-target: ${btn.attr('data-bs-target') || 'N/A'}<br>
+                        </div>
+                    `;
+                });
+            } else {
+                backupDetails = '<div class="not-found">❌ No se encontró sección de backup</div>';
+            }
+            $('#backup-details').html(backupDetails);
+            
+            // Verificar modales
+            const modals = $('[id*="Modal"], .modal');
+            let modalDetails = '';
+            if (modals.length > 0) {
+                modalDetails = `<div class="found">✅ Se encontraron ${modals.length} modales</div>`;
+                modals.each(function(index) {
+                    const modal = $(this);
+                    modalDetails += `
+                        <div class="element-details">
+                            <strong>Modal ${index + 1}:</strong><br>
+                            • ID: ${modal.attr('id') || 'sin-id'}<br>
+                            • Clases: ${modal.attr('class') || 'sin-clases'}<br>
+                            • Título: ${modal.find('.modal-title').text() || 'Sin título'}<br>
+                        </div>
+                    `;
+                });
+            } else {
+                modalDetails = '<div class="not-found">❌ No se encontraron modales</div>';
+            }
+            $('#modal-details').html(modalDetails);
+            
+            // Información del DOM
+            const domInfo = `
+                <div class="info">
+                    • Total de elementos en el DOM: ${$('*').length}<br>
+                    • Total de botones: ${$('button').length}<br>
+                    • Total de modales: ${$('.modal').length}<br>
+                    • Elementos con ID que contiene 'backup': ${$('[id*="backup"]').length}<br>
+                    • Elementos con ID que contiene 'restore': ${$('[id*="restore"]').length}<br>
+                    • Elementos con ID que contiene 'drive': ${$('[id*="drive"]').length}<br>
+                </div>
+            `;
+            $('#dom-info').html(domInfo);
+            
+            // Verificar eventos JavaScript
+            let jsEvents = '';
+            try {
+                // Verificar si hay eventos en los elementos principales
+                const restoreDriveBtn = $('#restoreDriveBtn');
+                if (restoreDriveBtn.length > 0) {
+                    const events = $._data(restoreDriveBtn[0], 'events');
+                    jsEvents += `
+                        <div class="element-details">
+                            <strong>#restoreDriveBtn eventos:</strong><br>
+                            ${events ? Object.keys(events).join(', ') : 'Sin eventos registrados'}
+                        </div>
+                    `;
+                }
+                
+                // Verificar funciones globales relacionadas
+                const globalFunctions = [];
+                if (typeof window.initializeFoundElements === 'function') globalFunctions.push('initializeFoundElements');
+                if (typeof window.waitForButtons === 'function') globalFunctions.push('waitForButtons');
+                if (typeof window.showRestoreDriveModal === 'function') globalFunctions.push('showRestoreDriveModal');
+                
+                jsEvents += `
+                    <div class="info">
+                        <strong>Funciones globales disponibles:</strong><br>
+                        ${globalFunctions.length > 0 ? globalFunctions.join(', ') : 'Ninguna función específica encontrada'}
+                    </div>
+                `;
+            } catch (e) {
+                jsEvents = `<div class="warning">⚠️ Error al verificar eventos: ${e.message}</div>`;
+            }
+            $('#js-events').html(jsEvents);
+            
+            // Capturar logs de consola (simulado)
+            let consoleOutput = `
+                <div class="info">
+                    📝 Para ver logs reales de consola, abrir DevTools (F12)<br>
+                    🔍 Buscar mensajes relacionados con: 'restoreDriveBtn', 'restoreDriveModal', 'waitForButtons'
+                </div>
+            `;
+            $('#console-output').html(consoleOutput);
+            
+            // Marcar como completado
+            $('#completion-status').html('✅ Captura completada - ' + new Date().toLocaleString());
+            
+            // Log en consola para debugging
+            console.log('=== CAPTURA DASHBOARD REAL ===');
+            console.log('URL:', window.location.href);
+            console.log('Elementos encontrados:');
+            elementsToCheck.forEach(selector => {
+                const element = $(selector);
+                console.log(`${selector}:`, element.length > 0 ? 'ENCONTRADO' : 'NO ENCONTRADO', element);
+            });
+            console.log('=== FIN CAPTURA ===');
+        });
+    </script>
+</body>
+</html>

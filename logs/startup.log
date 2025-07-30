@@ -1,6 +1,0 @@
-Tue 06 May 2025 07:10:16 PM CEST - Iniciando Gunicorn con wsgi:flask_app
-Tue 06 May 2025 07:13:35 PM CEST - Iniciando Gunicorn con wsgi:flask_app
-Tue 06 May 2025 07:14:51 PM CEST - Iniciando Gunicorn con wsgi:flask_app
-Tue 13 May 2025 01:49:52 PM CEST - Iniciando Gunicorn con wsgi:app (compatible con systemd)
-Wed 14 May 2025 06:11:48 PM CEST - Iniciando Gunicorn con wsgi:app (compatible con systemd)
-Wed 14 May 2025 06:14:55 PM CEST - Iniciando Gunicorn con wsgi:app (compatible con systemd)

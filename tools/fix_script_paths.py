@@ -40,7 +40,7 @@ def backup_file(file_path):
     return False
 
 def create_script_symlinks():
-    """Crea enlaces simbólicos para los scripts en subdirectorios"""
+    """Crea enlaces simbólicos para los scripts en subdirectorios con nombres únicos"""
     print("Creando enlaces simbólicos para scripts en subdirectorios...")
     
     # Buscar scripts en subdirectorios de tools
@@ -48,35 +48,31 @@ def create_script_symlinks():
     for root, dirs, files in os.walk(TOOLS_DIR):
         for file in files:
             if file.endswith('.sh') or file.endswith('.py'):
-                # Obtener la ruta completa del script
                 script_path = os.path.join(root, file)
-                # Obtener la ruta relativa desde TOOLS_DIR
                 rel_path = os.path.relpath(script_path, TOOLS_DIR)
                 
                 # Solo procesar scripts en subdirectorios
                 if '/' in rel_path:
-                    scripts_found.append((script_path, rel_path, file))
+                    # Crear nombre único basado en el subdirectorio
+                    subdir = rel_path.split('/')[0]
+                    unique_name = f"{subdir}_{file}"
+                    scripts_found.append((script_path, rel_path, unique_name))
     
-    # Crear enlaces simbólicos
-    for script_path, rel_path, file in scripts_found:
-        # Ruta del enlace simbólico en el directorio raíz de tools
-        symlink_path = os.path.join(TOOLS_DIR, file)
+    # Crear enlaces simbólicos con nombres únicos
+    for script_path, rel_path, unique_name in scripts_found:
+        symlink_path = os.path.join(TOOLS_DIR, unique_name)
         
-        # Verificar si ya existe un archivo con ese nombre
-        if os.path.exists(symlink_path) and not os.path.islink(symlink_path):
-            print(f"  ⚠️ Ya existe un archivo con el nombre {file}. No se creará enlace.")
-            continue
-        
-        # Eliminar enlace simbólico existente si lo hay
+        # Eliminar enlace existente si lo hay
         if os.path.islink(symlink_path):
             os.unlink(symlink_path)
         
-        # Crear enlace simbólico
-        try:
-            os.symlink(script_path, symlink_path)
-            print(f"  ✅ Enlace creado: {symlink_path} -> {script_path}")
-        except Exception as e:
-            print(f"  ❌ Error al crear enlace: {str(e)}")
+        # Crear enlace simbólico solo si no existe un archivo regular
+        if not os.path.exists(symlink_path):
+            try:
+                os.symlink(script_path, symlink_path)
+                print(f"  ✅ Enlace creado: {symlink_path} -> {script_path}")
+            except Exception as e:
+                print(f"  ❌ Error al crear enlace: {str(e)}")
     
     return len(scripts_found)
 
@@ -244,10 +240,10 @@ def main():
     print_header("SOLUCIÓN DE PROBLEMAS DE RUTAS DE SCRIPTS")
     print(f"Fecha y hora: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Crear enlaces simbólicos para scripts en subdirectorios
-    print_header("CREANDO ENLACES SIMBÓLICOS")
-    num_scripts = create_script_symlinks()
-    print(f"Se procesaron {num_scripts} scripts")
+    # COMENTADO: Crear enlaces simbólicos para scripts en subdirectorios
+    # print_header("CREANDO ENLACES SIMBÓLICOS")
+    # num_scripts = create_script_symlinks()
+    # print(f"Se procesaron {num_scripts} scripts")
     
     # Mejorar la función get_script_path
     print_header("MEJORANDO FUNCIÓN GET_SCRIPT_PATH")

@@ -1,0 +1,120 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+
+[tool.pycodestyle]
+max-line-length = 88
+ignore = ["E203", "W503", "F841"]
+
+[tool.pylint."messages control"]
+disable = ["no-member"]
+
+[tool.basedpyright]
+# Configuración específica para basedpyright (fork de pyright)
+reportAttributeAccessIssue = false
+reportGeneralTypeIssues = false
+reportImplicitRelativeImport = false
+reportOptionalMemberAccess = false
+reportOptionalSubscript = false
+reportUnboundVariable = false
+reportMissingImports = false
+
+# Especificar el entorno virtual
+venvPath = "."
+venv = "venv310"
+
+# Configuración de rutas
+pythonPath = "./venv310/bin/python"
+
+# Type stubs y tipos
+reportMissingTypeStubs = false
+reportUnknownParameterType = false
+reportPartiallyUnknownParameterType = false
+reportPartiallyUnknownMemberType = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportMissingParameterType = false
+
+# Variables y parámetros
+reportPossiblyUnboundVariable = false
+reportUnusedParameter = false
+reportUnusedVariable = false
+reportUnusedImport = false
+reportUnusedCallResult = false
+
+# PyQt6 specific - Suprimir warnings para archivos de interfaz gráfica
+reportUnannotatedClassAttribute = false
+reportImplicitOverride = false
+
+# Otros
+reportUnknownLambdaType = false
+reportCallIssue = false
+reportArgumentType = false
+reportAny = false
+reportUnnecessaryIsInstance = false
+reportUnreachable = false
+reportIndexIssue = false
+reportOperatorIssue = false
+reportImplicitStringConcatenation = false
+reportDeprecated = false
+reportPrivateUsage = false
+reportUntypedNamedTuple = false
+reportImportCycles = false
+reportUntypedFunctionDecorator = false
+reportExplicitAny = false
+reportUnusedFunction = false
+
+[tool.mypy]
+ignore_missing_imports = true
+disable_error_code = ["attr-defined", "import-untyped"]
+
+[tool.ruff.lint]
+ignore-init-module-imports = false
+# Ignorar variables no utilizadas - común en funciones que ejecutamos por efectos secundarios
+ignore = ["F841", "F821", "F401", "E402", "E722"]
+
+[tool.cspell]
+# Palabras específicas del proyecto
+words = [
+    "catalogodetablas",
+    "catalogojoyero",
+    "edefrutos",
+    "descomentar",
+    "Descomentar",
+    "GARANTÍAS"
+]

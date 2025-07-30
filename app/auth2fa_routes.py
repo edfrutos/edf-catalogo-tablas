@@ -1,59 +1,58 @@
 # app/auth2fa_routes.py
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 import pyotp
-import qrcode
+import qrcode  # type: ignore
 import io
 from flask import send_file
-from app.models import users_collection
+from app.models import users_collection  # type: ignore
 from bson.objectid import ObjectId
-from app.utils import check_authenticated
-from app.models import (
-    get_users_collection, 
-    get_resets_collection, 
-    find_user_by_email_or_name,
-    find_reset_token,
-    update_user_password,
-    mark_token_as_used
-)
 
-auth2fa_bp = Blueprint('auth2fa', __name__, url_prefix='/2fa')
+auth2fa_bp = Blueprint("auth2fa", __name__, url_prefix="/2fa")
 
 # -------------------------------------------
 # CONFIGURACIÓN DE 2FA
 # -------------------------------------------
 
+
 @auth2fa_bp.route("/setup", methods=["GET", "POST"])
 def setup_2fa():
     if "usuario_id" not in session:
         return redirect(url_for("auth.login"))
-    
+
     usuario = users_collection.find_one({"_id": ObjectId(session["usuario_id"])})
     if not usuario:
         flash("Usuario no encontrado.", "error")
         return redirect(url_for("main.home"))
-    
+
     if request.method == "POST":
         token = request.form.get("token")
         secret = usuario.get("2fa_secret")
         totp = pyotp.TOTP(secret)
-        
-        if totp.verify(token):
-            users_collection.update_one({"_id": usuario["_id"]}, {"$set": {"2fa_enabled": True}})
+
+        if token and totp.verify(token):
+            users_collection.update_one(
+                {"_id": usuario["_id"]}, {"$set": {"2fa_enabled": True}}
+            )
             flash("Autenticación 2FA activada exitosamente.", "success")
             return redirect(url_for("main.home"))
         else:
             flash("Código inválido. Inténtalo de nuevo.", "error")
-    
+
     # Si el usuario ya tiene secret, usarlo; sino, generarlo
     if "2fa_secret" not in usuario:
         secret = pyotp.random_base32()
-        users_collection.update_one({"_id": usuario["_id"]}, {"$set": {"2fa_secret": secret}})
+        users_collection.update_one(
+            {"_id": usuario["_id"]}, {"$set": {"2fa_secret": secret}}
+        )
     else:
         secret = usuario["2fa_secret"]
 
     # QR para Google Authenticator
-    otp_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=usuario["email"], issuer_name="EDF Catalogo Tablas")
+    otp_uri = pyotp.totp.TOTP(secret).provisioning_uri(
+        name=usuario["email"], issuer_name="EDF Catalogo Tablas"
+    )
     return render_template("setup_2fa.html", otp_uri=otp_uri, secret=secret)
+
 
 @auth2fa_bp.route("/qrcode")
 def qrcode_2fa():
@@ -65,18 +64,22 @@ def qrcode_2fa():
         return "No autorizado", 403
 
     secret = usuario["2fa_secret"]
-    otp_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=usuario["email"], issuer_name="EDF Catalogo Tablas")
+    otp_uri = pyotp.totp.TOTP(secret).provisioning_uri(
+        name=usuario["email"], issuer_name="EDF Catalogo Tablas"
+    )
 
     img = qrcode.make(otp_uri)
     buf = io.BytesIO()
     img.save(buf)
     buf.seek(0)
 
-    return send_file(buf, mimetype='image/png')
+    return send_file(buf, mimetype="image/png")
+
 
 # -------------------------------------------
 # VERIFICACIÓN 2FA EN LOGIN
 # -------------------------------------------
+
 
 @auth2fa_bp.route("/verify", methods=["GET", "POST"])
 def verify_2fa():
@@ -90,9 +93,9 @@ def verify_2fa():
         if not usuario or "2fa_secret" not in usuario:
             flash("Error interno.", "error")
             return redirect(url_for("auth.login"))
-        
+
         totp = pyotp.TOTP(usuario["2fa_secret"])
-        if totp.verify(token):
+        if token and totp.verify(token):
             session["usuario"] = usuario["nombre"]
             session["usuario_id"] = str(usuario["_id"])
             session.pop("2fa_user_id", None)
@@ -100,6 +103,5 @@ def verify_2fa():
             return redirect(url_for("main.home"))
         else:
             flash("Código incorrecto. Intenta nuevamente.", "error")
-    
-    return render_template("verificar_2fa.html")
 
+    return render_template("verificar_2fa.html")

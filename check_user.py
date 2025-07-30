@@ -1,66 +1,82 @@
-# Script: check_user.py
-# Descripción: [Explica brevemente qué hace el script]
-# Uso: python3 check_user.py [opciones]
-# Requiere: [librerías externas, si aplica]
-# Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-06-09
-
+#!/usr/bin/env python3
+"""
+Script para verificar los datos del usuario y permisos de administrador
+"""
 import os
-from dotenv import load_dotenv
-from pymongo import MongoClient
-from bson import ObjectId
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Cargar variables de entorno
-load_dotenv()
+from app.database import initialize_db, get_users_collection
 
-def check_user(email):
-    # Obtener la URI de conexión de MongoDB
-    mongo_uri = os.getenv('MONGO_URI')
-    if not mongo_uri:
-        print("Error: MONGO_URI no está configurada en el archivo .env")
+def check_user_permissions():
+    print("Iniciando verificación de usuario...")
+    
+    # Inicializar conexión a la base de datos
+    try:
+        # Inicializar conexión sin app Flask
+        print("Inicializando conexión a la base de datos...")
+        if initialize_db():
+            print("✅ Conexión a MongoDB establecida")
+        else:
+            print("❌ Error conectando a MongoDB")
+            return
+    except Exception as e:
+        print(f"❌ Error conectando a MongoDB: {e}")
         return
     
+    # Obtener colección de usuarios
     try:
-        # Conectar a MongoDB
-        client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
-        db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
-        db = client[db_name]
-        
-        # Buscar el usuario por email
-        user = db.users.find_one({"$or": [
-            {"email": email},
-            {"username": email},
-            {"nombre": email}
-        ]})
-        
-        if not user:
-            print(f"Usuario '{email}' no encontrado en la base de datos.")
+        users_collection = get_users_collection()
+        if users_collection is None:
+            print("❌ No se pudo obtener la colección de usuarios")
             return
-            
-        print("\n=== INFORMACIÓN DEL USUARIO ===")
-        print(f"ID: {user.get('_id')}")
-        print(f"Email: {user.get('email')}")
-        print(f"Nombre: {user.get('nombre')}")
-        print(f"Usuario: {user.get('username')}")
-        print(f"Rol: {user.get('role', 'user')}")
-        print(f"Cuenta activa: {not user.get('inactive', False)}")
-        print(f"Cuenta bloqueada: {bool(user.get('locked_until'))}")
-        print(f"Debe cambiar contraseña: {user.get('must_change_password', False)}")
-        print(f"Contraseña: {'[PROTEGIDA]' if user.get('password') else '[NO DEFINIDA]'}")
         
-        # Verificar si la cuenta está bloqueada
-        if user.get('locked_until'):
-            print("\n¡ATENCIÓN! La cuenta está bloqueada hasta:", user['locked_until'])
+        # Buscar usuario edefrutos
+        user = users_collection.find_one({"username": "edefrutos"})
+        if not user:
+            print("❌ Usuario 'edefrutos' no encontrado")
+            return
         
-        # Verificar si la contraseña está en formato de reseteo
-        if user.get('password') == 'RESET_REQUIRED':
-            print("\n¡ATENCIÓN! El usuario debe restablecer su contraseña.")
+        print(f"✅ Usuario encontrado: {user.get('username')}")
+        print(f"   Email: {user.get('email')}")
+        print(f"   Role: {user.get('role')}")
+        print(f"   Is Active: {user.get('is_active')}")
+        print(f"   Is Admin: {user.get('is_admin')}")
+        
+        # Verificar si necesita actualización
+        if user.get('role') == 'admin' and not user.get('is_admin'):
+            print("\n⚠️  El usuario tiene role='admin' pero is_admin=False")
+            print("   Actualizando is_admin=True...")
             
+            result = users_collection.update_one(
+                {"username": "edefrutos"},
+                {"$set": {"is_admin": True}}
+            )
+            
+            if result.modified_count > 0:
+                print("✅ Usuario actualizado correctamente")
+            else:
+                print("❌ Error actualizando usuario")
+        
+        elif user.get('is_admin'):
+            print("✅ Usuario tiene permisos de administrador correctos")
+        
+        else:
+            print("❌ Usuario no tiene permisos de administrador")
+            print("   Actualizando permisos de administrador...")
+            
+            result = users_collection.update_one(
+                {"username": "edefrutos"},
+                {"$set": {"is_admin": True, "role": "admin"}}
+            )
+            
+            if result.modified_count > 0:
+                print("✅ Permisos de administrador otorgados")
+            else:
+                print("❌ Error otorgando permisos de administrador")
+        
     except Exception as e:
-        print(f"Error al conectar con la base de datos: {str(e)}")
-    finally:
-        if 'client' in locals():
-            client.close()
+        print(f"❌ Error accediendo a la base de datos: {e}")
 
 if __name__ == "__main__":
-    check_user('edefrutos')
+    check_user_permissions()

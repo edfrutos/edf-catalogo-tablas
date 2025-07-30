@@ -62,10 +62,96 @@ def get_resets_collection():
         resets_collection = db.password_resets
     return resets_collection
 
-def find_user_by_email_or_email(email):
-    """Busca un usuario por su email."""
-    users = get_users_collection()
-    return users.find_one({"$or": [{"email": email}, {"email": email}]})
+def find_user_by_email_or_email(identifier):
+    """Busca un usuario por email, nombre de usuario o nombre real (insensible a mayúsculas y espacios)"""
+    logger.info(f"[find_user_by_email_or_email] INICIO - Buscando: '{identifier}'")
+    
+    if not identifier:
+        logger.warning("[find_user_by_email_or_email] Identificador vacío")
+        return None
+
+    # Normalizar el identificador
+    identifier = identifier.lower().strip()
+    logger.info(f"[find_user_by_email_or_email] Identificador normalizado: '{identifier}'")
+    
+    collection = get_users_collection()
+    logger.info(f"[find_user_by_email_or_email] Colección obtenida: {collection}")
+
+    if collection is None:
+        logger.error("No se pudo obtener la colección de usuarios")
+        return None
+
+    # 1. Búsqueda exacta insensible a mayúsculas y espacios para username/email/nombre
+    # Usamos regex exacto con ^ $ y opción 'i' (sin re.escape)
+    query = {
+        "$or": [
+            {"email": {"$regex": f"^{identifier}$", "$options": "i"}},
+            {"username": {"$regex": f"^{identifier}$", "$options": "i"}},
+            {"nombre": {"$regex": f"^{identifier}$", "$options": "i"}},
+        ]
+    }
+    logger.info(f"[find_user_by_email_or_email] Query exacta: {query}")
+    
+    user = collection.find_one(query)
+    logger.info(f"[find_user_by_email_or_email] Resultado query exacta: {user is not None}")
+    
+    if user:
+        # Log which field matched
+        match_field = None
+        for field in ["email", "username", "nombre"]:
+            value = user.get(field, "")
+            if isinstance(value, str) and value.lower().strip() == identifier:
+                match_field = field
+                break
+        logger.info(
+            f"[find_user_by_email_or_email] Usuario encontrado por {match_field if match_field else 'algún campo'}: {user.get('email', user.get('username', user.get('nombre', '')))}"
+        )
+        return user
+
+    # 2. Búsqueda parcial si el input es suficientemente largo
+    if len(identifier) > 3:
+        query_partial = {
+            "$or": [
+                {"email": {"$regex": identifier, "$options": "i"}},
+                {"username": {"$regex": identifier, "$options": "i"}},
+                {"nombre": {"$regex": identifier, "$options": "i"}},
+            ]
+        }
+        logger.info(f"[find_user_by_email_or_email] Query parcial: {query_partial}")
+        
+        user = collection.find_one(query_partial)
+        logger.info(f"[find_user_by_email_or_email] Resultado query parcial: {user is not None}")
+        
+        if user:
+            logger.info(
+                f"[find_user_by_email_or_email] Usuario encontrado por búsqueda parcial: {user.get('email', user.get('username', user.get('nombre', '')))}"
+            )
+            return user
+
+    # 3. Si no tiene @, probar dominios comunes
+    if "@" not in identifier:
+        logger.info("[find_user_by_email_or_email] Probando dominios comunes")
+        common_domains = [
+            "@gmail.com",
+            "@hotmail.com",
+            "@yahoo.com",
+            "@outlook.com",
+            "@dominio.com",
+        ]
+        for domain in common_domains:
+            email = f"{identifier}{domain}"
+            query_domain = {"email": {"$regex": f"^{email}$", "$options": "i"}}
+            logger.info(f"[find_user_by_email_or_email] Probando dominio {domain}: {query_domain}")
+            
+            user = collection.find_one(query_domain)
+            if user:
+                logger.info(
+                    f"[find_user_by_email_or_email] Usuario encontrado con dominio {domain}: {user.get('email')}"
+                )
+                return user
+
+    logger.warning(f"[find_user_by_email_or_email] Usuario no encontrado con identificador: {identifier}")
+    return None
 
 def find_reset_token(token):
     """Busca un token de reseteo de contraseña."""

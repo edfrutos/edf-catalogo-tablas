@@ -31,7 +31,7 @@
                     </a>
                     {% endif %}
                     <div class="mt-1 text-center">
-                        <button type="button" class="btn btn-sm btn-danger" onclick="confirmarEliminarImagen('{{ img }}', {{ loop.index0 }})">Eliminar</button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="confirmarEliminarImagen('{{ img|e }}', {{ loop.index0 }})">Eliminar</button>
                     </div>
                 </div>
                 {% endfor %}

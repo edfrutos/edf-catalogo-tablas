@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dashboard Google Drive</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .loading { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { margin: 5px; padding: 10px 15px; cursor: pointer; }
+        #results { margin-top: 20px; }
+        .result-item { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 3px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Dashboard Google Drive Integration</h1>
+    
+    <div class="test-section">
+        <h3>🧪 Pruebas de Conectividad</h3>
+        <button onclick="testGoogleDriveConnection()">🔌 Test Conexión Google Drive</button>
+        <button onclick="loadDriveBackups()">📁 Cargar Backups de Drive</button>
+        <button onclick="createTestBackup()">💾 Crear Backup de Prueba</button>
+    </div>
+
+    <div id="results">
+        <h3>📊 Resultados:</h3>
+    </div>
+
+    <script>
+        // Función para mostrar resultados
+        function showResult(title, data, isError = false) {
+            const resultsDiv = document.getElementById('results');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${isError ? 'error' : 'success'}`;
+            resultItem.innerHTML = `
+                <h4>${isError ? '❌' : '✅'} ${title}</h4>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            resultsDiv.appendChild(resultItem);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        // Test de conexión básica a Google Drive
+        function testGoogleDriveConnection() {
+            console.log('🔌 Probando conexión a Google Drive...');
+            showResult('Iniciando test de conexión...', { status: 'loading' });
+            
+            $.ajax({
+                url: '/maintenance/api/test-gdrive',
+                method: 'GET',
+                timeout: 30000,
+                success: function(response) {
+                    console.log('✅ Conexión exitosa:', response);
+                    showResult('Test de Conexión Google Drive', response, false);
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error de conexión:', xhr.responseText);
+                    const errorData = {
+                        status: xhr.status,
+                        error: error,
+                        response: xhr.responseText
+                    };
+                    showResult('Error en Test de Conexión', errorData, true);
+                }
+            });
+        }
+
+        // Cargar backups desde Google Drive
+        function loadDriveBackups() {
+            console.log('📁 Cargando backups desde Google Drive...');
+            showResult('Iniciando carga de backups...', { status: 'loading' });
+            
+            $.ajax({
+                url: '/maintenance/api/drive-backups',
+                method: 'GET',
+                timeout: 60000,
+                success: function(response) {
+                    console.log('✅ Backups cargados:', response);
+                    showResult('Backups de Google Drive', response, false);
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error cargando backups:', xhr.responseText);
+                    const errorData = {
+                        status: xhr.status,
+                        error: error,
+                        response: xhr.responseText
+                    };
+                    showResult('Error Cargando Backups', errorData, true);
+                }
+            });
+        }
+
+        // Crear backup de prueba
+        function createTestBackup() {
+            console.log('💾 Creando backup de prueba...');
+            showResult('Iniciando creación de backup...', { status: 'loading' });
+            
+            $.ajax({
+                url: '/maintenance/api/backup',
+                method: 'POST',
+                data: {
+                    'backup_type': 'test',
+                    'upload_to_drive': 'true'
+                },
+                timeout: 120000,
+                success: function(response) {
+                    console.log('✅ Backup creado:', response);
+                    showResult('Backup Creado', response, false);
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error creando backup:', xhr.responseText);
+                    const errorData = {
+                        status: xhr.status,
+                        error: error,
+                        response: xhr.responseText
+                    };
+                    showResult('Error Creando Backup', errorData, true);
+                }
+            });
+        }
+
+        // Auto-ejecutar test de conexión al cargar la página
+        $(document).ready(function() {
+            console.log('📱 Página cargada, ejecutando test inicial...');
+            setTimeout(testGoogleDriveConnection, 1000);
+        });
+    </script>
+</body>
+</html>

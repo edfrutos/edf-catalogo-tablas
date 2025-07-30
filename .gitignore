@@ -11,6 +11,20 @@ __pycache__/
 *.pyd
 
 # -------------------------------------------
+# IGNORAR ENTORNOS IDE
+# -------------------------------------------
+
+.blackboxrules
+.cspell.json
+.eslintignore
+.flake8
+.markdownlint.json
+.prettierignore
+.prettierrc.json
+.spellright.dict
+.windwurf-setting.json
+
+# -------------------------------------------
 # IGNORAR ARCHIVOS DE CONFIGURACIÓN SENSIBLES
 # -------------------------------------------
 .env
@@ -26,9 +40,10 @@ backups/*/.env*
 *password*
 *token*
 dev_template/tests/legacy/config_debug.py
+config/mongodb_config.json
 
 # -------------------------------------------
-# IGNORAR ARCHIVOS Y CARPETAS TEMPORALES
+# IGNORAR ARCHIVOS Y CARPETAS TEMPORALESblackboxrules
 # -------------------------------------------
 *.sqlite3
 *.log
@@ -156,6 +171,7 @@ htmlcov/
 coverage.xml
 .tox/
 .pytest_cache/
+.pixi/
 
 # -------------------------------------------
 # IGNORAR ARCHIVOS DE AWS (si usas SAM o CDK)
@@ -212,7 +228,65 @@ generated-docs/
 # Archivos temporales de Git
 .git-rewrite/
 
+<<<<<<< Updated upstream
 # -------------------------------------------
 # IGNORAR GEMINI CLI
 # -------------------------------------------
 gemini-cli/
+=======
+
+# Añadir al final del archivo .gitignore existente:
+
+# -------------------------------------------
+# ARCHIVOS ADICIONALES DE IDE Y EDITORES
+# -------------------------------------------
+*.swp
+*.swo
+*~
+.vim/
+.emacs.d/
+.atom/
+.brackets.json
+
+# -------------------------------------------
+# ARCHIVOS DE CERTIFICADOS Y CLAVES
+# -------------------------------------------
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+*.der
+
+# -------------------------------------------
+# ARCHIVOS DE CONFIGURACIÓN ADICIONALES
+# -------------------------------------------
+.env.local
+.env.development
+.env.test
+.env.production
+config.local.*
+settings.local.*
+
+# -------------------------------------------
+# ARCHIVOS DE HERRAMIENTAS DE DESARROLLO
+# -------------------------------------------
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.coverage
+htmlcov/
+.nyc_output/
+coverage/
+
+# -------------------------------------------
+# ARCHIVOS DE TOURS Y DOCUMENTACIÓN GENERADA
+# -------------------------------------------
+.tours/
+generated-docs/
+*.drawio.bkp
+*.drawio~
+>>>>>>> Stashed changes

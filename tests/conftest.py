@@ -69,7 +69,11 @@ def app():
         app.mongo = get_mongo_client()
         app.mongo_db = get_mongo_db()
     
-    yield app  # Usar yield en lugar de return para permitir limpieza después
+    with app.app_context():
+        from flask import g
+        g.mongo = app.mongo
+        g.users_collection = app.mongo_db["users"]
+        yield app  # Usar yield en lugar de return para permitir limpieza después
     
     # No es necesario cerrar el cliente aquí ya que se maneja globalmente,
     # pero podríamos añadir limpieza adicional si fuera necesario

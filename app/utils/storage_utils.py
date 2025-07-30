@@ -12,6 +12,14 @@ from botocore.exceptions import ClientError
 from flask import current_app
 import secrets
 
+# Importaciones para Google Drive
+try:
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '../../tools/db_utils'))
+    from google_drive_utils import get_drive
+except ImportError:
+    get_drive = None
+
 # Definiciones de carpetas locales
 SPREADSHEET_FOLDER = os.path.join(os.getcwd(), "spreadsheets")
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "imagenes_subidas")
@@ -51,6 +59,25 @@ def eliminar_archivo_imagen(ruta_imagen):
             os.remove(ruta_local)
             return True
     return False
+
+def get_storage_client():
+    """Obtiene un cliente de almacenamiento de Google Drive."""
+    try:
+        if get_drive is None:
+            print("Google Drive utils no disponible")
+            return None
+        
+        # Intentar obtener el cliente de Google Drive
+        drive_client = get_drive()
+        if drive_client:
+            print("Cliente de Google Drive inicializado correctamente")
+            return drive_client
+        else:
+            print("No se pudo inicializar el cliente de Google Drive")
+            return None
+    except Exception as e:
+        print(f"Error al obtener cliente de Google Drive: {e}")
+        return None
 
 def upload_file_to_s3(filepath, object_name=None):
     """Subir un archivo a S3"""

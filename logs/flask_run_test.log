@@ -1,4 +1,0 @@
-DEBUG DECORADOR: admin_required decorador inicializado
-MONGO_URI usado: mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero?retryWrites=true&w=majority
- * Serving Flask app 'app'
- * Debug mode: off

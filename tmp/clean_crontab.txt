@@ -1,0 +1,14 @@
+# Crontab para EDF Catalogo Tablas
+# Generado automáticamente - No editar manualmente
+
+# Verificación de espacio en disco cada 6 horas
+0 */6 * * * cd /Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/scripts && /Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/scripts/.venv310/bin/python3 /Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/scripts/maintenance/run_maintenance.py --task disk >> /Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/scripts/logs/disk_check.log 2>&1
+
+# Limpieza automática de logs - EDF Catalogo Tablas
+0 2 * * 0 cd /Users/edefrutos/_Repositorios/edf_catalogotablas && /Users/edefrutos/_Repositorios/edf_catalogotablas/venv310/bin/python3 /Users/edefrutos/_Repositorios/edf_catalogotablas/tools/maintenance/clean_old_logs.py --days 30 >> /Users/edefrutos/_Repositorios/edf_catalogotablas/logs/cleanup_job.log 2>&1
+
+# Monitoreo de MongoDB - Ejecutar cada hora
+0 * * * * /Users/edefrutos/edf_catalogotablas/venv310/bin/python /Users/edefrutos/edf_catalogotablas/scripts/maintenance/monitor_mongodb.py >> /Users/edefrutos/edf_catalogotablas/logs/cron_monitor.log 2>&1
+
+# Monitoreo adicional después de reinicios del servidor
+@reboot sleep 60 && /Users/edefrutos/edf_catalogotablas/venv310/bin/python /Users/edefrutos/edf_catalogotablas/scripts/maintenance/monitor_mongodb.py >> /Users/edefrutos/edf_catalogotablas/logs/cron_monitor.log 2>&1

@@ -142,5 +142,5 @@ La aplicación se actualiza automáticamente. Las nuevas versiones incluyen mejo
 
 **Versión**: 2.0.0  
 **Fecha de Lanzamiento**: Junio 2025  
-**Desarrollado por**: Eduardo de Frutos  
+**Desarrollado por**: Eugenio de Frutos  
 **© 2025 EDF Software Solutions. Todos los derechos reservados.**

@@ -9,250 +9,496 @@ endblock %} {% block content %}
   </div>
   {% endif %}
   <!-- Encabezado y menú de navegación -->
-  <div class="">
-  <div class="row justify-content-center w-100">
-
-    <div class="col-12 d-flex justify-content-between align-items-center">
-      <div>
-        <h2><i class="bi bi-tools"></i> Panel de Mantenimiento</h2>
-        <p class="lead mb-0">Herramientas para el mantenimiento del sistema</p>
-      </div>
-  </div>
-
-  <!-- Tarjeta de Estado del Sistema -->
-  <div id="systemStatusSection" class="row mb-4">
-    <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          <h5 class="mb-0">
-            <i class="bi bi-speedometer2"></i> Estado del Sistema
-          </h5>
+  <div class="container-fluid">
+    <div class="row justify-content-center w-100">
+      <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+          <h2><i class="bi bi-tools"></i> Panel de Mantenimiento</h2>
+          <p class="lead mb-0">
+            Herramientas para el mantenimiento del sistema
+          </p>
         </div>
-        <div class="card-body">
-          <div class="d-flex justify-content-end mb-2">
-            <button
-              class="btn btn-outline-secondary btn-sm"
-              id="exportSystemStatusBtn"
-            >
-              <i class="bi bi-download"></i> Exportar a CSV
-            </button>
-          </div>
-          <div id="systemStatus" class="row">
-            <div class="col-md-6 mb-3">
-              <div class="card h-100">
-                <div class="card-header bg-secondary text-white">
-                  Uso de memoria
-                </div>
-                <div class="card-body">
-                  <div class="progress mb-2" style="height: 25px">
-                    <div
-                      id="memoriaUsage"
-                      class="progress-bar bg-success progress-bar-striped progress-bar-animated"
-                      role="progressbar"
-                      style="width: 0%"
-                    >
-                      Cargando...
+      </div>
+
+      <!-- Tarjeta de Estado del Sistema -->
+      <div id="systemStatusSection" class="row mb-4">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">
+                <i class="bi bi-speedometer2"></i> Estado del Sistema
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-end mb-2">
+                <button
+                  class="btn btn-outline-secondary btn-sm"
+                  id="exportSystemStatusBtn"
+                >
+                  <i class="bi bi-download"></i> Exportar a CSV
+                </button>
+              </div>
+              <div id="systemStatus" class="row">
+                <div class="col-md-6 mb-3">
+                  <div class="card h-100">
+                    <div class="card-header bg-secondary text-white">
+                      Uso de memoria
+                    </div>
+                    <div class="card-body">
+                      <div class="progress mb-2" style="height: 25px">
+                        <div
+                          id="memoriaUsage"
+                          class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                          role="progressbar"
+                          style="width: 0%"
+                        >
+                          Cargando...
+                        </div>
+                      </div>
+                      <p class="card-text mb-1">
+                        <strong>Total:</strong>
+                        <span id="memTotal">Cargando...</span> GB<br />
+                        <strong>Disponible:</strong>
+                        <span id="memDisponible">Cargando...</span> GB
+                      </p>
                     </div>
                   </div>
-                  <p class="card-text mb-1">
-                    <strong>Total:</strong>
-                    <span id="memTotal">Cargando...</span> GB<br />
-                    <strong>Disponible:</strong>
-                    <span id="memDisponible">Cargando...</span> GB
-                  </p>
                 </div>
-              </div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <div class="card h-100">
-                <div class="card-header bg-secondary text-white">
-                  Detalles técnicos
-                </div>
-                <div class="card-body">
-                  <p class="card-text">
-                    <strong>SO:</strong> <span id="so">Cargando...</span><br />
-                    <strong>Arquitectura:</strong>
-                    <span id="arquitectura">Cargando...</span><br />
-                    <strong>Usuario:</strong>
-                    <span id="usuario">Cargando...</span><br />
-                    <strong>Hora:</strong> <span id="hora">Cargando...</span>
-                  </p>
+                <div class="col-md-6 mb-3">
+                  <div class="card h-100">
+                    <div class="card-header bg-secondary text-white">
+                      Detalles técnicos
+                    </div>
+                    <div class="card-body">
+                      <p class="card-text">
+                        <strong>SO:</strong> <span id="so">Cargando...</span
+                        ><br />
+                        <strong>Arquitectura:</strong>
+                        <span id="arquitectura">Cargando...</span><br />
+                        <strong>Usuario:</strong>
+                        <span id="usuario">Cargando...</span><br />
+                        <strong>Hora:</strong>
+                        <span id="hora">Cargando...</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Tarjeta de Tareas Programadas -->
-  <div id="tasksSection" class="row mb-4">
-    <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-header bg-info text-white">
-          <h5 class="mb-0">
-            <i class="bi bi-clock-history"></i> Tareas Programadas
-          </h5>
+      <!-- Tarjeta de Tareas Programadas -->
+      <div id="tasksSection" class="row mb-4">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+              <h5 class="mb-0">
+                <i class="bi bi-clock-history"></i> Tareas Programadas
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Descripción</th>
+                      <th>Programación</th>
+                      <th>Última Ejecución</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="scheduledTasks">
+                    <tr>
+                      <td>Limpieza de Logs</td>
+                      <td>Domingos 2:00 AM</td>
+                      <td class="last-run" id="lastCleanupRun">-</td>
+                      <td><span class="badge bg-success">OK</span></td>
+                      <td>
+                        <button
+                          class="btn btn-sm btn-outline-primary run-task"
+                          data-task="cleanup"
+                          title="Ejecutar limpieza de logs ahora"
+                          data-bs-toggle="tooltip"
+                        >
+                          <i class="bi bi-play"></i> Ejecutar Ahora
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Verificación MongoDB</td>
+                      <td>Diario 3:00 AM</td>
+                      <td class="last-run" id="lastMongoCheck">-</td>
+                      <td><span class="badge bg-success">OK</span></td>
+                      <td>
+                        <button
+                          class="btn btn-sm btn-outline-primary run-task"
+                          data-task="mongo"
+                          title="Ejecutar verificación de MongoDB ahora"
+                          data-bs-toggle="tooltip"
+                        >
+                          <i class="bi bi-play"></i> Ejecutar Ahora
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Verificación Disco</td>
+                      <td>Domingos 1:00 AM</td>
+                      <td class="last-run" id="lastDiskCheck">-</td>
+                      <td><span class="badge bg-success">OK</span></td>
+                      <td>
+                        <button
+                          class="btn btn-sm btn-outline-primary run-task"
+                          data-task="disk"
+                          title="Ejecutar verificación de disco ahora"
+                          data-bs-toggle="tooltip"
+                        >
+                          <i class="bi bi-play"></i> Ejecutar Ahora
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Descripción</th>
-                  <th>Programación</th>
-                  <th>Última Ejecución</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="scheduledTasks">
-                <tr>
-                  <td>Limpieza de Logs</td>
-                  <td>Domingos 2:00 AM</td>
-                  <td class="last-run" id="lastCleanupRun">-</td>
-                  <td><span class="badge bg-success">OK</span></td>
-                  <td>
-                    <button
-                      class="btn btn-sm btn-outline-primary run-task" data-task="cleanup" title="Ejecutar limpieza de logs ahora" data-bs-toggle="tooltip">
-                      <i class="bi bi-play"></i> Ejecutar Ahora
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Verificación MongoDB</td>
-                  <td>Diario 3:00 AM</td>
-                  <td class="last-run" id="lastMongoCheck">-</td>
-                  <td><span class="badge bg-success">OK</span></td>
-                  <td>
-                    <button
-                      class="btn btn-sm btn-outline-primary run-task" data-task="mongo" title="Ejecutar verificación de MongoDB ahora" data-bs-toggle="tooltip">
-                      <i class="bi bi-play"></i> Ejecutar Ahora
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Verificación Disco</td>
-                  <td>Domingos 1:00 AM</td>
-                  <td class="last-run" id="lastDiskCheck">-</td>
-                  <td><span class="badge bg-success">OK</span></td>
-                  <td>
-                    <button
-                      class="btn btn-sm btn-outline-primary run-task" data-task="disk" title="Ejecutar verificación de disco ahora" data-bs-toggle="tooltip">
-                      <i class="bi bi-play"></i> Ejecutar Ahora
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      </div>
+      <!-- Alerta de resultado de tarea -->
+      <div
+        id="taskResult"
+        style="display: none"
+        class="alert"
+        aria-live="polite"
+        tabindex="-1"
+      ></div>
+    </div>
+
+    <!-- Sección de Backup y restauración -->
+    <div id="backupSection" class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-cloud-arrow-up"></i> Backup y restauración
+            </h5>
+          </div>
+          <div class="card-body">
+            <p>
+              Desde aquí puedes realizar copias de seguridad y restaurar datos
+              del sistema.
+            </p>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-success" id="backupBtn">
+                <i class="bi bi-cloud-arrow-up"></i> Realizar Backup
+              </button>
+              <button class="btn btn-outline-secondary" id="restoreBtn">
+                <i class="bi bi-arrow-counterclockwise"></i> Restaurar Backup
+              </button>
+              <button
+                class="btn btn-outline-success ms-2"
+                id="restoreDriveBtn"
+                data-bs-toggle="modal"
+                data-bs-target="#restoreDriveModal"
+              >
+                <i class="bi bi-google"></i> Google Drive
+              </button>
+            </div>
+            <div id="backupResult" class="mt-3"></div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <!-- Alerta de resultado de tarea -->
-  <div id="taskResult" style="display: none" class="alert" aria-live="polite" tabindex="-1"></div>
-</div>
 
-<!-- Sección de Backup y restauración -->
-<div id="backupSection" class="row mb-4">
-  <div class="col-12">
-    <div class="card shadow-sm">
-      <div class="card-header bg-success text-white">
-        <h5 class="mb-0">
-          <i class="bi bi-cloud-arrow-up"></i> Backup y restauración
-        </h5>
-      </div>
-      <div class="card-body">
-        <p>
-          Desde aquí puedes realizar copias de seguridad y restaurar datos del
-          sistema.
-        </p>
-        <div class="d-flex gap-2">
-          <button class="btn btn-outline-success" id="backupBtn">
-            <i class="bi bi-cloud-arrow-up"></i> Realizar Backup
-          </button>
-          <button class="btn btn-outline-secondary" id="restoreBtn">
-            <i class="bi bi-arrow-counterclockwise"></i> Restaurar Backup
-          </button>
-        </div>
-        <div id="backupResult" class="mt-3"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="logsSection"></div>
-<!-- Modal para logs -->
-<div
-  class="modal fade"
-  id="logsModal"
-  tabindex="-1"
-  aria-labelledby="logsModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="logsModalLabel">
-          Registros de Mantenimiento
-        </h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Cerrar"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <div class="btn-group" role="group">
+    <div id="logsSection"></div>
+    <!-- Modal para logs -->
+    <div
+      class="modal fade"
+      id="logsModal"
+      tabindex="-1"
+      aria-labelledby="logsModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="logsModalLabel">
+              Registros de Mantenimiento
+            </h5>
             <button
               type="button"
-              class="btn btn-outline-primary"
-              data-log-type="today"
-            >
-              Hoy
-            </button>
-            <button
-              type="button"
-              class="btn btn-outline-primary"
-              data-log-type="yesterday"
-            >
-              Ayer
-            </button>
-            <button
-              type="button"
-              class="btn btn-outline-primary"
-              data-log-type="week"
-            >
-              Esta semana
-            </button>
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Cerrar"
+            ></button>
           </div>
-        </div>
-        <div class="mb-2">
-          <label for="logFileSelect" class="form-label">Archivo de log:</label>
-          <select
-            id="logFileSelect"
-            class="form-select form-select-sm mb-2"
-          ></select>
-        </div>
-        <pre
-          id="logContent"
-          class="bg-dark text-light p-3 rounded"
-          style="max-height: 60vh; overflow-y: auto"
-        >
+          <div class="modal-body">
+            <div class="mb-3">
+              <div class="btn-group" role="group">
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  data-log-type="today"
+                >
+                  Hoy
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  data-log-type="yesterday"
+                >
+                  Ayer
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  data-log-type="week"
+                >
+                  Esta semana
+                </button>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label for="logFileSelect" class="form-label"
+                >Archivo de log:</label
+              >
+              <select
+                id="logFileSelect"
+                class="form-select form-select-sm mb-2"
+              ></select>
+            </div>
+            <pre
+              id="logContent"
+              class="bg-dark text-light p-3 rounded"
+              style="max-height: 60vh; overflow-y: auto"
+            >
 Cargando registros...</pre
-        >
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Cerrar
-        </button>
-        <button type="button" class="btn btn-primary" id="refreshLogs">
-          <i class="bi bi-arrow-clockwise"></i> Actualizar
-        </button>
-      </div>
+            >
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cerrar
+            </button>
+            <button type="button" class="btn btn-primary" id="refreshLogs">
+              <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+          </div>
 
+<<<<<<< Updated upstream
+=======
+          <!-- FIN DEL MODAL DE LOGS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Google Drive Backups (independiente) -->
+    <div class="modal fade" id="restoreDriveModal" tabindex="-1" aria-labelledby="restoreDriveModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="restoreDriveModalLabel">
+              <i class="bi bi-google"></i> Restaurar desde Google Drive
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Estado de carga -->
+            <div id="driveBackupsLoading" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+              <p class="mt-2">Cargando backups disponibles desde Google Drive...</p>
+            </div>
+
+            <!-- Contenedor principal de backups -->
+            <div id="driveBackupsContent" style="display: none">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">
+                  <i class="bi bi-cloud-download"></i> Backups Disponibles en Google Drive
+                  <span id="driveBackupsCount" class="badge bg-secondary ms-2">0 respaldos</span>
+                </h6>
+                <div class="d-flex gap-2">
+                  <!-- Control de número de backups a mostrar -->
+                  <div class="input-group input-group-sm" style="width: 200px;">
+                    <span class="input-group-text">Mostrar:</span>
+                    <select id="backupsPerPage" class="form-select form-select-sm">
+                      <option value="10">10 backups</option>
+                      <option value="25" selected>25 backups</option>
+                      <option value="50">50 backups</option>
+                      <option value="100">100 backups</option>
+                      <option value="-1">Todos</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="refreshDriveBackups">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Controles de selección múltiple -->
+              <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="selectAllBackups">
+                  <label class="form-check-label" for="selectAllBackups">
+                    Seleccionar todos
+                  </label>
+                </div>
+                <div>
+                  <span id="selectedCount" class="text-muted me-3">0 seleccionados</span>
+                  <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBackups" disabled>
+                    <i class="bi bi-trash"></i> Eliminar seleccionados
+                  </button>
+                </div>
+              </div>
+              
+              <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                  <thead class="table-dark">
+                    <tr>
+                      <th width="40"><input type="checkbox" id="selectAllHeader" class="form-check-input"></th>
+                      <th><i class="bi bi-file-earmark-zip"></i> Archivo</th>
+                      <th><i class="bi bi-hdd"></i> Tamaño</th>
+                      <th><i class="bi bi-calendar"></i> Fecha</th>
+                      <th><i class="bi bi-person"></i> Usuario</th>
+                      <th><i class="bi bi-gear"></i> Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="driveBackupsTableBody">
+                    <!-- Los backups se cargarán aquí via AJAX -->
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Paginación -->
+              <div id="backupsPagination" class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted">
+                  Mostrando <span id="showingFrom">1</span> a <span id="showingTo">25</span> de <span id="totalBackups">0</span> backups
+                </div>
+                <nav>
+                  <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                    <!-- Controles de paginación se generarán aquí -->
+                  </ul>
+                </nav>
+              </div>
+            </div>
+
+            <!-- Mensaje cuando no hay backups -->
+            <div id="driveBackupsEmpty" class="text-center py-4" style="display: none">
+              <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+              <h5 class="text-muted mt-3">No hay backups disponibles</h5>
+              <p class="text-muted">No se encontraron backups en Google Drive.</p>
+            </div>
+
+            <!-- Mensaje de error -->
+            <div id="driveBackupsError" class="alert alert-danger" style="display: none">
+              <i class="bi bi-exclamation-triangle"></i>
+              <strong>Error al cargar backups</strong>
+              <p class="mb-0" id="driveBackupsErrorMessage">No se pudieron cargar los backups desde Google Drive.</p>
+            </div>
+
+            <!-- Input file para restaurar backup local -->
+            <input type="file" id="restoreFileInput" accept=".json,.gz,.zip" style="display: none;">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-x-circle"></i> Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block scripts %}
+<!-- DataTables CSS y JS para la tabla de backups -->
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"
+/>
+<script
+  type="text/javascript"
+  charset="utf8"
+  src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"
+></script>
+<script
+  type="text/javascript"
+  charset="utf8"
+  src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"
+></script>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}?v=20250724_UNIFIED_FINAL_{{ range(1000, 9999) | random }}"></script>
+<script>
+  // Cargar estado del sistema al inicializar la página
+  $(document).ready(function () {
+    loadSystemStatus();
+
+    // Actualizar cada 30 segundos
+    setInterval(loadSystemStatus, 30000);
+  });
+
+  function loadSystemStatus() {
+    $.ajax({
+      url: "/admin/api/system_status",
+      method: "GET",
+      success: function (response) {
+        console.log("System status response:", response);
+        if (response.status === "success" && response.data) {
+          updateSystemStatusUI(response.data.system_status);
+        }
+      },
+      error: function (xhr, status, error) {
+        console.error("Error loading system status:", error);
+      },
+    });
+  }
+
+  function updateSystemStatusUI(systemStatus) {
+    if (systemStatus.memory_usage) {
+      const memUsage = systemStatus.memory_usage;
+      $("#memoriaUsage")
+        .css("width", memUsage.percent + "%")
+        .text(memUsage.percent + "%");
+      $("#memTotal").text((memUsage.total_mb / 1024).toFixed(2));
+      $("#memDisponible").text((memUsage.available_mb / 1024).toFixed(2));
+    }
+
+    if (systemStatus.system_details) {
+      const details = systemStatus.system_details;
+      $("#so").text(details.os || "N/A");
+      $("#arquitectura").text(details.architecture || "N/A");
+      $("#usuario").text(details.user || "N/A");
+      $("#hora").text(details.timestamp || "N/A");
+    }
+  }
+</script>
+
+<!-- Script adicional para diagnóstico -->
+<script>
+$(document).ready(function() {
+  // Esperar a que se cargue el script de diagnóstico
+  setTimeout(function() {
+    // Configuración personalizada para producción
+    if (typeof configurarDiagnostico === 'function') {
+      configurarDiagnostico({
+        autoEjecutar: true,
+        intervaloActualizacion: 30000, // 30 segundos
+        mostrarEnConsola: false,
+        mostrarEnPagina: true
+      });
+      
+      // Ejecutar diagnóstico inicial
+      ejecutarDiagnostico();
+    }
+  }, 2000);
+});
+</script>
+>>>>>>> Stashed changes
 {% endblock %}

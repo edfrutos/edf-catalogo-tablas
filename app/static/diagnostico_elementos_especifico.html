@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Específico - Elementos Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; }
+        .code { background-color: #f8f9fa; padding: 10px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico Específico - Elementos Dashboard</h1>
+    <p><strong>Propósito:</strong> Verificar la existencia de elementos específicos del dashboard</p>
+    
+    <div id="results"></div>
+    
+    <script>
+    $(document).ready(function() {
+        console.log("🔍 Iniciando diagnóstico específico...");
+        
+        const results = $('#results');
+        
+        // Función para agregar resultado
+        function addResult(message, type = 'info') {
+            const div = $(`<div class="result ${type}">${message}</div>`);
+            results.append(div);
+        }
+        
+        addResult("📋 <strong>DIAGNÓSTICO ESPECÍFICO DE ELEMENTOS</strong>", "warning");
+        addResult(`⏰ Timestamp: ${new Date().toISOString()}`);
+        
+        // Verificar URL actual
+        addResult(`🌐 URL actual: ${window.location.href}`);
+        
+        // Verificar si jQuery está disponible
+        addResult(`📚 jQuery versión: ${$.fn.jquery}`, "success");
+        
+        // Buscar elementos específicos
+        const elementos = [
+            { id: '#restoreDriveBtn', nombre: 'Botón Google Drive' },
+            { id: '#restoreDriveModal', nombre: 'Modal Google Drive' },
+            { id: '#backupBtn', nombre: 'Botón Backup' },
+            { id: '#restoreBtn', nombre: 'Botón Restore' }
+        ];
+        
+        addResult("🔍 <strong>VERIFICACIÓN DE ELEMENTOS:</strong>");
+        
+        elementos.forEach(elemento => {
+            const el = $(elemento.id);
+            const existe = el.length > 0;
+            const tipo = existe ? 'success' : 'error';
+            const icono = existe ? '✅' : '❌';
+            
+            addResult(`${icono} <strong>${elemento.nombre}</strong> (${elemento.id}): ${existe ? 'ENCONTRADO' : 'NO ENCONTRADO'}`, tipo);
+            
+            if (existe) {
+                // Información adicional del elemento
+                addResult(`&nbsp;&nbsp;&nbsp;📍 Clases: ${el.attr('class') || 'ninguna'}`);
+                addResult(`&nbsp;&nbsp;&nbsp;👁️ Visible: ${el.is(':visible') ? 'SÍ' : 'NO'}`);
+                addResult(`&nbsp;&nbsp;&nbsp;📏 Dimensiones: ${el.outerWidth()}x${el.outerHeight()}px`);
+                
+                if (elemento.id === '#restoreDriveBtn') {
+                    addResult(`&nbsp;&nbsp;&nbsp;🎯 data-bs-target: ${el.attr('data-bs-target') || 'no definido'}`);
+                    addResult(`&nbsp;&nbsp;&nbsp;🔗 data-bs-toggle: ${el.attr('data-bs-toggle') || 'no definido'}`);
+                }
+            }
+        });
+        
+        // Verificar todos los elementos con ID que contengan 'restore' o 'Drive'
+        addResult("🔍 <strong>BÚSQUEDA AMPLIA DE ELEMENTOS RELACIONADOS:</strong>");
+        
+        const todosElementos = $('[id*="restore"], [id*="Drive"], [id*="drive"]');
+        if (todosElementos.length > 0) {
+            addResult(`📋 Encontrados ${todosElementos.length} elementos relacionados:`, "success");
+            todosElementos.each(function() {
+                const id = $(this).attr('id');
+                const tag = this.tagName.toLowerCase();
+                addResult(`&nbsp;&nbsp;&nbsp;• ${tag}#${id}`);
+            });
+        } else {
+            addResult("❌ No se encontraron elementos relacionados con 'restore' o 'Drive'", "error");
+        }
+        
+        // Verificar estructura del DOM
+        addResult("🏗️ <strong>ESTRUCTURA DEL DOM:</strong>");
+        addResult(`📄 Total de elementos en el DOM: ${$('*').length}`);
+        addResult(`🔘 Total de botones: ${$('button').length}`);
+        addResult(`📦 Total de modales: ${$('.modal').length}`);
+        
+        // Verificar si hay errores de JavaScript
+        addResult("🐛 <strong>VERIFICACIÓN DE ERRORES:</strong>");
+        
+        // Simular clic en el botón si existe
+        const driveBtn = $('#restoreDriveBtn');
+        if (driveBtn.length > 0) {
+            addResult("🖱️ <strong>PRUEBA DE INTERACCIÓN:</strong>");
+            try {
+                // Verificar eventos
+                const eventos = $._data(driveBtn[0], 'events');
+                if (eventos) {
+                    addResult(`📋 Eventos registrados: ${Object.keys(eventos).join(', ')}`, "success");
+                } else {
+                    addResult("⚠️ No hay eventos registrados en el botón", "warning");
+                }
+            } catch (e) {
+                addResult(`❌ Error al verificar eventos: ${e.message}`, "error");
+            }
+        }
+        
+        addResult("✅ <strong>DIAGNÓSTICO COMPLETADO</strong>", "success");
+        
+        console.log("✅ Diagnóstico específico completado");
+    });
+    </script>
+</body>
+</html>

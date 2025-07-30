@@ -14,7 +14,7 @@
 
 ## 🔧 Instrucciones de Uso
 
-### Para el Usuario (Eduardo de Frutos)
+### Para el Usuario (Eugenio de Frutos)
 1. **Al inicio de cada nueva conversación con IA**, menciona:
    ```
    "Por favor, lee el archivo config/preferencias_comunicacion.md 
@@ -56,4 +56,4 @@
 **Creado**: Enero 2025  
 **Última Actualización**: Enero 2025  
 **Propósito**: Mantener consistencia en comunicación con IA  
-**Autor**: Eduardo de Frutos
+**Autor**: Eugenio de Frutos

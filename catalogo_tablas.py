@@ -9,21 +9,22 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
 from PyQt6.QtCore import QSettings, Qt
 import sys
 
+
 class CatalogoTablasWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        
+
         # Configuración del título correcto
-        self.setWindowTitle('EDF CatálogoDeTablas')
-        
+        self.setWindowTitle("EDF CatálogoDeTablas")
+
         # Inicializar configuraciones
-        self.settings = QSettings('EDF', 'CatálogoDeTablas')
-        
+        self.settings = QSettings("EDF", "CatálogoDeTablas")
+
         # Widget central y layout
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        self.layout = QVBoxLayout(self.central_widget)
-        
+        self.main_layout = QVBoxLayout(self.central_widget)
+
         # Configurar geometría inicial
         self.setup_window_geometry()
 
@@ -31,20 +32,20 @@ class CatalogoTablasWindow(QMainWindow):
         # Configurar tamaños
         self.setMinimumSize(800, 600)
         self.setMaximumSize(2560, 1600)
-        
+
         # Restaurar último tamaño usado o usar predeterminado
-        size = self.settings.value('window_size', (1024, 768))
+        size = self.settings.value("window_size", (1024, 768))
         if isinstance(size, tuple):
             width, height = size
         else:
             width, height = (1024, 768)
-        
+
         self.resize(int(width), int(height))
         self.center_window()
 
     def center_window(self):
         # Centrar en pantalla
-        screen = self.screen().availableGeometry()
+        screen = self.screen().availableGeometry()  # type: ignore
         window_size = self.geometry()
         x = (screen.width() - window_size.width()) // 2
         y = (screen.height() - window_size.height()) // 2
@@ -52,11 +53,11 @@ class CatalogoTablasWindow(QMainWindow):
 
     def closeEvent(self, event):
         # Guardar tamaño al cerrar
-        self.settings.setValue('window_size', (
-            self.size().width(),
-            self.size().height()
-        ))
+        self.settings.setValue(
+            "window_size", (self.size().width(), self.size().height())
+        )
         super().closeEvent(event)
+
 
 def main():
     try:
@@ -71,5 +72,6 @@ def main():
         print(f"Error: {e}")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

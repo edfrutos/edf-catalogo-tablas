@@ -1,442 +1,428 @@
-{% extends 'admin/base.html' %}
-
-{% block title %}Gestor de Scripts - Catálogo Tablas{% endblock %}
-
-{% block content %}
+{% extends 'admin/base.html' %} {% block title %}Gestor de Scripts - Catálogo
+Tablas{% endblock %} {% block content %}
 <div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white d-flex align-items-center">
-                    <i class="fas fa-tools me-2"></i>
-                    <h1 class="h3 mb-0">Gestor de Scripts</h1>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Información:</strong> Esta herramienta permite visualizar y ejecutar los scripts de shell (.sh) disponibles en el sistema. Utilice con precaución, ya que algunos scripts pueden afectar la configuración del sistema.
-                    </div>
-                </div>
-            </div>
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div
+          class="card-header bg-primary text-white d-flex align-items-center"
+        >
+          <i class="fas fa-tools me-2"></i>
+          <h1 class="h3 mb-0">Gestor de Scripts</h1>
         </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" id="searchInput" class="form-control" placeholder="Buscar scripts por nombre o descripción...">
-                    </div>
-                    <div class="btn-group mb-3 category-filter" id="categoryFilterContainer">
-                        <!-- Botones de categorías serán inyectados dinámicamente por JS -->
-                        <button class="btn btn-outline-primary active" data-category="all">Todos</button>
-                    </div>
-                </div>
-            </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Información:</strong> Esta herramienta permite visualizar y
+            ejecutar los scripts de shell (.sh) disponibles en el sistema.
+            Utilice con precaución, ya que algunos scripts pueden afectar la
+            configuración del sistema.
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 
-    <div class="row" id="scriptAccordionContainer">
-        <!-- Aquí se inyectará dinámicamente el acordeón de scripts por JS -->
-    </div>
-
-    <div class="row" id="noScriptsAlert" style="display:none;">
-        <div class="col-12">
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                No se encontraron scripts en el sistema.
-            </div>
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="input-group mb-3">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input
+              type="text"
+              id="searchInput"
+              class="form-control"
+              placeholder="Buscar scripts por nombre o descripción..."
+            />
+          </div>
+          <div
+            class="btn-group mb-3 category-filter"
+            id="categoryFilterContainer"
+          >
+            <!-- Botones de categorías serán inyectados dinámicamente por JS -->
+            <button class="btn btn-outline-primary active" data-category="all">
+              Todos
+            </button>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <div class="row" id="scriptAccordionContainer">
+    <!-- Aquí se inyectará dinámicamente el acordeón de scripts por JS -->
+  </div>
+
+  <div class="row" id="noScriptsAlert" style="display: none">
+    <div class="col-12">
+      <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        No se encontraron scripts en el sistema.
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal para ver el contenido del script -->
-<div class="modal fade" id="scriptModal" tabindex="-1" aria-labelledby="scriptModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Contenido del Script</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div
+  class="modal fade"
+  id="scriptModal"
+  tabindex="-1"
+  aria-labelledby="scriptModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Contenido del Script</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="script-path mb-3 text-muted small" id="modalPath"></div>
+        <pre class="bg-light p-3 rounded" id="scriptContent"><code></code></pre>
+        <div id="outputContainer" class="mt-4" style="display: none">
+          <h6 class="border-bottom pb-2 mb-3">Salida del Script:</h6>
+          <div class="d-flex align-items-center mb-2">
+            <div
+              id="runningIndicator"
+              class="spinner-border spinner-border-sm text-primary me-2"
+              role="status"
+            >
+              <span class="visually-hidden">Ejecutando...</span>
             </div>
-            <div class="modal-body">
-                <div class="script-path mb-3 text-muted small" id="modalPath"></div>
-                <pre class="bg-light p-3 rounded" id="scriptContent"><code></code></pre>
-                <div id="outputContainer" class="mt-4" style="display: none;">
-                    <h6 class="border-bottom pb-2 mb-3">Salida del Script:</h6>
-                    <div class="d-flex align-items-center mb-2">
-                        <div id="runningIndicator" class="spinner-border spinner-border-sm text-primary me-2" role="status">
-                            <span class="visually-hidden">Ejecutando...</span>
-                        </div>
-                        <div id="statusBadge" class="badge bg-secondary me-2">Esperando</div>
-                        <div id="timestampInfo" class="small text-muted"></div>
-                    </div>
-                    <pre class="bg-dark text-light p-3 rounded" id="scriptOutput"></pre>
-                </div>
+            <div id="statusBadge" class="badge bg-secondary me-2">
+              Esperando
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-success" id="modalRunBtn">
-                    <i class="fas fa-play me-1"></i> Ejecutar Script
-                </button>
-            </div>
+            <div id="timestampInfo" class="small text-muted"></div>
+          </div>
+          <pre class="bg-dark text-light p-3 rounded" id="scriptOutput"></pre>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cerrar
+        </button>
+        <button type="button" class="btn btn-success" id="modalRunBtn">
+          <i class="fas fa-play me-1"></i> Ejecutar Script
+        </button>
+      </div>
     </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const scriptAccordionContainer = document.getElementById('scriptAccordionContainer');
-    const searchInput = document.getElementById('searchInput');
+  document.addEventListener("DOMContentLoaded", function () {
+    const scriptAccordionContainer = document.getElementById(
+      "scriptAccordionContainer"
+    );
+    const searchInput = document.getElementById("searchInput");
+    const scriptModal = new bootstrap.Modal(
+      document.getElementById("scriptModal")
+    );
+    const modalTitle = document.getElementById("modalTitle");
+    const modalPath = document.getElementById("modalPath");
+    const scriptContent = document.getElementById("scriptContent");
+    const outputContainer = document.getElementById("outputContainer");
+    const scriptOutput = document.getElementById("scriptOutput");
+    const modalRunBtn = document.getElementById("modalRunBtn");
+    const runningIndicator = document.getElementById("runningIndicator");
+    const statusBadge = document.getElementById("statusBadge");
+    const timestampInfo = document.getElementById("timestampInfo");
 
     let scriptsData = [];
     let filteredData = [];
 
-    // Función para cargar los scripts desde la API
+    // AÑADIR: Función para cargar los scripts desde la API
     function loadScripts() {
-        fetch('/admin/tools/api/scripts_metadata')
-            .then(response => response.json())
-            .then(data => {
-                scriptsData = data;
-                filteredData = data;
-                renderAccordion(data);
-            })
-            .catch(err => {
-                scriptAccordionContainer.innerHTML = '<div class="alert alert-danger">Error al cargar los scripts: ' + err + '</div>';
-            });
+      fetch("/admin/tools/api/scripts_metadata")
+        .then((response) => response.json())
+        .then((data) => {
+          scriptsData = data;
+          filteredData = data;
+          renderAccordion(data);
+        })
+        .catch((err) => {
+          console.error("Error al cargar scripts:", err);
+          scriptAccordionContainer.innerHTML =
+            '<div class="alert alert-danger">Error al cargar los scripts: ' +
+            err +
+            "</div>";
+        });
     }
 
-    // Renderiza el acordeón de scripts agrupados por categoría
+    // AÑADIR: Renderiza el acordeón de scripts agrupados por categoría
     function renderAccordion(data) {
-        if (!data || data.length === 0) {
-            scriptAccordionContainer.innerHTML = '<div class="alert alert-warning">No se encontraron scripts en el sistema.</div>';
-            return;
-        }
-        let html = '<div class="accordion" id="toolsAccordion">';
-        data.forEach((cat, idx) => {
-            const catId = 'cat_' + idx;
-            html += `
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="heading_${catId}">
-                    <button class="accordion-button${idx === 0 ? '' : ' collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_${catId}" aria-expanded="${idx === 0 ? 'true' : 'false'}" aria-controls="collapse_${catId}">
-                        ${cat.categoria} <span class="badge bg-secondary ms-2">${cat.scripts.length}</span>
-                    </button>
-                </h2>
-                <div id="collapse_${catId}" class="accordion-collapse collapse${idx === 0 ? ' show' : ''}" aria-labelledby="heading_${catId}" data-bs-parent="#toolsAccordion">
-                    <div class="accordion-body">
-                        <ul class="list-group">
-                        ${cat.scripts.map(script => `
-                            <li class="list-group-item d-flex justify-content-between align-items-start flex-wrap">
-                                <div class="ms-2 me-auto">
-                                    <div class="fw-bold">${script.nombre}</div>
-                                    <div class="text-muted small">${script.descripcion}</div>
-                                </div>
-                                <button class="btn btn-sm btn-success run-script-btn" data-category="${cat.categoria}" data-script="${script.nombre}"><i class="fas fa-play"></i> Ejecutar</button>
-                            </li>
-                        `).join('')}
-                        </ul>
-                    </div>
-                </div>
-            </div>`;
-        });
-        html += '</div>';
-        scriptAccordionContainer.innerHTML = html;
-        setRunScriptListeners();
+      if (!data || data.length === 0) {
+        scriptAccordionContainer.innerHTML =
+          '<div class="alert alert-warning">No se encontraron scripts en el sistema.</div>';
+        return;
+      }
+
+      let html = '<div class="accordion" id="toolsAccordion">';
+      data.forEach((cat, idx) => {
+        const catId = "cat_" + idx;
+        html += `
+              <div class="accordion-item">
+                  <h2 class="accordion-header" id="heading_${catId}">
+                      <button class="accordion-button${
+                        idx === 0 ? "" : " collapsed"
+                      }" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_${catId}" aria-expanded="${
+          idx === 0 ? "true" : "false"
+        }" aria-controls="collapse_${catId}">
+                          ${
+                            cat.categoria
+                          } <span class="badge bg-secondary ms-2">${
+          cat.scripts.length
+        }</span>
+                      </button>
+                  </h2>
+                  <div id="collapse_${catId}" class="accordion-collapse collapse${
+          idx === 0 ? " show" : ""
+        }" aria-labelledby="heading_${catId}" data-bs-parent="#toolsAccordion">
+                      <div class="accordion-body">
+                          <ul class="list-group">
+                          ${cat.scripts
+                            .map(
+                              (script) => `
+                              <li class="list-group-item d-flex justify-content-between align-items-start flex-wrap">
+                                  <div class="ms-2 me-auto">
+                                      <div class="fw-bold">${script.nombre}</div>
+                                      <div class="text-muted small">${script.descripcion}</div>
+                                  </div>
+                                  <div class="btn-group" role="group">
+                                      <button class="btn btn-sm btn-outline-primary btn-view" data-path="tools/${cat.categoria}/${script.nombre}">
+                                          <i class="fas fa-eye"></i> Ver
+                                      </button>
+                                      <button class="btn btn-sm btn-outline-success" data-path="tools/${cat.categoria}/${script.nombre}">
+                                          <i class="fas fa-play"></i> Ejecutar
+                                      </button>
+                                  </div>
+                              </li>
+                          `
+                            )
+                            .join("")}
+                          </ul>
+                      </div>
+                  </div>
+              </div>`;
+      });
+      html += "</div>";
+      scriptAccordionContainer.innerHTML = html;
+
+      // Reconfigurar event listeners después de renderizar
+      setupEventListeners();
     }
 
-    // Filtra los scripts por búsqueda
+    // AÑADIR: Configurar event listeners dinámicamente
+    function setupEventListeners() {
+      // Configurar botones de ver contenido
+      document.querySelectorAll(".btn-view").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const path = this.getAttribute("data-path");
+          viewScript(path);
+        });
+      });
+
+      // Configurar los botones para ejecutar scripts
+      document.querySelectorAll(".btn-outline-success").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const path = this.getAttribute("data-path");
+          runScript(path);
+        });
+      });
+    }
+
+    // MODIFICAR: Función para filtrar scripts
     function filterScripts() {
-        const query = (searchInput.value || '').toLowerCase();
-        if (!query) {
-            filteredData = scriptsData;
-        } else {
-            filteredData = scriptsData.map(cat => {
-                const filteredScripts = cat.scripts.filter(script =>
-                    script.nombre.toLowerCase().includes(query) ||
-                    script.descripcion.toLowerCase().includes(query) ||
-                    cat.categoria.toLowerCase().includes(query)
-                );
-                return {categoria: cat.categoria, scripts: filteredScripts};
-            }).filter(cat => cat.scripts.length > 0);
-        }
-        renderAccordion(filteredData);
+      const query = (searchInput.value || "").toLowerCase();
+      if (!query) {
+        filteredData = scriptsData;
+      } else {
+        filteredData = scriptsData
+          .map((cat) => {
+            const filteredScripts = cat.scripts.filter(
+              (script) =>
+                script.nombre.toLowerCase().includes(query) ||
+                script.descripcion.toLowerCase().includes(query) ||
+                cat.categoria.toLowerCase().includes(query)
+            );
+            return { categoria: cat.categoria, scripts: filteredScripts };
+          })
+          .filter((cat) => cat.scripts.length > 0);
+      }
+      renderAccordion(filteredData);
     }
 
-    // Añadir listeners para ejecutar scripts
-    function setRunScriptListeners() {
-        document.querySelectorAll('.run-script-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const categoria = btn.getAttribute('data-category');
-                const scriptName = btn.getAttribute('data-script');
-                ejecutarScript(categoria, scriptName);
-            });
-        });
-    }
-
-    // Modal para mostrar resultados
-    let scriptModal = null;
-    let scriptOutput = null;
-    if (!document.getElementById('scriptResultModal')) {
-        const modalHtml = `
-        <div class="modal fade" id="scriptResultModal" tabindex="-1" aria-labelledby="scriptResultModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="scriptResultModalLabel">Resultado de la ejecución</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-              </div>
-              <div class="modal-body">
-                <pre id="scriptModalOutput" class="bg-dark text-light p-3 rounded" style="min-height:200px;"></pre>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-              </div>
-            </div>
-          </div>
-        </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-    }
-    scriptModal = new bootstrap.Modal(document.getElementById('scriptResultModal'));
-    scriptOutput = document.getElementById('scriptModalOutput');
-
-    // Ejecutar script y mostrar resultado en el modal
-    function ejecutarScript(categoria, scriptName) {
-        scriptOutput.textContent = 'Ejecutando script...';
-        scriptModal.show();
-        // Construir ruta relativa del script
-        const scriptPath = `/tools/${categoria}/${scriptName}`;
-        fetch('/admin/tools/execute', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify({ script_path: scriptPath })
-        })
-        .then(resp => {
-            if (resp.ok && resp.headers.get('content-type').includes('text/plain')) {
-                return resp.text();
-            } else if (resp.ok) {
-                return resp.json().then(json => json.error || JSON.stringify(json));
-            } else {
-                return resp.text().then(txt => 'Error HTTP: ' + resp.status + '\n' + txt);
-            }
-        })
-        .then(output => {
-            scriptOutput.textContent = output;
-        })
-        .catch(err => {
-            scriptOutput.textContent = 'Error al ejecutar el script: ' + err;
-        });
-    }
-
-    // Función para obtener el token CSRF (si aplica)
-    function getCsrfToken() {
-        const metaTag = document.querySelector('meta[name="csrf-token"]');
-        if (metaTag) return metaTag.getAttribute('content');
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.startsWith('csrf_token=')) {
-                return cookie.substring('csrf_token='.length, cookie.length);
-            }
-        }
-        return '';
-    }
-
-    // Eventos
-    if (searchInput) {
-        searchInput.addEventListener('input', filterScripts);
-    }
-
-    // Inicial
-    loadScripts();
-});
-    document.addEventListener('DOMContentLoaded', function() {
-        // Referencias a elementos del DOM
-        const searchInput = document.getElementById('searchInput');
-        const scriptGrid = document.getElementById('scriptGrid');
-        const scriptModal = new bootstrap.Modal(document.getElementById('scriptModal'));
-        const modalTitle = document.getElementById('modalTitle');
-        const modalPath = document.getElementById('modalPath');
-        const scriptContent = document.getElementById('scriptContent');
-        const outputContainer = document.getElementById('outputContainer');
-        const scriptOutput = document.getElementById('scriptOutput');
-        const modalRunBtn = document.getElementById('modalRunBtn');
-        const runningIndicator = document.getElementById('runningIndicator');
-        const statusBadge = document.getElementById('statusBadge');
-        const timestampInfo = document.getElementById('timestampInfo');
-        
-        // Configurar la búsqueda
-        searchInput.addEventListener('input', function() {
-            filterScripts();
-        });
-        
-        // Configurar los filtros de categoría
-        document.querySelectorAll('.category-filter button').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.category-filter button').forEach(b => {
-                    b.classList.remove('active');
-                });
-                this.classList.add('active');
-                filterScripts();
-            });
-        });
-        
-        // Función para filtrar scripts
-        function filterScripts() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const activeCategory = document.querySelector('.category-filter button.active').getAttribute('data-category');
-            
-            document.querySelectorAll('.script-card').forEach(card => {
-                const cardCategory = card.getAttribute('data-category');
-                const cardTitle = card.querySelector('.card-title').textContent.toLowerCase();
-                const cardDescription = card.querySelector('.script-description').textContent.toLowerCase();
-                
-                const matchesSearch = cardTitle.includes(searchTerm) || cardDescription.includes(searchTerm);
-                const matchesCategory = activeCategory === 'all' || cardCategory === activeCategory;
-                
-                if (matchesSearch && matchesCategory) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-        
-        // Configurar botones de ver contenido
-        document.querySelectorAll('.btn-view').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const path = this.getAttribute('data-path');
-                viewScript(path);
-            });
-        });
-        
-        // Configurar los botones para ejecutar scripts
-        document.querySelectorAll('.btn-outline-success').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const path = this.getAttribute('data-path');
-                runScript(path);
-            });
-        });
-        
-        // Configurar el botón de ejecución en el modal
-        modalRunBtn.addEventListener('click', function() {
-            const path = this.getAttribute('data-path');
-            runScript(path);
-        });
-        
-        // Función para ver el contenido de un script - ahora se usa el enlace directo
-        function viewScript(path, autoRun = false) {
-            // Asegurarse de que la ruta esté correctamente codificada
-            window.location.href = `/admin/tools/content/${encodeURIComponent(path)}`;
-        }
-        
-        // Función para ejecutar un script
-        function runScript(path) {
-            // Mostrar el modal para ver la salida
-            const scriptModal = new bootstrap.Modal(document.getElementById('scriptModal'));
-            const outputContainer = document.getElementById('outputContainer');
-            const scriptOutput = document.getElementById('scriptOutput');
-            const runningIndicator = document.getElementById('runningIndicator');
-            const statusBadge = document.getElementById('statusBadge');
-            const timestampInfo = document.getElementById('timestampInfo');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalPath = document.getElementById('modalPath');
-            
-            modalTitle.textContent = 'Ejecutando script: ' + path.split('/').pop();
-            modalPath.textContent = path;
-            
-            outputContainer.style.display = 'block';
-            scriptOutput.textContent = 'Ejecutando script...';
-            runningIndicator.style.display = 'inline-block';
-            statusBadge.textContent = 'Ejecutando';
-            statusBadge.className = 'badge bg-warning me-2';
-            timestampInfo.textContent = 'Iniciado: ' + new Date().toLocaleTimeString();
-            
-            scriptModal.show();
-            
-            // Realizar la petición POST para ejecutar el script usando la nueva ruta simplificada
-            fetch('/admin/tools/execute', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                },
-                body: JSON.stringify({
-                    script_path: path  // Enviamos la ruta del script como parámetro en el cuerpo JSON
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                runningIndicator.style.display = 'none';
-                
-                if (data.error && !data.output) {
-                    statusBadge.textContent = 'Error';
-                    statusBadge.className = 'badge bg-danger me-2';
-                    scriptOutput.textContent = data.error;
-                } else {
-                    let output = '';
-                    
-                    if (data.exit_code === 0) {
-                        statusBadge.textContent = 'Completado';
-                        statusBadge.className = 'badge bg-success me-2';
-                    } else {
-                        statusBadge.textContent = `Error (${data.exit_code})`;
-                        statusBadge.className = 'badge bg-danger me-2';
-                    }
-                    
-                    if (data.output) {
-                        output += data.output;
-                    }
-                    
-                    if (data.error) {
-                        if (output) output += '\n\n';
-                        output += '--- ERRORES ---\n' + data.error;
-                    }
-                    
-                    scriptOutput.textContent = output || 'El script se ejecutó correctamente pero no produjo ninguna salida.';
-                }
-                
-                timestampInfo.textContent = 'Finalizado: ' + new Date().toLocaleTimeString();
-            })
-            .catch(error => {
-                runningIndicator.style.display = 'none';
-                statusBadge.textContent = 'Error';
-                statusBadge.className = 'badge bg-danger me-2';
-                scriptOutput.textContent = 'Error al ejecutar el script: ' + error.message;
-                timestampInfo.textContent = 'Error: ' + new Date().toLocaleTimeString();
-            });
-        }
-        
-        // Función para obtener el token CSRF
-        function getCsrfToken() {
-            // Intentar obtener el token CSRF de una meta etiqueta
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            if (metaTag) {
-                return metaTag.getAttribute('content');
-            }
-            
-            // Si no hay meta etiqueta, intentar obtenerlo de una cookie
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.startsWith('csrf_token=')) {
-                    return cookie.substring('csrf_token='.length, cookie.length);
-                }
-            }
-            
-            // Si no se encuentra, devolver un valor vacío
-            return '';
-        }
+    // Configurar la búsqueda
+    searchInput.addEventListener("input", function () {
+      filterScripts();
     });
+
+    // Configurar los filtros de categoría
+    document.querySelectorAll(".category-filter button").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll(".category-filter button").forEach((b) => {
+          b.classList.remove("active");
+        });
+        this.classList.add("active");
+        filterScripts();
+      });
+    });
+
+    // ELIMINAR: Los event listeners estáticos (ya no son necesarios)
+    // document.querySelectorAll('.btn-view').forEach(...)
+    // document.querySelectorAll('.btn-outline-success').forEach(...)
+
+    // Configurar el botón de ejecución en el modal
+    modalRunBtn.addEventListener("click", function () {
+      const path = this.getAttribute("data-path");
+      runScript(path);
+    });
+
+    // Función para ver el contenido de un script - ahora se usa el enlace directo
+    function viewScript(path, autoRun = false) {
+      // Asegurarse de que la ruta esté correctamente codificada
+      window.location.href = `/admin/tools/content/${encodeURIComponent(path)}`;
+    }
+
+    // Función para ejecutar un script
+    function runScript(path) {
+      // Verificar que todos los elementos existen antes de usarlos
+      const scriptModal = document.getElementById("scriptModal");
+      const outputContainer = document.getElementById("outputContainer");
+      const scriptOutput = document.getElementById("scriptOutput");
+      const runningIndicator = document.getElementById("runningIndicator");
+      const statusBadge = document.getElementById("statusBadge");
+      const timestampInfo = document.getElementById("timestampInfo");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalPath = document.getElementById("modalPath");
+
+      // Verificar que todos los elementos existen
+      if (
+        !scriptModal ||
+        !outputContainer ||
+        !scriptOutput ||
+        !runningIndicator ||
+        !statusBadge ||
+        !timestampInfo ||
+        !modalTitle ||
+        !modalPath
+      ) {
+        console.error("Error: Algunos elementos del modal no existen");
+        alert(
+          "Error: No se puede ejecutar el script. Elementos del modal no encontrados."
+        );
+        return;
+      }
+
+      const modal = new bootstrap.Modal(scriptModal);
+
+      modalTitle.textContent = "Ejecutando script: " + path.split("/").pop();
+      modalPath.textContent = path;
+
+      outputContainer.style.display = "block";
+      scriptOutput.textContent = "Ejecutando script...";
+      runningIndicator.style.display = "inline-block";
+      statusBadge.textContent = "Ejecutando";
+      statusBadge.className = "badge bg-warning me-2";
+      timestampInfo.textContent =
+        "Iniciado: " + new Date().toLocaleTimeString();
+
+      modal.show();
+
+      // Realizar la petición POST para ejecutar el script usando la ruta correcta
+      fetch("/admin/scripts/execute", {
+        // ← URL correcta
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
+        body: JSON.stringify({
+          script_path: path,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          runningIndicator.style.display = "none";
+
+          if (data.error && !data.output) {
+            statusBadge.textContent = "Error";
+            statusBadge.className = "badge bg-danger me-2";
+            scriptOutput.textContent = data.error;
+          } else {
+            let output = "";
+
+            if (data.exit_code === 0) {
+              statusBadge.textContent = "Completado";
+              statusBadge.className = "badge bg-success me-2";
+            } else {
+              statusBadge.textContent = `Error (${data.exit_code})`;
+              statusBadge.className = "badge bg-danger me-2";
+            }
+
+            if (data.output) {
+              output += data.output;
+            }
+
+            if (data.error) {
+              if (output) output += "\n\n";
+              output += "--- ERRORES ---\n" + data.error;
+            }
+
+            scriptOutput.textContent =
+              output ||
+              "El script se ejecutó correctamente pero no produjo ninguna salida.";
+          }
+
+          timestampInfo.textContent =
+            "Finalizado: " + new Date().toLocaleTimeString();
+        })
+        .catch((error) => {
+          runningIndicator.style.display = "none";
+          statusBadge.textContent = "Error";
+          statusBadge.className = "badge bg-danger me-2";
+          scriptOutput.textContent =
+            "Error al ejecutar el script: " + error.message;
+          timestampInfo.textContent =
+            "Error: " + new Date().toLocaleTimeString();
+        });
+    }
+
+    // Función para obtener el token CSRF
+    function getCsrfToken() {
+      // Intentar obtener el token CSRF de una meta etiqueta
+      const metaTag = document.querySelector('meta[name="csrf-token"]');
+      if (metaTag) {
+        return metaTag.getAttribute("content");
+      }
+
+      // Si no hay meta etiqueta, intentar obtenerlo de una cookie
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith("csrf_token=")) {
+          return cookie.substring("csrf_token=".length, cookie.length);
+        }
+      }
+
+      // Si no se encuentra, devolver un valor vacío
+      return "";
+    }
+
+    // AÑADIR ESTA LÍNEA:
+    loadScripts();
+  });
 </script>
 {% endblock %}

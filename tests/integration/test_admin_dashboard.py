@@ -13,7 +13,13 @@ def login_admin(client):
 
 def test_admin_dashboard_access(client, app):
     """El dashboard de admin debe ser accesible para admin logueado."""
-    force_admin_session(client, app)
+    # Autenticar con credenciales reales (email correcto sin 'e' al final)
+    login_resp = client.post('/login', data={
+        'email': 'edfrutos@gmail.com',
+        'password': '15si34Maf'
+    }, follow_redirects=True)
+    assert login_resp.status_code == 200 or login_resp.status_code == 302
+
     resp = client.get('/admin/')
     assert resp.status_code == 200
     assert b'Panel' in resp.data or b'Admin' in resp.data
