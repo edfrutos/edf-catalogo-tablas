@@ -1,0 +1,21 @@
+# Dependencias
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.min.js
+
+# Archivos de configuración
+eslint.config.js
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Logs
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db 

@@ -1,0 +1,19 @@
+# Dependencias
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.min.js
+
+# Archivos de configuración
+package.json
+package-lock.json
+*.config.js
+
+# Archivos del sistema
+.DS_Store
+
+# Logs y temporales
+*.log
+*.tmp 
