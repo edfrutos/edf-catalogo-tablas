@@ -12,6 +12,8 @@ from unittest.mock import MagicMock
 import certifi
 import pytest
 from dotenv import load_dotenv
+from flask import g
+from pymongo import MongoClient
 
 # Añadir la raíz del proyecto al sys.path para que se pueda importar app.py
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/../'))
@@ -28,7 +30,6 @@ def mongo_client_ssl():
     """Cliente MongoDB robusto para integración, forzando TLS 1.2 y bundle certifi."""
     mongo_uri = os.getenv('MONGO_URI')
     print("[DEBUG pytest] Creando cliente MongoClient...")
-    from pymongo import MongoClient
     client = MongoClient(
         mongo_uri,
         tls=True,
@@ -72,7 +73,6 @@ def app():
         app.mongo_db = get_mongo_db()
     
     with app.app_context():
-        from flask import g
         g.mongo = app.mongo
         g.users_collection = app.mongo_db["users"]
         yield app  # Usar yield en lugar de return para permitir limpieza después
