@@ -1,0 +1,169 @@
+{% extends "admin/base.html" %}
+{% block title %}Panel de Administración{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <form class="row mb-4" method="get" action="{{ url_for('admin.dashboard_admin') }}">
+    <div class="col-md-4 mb-2">
+      <input type="text" class="form-control" name="search" placeholder="Buscar por nombre o propietario" value="{{ search or '' }}">
+    </div>
+    <div class="col-md-3 mb-2">
+      <select class="form-select" name="search_type">
+        <option value="name" {% if search_type == 'name' %}selected{% endif %}>Nombre de catálogo/tabla</option>
+        <option value="owner" {% if search_type == 'owner' %}selected{% endif %}>Usuario propietario</option>
+      </select>
+    </div>
+    <div class="col-md-2 mb-2">
+      <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Buscar</button>
+    </div>
+    <div class="col-md-3 mb-2">
+      {% if search %}
+        <a href="{{ url_for('admin.dashboard_admin') }}" class="btn btn-outline-secondary w-100">Limpiar búsqueda</a>
+      {% endif %}
+    </div>
+  </form>
+  <div class="row mb-4">
+    <div class="col-12 text-center">
+      <h2 class="mb-2"><i class="bi bi-speedometer2"></i> Panel de Administración</h2>
+      <p class="lead">Bienvenido, <strong>{{ session.username }}</strong>. Aquí puedes gestionar usuarios, catálogos y ver el estado del sistema.</p>
+    </div>
+  </div>
+  <div class="row mb-4 text-center">
+    <div class="col-md-4 mb-3">
+      <div class="card shadow border-0 h-100">
+        <div class="card-body bg-primary text-white rounded">
+          <h5 class="card-title"><i class="bi bi-people"></i> Usuarios registrados</h5>
+          <p class="display-4 fw-bold">{{ total_usuarios or '—' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card shadow border-0 h-100">
+        <div class="card-body bg-success text-white rounded">
+          <h5 class="card-title"><i class="bi bi-table"></i> Catálogos/Tablas</h5>
+          <p class="display-4 fw-bold">{{ total_catalogos or '—' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card shadow border-0 h-100">
+        <div class="card-body bg-warning text-dark rounded">
+          <h5 class="card-title"><i class="bi bi-percent"></i> Porcentaje</h5>
+          {% if porcentaje is not none and porcentaje > 0 %}
+            <p class="fw-bold fs-5">{{ porcentaje|round(2) }}&#37;</p>
+          {% else %}
+            <p class="fw-bold fs-5 text-muted">—</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3">
+      <a href="{{ url_for('admin.lista_usuarios') }}" class="btn btn-outline-info w-100 py-3 shadow-sm" title="Gestión de Usuarios">
+        <i class="bi bi-person-lines-fill"></i> Gestión de Usuarios
+      </a>
+    </div>
+    <div class="col-md-4 mb-3">
+      <a href="{{ url_for('maintenance.maintenance_dashboard') }}" class="btn btn-outline-warning w-100 py-3 shadow-sm" title="Mantenimiento del sistema">
+        <i class="bi bi-tools"></i> Mantenimiento
+      </a>
+    </div>
+    <div class="col-md-4 mb-3">
+      <a href="{{ url_for('admin.db_scripts') }}" class="btn btn-outline-secondary w-100 py-3 shadow-sm" title="Gestión de Scripts DB">
+        <i class="bi bi-terminal"></i> Scripts DB
+      </a>
+    </div>
+  </div>
+  <h4 class="mt-4 mb-3"><i class="bi bi-folder-check"></i> Mis Catálogos</h4>
+  <div class="table-responsive mb-4">
+    <table class="table table-hover align-middle shadow-sm">
+      <thead class="table-light">
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Fecha de creación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat in mis_registros %}
+        <tr>
+          <td><i class="bi bi-table"></i> {{ cat.name }}</td>
+          <td>{{ cat.tipo|capitalize }}</td>
+          <td>
+            {% if cat.created_at %}
+              {{ cat.created_at.strftime('%Y-%m-%d %H:%M') if cat.created_at.strftime else cat.created_at }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('admin.ver_catalogo_unificado', collection_source=cat.tipo == 'spreadsheet' and 'spreadsheets' or 'catalogs', catalog_id=cat._id) }}" class="btn btn-sm btn-outline-primary me-1" title="Ver"><i class="bi bi-eye"></i></a>
+            <a href="{{ url_for('admin.editar_catalogo_admin', collection_source=cat.tipo == 'spreadsheet' and 'spreadsheets' or 'catalogs', catalog_id=cat._id) }}" class="btn btn-sm btn-outline-warning me-1" title="Editar"><i class="bi bi-pencil"></i></a>
+            <form action="{{ url_for('admin.eliminar_catalogo_admin', collection_source=cat.tipo == 'spreadsheet' and 'spreadsheets' or 'catalogs', catalog_id=cat._id) }}" method="post" style="display:inline;">
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Seguro que deseas eliminar este catálogo/tabla?');"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not mis_registros %}
+      <div class="alert alert-info mt-3">No tienes catálogos/tablas propios.</div>
+    {% endif %}
+  </div>
+
+  <h4 class="mt-4 mb-3"><i class="bi bi-clock-history"></i> Últimos Catálogos/Tablas Creados</h4>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle shadow-sm">
+      <thead class="table-light">
+        <tr>
+          <th>Nombre</th>
+          <th>Propietario</th>
+          <th>Fecha de creación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tabla in tablas[:5] %}
+        <tr>
+          <td><i class="bi bi-table"></i> {{ tabla.name }}</td>
+          <td>{{ tabla.owner if tabla.owner else '—' }}</td>
+          <td>
+            {% if tabla.created_at %}
+              {{ tabla.created_at.strftime('%Y-%m-%d %H:%M') if tabla.created_at.strftime else tabla.created_at }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if session.role == 'admin' or tabla.owner == session.username %}
+              <a href="{{ url_for('admin.ver_catalogo_unificado', collection_source='spreadsheets', catalog_id=tabla._id) }}" class="btn btn-sm btn-outline-primary me-1" title="Ver"><i class="bi bi-eye"></i></a>
+              <form action="{{ url_for('main.delete_table', table_id=tabla._id) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Seguro que deseas eliminar esta tabla?');"><i class="bi bi-trash"></i></button>
+              </form>
+            {% else %}
+              <span class="text-muted">Sin permisos</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not tablas %}
+      <div class="alert alert-info mt-3">No hay tablas/catálogos creados aún.</div>
+    {% endif %}
+  </div>
+  <div class="row mt-3">
+    <div class="col-md-4 mx-auto">
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger w-100 py-2 shadow-sm">
+        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}?v=20250724_UNIFIED_FINAL_{{ range(1000, 9999) | random }}"></script>
+{% endblock %}

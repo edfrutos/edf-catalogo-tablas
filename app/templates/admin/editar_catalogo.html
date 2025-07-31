@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Catálogo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Catálogo/Tabla</h2>
+    <a href="{{ request.referrer or url_for('admin.dashboard_admin') }}" class="btn btn-secondary mb-3">&larr; Volver</a>
+    <form method="POST" id="formEditarCatalogo">
+        <div class="mb-3">
+            <label for="name" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ catalog.name }}" required>
+        </div>
+        <!-- Input oculto para encabezados -->
+        <input type="hidden" id="headers" name="headers" value="{{ catalog.headers|join(', ') if catalog.headers else '' }}">
+        <div class="mb-3">
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editHeadersModal">
+                <i class="bi bi-columns-gap"></i> Editar encabezados de columnas
+            </button>
+            <span id="headersPreview" class="ms-2 text-muted small">{{ catalog.headers|join(', ') if catalog.headers else '' }}</span>
+        </div>
+        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+    </form>
+</div>
+
+<!-- Modal para editar encabezados de columnas -->
+<div class="modal fade" id="editHeadersModal" tabindex="-1" aria-labelledby="editHeadersModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form onsubmit="guardarEncabezados(event)">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editHeadersModalLabel">Editar encabezados de columnas</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <label for="headersInputModal" class="form-label">Encabezados (separados por coma):</label>
+          <input type="text" class="form-control" id="headersInputModal" placeholder="columna1, columna2, columna3">
+          <div class="form-text">Puedes modificar, añadir o eliminar encabezados. Sepáralos por coma.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar encabezados</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Al abrir el modal, poner el valor actual de los encabezados
+const headersInputModal = document.getElementById('headersInputModal');
+document.getElementById('editHeadersModal').addEventListener('show.bs.modal', function () {
+    headersInputModal.value = document.getElementById('headers').value;
+});
+// Al guardar en el modal, actualizar el input oculto y el preview
+function guardarEncabezados(event) {
+    event.preventDefault();
+    const value = headersInputModal.value;
+    document.getElementById('headers').value = value;
+    document.getElementById('headersPreview').textContent = value;
+    // Cerrar el modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editHeadersModal'));
+    modal.hide();
+}
+</script>
+{% endblock %}

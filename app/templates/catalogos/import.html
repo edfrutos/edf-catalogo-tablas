@@ -1,0 +1,16 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h2>Importar Catálogo</h2>
+<form method="POST" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label class="form-label">Nombre del catálogo (opcional)</label>
+    <input type="text" class="form-control" name="name" placeholder="Ej: Clientes 2025">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Archivo CSV o XLSX</label>
+    <input type="file" class="form-control" name="file" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Importar</button>
+</form>
+{% endblock %}

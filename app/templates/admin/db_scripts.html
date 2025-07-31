@@ -1,0 +1,252 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            <i class="bi {% if category == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Título y alerta de advertencia -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-terminal me-2"></i>Scripts de Base de Datos</h2>
+        <div>
+            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#helpModal">
+                <i class="bi bi-question-circle"></i> Ayuda
+            </button>
+        </div>
+    </div>
+    
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        {{ warning }}
+    </div>
+
+    <div class="row">
+        <!-- Panel de scripts -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Scripts Disponibles</h5>
+                </div>
+                <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+                    {% if scripts|length == 0 %}
+                        <div class="list-group-item text-muted">No hay scripts disponibles en <code>tools/db_utils</code>.</div>
+                    {% else %}
+                        {% for script in scripts %}
+                            <a href="#" class="list-group-item list-group-item-action script-item {% if script.name == selected_script %}active{% endif %}"
+                               data-script="{{ script.name }}" data-description="{{ script.description }}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ script.name }}</h6>
+                                    <small class="text-muted">{{ script.last_modified }}</small>
+                                </div>
+                                <p class="mb-1 small text-muted text-truncate">{{ script.description }}</p>
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de ejecución -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Ejecutar Script</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="scriptForm">
+                        <div class="mb-3">
+                            <label for="script" class="form-label">Script seleccionado:</label>
+                            <select name="script" id="script" class="form-select" required>
+                                <option value="">-- Selecciona un script --</option>
+                                {% for script in scripts %}
+                                    <option value="{{ script.name }}" {% if script.name == selected_script %}selected{% endif %}>{{ script.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div id="scriptHelp" class="form-text text-muted mt-1">
+                                <i class="bi bi-info-circle"></i> Selecciona un script de la lista
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="args" class="form-label">Argumentos (opcionales):</label>
+                            <div class="input-group">
+                                <input type="text" name="args" id="args" class="form-control" 
+                                       value="{{ args|default('') }}" 
+                                       placeholder="Ej: --help o --parametro=valor"
+                                       title="Argumentos para el script">
+                                <button type="submit" name="action" value="help" class="btn btn-outline-secondary" 
+                                        title="Mostrar ayuda del script">
+                                    <i class="bi bi-question-lg"></i> Ayuda
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Usa <code>--help</code> para ver las opciones del script.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="reset" class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </button>
+                            <button type="submit" name="action" value="run" class="btn btn-primary">
+                                <i class="bi bi-play-fill"></i> Ejecutar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Resultados de la ejecución -->
+                {% if result or error %}
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Resultado de la ejecución</h6>
+                        {% if duration %}
+                            <span class="badge bg-secondary">{{ duration }} segundos</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if result %}
+                        <div class="mb-3">
+                            <h6>Salida estándar (stdout):</h6>
+                            <div class="bg-dark text-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+                                <pre class="mb-0" style="white-space: pre-wrap;">{{ result }}</pre>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if error %}
+                        <div class="alert alert-danger mb-0">
+                            <h6 class="alert-heading">Error (stderr):</h6>
+                            <pre class="mb-0" style="white-space: pre-wrap;">{{ error }}</pre>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de ayuda -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="helpModalLabel">
+                    <i class="bi bi-question-circle me-2"></i>Ayuda - Scripts de Base de Datos
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <h5>¿Qué son estos scripts?</h5>
+                <p>Estos scripts son herramientas de mantenimiento para la base de datos de la aplicación. Permiten realizar tareas como:</p>
+                <ul>
+                    <li>Corregir inconsistencias en los datos</li>
+                    <li>Generar informes</li>
+                    <li>Realizar copias de seguridad</li>
+                    <li>Migrar o transformar datos</li>
+                    <li>Otras tareas administrativas</li>
+                </ul>
+                
+                <h5 class="mt-4">Recomendaciones de seguridad</h5>
+                <div class="alert alert-warning">
+                    <i class="bi bi-shield-exclamation me-2"></i>
+                    <strong>¡Precaución!</strong> Los scripts pueden modificar datos. Asegúrate de entender qué hace un script antes de ejecutarlo.
+                </div>
+                
+                <h5 class="mt-4">¿Cómo usar?</h5>
+                <ol>
+                    <li>Selecciona un script de la lista</li>
+                    <li>Opcionalmente, añade argumentos si el script los requiere</li>
+                    <li>Haz clic en "Ejecutar" para ejecutar el script con los argumentos proporcionados</li>
+                    <li>Usa el botón "Ayuda" para ver la documentación de un script</li>
+                </ol>
+                
+                <h5 class="mt-4">Solución de problemas</h5>
+                <p>Si un script falla:</p>
+                <ul>
+                    <li>Verifica que los argumentos sean correctos</li>
+                    <li>Consulta los mensajes de error en la sección de resultados</li>
+                    <li>Revisa los logs del servidor para más detalles</li>
+                    <li>Si el problema persiste, contacta al administrador del sistema</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript adicional -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar descripción al seleccionar un script de la lista
+    document.querySelectorAll('.script-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const scriptName = this.getAttribute('data-script');
+            document.getElementById('script').value = scriptName;
+            
+            // Actualizar la clase activa
+            document.querySelectorAll('.script-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Mostrar la descripción
+            const description = this.getAttribute('data-description');
+            document.getElementById('scriptHelp').innerHTML = 
+                `<i class="bi bi-info-circle"></i> ${description || 'No hay descripción disponible.'}`;
+        });
+    });
+    
+    // Manejar el envío del formulario
+    const form = document.getElementById('scriptForm');
+    form.addEventListener('submit', function(e) {
+        const script = document.getElementById('script').value;
+        if (!script) {
+            e.preventDefault();
+            alert('Por favor, selecciona un script para ejecutar.');
+            return false;
+        }
+        
+        // Mostrar indicador de carga
+        const submitBtn = form.querySelector('button[type="submit"][name="action"][value="run"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Ejecutando...';
+        }
+        
+        return true;
+    });
+});
+</script>
+
+<style>
+.script-item {
+    transition: all 0.2s;
+}
+.script-item:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+.script-item.active {
+    background-color: #e9ecef;
+    border-left: 4px solid #0d6efd;
+}
+pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+</style>
+
+{% endblock %} 

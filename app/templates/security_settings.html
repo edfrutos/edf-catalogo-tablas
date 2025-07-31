@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Configuración de Seguridad</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('update_security_settings') }}">
+                        <!-- Notificaciones por Email -->
+                        <div class="mb-4">
+                            <h5>Notificaciones por Email</h5>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="notify_login" name="notify_login" 
+                                       {% if settings.notify_login %}checked{% endif %}>
+                                <label class="form-check-label" for="notify_login">
+                                    Notificarme cuando alguien inicie sesión desde un nuevo dispositivo
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="notify_failed_attempts" name="notify_failed_attempts"
+                                       {% if settings.notify_failed_attempts %}checked{% endif %}>
+                                <label class="form-check-label" for="notify_failed_attempts">
+                                    Notificarme sobre intentos fallidos de inicio de sesión
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="notify_password_changes" name="notify_password_changes"
+                                       {% if settings.notify_password_changes %}checked{% endif %}>
+                                <label class="form-check-label" for="notify_password_changes">
+                                    Notificarme cuando se cambie mi contraseña
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Verificación en Dos Pasos -->
+                        <div class="mb-4">
+                            <h5>Verificación en Dos Pasos</h5>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="enable_2fa" name="enable_2fa"
+                                       {% if settings.enable_2fa %}checked{% endif %}>
+                                <label class="form-check-label" for="enable_2fa">
+                                    Habilitar verificación en dos pasos
+                                </label>
+                            </div>
+                            <div class="form-text text-muted">
+                                La verificación en dos pasos envía un código a tu email cada vez que inicies sesión desde un nuevo dispositivo.
+                            </div>
+                        </div>
+
+                        <!-- Sesiones Activas -->
+                        <div class="mb-4">
+                            <h5>Sesiones Activas</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Dispositivo</th>
+                                            <th>Ubicación</th>
+                                            <th>Última Actividad</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for session in active_sessions %}
+                                        <tr>
+                                            <td>{{ session.device }}</td>
+                                            <td>{{ session.location }}</td>
+                                            <td>{{ session.last_activity.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                            <td>
+                                                {% if session.current %}
+                                                <span class="badge bg-success">Actual</span>
+                                                {% else %}
+                                                <button type="button" class="btn btn-danger btn-sm"
+                                                        onclick="revokeSession('{{ session.id }}')">
+                                                    Cerrar
+                                                </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Historial de Actividad -->
+                        <div class="mb-4">
+                            <h5>Historial de Actividad Reciente</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Actividad</th>
+                                            <th>Ubicación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for activity in activity_history %}
+                                        <tr>
+                                            <td>{{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                            <td>{{ activity.description }}</td>
+                                            <td>{{ activity.location }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function revokeSession(sessionId) {
+    if (confirm('¿Estás seguro de que quieres cerrar esta sesión?')) {
+        fetch('/security/revoke-session/' + sessionId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al cerrar la sesión: ' + data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

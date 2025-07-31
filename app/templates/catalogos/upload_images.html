@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Subir imágenes al catálogo: {{ catalogo.nombre }}</h2>
+
+<form method="POST" action="{{ url_for('catalog.upload_images', catalogo_id=catalogo._id) }}" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label for="registro_numero" class="form-label">Número de Registro</label>
+    <input type="number" class="form-control" name="registro_numero" id="registro_numero" required>
+  </div>
+
+  <div class="mb-3">
+    <label for="imagenes" class="form-label">Selecciona hasta 3 imágenes</label>
+    <input type="file" class="form-control" name="imagenes" id="imagenes" accept="image/*" multiple required>
+    <div class="form-text">Se permitirán máximo 3 imágenes por registro. El nombre se generará automáticamente.</div>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Subir imágenes</button>
+  <a href="{{ url_for('catalog.view', catalogo_id=catalogo._id) }}" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

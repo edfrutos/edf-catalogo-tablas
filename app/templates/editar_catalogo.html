@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Editar Catálogo{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Editar Catálogo</h1>
+    <form method="post">
+        <div class="mb-3">
+            <label for="name" class="form-label">Nombre del Catálogo</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ catalog.name }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="headers" class="form-label">Encabezados (separados por comas)</label>
+            <input type="text" class="form-control" id="headers" name="headers" value="{{ catalog.headers|join(', ') }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

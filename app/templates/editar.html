@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Registro #{{ registro["Número"] }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='css/favicon.ico') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Barra de navegación -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>Editar Registro #{{ registro["Número"] }}</h1>
+            {% if session.usuario %}
+            <button onclick="window.location.href='/logout'" class="btn-secondary">
+                Cerrar Sesión ({{ session.usuario }})
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data" onsubmit="return confirmarAccion(event, document.querySelector('input[name=\'delete_record\']').checked ? '¿Está seguro de que desea eliminar este registro?' : '¿Desea guardar los cambios en este registro?')">
+            <!-- Campos del registro -->
+            <div class="form-group">
+                <label>Número:</label>
+                <input type="text" value="{{ registro.get('Número', '') }}" readonly>
+            </div>
+
+            {% for header in headers %}
+                {% if header != "Número" and header != "Imagenes" %}
+                <div class="form-group">
+                    <label for="{{ header }}">{{ header }}:</label>
+                    <input type="text" 
+                           id="{{ header }}" 
+                           name="{{ header }}" 
+                           value="{{ registro.get(header.replace(' ', '_').replace('.', '_'), '') }}" 
+                           required>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Sección de imágenes -->
+            <h3>Gestión de Imágenes</h3>
+            <div class="form-group">
+                <h4>Subir nuevas imágenes (seleccione una imagen para cada posición):</h4>
+                <small>Formatos permitidos: PNG, JPG, JPEG, GIF</small>
+                
+                <div style="margin-top: 10px;">
+                    <label>Posición 1:</label>
+                    <input type="file" 
+                           name="imagen1" 
+                           accept="image/*"
+                           class="btn-secondary">
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label>Posición 2:</label>
+                    <input type="file" 
+                           name="imagen2" 
+                           accept="image/*"
+                           class="btn-secondary">
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label>Posición 3:</label>
+                    <input type="file" 
+                           name="imagen3" 
+                           accept="image/*"
+                           class="btn-secondary">
+                </div>
+            </div>
+
+            <!-- Vista previa de imágenes actuales -->
+            <div class="image-preview">
+                {% for i in range(3) %}
+                    <div>
+                        {% if imagenes_actuales[i] %}
+                        {% if imagenes_actuales[i] and imagenes_actuales[i].startswith('s3://') %}
+                            {% set filename = imagenes_actuales[i].split('/')[-1] %}
+                            <img src="/imagenes_subidas/{{ filename }}?s3=true" alt="Imagen actual" class="thumbnail">
+                        {% else %}
+                            <img src="{{ imagenes_actuales[i] }}" alt="Imagen actual" class="thumbnail">
+                        {% endif %}
+                        <input type="checkbox" name="remove_img{{ i+1 }}"> Eliminar imagen {{ i+1 }}
+                        {% else %}
+                        <p>Espacio de imagen {{ i+1 }} vacío</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Zona de eliminación -->
+            <div class="danger-zone">
+                <h3>Zona de Peligro</h3>
+                <label>
+                    <input type="checkbox" name="delete_record">
+                    Eliminar este registro completamente
+                </label>
+                <p><small>Esta acción no se puede deshacer</small></p>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="btn-container">
+                <button type="submit" class="btn-primary">Guardar Cambios</button>
+                <button type="button" 
+                        onclick="window.location.href='/catalog'" 
+                        class="btn-secondary">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Confirmar eliminación
+        document.querySelector('form').onsubmit = function(e) {
+            if (document.querySelector('input[name="delete_record"]').checked) {
+                if (!confirm('¿Está seguro de que desea eliminar este registro? Esta acción no se puede deshacer.')) {
+                    e.preventDefault();
+                }
+            }
+        };
+
+        function confirmarAccion(event, mensaje) {
+            if (!confirm(mensaje)) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

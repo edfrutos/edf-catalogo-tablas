@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Backups existentes{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Backups existentes</h1>
+  <a href="{{ url_for('maintenance.maintenance_dashboard') }}" class="btn btn-link mb-3">&larr; Volver a mantenimiento</a>
+  {% if backup_files %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Nombre</th>
+          <th>Tamaño</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for backup in backup_files %}
+        <tr>
+          <td>{{ backup.name }}</td>
+          <td>{{ backup.size }}</td>
+          <td>{{ backup.modified }}</td>
+          <td>
+            <a href="{{ url_for('admin.download_backup', filename=backup.name) }}" class="btn btn-sm btn-success me-2">
+              <i class="bi bi-download"></i> Descargar
+            </a>
+            <form method="post" action="{{ url_for('admin.backups_list') }}" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas eliminar el backup {{ backup.name|e }}?');">
+              <input type="hidden" name="filename" value="{{ backup.name }}">
+              <button type="submit" class="btn btn-sm btn-danger">
+                <i class="bi bi-trash"></i> Eliminar
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No hay archivos de backup disponibles.</div>
+  {% endif %}
+</div>
+{% endblock %}

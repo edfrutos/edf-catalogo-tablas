@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Usuarios Sospechosos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Usuarios Sospechosos</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lista de Usuarios Sospechosos</h5>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+                    Volver al Dashboard
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Email</th>
+                                <th>Nombre</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.nombre }}</td>
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" 
+                                                onclick="deleteUser('{{ user.email }}')">
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No se encontraron usuarios sospechosos.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteUser(email) {
+    if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+        fetch('/admin/user/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la solicitud');
+        });
+    }
+}
+</script>
+{% endblock %}

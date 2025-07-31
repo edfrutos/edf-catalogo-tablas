@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Crear Cuenta</h2>
+<form method="POST" action="{{ url_for('auth.register') }}">
+  <div class="mb-3">
+    <label for="username" class="form-label">Usuario</label>
+    <input type="text" class="form-control" name="nombre" required>
+  </div>
+  <div class="mb-3">
+    <label for="email" class="form-label">Correo</label>
+    <input type="email" class="form-control" name="email" required>
+  </div>
+  <div class="mb-3">
+    <label for="password" class="form-label">Contraseña</label>
+    <div class="input-group">
+      <input type="password" class="form-control" id="password" name="password" required>
+      <button class="btn btn-outline-secondary toggle-password" type="button"><i class="bi bi-eye"></i></button>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Registrar</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.toggle-password').forEach(function(btn) {
+  btn.addEventListener('click', function () {
+    const pwd = this.parentElement.querySelector('input[type="password"], input[type="text"]');
+    const icon = this.querySelector('i');
+    if (pwd.type === 'password') {
+      pwd.type = 'text';
+      if (icon) { icon.classList.remove('bi-eye'); icon.classList.add('bi-eye-slash'); }
+    } else {
+      pwd.type = 'password';
+      if (icon) { icon.classList.remove('bi-eye-slash'); icon.classList.add('bi-eye'); }
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Panel de Usuario{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4>Bienvenido, {{ session.get('username', 'Usuario') }}</h4>
+                </div>
+                <div class="card-body">
+                    <p>Has iniciado sesión correctamente en tu cuenta.</p>
+                    <p>Email: <strong>{{ session.get('email', '') }}</strong></p>
+                    
+                    <div class="mt-4">
+                        <h5>Acciones Disponibles</h5>
+                        <div class="list-group">
+                            <a href="{{ url_for('main.index') }}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-home"></i> Página Principal
+                            </a>
+                            <a href="{{ url_for('catalogs.list') }}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-table"></i> Mis Tablas
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="fas fa-user-edit"></i> Mi Perfil
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

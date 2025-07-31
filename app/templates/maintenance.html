@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Mantenimiento - Catálogo de Tablas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .maintenance-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+        h1 {
+            color: #2196F3;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .dot {
+            background-color: #2196F3;
+            border-radius: 50%;
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+        .status-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: left;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="maintenance-container">
+        <h1>Inicializando Aplicación</h1>
+        <p>La aplicación está arrancando. Por favor, espere unos momentos...</p>
+        <div class="loading">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <p id="status-message">Comprobando estado del servicio...</p>
+        <div class="status-box">
+            <div id="connection-status">Conectando con la base de datos...</div>
+            <div id="initialization-status">Inicializando componentes...</div>
+        </div>
+    </div>
+
+    <script>
+        // Comprobar el estado cada 3 segundos
+        let attemptCount = 0;
+        const statusCheck = setInterval(function() {
+            attemptCount++;
+            document.getElementById('status-message').textContent = `Comprobando estado del servicio... (Intento ${attemptCount})`;
+            
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ready') {
+                        document.getElementById('connection-status').textContent = 'Conexión establecida ✓';
+                        document.getElementById('initialization-status').textContent = 'Componentes inicializados ✓';
+                        document.getElementById('status-message').textContent = 'Redirigiendo a la aplicación...';
+                        
+                        // Redirigir después de mostrar el mensaje de éxito
+                        setTimeout(function() {
+                            window.location.href = '/';
+                        }, 1500);
+                        
+                        clearInterval(statusCheck);
+                    } else {
+                        document.getElementById('connection-status').textContent = 'Intentando conectar a la base de datos...';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('status-message').textContent = 'Error al comprobar el estado. Reintentando...';
+                });
+        }, 3000);
+    </script>
+</body>
+</html>

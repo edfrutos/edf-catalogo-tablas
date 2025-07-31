@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Catálogos{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Catálogos</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <a href="{{ url_for('catalogs.create') }}" class="btn btn-primary me-2">
+                <i class="fas fa-plus"></i> Crear Nuevo Catálogo
+            </a>
+            <a href="{{ url_for('catalogs.import_catalog') }}" class="btn btn-success">
+                <i class="fas fa-file-import"></i> Importar Catálogo
+            </a>
+        </div>
+        <div class="col-md-6">
+            <form class="d-flex" action="{{ url_for('catalogs.list_catalogs') }}" method="get">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Buscar catálogos..." value="{{ search_query }}">
+                    <select name="search_type" class="form-select" style="max-width: 150px;">
+                        <option value="name" {% if search_type == 'name' %}selected{% endif %}>Por nombre</option>
+                        <option value="user" {% if search_type == 'user' %}selected{% endif %}>Por usuario</option>
+                    </select>
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    {% if search_query %}
+                    <a href="{{ url_for('catalogs.list_catalogs') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Limpiar
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if search_query %}
+    <div class="alert alert-info">
+        <h4><i class="fas fa-search"></i> Resultados de búsqueda</h4>
+        <p>Se encontraron <strong>{{ catalogs|length }}</strong> catálogos {% if search_type == 'name' %}con nombre{% else %}creados por usuario{% endif %} que contienen "<strong>{{ search_query }}</strong>".</p>
+    </div>
+    {% endif %}
+    
+    {% if catalogs %}
+        <div class="row">
+            {% for catalog in catalogs %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">{{ catalog.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                <strong>Filas:</strong> {{ catalog.row_count }}
+                            </p>
+                            <p class="card-text">
+                                <strong>Columnas:</strong> {{ catalog.headers|length }}
+                            </p>
+                            <p class="card-text">
+                                <strong>Creado por:</strong> {{ catalog.created_by }}
+                            </p>
+                            {% if catalog.created_at %}
+                            <p class="card-text">
+                                <strong>Fecha de creación:</strong> {{ catalog.created_at_formatted if catalog.created_at_formatted else 'N/A' }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{ url_for('catalogs.view', catalog_id=catalog._id_str) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            <a href="{{ url_for('catalogs.edit', catalog_id=catalog._id_str) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('catalogs.delete_catalog', catalog_id=catalog._id_str) }}" class="d-inline" onsubmit="return confirm('¿Está seguro de que desea eliminar este catálogo? Esta acción no se puede deshacer.')">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No hay catálogos disponibles. Crea uno para comenzar.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

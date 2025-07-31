@@ -1,0 +1,174 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <form method="get" action="{{ url_for('admin.lista_usuarios') }}" class="d-flex">
+          <input type="text" name="q" class="form-control me-2" placeholder="Buscar por email o nombre de usuario" value="{{ request.args.get('q', '') }}">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Buscar</button>
+        </form>
+      </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <h1>Gestión de Usuarios</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Estadísticas</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <h6>Total Usuarios</h6>
+                                <h3>{{ stats.total }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <h6>Admins</h6>
+                                <h3>{{ stats.roles.admin }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <h6>Normales</h6>
+                                <h3>{{ stats.roles.normal }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <h6>Sin Rol</h6>
+                                <h3>{{ stats.roles.no_role }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Nombre</th>
+                                    <th>Rol</th>
+                                    <th>Catálogos</th>
+                                    <th>Última Actualización</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if usuarios|length == 0 %}
+                                    <tr><td colspan="6" class="text-center text-muted">No hay usuarios registrados.</td></tr>
+                                {% else %}
+                                {% for user in usuarios %}
+                                <tr>
+                                    <td>{{ user.email or 'Sin email' }}</td>
+                                    <td>{{ user.nombre or user.username or 'Sin nombre' }}</td>
+                                    <td>{{ user.role or 'Sin rol' }}</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('admin.ver_catalogos_usuario', user_email=user.email) }}" 
+                                           class="btn btn-info btn-sm position-relative" 
+                                           style="min-width: 110px; font-weight: bold;">
+                                            <i class="bi bi-table me-1"></i> Catálogos
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                {{ user.num_catalogs|default(0) }}
+                                                <span class="visually-hidden">catálogos</span>
+                                            </span>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if user.updated_at %}
+                                            {% if user.updated_at is string %}
+                                                {{ user.updated_at }}
+                                            {% else %}
+                                                {{ user.updated_at }}
+                                            {% endif %}
+                                        {% else %}
+                                            No disponible
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('admin.editar_usuario', user_id=user._id) }}" 
+                                               class="btn btn-sm btn-warning" 
+                                               title="Editar">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteModal{{ loop.index }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales de confirmación de eliminación -->
+{% if usuarios|length > 0 %}
+    {% for user in usuarios %}
+    <div class="modal fade" id="deleteModal{{ loop.index }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que deseas eliminar al usuario {{ user.email }}?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form action="{{ url_for('admin.eliminar_usuario', user_id=user._id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Formatear fechas en la columna de última actualización (5ta columna)
+    document.querySelectorAll('td:nth-child(5)').forEach(function(cell) {
+        const text = cell.textContent.trim();
+        if (text !== 'No disponible') {
+            const date = new Date(text);
+            if (!isNaN(date)) {
+                cell.textContent = date.toLocaleString('es-ES');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Verificación de Dos Factores</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-center mb-4">Por favor, ingresa el código de verificación generado por tu aplicación de autenticación.</p>
+                    
+                    <form method="POST">
+                        <div class="form-group">
+                            <label for="code">Código de verificación:</label>
+                            <input type="text" class="form-control" id="code" name="code" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block mt-3">Verificar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Crear Nuevo Usuario</h2>
+    <div>
+      {% if session.rol == 'admin' %}
+        <a href="{{ url_for('admin.dashboard_admin') }}" class="btn btn-secondary">Volver al Panel de Administración</a>
+      {% else %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Volver al Panel de Control</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin.crear_usuario') }}">
+        <div class="mb-3">
+          <label for="nombre" class="form-label">Nombre</label>
+          <input type="text" class="form-control" id="nombre" name="nombre" required>
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" id="email" name="email" required>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Contraseña</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" name="password" required>
+            <button class="btn btn-outline-secondary toggle-password" type="button"><i class="bi bi-eye"></i></button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="role" class="form-label">Rol</label>
+          <select class="form-control" id="role" name="role" required>
+            <option value="user">Usuario Normal</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+          <a href="{{ url_for('admin.lista_usuarios') }}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Crear Usuario</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.toggle-password').forEach(function(btn) {
+  btn.addEventListener('click', function () {
+    const pwd = this.parentElement.querySelector('input[type="password"], input[type="text"]');
+    const icon = this.querySelector('i');
+    if (pwd.type === 'password') {
+      pwd.type = 'text';
+      if (icon) { icon.classList.remove('bi-eye'); icon.classList.add('bi-eye-slash'); }
+    } else {
+      pwd.type = 'password';
+      if (icon) { icon.classList.remove('bi-eye-slash'); icon.classList.add('bi-eye'); }
+    }
+  });
+});
+</script>
+{% endblock %}

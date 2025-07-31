@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'warning' if category=='error' else category }} alert-dismissible fade show mt-2" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+      {% if session.get('username') or session.get('email') %}
+      <div class="top-right">
+      <h1>Mis Tablas de Catálogo</h1>
+        <button type="button" class="btn btn-danger" onclick="window.location.href='/logout'">
+          Cerrar Sesión ({{ session.get('username', session.get('email', 'Usuario')) }})
+        </button>
+      </div>
+      {% endif %}
+      
+      <h2>Crear o Importar Tabla</h2>
+      <form method="POST" action="/tables">
+        <p>
+          <label for="table_name">Nombre de la Tabla:</label>
+          <input type="text" id="table_name" name="table_name" required />
+        </p>
+        <p>
+          <label for="table_headers">Encabezados (separados por coma):</label>
+          <input type="text" id="table_headers" name="table_headers" placeholder="Ej: Código, Nombre, Precio, Stock" />
+          <small>Si no se ingresa nada, se usarán los valores por defecto.</small>
+        </p>
+        <p>
+          <label for="import_table">Importar tabla (archivo Excel):</label>
+          <input type="file" id="import_table" name="import_table" accept=".xlsx, .csv" />
+          <small>
+            Si se importa un archivo Excel o CSV, se usarán los encabezados de la primera fila. Si no se sube archivo, se
+            usarán los encabezados ingresados manualmente o los valores por defecto.
+          </small>
+        </p>
+        <button type="submit" class="btn btn-primary">Crear/Importar Tabla</button>
+      </form>
+
+      <hr />
+      <h2>Tablas Creadas</h2>
+      {% if tables %}
+      <ul>
+        {% for table in tables %}
+        <li>
+          <strong>{{ table.name }}</strong> - Creada el {% if table.created_at and table.created_at.strftime %}{{ table.created_at.strftime('%Y-%m-%d %H:%M') }}{% else %}{{ table.created_at }}{% endif %}
+          <a href="/select_table/{{ table._id }}" class="btn btn-primary">Seleccionar</a>
+          {% if session.role == 'admin' or table.owner == session.get('username', session.get('email', 'Usuario')) %}
+            <a href="{{ url_for('main.editar', id=table._id) }}" class="btn btn-sm btn-primary">Editar</a>
+            <form method="POST" action="/tables">
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar esta tabla?')">Eliminar</button>
+            </form>
+          {% else %}
+            <span class="text-muted">Sin permisos</span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No has creado ninguna tabla todavía.</p>
+      {% endif %}
+
+      <br />
+      <a href="/auth/logout" class="btn btn-danger">Cerrar Sesión</a>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmarAccion(event, mensaje) {
+    if (!confirm(mensaje)) {
+        event.preventDefault();
+        return false;
+    }
+    return true;
+}
+</script>
+{% endblock %}

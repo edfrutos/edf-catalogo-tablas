@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Panel de Usuario{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row mb-4">
+    <div class="col-12 text-center">
+      <h2 class="mb-2"><i class="bi bi-person-badge"></i> ¡Bienvenido, {{ session.get('username', session.get('email', 'Usuario')) }}!</h2>
+      <p class="lead">Este es tu panel personal. Aquí puedes gestionar tus catálogos/tablas y acceder a tus datos.</p>
+    </div>
+  </div>
+  <div class="row mb-4">
+    <div class="col-md-8 mx-auto">
+      <div class="d-flex justify-content-between mb-3">
+        <a href="{{ url_for('catalogs.list') }}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo Catálogo</a>
+        <a href="{{ url_for('catalogs.import_catalog') }}" class="btn btn-primary"><i class="bi bi-upload"></i> Importar Excel</a>
+      </div>
+      <div class="card shadow border-0 mb-3">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-table"></i> Tus Tablas de Catálogo</h5>
+        </div>
+        <div class="card-body">
+          {% if tablas %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Nombre</th>
+                  <th>Fecha de creación</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for table in tablas %}
+                <tr>
+                  <td><i class="bi bi-table"></i> {{ table.name }}</td>
+                  <td>{{ table.created_at if table.created_at else '—' }}</td>
+                  <td>
+                    <a href="{{ url_for('main.ver_tabla', table_id=table._id) }}" class="btn btn-sm btn-outline-primary" title="Ver"><i class="bi bi-eye"></i></a>
+                    <a href="{{ url_for('main.editar', id=table._id) }}" class="btn btn-sm btn-outline-success" title="Editar"><i class="bi bi-pencil"></i></a>
+                    <form action="{{ url_for('main.delete_table', table_id=table._id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas eliminar esta tabla?');">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="alert alert-info">No tienes tablas creadas aún. ¡Crea una nueva o importa un Excel!</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row mt-3">
+    <div class="col-md-4 mx-auto">
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger w-100 py-2 shadow-sm">
+        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+function confirmarAccion(event, mensaje) {
+    if (!confirm(mensaje)) {
+        event.preventDefault();
+        return false;
+    }
+    return true;
+}
+</script>
+{% endblock %} 

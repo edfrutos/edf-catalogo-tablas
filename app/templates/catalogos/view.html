@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ catalog.name }}</h2>
+<div class="d-flex gap-2 mb-3">
+  <a href="{{ url_for('catalogs.add_row', catalog_id=catalog._id) }}" class="btn btn-primary">Añadir Fila</a>
+  <a href="{{ url_for('catalogs.list') }}" class="btn btn-secondary">Volver</a>
+</div>
+<table class="table">
+  <thead>
+    <tr>
+      {% for header in catalog.headers %}
+      <th>{{ header }}</th>
+      {% endfor %}
+      <th>Imágenes</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in catalog.rows %}
+    <tr>
+      {% for header in catalog.headers %}
+      <td>{{ row[header] }}</td>
+      {% endfor %}
+      <td>
+        {% set imgs = row["images"] if row is mapping and "images" in row else None %}
+        {% if imgs %}
+          {% for img in imgs %}
+            <img src="{{ url_for('static', filename='uploads/' ~ img) }}" alt="img" class="catalog-img img-thumbnail" style="height:60px;margin-right:4px;cursor:pointer;">
+          {% endfor %}
+        {% else %}-{% endif %}
+      </td>
+      <td>
+        <a href="{{ url_for('catalogs.edit_row', catalog_id=catalog._id, row_index=loop.index0) }}" class="btn btn-sm btn-warning">Editar</a>
+        {% if session.get('role') == 'admin' or catalog.owner == session.get('username') or catalog.owner_name == session.get('username') or catalog.created_by == session.get('username') %}
+        <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=loop.index0) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+          <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Modal for image preview -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">Vista Previa de Imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <img src="" id="modalImage" class="img-fluid w-100" alt="imagen">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("[script.js] DOM loaded");
+    
+    // Obtener referencias
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    const modalImage = document.getElementById('modalImage');
+    
+    // Event listener para imágenes
+    document.querySelectorAll('.catalog-img').forEach(img => {
+        img.addEventListener('click', function() {
+            console.log("[script.js] Image clicked");
+            const src = this.getAttribute('src');
+            if (modalImage) {
+                modalImage.src = src;
+                modal.show();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

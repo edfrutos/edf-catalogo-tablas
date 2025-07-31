@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Agregar Fila a Tabla{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Agregar Fila a "{{ tabla.name }}"</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% for header in tabla.headers %}
+        <div class="mb-3">
+            <label for="{{ header }}" class="form-label">{{ header }}</label>
+            <input type="text" class="form-control" id="{{ header }}" name="{{ header }}">
+        </div>
+        {% endfor %}
+        <div class="mb-3">
+            <label for="imagenes" class="form-label">Imágenes (opcional, máximo 3)</label>
+            <input type="file" class="form-control" id="imagenes" name="imagenes" multiple accept="image/*">
+            <div class="form-text">Puede seleccionar hasta 3 imágenes. Formatos permitidos: JPG, PNG, GIF.</div>
+        </div>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('main.ver_tabla', table_id=tabla._id) }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

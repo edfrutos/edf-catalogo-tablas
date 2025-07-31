@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Editar Registro en {{ catalogo.nombre }}</h2>
+
+<form method="POST" action="{{ url_for('catalog.update_record', catalogo_id=catalogo._id, record_id=registro._id) }}">
+  {% for campo, valor in registro.items() if campo not in ['_id'] %}
+    <div class="mb-3">
+      <label for="{{ campo }}" class="form-label">{{ campo | capitalize }}</label>
+      <input type="text" class="form-control" id="{{ campo }}" name="{{ campo }}" value="{{ valor }}">
+    </div>
+  {% endfor %}
+  
+  <button type="submit" class="btn btn-success">Guardar Cambios</button>
+  <a href="{{ url_for('catalog.view', catalogo_id=catalogo._id) }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

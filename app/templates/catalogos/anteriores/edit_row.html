@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Editar fila</h2>
+<form method="POST">
+  {% for header in catalog.headers %}
+    <div class="mb-3">
+      <label class="form-label">{{ header }}</label>
+      <input type="text" class="form-control" name="{{ header }}" value="{{ row[header] }}">
+    </div>
+  {% endfor %}
+  <button type="submit" class="btn btn-primary">Guardar fila</button>
+  <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

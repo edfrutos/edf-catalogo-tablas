@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{% if user is defined %}Catálogos de {{ user.nombre or user.username or user.email }}{% else %}Catálogos de Usuario{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{% if user is defined %}Catálogos/Tablas de {{ user.nombre or user.username or user.email }}{% else %}Catálogos de Usuario{% endif %}</h1>
+        <div>
+            <a href="{{ url_for('admin.lista_usuarios') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a la lista de usuarios
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header bg-light">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Usuario:</strong> {% if user is defined %}{{ user.nombre or user.username or 'N/A' }}{% else %}N/A{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <strong>Email:</strong> {% if user is defined %}{{ user.email }}{% else %}N/A{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <strong>Total de catálogos:</strong> <span class="badge bg-info">{{ catalogs|length }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if catalogs %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle shadow-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Fecha de creación</th>
+                                <th>Filas</th>
+                                <th>Tipo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for catalog in catalogs %}
+                            <tr>
+                                <td>{{ catalog.name }}</td>
+                                <td>{{ catalog.created_at_formatted }}</td>
+                                <td>{{ catalog.row_count }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if catalog.collection_source == 'catalogs' else 'info' }}">{{ catalog.collection_source }}</span>
+                                </td>
+                                <td>
+                                    {% if session.role == 'admin' %}
+                                        <!-- Enlace unificado para ver el catálogo en el panel de administración -->
+                                        <a href="{{ url_for('admin.ver_catalogo_unificado', collection_source=catalog.collection_source, catalog_id=catalog._id|string) }}" class="btn btn-sm btn-outline-primary me-1" title="Ver"><i class="bi bi-eye"></i></a>
+                                        
+                                        <!-- Botones de editar y eliminar -->
+                                        <a href="{{ url_for('admin.editar_catalogo_admin', collection_source=catalog.collection_source, catalog_id=catalog._id|string) }}" class="btn btn-sm btn-outline-success me-1" title="Editar"><i class="bi bi-pencil"></i></a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="eliminarCatalogo('{{ catalog.collection_source }}', '{{ catalog._id|string }}')"><i class="bi bi-trash"></i></button>
+                                    {% else %}
+                                        <span class="text-muted">Sin permisos</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Este usuario no tiene catálogos creados.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar catálogo -->
+<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea eliminar este catálogo? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="eliminarForm" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function eliminarCatalogo(collectionSource, catalogId) {
+    if (!catalogId || !collectionSource) {
+        alert('No se puede eliminar. Datos del catálogo no válidos.');
+        return;
+    }
+    document.getElementById('eliminarForm').action = `{{ url_for('admin.eliminar_catalogo_admin', collection_source='__collection_source__', catalog_id='__catalog_id__') }}`.replace('__collection_source__', collectionSource).replace('__catalog_id__', catalogId);
+    new bootstrap.Modal(document.getElementById('eliminarModal')).show();
+}
+</script>
+{% endblock %}

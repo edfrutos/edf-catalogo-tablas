@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="alert alert-danger text-center mt-4">
+    <h3>¿Estás seguro de que deseas eliminar {{ tipo|default("este elemento") }}?</h3>
+    <p class="mt-3">Esta acción no se puede deshacer.</p>
+
+    {% if nombre %}
+    <h5 class="text-danger mt-3">Elemento: {{ nombre }}</h5>
+    {% endif %}
+
+    <form method="post" class="mt-4 d-flex justify-content-center gap-3">
+        <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        <a href="{{ url_cancelar or url_for('main.index') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

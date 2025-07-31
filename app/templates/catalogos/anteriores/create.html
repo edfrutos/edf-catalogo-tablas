@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Crear Catálogo</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label for="name" class="form-label">Nombre del catálogo</label>
+    <input type="text" class="form-control" name="name" required>
+  </div>
+  <div class="mb-3">
+    <label for="headers" class="form-label">Encabezados (separados por coma)</label>
+    <input type="text" class="form-control" name="headers" placeholder="nombre, descripción, precio" required>
+  </div>
+  <button type="submit" class="btn btn-success">Crear</button>
+  <a href="{{ url_for('catalogs.list') }}" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

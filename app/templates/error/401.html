@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}No autorizado{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2 text-center">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <h1 class="display-1 text-warning">401</h1>
+                    <h2 class="mb-4">No autorizado</h2>
+                    <p class="lead">No tienes autorización para acceder a esta página.</p>
+                    <hr>
+                    <p>Por favor, inicia sesión para acceder a este contenido.</p>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

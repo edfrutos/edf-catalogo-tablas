@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Editar Fila</h2>
+<form method="POST" enctype="multipart/form-data">
+  {% for header in catalog.headers %}
+  <div class="mb-3">
+    <label class="form-label">{{ header }}</label>
+    <input type="text" class="form-control" name="{{ header }}" value="{{ row[header] }}">
+  </div>
+  {% endfor %}
+  <div class="mb-3">
+    <label class="form-label">Imágenes (máx. 3)</label>
+    <input type="file" class="form-control" name="images" accept="image/*" multiple>
+  </div>
+  {% if row.images %}
+  <div class="mb-3">
+    <label class="form-label d-block">Imágenes actuales</label>
+    <div class="d-flex flex-wrap gap-3 align-items-center">
+      {% for img in row.images %}
+        <div class="position-relative">
+          <img src="{{ url_for('static', filename='uploads/' ~ img) }}" alt="img" class="img-thumbnail" style="height:100px;">
+          <input type="checkbox" name="delete_images" value="{{ img }}" class="position-absolute top-0 end-0 m-1" style="transform: scale(1.5);">
+          <label class="d-block text-center small mt-1">Eliminar</label>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-text text-muted mt-2">
+      Marca las casillas para eliminar las imágenes seleccionadas
+    </div>
+  </div>
+  {% endif %}
+  <div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
+    <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=row_index) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+      <button type="submit" class="btn btn-danger">Eliminar</button>
+    </form>
+  </div>
+</form>
+
+<!-- Modal for image preview -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">Vista Previa de Imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <img src="" id="modalImage" class="img-fluid w-100" alt="imagen">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Preview modal
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    const modalImage = document.getElementById('modalImage');
+    
+    document.querySelectorAll('.img-thumbnail').forEach(img => {
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', function(e) {
+            // No abrir el modal si se hizo clic en el checkbox
+            if (e.target.tagName === 'INPUT') return;
+            modalImage.src = this.src;
+            modal.show();
+        });
+    });
+});
+</script>
+{% endblock %}

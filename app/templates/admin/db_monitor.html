@@ -1,0 +1,577 @@
+{% extends 'admin/base.html' %}
+{% block title %}Monitor de Base de Datos en Tiempo Real{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Área de mensajes de error para gráficos -->
+    <div id="chartError" class="alert alert-danger d-none mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span id="errorMessage"></span>
+    </div>
+    <h2 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Monitor de Base de Datos</h2>
+    
+    {% if status.error %}
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        {{ status.error }}
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <!-- Panel de estado general -->
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clipboard2-pulse me-2"></i>Estado General</span>
+                    <div>
+                        <a href="{{ url_for('admin.db_monitor') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-arrow-repeat"></i> Actualizar
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-2">Estado del Servidor</h6>
+                                            <h3 class="mb-0 text-{{ 'success' if status.is_connected else 'danger' }}">
+                                                {{ 'En Línea' if status.is_connected else 'Desconectado' }}
+                                            </h3>
+                                            <small class="text-muted">
+                                                {{ status.server_status.version|default('Versión: N/A') }}
+                                            </small>
+                                        </div>
+                                        <div class="bg-{{ 'success' if status.is_connected else 'danger' }} bg-opacity-10 p-3 rounded">
+                                            <i class="bi bi-{{ 'check-circle' if status.is_connected else 'x-circle' }} text-{{ 'success' if status.is_connected else 'danger' }} fs-3"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if status.is_connected %}
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-2">Almacenamiento</h6>
+                                            <h3 class="mb-0 text-primary">
+                                                {% if status.stats and 'storageSize' in status.stats %}
+                                                    {{ (status.stats.storageSize / 1024 / 1024)|round(2) }} MB
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </h3>
+                                            <small class="text-muted">
+                                                {% if status.stats and 'collections' in status.stats %}
+                                                    {{ status.stats.collections }} colecciones
+                                                {% else %}
+                                                    Estadísticas no disponibles
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                            <i class="bi bi-hdd text-primary fs-3"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-2">Documentos</h6>
+                                            <h3 class="mb-0 text-info">
+                                                {% if status.stats and 'objects' in status.stats %}
+                                                    {{ "{:,}".format(status.stats.objects) }}
+                                                {% else %}
+                                                    0
+                                                {% endif %}
+                                            </h3>
+                                            <small class="text-muted">
+                                                {% if status.stats and 'dataSize' in status.stats %}
+                                                    {{ status.stats.dataSize|filesizeformat }} de datos
+                                                {% else %}
+                                                    Datos no disponibles
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                                            <i class="bi bi-file-earmark-text text-info fs-3"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-2">Rendimiento</h6>
+                                            <h3 class="mb-0 text-warning" id="currentOps">0.00</h3>
+                                            <small class="text-muted">
+                                                <span id="currentConnections">0</span> conexiones activas
+                                            </small>
+                                        </div>
+                                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                            <i class="bi bi-lightning-charge text-warning fs-3"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-2">Memoria</h6>
+                                            <h3 class="mb-0 text-info" id="memoryUsage">0 MB</h3>
+                                            <small class="text-muted">
+                                                <span id="memoryPercentage">0%</span> en uso
+                                            </small>
+                                        </div>
+                                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                                            <i class="bi bi-memory text-info fs-3"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos de rendimiento -->
+        {% if status.is_connected %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-speedometer2 me-2"></i>Operaciones por Segundo
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6 col-md-3 text-center">
+                            <h6 class="text-muted mb-1">Consultas</h6>
+                            <h4 id="currentQueries">0.00</h4>
+                            <small class="text-muted">ops/seg</small>
+                        </div>
+                        <div class="col-6 col-md-3 text-center">
+                            <h6 class="text-muted mb-1">Inserciones</h6>
+                            <h4 id="currentInserts">0.00</h4>
+                            <small class="text-muted">ops/seg</small>
+                        </div>
+                        <div class="col-6 col-md-3 text-center">
+                            <h6 class="text-muted mb-1">Actualizaciones</h6>
+                            <h4 id="currentUpdates">0.00</h4>
+                            <small class="text-muted">ops/seg</small>
+                        </div>
+                        <div class="col-6 col-md-3 text-center">
+                            <h6 class="text-muted mb-1">Eliminaciones</h6>
+                            <h4 id="currentDeletes">0.00</h4>
+                            <small class="text-muted">ops/seg</small>
+                        </div>
+                    </div>
+                    <canvas id="opsChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-memory me-2"></i>Uso de Memoria
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6 text-center">
+                            <h6 class="text-muted mb-1">Memoria Usada</h6>
+                            <h4 id="memoryUsage">0 MB</h4>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h6 class="text-muted mb-1">Conexiones</h6>
+                            <h4 id="currentConnectionsCount">0</h4>
+                        </div>
+                    </div>
+                    <canvas id="memoryChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tabla de operaciones lentas -->
+        {% if status.is_connected and status.slow_ops %}
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-hourglass-split me-2"></i>Operaciones Lentas Recientes
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Operación</th>
+                                    <th>Colección</th>
+                                    <th>Duración</th>
+                                    <th>Usuario</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for op in status.slow_ops %}
+                                <tr>
+                                    <td><code>{{ op.opid|default('N/A') }}</code></td>
+                                    <td>{{ op.op|default('N/A') }}</td>
+                                    <td>{{ op.ns|default('N/A') }}</td>
+                                    <td>{{ op.secs_running|default(0)|round(2) }}s</td>
+                                    <td>{{ op.client|default('N/A')|truncate(20) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Variables globales para los gráficos
+let opsChart, memoryChart;
+const MAX_DATA_POINTS = 30;
+let timeLabels = Array(MAX_DATA_POINTS).fill('');
+let opsData = {
+    queries: Array(MAX_DATA_POINTS).fill(0),
+    inserts: Array(MAX_DATA_POINTS).fill(0),
+    updates: Array(MAX_DATA_POINTS).fill(0),
+    deletes: Array(MAX_DATA_POINTS).fill(0)
+};
+let memoryData = Array(MAX_DATA_POINTS).fill(0);
+let dataIndex = 0;
+let isFirstUpdate = true;
+
+// Función para formatear bytes a una representación legible
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// Función para actualizar los datos de los gráficos
+function updateCharts() {
+    console.log('Actualizando gráficos...');
+    
+    // Usar URL absoluta para evitar problemas de ruta
+    const apiUrl = window.location.origin + '/admin/api/db/ops';
+    
+    fetch(apiUrl, {
+        headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.error || 'Error desconocido al obtener datos');
+        }
+        
+        console.log('Datos recibidos:', data);
+        
+        // Obtener la hora actual
+        const now = new Date();
+        const timeString = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+        
+        // Actualizar índice circular
+        dataIndex = (dataIndex + 1) % MAX_DATA_POINTS;
+        timeLabels[dataIndex] = timeString;
+        
+        // Actualizar datos de operaciones
+        const ops = data.ops_per_sec || {};
+        opsData.queries[dataIndex] = ops.query || 0;
+        opsData.inserts[dataIndex] = ops.insert || 0;
+        opsData.updates[dataIndex] = ops.update || 0;
+        opsData.deletes[dataIndex] = ops.delete || 0;
+        
+        // Actualizar valores en tiempo real
+        document.getElementById('currentQueries').textContent = opsData.queries[dataIndex].toFixed(2);
+        document.getElementById('currentInserts').textContent = opsData.inserts[dataIndex].toFixed(2);
+        document.getElementById('currentUpdates').textContent = opsData.updates[dataIndex].toFixed(2);
+        document.getElementById('currentDeletes').textContent = opsData.deletes[dataIndex].toFixed(2);
+        
+        // Actualizar datos de memoria
+        const memoryUsed = data.memory?.resident || 0;
+        memoryData[dataIndex] = memoryUsed;
+        
+        // Actualizar estadísticas de memoria y conexiones
+        document.getElementById('memoryUsage').textContent = formatBytes(memoryUsed * 1024 * 1024);
+        document.getElementById('currentConnections').textContent = data.connections?.current || 0;
+        
+        // Actualizar gráficos
+        updateChartsUI();
+        
+        // Ocultar mensaje de error si existe
+        const errorDiv = document.getElementById('chartError');
+        if (errorDiv && !errorDiv.classList.contains('d-none')) {
+            errorDiv.classList.add('d-none');
+        }
+        
+        // Configurar la próxima actualización
+        if (isFirstUpdate) {
+            isFirstUpdate = false;
+            // Primera actualización más rápida para mostrar datos rápidamente
+            setTimeout(updateCharts, 1000);
+        } else {
+            // Actualizaciones posteriores cada 2 segundos
+            setTimeout(updateCharts, 2000);
+        }
+    })
+    .catch(error => {
+        console.error('Error al actualizar gráficos:', error);
+        
+        // Mostrar mensaje de error
+        const errorDiv = document.getElementById('chartError');
+        if (errorDiv) {
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.textContent = `Error al cargar datos: ${error.message}`;
+                errorDiv.classList.remove('d-none');
+            }
+        }
+        
+        // Reintentar después de 5 segundos en caso de error
+        setTimeout(updateCharts, 5000);
+    });
+}
+
+// Función para actualizar la interfaz de los gráficos
+function updateChartsUI() {
+    // Actualizar gráfico de operaciones
+    opsChart.data.labels = timeLabels;
+    opsChart.data.datasets[0].data = opsData.queries;
+    opsChart.data.datasets[1].data = opsData.inserts;
+    opsChart.data.datasets[2].data = opsData.updates;
+    opsChart.data.datasets[3].data = opsData.deletes;
+    opsChart.update();
+    
+    // Actualizar gráfico de memoria
+    memoryChart.data.datasets[0].data = [memoryData[dataIndex], 100 - memoryData[dataIndex]];
+    memoryChart.update();
+}
+
+// Inicializar gráficos cuando el documento esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Inicializando gráficos...');
+    
+    // Configuración común para los gráficos
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+            duration: 0
+        },
+        scales: {
+            x: {
+                display: true,
+                ticks: {
+                    maxRotation: 0,
+                    autoSkip: true,
+                    maxTicksLimit: 10,
+                    callback: function(value, index, values) {
+                        // Mostrar solo algunas etiquetas para no saturar
+                        return index % 5 === 0 ? timeLabels[index] : '';
+                    }
+                }
+            },
+            y: {
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                            label += context.parsed.y.toFixed(2);
+                            if (context.datasetIndex === 0) {
+                                label += ' ops/s';
+                            } else if (context.datasetIndex === 1) {
+                                label += ' ops/s';
+                            } else if (context.datasetIndex === 2) {
+                                label += ' ops/s';
+                            } else if (context.datasetIndex === 3) {
+                                label += ' ops/s';
+                            }
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+        }
+    };
+    
+    // Inicializar gráfico de operaciones
+    const opsCtx = document.getElementById('opsChart').getContext('2d');
+    opsChart = new Chart(opsCtx, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [
+                {
+                    label: 'Consultas (ops/s)',
+                    data: opsData.queries,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    borderWidth: 1.5,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    fill: true
+                },
+                {
+                    label: 'Inserciones (ops/s)',
+                    data: opsData.inserts,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    borderWidth: 1.5,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    fill: true
+                },
+                {
+                    label: 'Actualizaciones (ops/s)',
+                    data: opsData.updates,
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                    borderWidth: 1.5,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    fill: true
+                },
+                {
+                    label: 'Eliminaciones (ops/s)',
+                    data: opsData.deletes,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    borderWidth: 1.5,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            ...chartOptions,
+            plugins: {
+                ...chartOptions.plugins,
+                title: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Inicializar gráfico de memoria
+    const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+    memoryChart = new Chart(memoryCtx, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [{
+                label: 'Uso de Memoria (MB)',
+                data: memoryData,
+                borderColor: 'rgba(153, 102, 255, 1)',
+                backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                borderWidth: 1.5,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                fill: true
+            }]
+        },
+        options: {
+            ...chartOptions,
+            plugins: {
+                ...chartOptions.plugins,
+                title: {
+                    display: false
+                },
+                tooltip: {
+                    ...chartOptions.plugins.tooltip,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += formatBytes(context.parsed.y * 1024 * 1024);
+                            }
+                            return label;
+                        }
+                    }
+                },
+            },
+            scales: {
+                ...chartOptions.scales,
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return formatBytes(value * 1024 * 1024).replace(' ', '\u00A0');
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Actualizar datos cada segundo
+    updateCharts();
+    setInterval(updateCharts, 1000);
+});
+</script>
+{% endblock %}

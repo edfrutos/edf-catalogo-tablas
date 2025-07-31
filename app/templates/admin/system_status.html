@@ -1,0 +1,1405 @@
+{% extends 'admin/base.html' %} {% block title %}Estado del Sistema{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <h1>Panel de Estado del Sistema</h1>
+
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div
+          class="card-header bg-{{ 'success' if data.health.status == 'healthy' else 'warning' if data.health.status == 'degraded' else 'danger' }}"
+        >
+          <h4 class="card-title mb-0 text-white">
+            Estado General: {% if data.health.status == 'healthy' %}
+            <span class="badge bg-success">Saludable</span>
+            {% elif data.health.status == 'degraded' %}
+            <span class="badge bg-warning">Degradado</span>
+            {% else %}
+            <span class="badge bg-danger">En riesgo</span>
+            {% endif %}
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tiempo activo</h5>
+                  <p class="card-text fs-4">{{ data.uptime }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Solicitudes</h5>
+                  <p class="card-text fs-4">
+                    {{ data.request_stats.total_requests }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Estado BD</h5>
+                  <p class="card-text fs-4">
+                    <span id="database-status" class="{% if data.database.is_available %}text-success{% else %}text-danger{% endif %}">
+                    {% if data.database.is_available %}
+                      <i class="bi bi-check-circle"></i> Conectado
+                    {% else %}
+                      <i class="bi bi-x-circle"></i> Desconectado
+                    {% endif %}
+                    </span>
+                  </p>
+                  <small class="text-muted" id="database-last-check">
+                    Última verificación: {{ data.database.last_checked or 'No disponible' }}
+                  </small>
+                  <div class="mt-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="testDatabaseConnection()">
+                      <i class="bi bi-arrow-clockwise"></i> Verificar conexión
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <h5 class="card-title">Tiempo resp. BD</h5>
+                  <p class="card-text fs-4">
+                    {{ data.database.response_time_ms }} ms
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row justify-content-center align-items-stretch">
+  <div class="col-md-5 mb-4 d-flex">
+    <div class="card h-100 flex-fill">
+      <div class="card-header bg-secondary text-white">
+        Uso de memoria
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+  <h5>CPU</h5>
+  {% set percent_cpu = (data.health.metrics.system_status.cpu_usage | default(0) | float) %}
+  <div class="progress">
+    <div
+      id="cpuUsage"
+      class="progress-bar {% if percent_cpu < 70 %}bg-success{% elif percent_cpu < 85 %}bg-warning{% else %}bg-danger{% endif %}"
+      role="progressbar"
+      style="width: {{ percent_cpu }}%;"
+      aria-valuenow="{{ percent_cpu }}"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      {{ percent_cpu }}%
+    </div>
+    <!-- Esta barra será actualizada dinámicamente por JS -->
+  </div>
+  <small class="text-muted refresh-time">Cargando datos del sistema...</small>
+</div>
+        <div class="mb-3">
+  <h5>Memoria</h5>
+  {% set percent = (data.health.metrics.system_status.memory_usage.percent | default(0) | float) %}
+  <div class="progress">
+    <div
+      class="progress-bar {% if percent < 70 %}bg-success{% elif percent < 85 %}bg-warning{% else %}bg-danger{% endif %}"
+      role="progressbar"
+      style="width: {{ percent }}%;"
+      aria-valuenow="{{ percent }}"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      {{ percent }}%
+    </div>
+  </div>
+  <small class="text-muted">
+    {{ data.health.metrics.system_status.memory_usage.used_mb }} MB de
+    {{ data.health.metrics.system_status.memory_usage.total_mb }} MB
+  </small>
+</div>
+        <div class="mb-3">
+          <h5>Disco</h5>
+          <div class="progress">
+            <div
+              class="progress-bar {% if (data.health.metrics.system_status.disk_usage.percent|default(0)) < 70 %}bg-success{% elif (data.health.metrics.system_status.disk_usage.percent|default(0)) < 85 %}bg-warning{% else %}bg-danger{% endif %}"
+              role="progressbar"
+              style="width: {{ data.health.metrics.system_status.disk_usage.percent|default(0) }}%;"
+              aria-valuenow="{{ data.health.metrics.system_status.disk_usage.percent|default(0) }}"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              {{ data.health.metrics.system_status.disk_usage.percent|default(0) }}%
+            </div>
+          </div>
+          <small class="text-muted">
+            {{ data.health.metrics.system_status.disk_usage.used_gb }} GB de
+            {{ data.health.metrics.system_status.disk_usage.total_gb }} GB
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5 mb-4 d-flex">
+    <div class="card h-100 flex-fill">
+      <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <span>Detalles técnicos</span>
+        <small class="text-end">Actualizado: {{ data.refresh_time }}</small>
+      </div>
+      <div class="card-body">
+        <div class="accordion" id="accordionDetails">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingDatabase">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDatabase">
+                Conexión a Base de Datos
+              </button>
+            </h2>
+            <div id="collapseDatabase" class="accordion-collapse collapse" data-bs-parent="#accordionDetails">
+              <div class="accordion-body">
+                <pre class="bg-light p-3">{{ data.database | tojson(indent=2) }}</pre>
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingRequests">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRequests">
+                Estadísticas de Solicitudes
+              </button>
+            </h2>
+            <div id="collapseRequests" class="accordion-collapse collapse" data-bs-parent="#accordionDetails">
+              <div class="accordion-body">
+                <pre class="bg-light p-3">{{ data.request_stats | tojson(indent=2) }}</pre>
+              </div>
+            </div>
+          </div>
+          <!-- Puedes agregar más bloques técnicos aquí -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h4 class="card-title mb-0">Estadísticas de Caché</h4>
+      </div>
+      <div class="card-body">
+        {% if cache_stats %}
+        <ul class="list-group" id="cache-stats-list">
+          <li class="list-group-item">Hits: {{ cache_stats.hit_count }}</li>
+          <li class="list-group-item">Misses: {{ cache_stats.miss_count }}</li>
+          <li class="list-group-item">Tasa de acierto: {{ cache_stats.hit_rate }}%</li>
+          <li class="list-group-item">Tamaño actual: {{ cache_stats.size }}</li>
+        </ul>
+        {% else %}
+        <div class="alert alert-secondary mb-0" id="cache-stats-list">Sin datos de caché disponibles.</div>
+        {% endif %}
+        
+        <div class="mt-3 text-center">
+          <button class="btn btn-outline-primary btn-sm" onclick="testCacheActivity()">
+            <i class="bi bi-play-circle"></i> Generar Actividad de Prueba
+          </button>
+          <small class="d-block text-muted mt-1">Crea operaciones de caché para probar las estadísticas</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="card-title mb-0">Archivos Temporales</h4>
+        </div>
+        <div class="card-body">
+          {% if temp_files %}
+          <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle"></i> 
+            Se encontraron {{ temp_files|length }} archivo(s) temporal(es) con prefijo "edefrutos2025_"
+          </div>
+          <form id="deleteTempFilesForm" method="post" action="{{ url_for('admin.delete_temp_files_route') }}">
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered align-middle">
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" id="selectAllTempFiles"></th>
+                    <th>Nombre</th>
+                    <th>Tamaño (MB)</th>
+                    <th>Ubicación</th>
+                    <th>Última Modificación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for file in temp_files %}
+                  <tr>
+                    <td><input type="checkbox" name="temp_files" value="{{ file.name }}"></td>
+                    <td><code>{{ file.name }}</code></td>
+                    <td>
+                      <span class="badge bg-{{ 'warning' if file.size_mb > 10 else 'secondary' }}">
+                        {{ file.size_mb }} MB
+                      </span>
+                    </td>
+                    <td><small class="text-muted">{{ file.path }}</small></td>
+                    <td>{{ file.mtime }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Eliminar seleccionados
+              </button>
+              <small class="text-muted">
+                Total: {{ "%.2f"|format(temp_files|sum(attribute='size_mb')) }} MB
+              </small>
+            </div>
+          </form>
+          {% else %}
+          <div class="alert alert-secondary mb-0">
+            <i class="bi bi-folder2-open"></i> 
+            No se encontraron archivos temporales con prefijo "edefrutos2025_"
+            <br><small class="text-muted mt-1">
+              Búsqueda realizada en directorios temporales del sistema
+            </small>
+          </div>
+          {% endif %}
+          <div id="deleteTempFilesMsg"></div>
+        </div>
+      </div>
+    </div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Select all functionality
+    const selectAll = document.getElementById("selectAllTempFiles");
+    if (selectAll) {
+      selectAll.addEventListener("change", function () {
+        document.querySelectorAll('input[name="temp_files"]').forEach(cb => {
+          cb.checked = selectAll.checked;
+        });
+      });
+    }
+  });
+</script>
+            <div class="col-md-4">
+              <div class="card bg-light mb-3">
+                <div class="card-body text-center">
+                  <button class="btn btn-warning" id="cleanupTempBtn">
+                    Limpiar archivos >2 días
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Duplicación eliminada - archivos temporales se muestran en la sección principal -->
+                  </div>
+              </div>
+    </div>
+  </div>
+  <div class="row justify-content-center gap-4 mb-4">
+    <div class="col-md-4 mb-4">
+      <div class="card mb-3">
+        <div class="card-header bg-secondary text-white">Uso de memoria</div>
+        <div class="card-body">
+          <strong>Proceso Python:</strong><br />
+          PID: {{ data.memory.python_process.pid }}<br />
+          RSS: {{ data.memory.python_process.rss_mb }} MB<br />
+          VMS: {{ data.memory.python_process.vms_mb }} MB<br />
+          % del sistema: {{ data.memory.python_process.percent }}%<br />
+          <hr />
+          <strong>Sistema:</strong><br />
+          Total: {{ data.memory.system.total_mb }} MB<br />
+          Usada: {{ data.memory.system.used_mb }} MB<br />
+          % usada: {{ data.memory.system.percent }}%<br />
+          <hr />
+          <strong>Swap:</strong><br />
+          Total: {{ data.memory.swap.total_mb }} MB<br />
+          Usada: {{ data.memory.swap.used_mb }} MB<br />
+          % usada: {{ data.memory.swap.percent }}%<br />
+          <button
+            class="btn btn-link mt-2"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#memDetails"
+            aria-expanded="false"
+            aria-controls="memDetails"
+          >
+            Ver detalles técnicos
+          </button>
+          <div class="collapse" id="memDetails">
+            <div class="card card-body mt-2">
+              <strong>Top procesos por memoria:</strong>
+              <ul>
+                {% for proc in data.memory.top_processes %}
+                <li>
+                  PID {{ proc.pid }} - {{ proc.name }}: {{ proc.rss_mb }} MB ({{
+                  proc.mem_percent }}%)
+                </li>
+                {% endfor %}
+              </ul>
+              <strong>Plataforma:</strong>
+              <ul>
+                <li>
+                  Sistema: {{ data.memory.platform.system }} {{
+                  data.memory.platform.release }}
+                </li>
+                <li>Versión: {{ data.memory.platform.version }}</li>
+                <li>Arquitectura: {{ data.memory.platform.machine }}</li>
+                <li>Procesador: {{ data.memory.platform.processor }}</li>
+                <li>Python: {{ data.memory.platform.python_version }}</li>
+              </ul>
+            </div>
+          </div>
+          <a
+            href="{{ url_for('admin.system_status_report') }}"
+            class="btn btn-outline-secondary btn-sm mt-3"
+          >
+            Descargar informe técnico (JSON)
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="card mb-3">
+        <div class="card-header bg-secondary text-white">
+          <div class="d-flex justify-content-between">
+            <h4 class="card-title mb-0">Detalles Técnicos</h4>
+            <span>Actualizado: {{ data.refresh_time }}</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="accordionDetails">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingDatabase">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseDatabase"
+                >
+                  Conexión a Base de Datos
+                </button>
+              </h2>
+              <div
+                id="collapseDatabase"
+                class="accordion-collapse collapse"
+                data-bs-parent="#accordionDetails"
+              >
+                <div class="accordion-body">
+                  <pre class="bg-light p-3">{{ data.database | tojson(indent=2) }}</pre>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingRequests">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseRequests"
+                >
+                  Estadísticas de Solicitudes
+                </button>
+              </h2>
+              <div id="collapseRequests" class="accordion-collapse collapse" data-bs-parent="#accordionDetails">
+                <div class="accordion-body">
+                  <pre class="bg-light p-3">{{ data.request_stats | tojson(indent=2) }}</pre>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingBackups">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseBackups"
+                >
+                  Gestión de Archivos de Backup
+                </button>
+              </h2>
+              <div
+                id="collapseBackups"
+                class="accordion-collapse collapse"
+                data-bs-parent="#accordionDetails"
+              >
+                <div class="accordion-body">
+                  <div class="card">
+                    <div class="card-header bg-danger text-white">
+                      <h5 class="mb-0">Eliminar Archivos de Backup</h5>
+                    </div>
+                    <div class="card-body">
+                      <form id="deleteBackupsForm">
+                        <div class="mb-3">
+                          <label class="form-label"
+                            >Seleccionar archivos de backup:</label
+                          >
+                          <div class="form-check mb-2">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="selectAllBackups"
+                            />
+                            <label
+                              class="form-check-label"
+                              for="selectAllBackups"
+                              ><strong>Seleccionar todos</strong></label
+                            >
+                          </div>
+                          <div
+                            style="
+                              max-height: 200px;
+                              overflow-y: auto;
+                              border: 1px solid #dee2e6;
+                              border-radius: 0.25rem;
+                              padding: 10px;
+                            "
+                          >
+                            {% if backup_files %} {% for backup in backup_files
+                            %}
+                            <div
+                              class="form-check d-flex justify-content-between align-items-center mb-2"
+                            >
+                              <div>
+                                <input
+                                  class="form-check-input backup-file-checkbox"
+                                  type="checkbox"
+                                  name="backupFiles"
+                                  id="backup{{ loop.index }}"
+                                  value="{{ backup.name }}"
+                                />
+                                <label
+                                  class="form-check-label"
+                                  for="backup{{ loop.index }}"
+                                  >{{ backup.name }}</label
+                                >
+                              </div>
+                              <small class="text-muted"
+                                >{{ backup.size }} | {{ backup.modified
+                                }}</small
+                              >
+                            </div>
+                            {% endfor %} {% else %}
+                            <div class="alert alert-info mb-0">
+                              No se encontraron archivos de backup
+                            </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label"
+                            >Criterio de eliminación:</label
+                          >
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="deleteCriteria"
+                              id="deleteSelected"
+                              value="selected"
+                              checked
+                            />
+                            <label
+                              class="form-check-label"
+                              for="deleteSelected"
+                            >
+                              Eliminar archivos seleccionados
+                            </label>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="deleteCriteria"
+                              id="deleteDate"
+                              value="date"
+                            />
+                            <label class="form-check-label" for="deleteDate">
+                              Eliminar archivos anteriores a fecha
+                            </label>
+                            <div
+                              id="dateContainer"
+                              class="mt-2 ms-4"
+                              style="display: none"
+                            >
+                              <input
+                                type="date"
+                                class="form-control"
+                                id="cutoffDate"
+                                name="cutoffDate"
+                              />
+                            </div>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="deleteCriteria"
+                              id="deleteAll"
+                              value="all"
+                            />
+                            <label class="form-check-label" for="deleteAll">
+                              Eliminar todos los archivos de backup
+                            </label>
+                          </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                          <button
+                            type="button"
+                            id="deleteBackupsBtn"
+                            class="btn btn-danger"
+                          >
+                            Eliminar Backups
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingLogs">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseLogs"
+                >
+                  Gestión de Archivos de Log
+                </button>
+              </h2>
+              <div
+                id="collapseLogs"
+                class="accordion-collapse collapse"
+                data-bs-parent="#accordionDetails"
+              >
+                <div class="accordion-body">
+                  <div class="card">
+                    <div class="card-header bg-warning text-white">
+                      <h5 class="mb-0">Truncar Archivos de Log</h5>
+                    </div>
+                    <div class="card-body">
+                      <form id="truncateLogsForm">
+                        <div class="mb-3">
+                          <label class="form-label"
+                            >Seleccionar archivos de log:</label
+                          >
+                          <div class="form-check mb-2">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="selectAllLogs"
+                            />
+                            <label class="form-check-label" for="selectAllLogs"
+                              ><strong>Seleccionar todos</strong></label
+                            >
+                          </div>
+                          <div
+                            style="
+                              max-height: 200px;
+                              overflow-y: auto;
+                              border: 1px solid #dee2e6;
+                              border-radius: 0.25rem;
+                              padding: 10px;
+                            "
+                          >
+                            {% if log_files %} {% for log in log_files %}
+                            <div
+                              class="form-check d-flex justify-content-between align-items-center mb-2"
+                            >
+                              <div>
+                                <input
+                                  class="form-check-input log-file-checkbox"
+                                  type="checkbox"
+                                  name="logFiles"
+                                  id="log{{ loop.index }}"
+                                  value="{{ log.name }}"
+                                />
+                                <label
+                                  class="form-check-label"
+                                  for="log{{ loop.index }}"
+                                  >{{ log.name }}</label
+                                >
+                              </div>
+                              <small class="text-muted"
+                                >{{ log.size }} | {{ log.modified }}</small
+                              >
+                            </div>
+                            {% endfor %} {% else %}
+                            <div class="alert alert-info mb-0">
+                              No se encontraron archivos de log
+                            </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Método de truncado:</label>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="truncateMethod"
+                              id="truncateComplete"
+                              value="complete"
+                              checked
+                            />
+                            <label
+                              class="form-check-label"
+                              for="truncateComplete"
+                            >
+                              Truncado completo (eliminar todo el contenido)
+                            </label>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="truncateMethod"
+                              id="truncateLines"
+                              value="lines"
+                            />
+                            <label class="form-check-label" for="truncateLines">
+                              Mantener últimas líneas
+                            </label>
+                            <div
+                              class="ms-4 mt-2"
+                              id="linesContainer"
+                              style="display: none"
+                            >
+                              <input
+                                type="number"
+                                class="form-control"
+                                id="lineCount"
+                                name="lineCount"
+                                min="10"
+                                value="100"
+                                placeholder="Número de líneas a mantener"
+                              />
+                            </div>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="truncateMethod"
+                              id="truncateDate"
+                              value="date"
+                            />
+                            <label class="form-check-label" for="truncateDate">
+                              Eliminar entradas anteriores a fecha
+                            </label>
+                            <div
+                              class="ms-4 mt-2"
+                              id="dateContainer"
+                              style="display: none"
+                            >
+                              <input
+                                type="date"
+                                class="form-control"
+                                id="cutoffDate"
+                                name="cutoffDate"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                          <button
+                            type="button"
+                            id="truncateLogsBtn"
+                            class="btn btn-warning"
+                          >
+                            Truncar Logs
+                          </button>
+                          <button
+                            type="button"
+                            id="downloadLogsBtn"
+                            class="btn btn-secondary"
+                          >
+                            Descargar Logs
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Manejo del botón de limpieza de archivos temporales
+    const cleanupBtn = document.getElementById("cleanupTempBtn");
+    if (cleanupBtn) {
+      cleanupBtn.addEventListener("click", function () {
+        if (
+          confirm(
+            "¿Seguro que deseas eliminar los archivos temporales con más de 2 días de antigüedad?"
+          )
+        ) {
+          fetch("/admin/api/cleanup-temp", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: "days=2",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message || "Limpieza completada");
+              location.reload();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error al limpiar archivos temporales");
+            });
+        }
+      });
+    }
+
+    // Manejo del formulario de eliminación de archivos temporales seleccionados
+    const deleteTempFilesForm = document.getElementById("deleteTempFilesForm");
+    if (deleteTempFilesForm) {
+      deleteTempFilesForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const checked = Array.from(deleteTempFilesForm.querySelectorAll('input[name="temp_files"]:checked'));
+        if (checked.length === 0) {
+          alert("Selecciona al menos un archivo para eliminar.");
+          return;
+        }
+        if (!confirm("¿Seguro que deseas eliminar los archivos seleccionados?")) return;
+        const files = checked.map(cb => cb.value);
+        fetch("/admin/api/delete-temp-files", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ files }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            alert(data.message || "Eliminación completada");
+            location.reload();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error al eliminar archivos temporales");
+          });
+      });
+    }
+
+    // Select all checkbox
+    const selectAllTempFiles = document.getElementById("selectAllTempFiles");
+    if (selectAllTempFiles) {
+      selectAllTempFiles.addEventListener("change", function () {
+        const checkboxes = document.querySelectorAll('input[name="temp_files"]');
+        checkboxes.forEach(cb => cb.checked = selectAllTempFiles.checked);
+      });
+    }
+
+    // Manejo del formulario de truncado de logs
+    const truncateMethodRadios = document.querySelectorAll(
+      'input[name="truncateMethod"]'
+    );
+    const linesContainer = document.getElementById("linesContainer");
+    const dateContainer = document.getElementById("dateContainer");
+    const truncateLogsBtn = document.getElementById("truncateLogsBtn");
+    const downloadLogsBtn = document.getElementById("downloadLogsBtn");
+    const selectAllLogs = document.getElementById("selectAllLogs");
+    const logFileCheckboxes = document.querySelectorAll(".log-file-checkbox");
+
+    // Establecer la fecha actual como valor predeterminado para el campo de fecha
+    const today = new Date();
+    const formattedDate = today.toISOString().split("T")[0];
+    document.getElementById("cutoffDate").value = formattedDate;
+
+    // Mostrar/ocultar campos según el método de truncado seleccionado
+    truncateMethodRadios.forEach((radio) => {
+      radio.addEventListener("change", function () {
+        linesContainer.style.display =
+          this.value === "lines" ? "block" : "none";
+        dateContainer.style.display = this.value === "date" ? "block" : "none";
+      });
+    });
+
+    // Manejar selección de todos los archivos de log
+    if (selectAllLogs) {
+      selectAllLogs.addEventListener("change", function () {
+        logFileCheckboxes.forEach((checkbox) => {
+          checkbox.checked = this.checked;
+        });
+      });
+
+      // Actualizar el estado del checkbox "Seleccionar todos" cuando se cambian los checkboxes individuales
+      logFileCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          const allChecked = Array.from(logFileCheckboxes).every(
+            (cb) => cb.checked
+          );
+          const anyChecked = Array.from(logFileCheckboxes).some(
+            (cb) => cb.checked
+          );
+
+          selectAllLogs.checked = allChecked;
+          selectAllLogs.indeterminate = anyChecked && !allChecked;
+        });
+      });
+    }
+
+    // Manejar el botón de truncado de logs
+    if (truncateLogsBtn) {
+      truncateLogsBtn.addEventListener("click", function () {
+        // Obtener los archivos de log seleccionados
+        const logFilesCheckboxes = document.querySelectorAll(
+          'input[name="logFiles"]:checked'
+        );
+        if (logFilesCheckboxes.length === 0) {
+          alert("Debe seleccionar al menos un archivo de log");
+          return;
+        }
+
+        const logFiles = Array.from(logFilesCheckboxes).map((cb) => cb.value);
+        const truncateMethod = document.querySelector(
+          'input[name="truncateMethod"]:checked'
+        ).value;
+
+        let requestData = {
+          logFiles: logFiles,
+          method: truncateMethod,
+        };
+
+        // Añadir parámetros adicionales según el método seleccionado
+        if (truncateMethod === "lines") {
+          const lineCount = document.getElementById("lineCount").value;
+          if (!lineCount || lineCount < 10) {
+            alert("Debe especificar un número válido de líneas (mínimo 10)");
+            return;
+          }
+          requestData.lineCount = lineCount;
+        } else if (truncateMethod === "date") {
+          const cutoffDate = document.getElementById("cutoffDate").value;
+          if (!cutoffDate) {
+            alert("Debe seleccionar una fecha");
+            return;
+          }
+          requestData.cutoffDate = cutoffDate;
+        }
+
+        // Confirmar la acción antes de proceder
+        let confirmMessage = `¿Seguro que deseas truncar los siguientes archivos de log: ${logFiles.join(
+          ", "
+        )}?`;
+        if (confirm(confirmMessage)) {
+          fetch("/admin/api/truncate-logs", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message);
+              location.reload();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error al truncar los archivos de log");
+            });
+        }
+      });
+    }
+
+    // Manejar selección de todos los backups
+    if (selectAllBackups) {
+      selectAllBackups.addEventListener("change", function () {
+        document
+          .querySelectorAll(".backup-file-checkbox")
+          .forEach((checkbox) => {
+            checkbox.checked = this.checked;
+          });
+      });
+
+      // Actualizar el estado del checkbox "Seleccionar todos" cuando se cambian los checkboxes individuales
+      document.querySelectorAll(".backup-file-checkbox").forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          const allCheckboxes = document.querySelectorAll(
+            ".backup-file-checkbox"
+          );
+          const allChecked = Array.from(allCheckboxes).every(
+            (cb) => cb.checked
+          );
+          const anyChecked = Array.from(allCheckboxes).some((cb) => cb.checked);
+
+          selectAllBackups.checked = allChecked;
+          selectAllBackups.indeterminate = anyChecked && !allChecked;
+        });
+      });
+    }
+
+    // Manejar cambios en el criterio de eliminación de backups
+    document
+      .querySelectorAll('input[name="deleteCriteria"]')
+      .forEach((radio) => {
+        radio.addEventListener("change", function () {
+          const dateContainer = document.getElementById("dateContainer");
+          dateContainer.style.display =
+            this.value === "date" ? "block" : "none";
+        });
+      });
+
+    // Manejar el botón de eliminación de backups
+    if (deleteBackupsBtn) {
+      deleteBackupsBtn.addEventListener("click", function () {
+        const deleteCriteria = document.querySelector(
+          'input[name="deleteCriteria"]:checked'
+        ).value;
+        let requestData = {
+          deleteCriteria: deleteCriteria,
+        };
+
+        if (deleteCriteria === "selected") {
+          // Obtener los archivos de backup seleccionados
+          const backupFilesCheckboxes = document.querySelectorAll(
+            'input[name="backupFiles"]:checked'
+          );
+          if (backupFilesCheckboxes.length === 0) {
+            alert("Debe seleccionar al menos un archivo de backup");
+            return;
+          }
+
+          requestData.backupFiles = Array.from(backupFilesCheckboxes).map(
+            (cb) => cb.value
+          );
+        } else if (deleteCriteria === "date") {
+          // Obtener la fecha de corte
+          const cutoffDate = document.getElementById("cutoffDate").value;
+          if (!cutoffDate) {
+            alert("Debe seleccionar una fecha");
+            return;
+          }
+          requestData.cutoffDate = cutoffDate;
+        } else if (deleteCriteria === "all") {
+          // Confirmar que realmente quiere eliminar todos los backups
+          if (
+            !confirm(
+              "¿Está seguro de que desea eliminar TODOS los archivos de backup? Esta acción no se puede deshacer."
+            )
+          ) {
+            return;
+          }
+        }
+
+        // Confirmar la acción antes de proceder
+        let confirmMessage = "";
+        if (deleteCriteria === "selected") {
+          confirmMessage = `¿Seguro que deseas eliminar los siguientes archivos de backup: ${requestData.backupFiles.join(
+            ", "
+          )}?`;
+        } else if (deleteCriteria === "date") {
+          confirmMessage = `¿Seguro que deseas eliminar todos los archivos de backup anteriores a ${requestData.cutoffDate}?`;
+        } else {
+          confirmMessage =
+            "¿Seguro que deseas eliminar TODOS los archivos de backup?";
+        }
+
+        if (confirm(confirmMessage)) {
+          fetch("/admin/api/delete-backups", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message);
+              location.reload();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error al eliminar los archivos de backup");
+            });
+        }
+      });
+    }
+
+    // Manejar el botón de descarga de logs
+    if (downloadLogsBtn) {
+      downloadLogsBtn.addEventListener("click", function () {
+        const logFilesCheckboxes = document.querySelectorAll(
+          'input[name="logFiles"]:checked'
+        );
+        if (logFilesCheckboxes.length === 0) {
+          alert("Debe seleccionar al menos un archivo de log");
+          return;
+        }
+
+        const logFiles = Array.from(logFilesCheckboxes).map((cb) => cb.value);
+
+        // Redirigir a la URL de descarga
+        if (logFiles.length === 1) {
+          // Si solo hay un archivo, descargarlo directamente
+          window.location.href = `/admin/logs/download/${logFiles[0]}`;
+        } else {
+          // Si hay múltiples archivos, crear un archivo ZIP
+          window.location.href = `/admin/logs/download-multiple?files=${logFiles.join(
+            ","
+          )}`;
+        }
+      });
+    }
+
+    // Función para actualizar los datos del sistema
+    function updateSystemStatus() {
+      fetch('/admin/api/system-status')
+        .then(response => response.json())
+        .then(data => {
+          console.log('Datos recibidos del servidor:', data);
+          if (data.status === 'success' && data.data.system_status) {
+            const systemStatus = data.data.system_status;
+            console.log('System status:', systemStatus);
+            
+            // Actualizar CPU usage
+            if (typeof systemStatus.cpu_usage === 'number') {
+              const cpuUsage = Math.round(systemStatus.cpu_usage * 10) / 10; // Redondear a 1 decimal
+              const cpuElement = document.getElementById('cpuUsage');
+              if (cpuElement) {
+                cpuElement.style.width = cpuUsage + '%';
+                cpuElement.setAttribute('aria-valuenow', cpuUsage);
+                cpuElement.textContent = cpuUsage + '%';
+                
+                // Actualizar color según el porcentaje
+                cpuElement.className = 'progress-bar ' + 
+                  (cpuUsage < 70 ? 'bg-success' : 
+                   cpuUsage < 85 ? 'bg-warning' : 'bg-danger');
+              }
+            }
+            
+            // Actualizar memoria
+            if (systemStatus.memory_usage) {
+              const memoryPercent = Math.round(systemStatus.memory_usage.percent * 10) / 10;
+              const memoryUsedMB = systemStatus.memory_usage.used_mb || 0;
+              const memoryTotalMB = systemStatus.memory_usage.total_mb || 0;
+              
+              // Actualizar barra de progreso de memoria
+              const memoryBars = document.querySelectorAll('.progress-bar');
+              if (memoryBars.length > 1) {
+                const memoryBar = memoryBars[1]; // Segunda barra (memoria)
+                memoryBar.style.width = memoryPercent + '%';
+                memoryBar.setAttribute('aria-valuenow', memoryPercent);
+                memoryBar.textContent = memoryPercent + '%';
+                
+                // Actualizar color según el porcentaje
+                memoryBar.className = 'progress-bar ' + 
+                  (memoryPercent < 70 ? 'bg-success' : 
+                   memoryPercent < 85 ? 'bg-warning' : 'bg-danger');
+              }
+              
+              // Actualizar texto descriptivo de memoria
+              const memoryTexts = document.querySelectorAll('small.text-muted');
+              if (memoryTexts.length > 1) {
+                memoryTexts[1].textContent = `${Math.round(memoryUsedMB)} MB de ${Math.round(memoryTotalMB)} MB`;
+              }
+            }
+            
+            // Actualizar disco
+            if (systemStatus.disk_usage) {
+              const diskPercent = Math.round(systemStatus.disk_usage.percent * 10) / 10;
+              const diskUsedGB = systemStatus.disk_usage.used_gb || 0;
+              const diskTotalGB = systemStatus.disk_usage.total_gb || 0;
+              
+              // Actualizar barra de progreso de disco
+              const diskBars = document.querySelectorAll('.progress-bar');
+              if (diskBars.length > 2) {
+                const diskBar = diskBars[2]; // Tercera barra (disco)
+                diskBar.style.width = diskPercent + '%';
+                diskBar.setAttribute('aria-valuenow', diskPercent);
+                diskBar.textContent = diskPercent + '%';
+                
+                // Actualizar color según el porcentaje
+                diskBar.className = 'progress-bar ' + 
+                  (diskPercent < 70 ? 'bg-success' : 
+                   diskPercent < 85 ? 'bg-warning' : 'bg-danger');
+              }
+              
+              // Actualizar texto descriptivo de disco
+              const diskTexts = document.querySelectorAll('small.text-muted');
+              if (diskTexts.length > 2) {
+                diskTexts[2].textContent = `${Math.round(diskUsedGB)} GB de ${Math.round(diskTotalGB)} GB`;
+              }
+            }
+            
+            // Actualizar estado de la base de datos
+            if (data.data.database) {
+              const dbData = data.data.database;
+              const dbStatusElement = document.getElementById('database-status');
+              const dbLastCheckElement = document.getElementById('database-last-check');
+              
+              if (dbStatusElement) {
+                if (dbData.is_available) {
+                  dbStatusElement.className = 'text-success';
+                  dbStatusElement.innerHTML = '<i class="bi bi-check-circle"></i> Conectado';
+                } else {
+                  dbStatusElement.className = 'text-danger';
+                  dbStatusElement.innerHTML = '<i class="bi bi-x-circle"></i> Desconectado';
+                }
+              }
+              
+              if (dbLastCheckElement) {
+                dbLastCheckElement.textContent = `Última verificación: ${dbData.last_checked || 'No disponible'}`;
+              }
+            }
+            
+            // Actualizar timestamp de última actualización
+            const now = new Date();
+            const timestamp = now.toLocaleString();
+            const refreshElements = document.querySelectorAll('.refresh-time');
+            refreshElements.forEach(el => {
+              el.textContent = 'Última actualización: ' + timestamp;
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error al actualizar estado del sistema:', error);
+          
+          // Mostrar error en el estado de BD también
+          const dbStatusElement = document.getElementById('database-status');
+          if (dbStatusElement) {
+            dbStatusElement.className = 'text-warning';
+            dbStatusElement.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error de conexión';
+          }
+          
+          // Mostrar mensaje de error en la UI
+          const refreshElements = document.querySelectorAll('.refresh-time');
+          refreshElements.forEach(el => {
+            el.textContent = 'Error al cargar datos del sistema';
+            el.style.color = 'red';
+          });
+        });
+    }
+
+    function updateCacheStats() {
+      // Mostrar indicador de carga
+      const cacheStatsContainer = document.getElementById('cache-stats-list');
+      if (cacheStatsContainer) {
+        cacheStatsContainer.innerHTML = '<div class="alert alert-info mb-0"><i class="bi bi-arrow-clockwise"></i> Cargando estadísticas del caché...</div>';
+      }
+      
+      fetch('/admin/api/cache-stats')
+        .then(response => {
+          console.log('Cache stats response status:', response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Cache stats data:', data);
+          if (data.status === 'success' && data.data) {
+            const cacheStats = data.data;
+            
+            // Actualizar los elementos de la interfaz con las nuevas estadísticas
+            if (cacheStatsContainer) {
+              cacheStatsContainer.innerHTML = `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>Hits:</span> 
+                  <span class="badge bg-success rounded-pill">${cacheStats.hit_count}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>Misses:</span> 
+                  <span class="badge bg-warning rounded-pill">${cacheStats.miss_count}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>Tasa de acierto:</span> 
+                  <span class="badge ${cacheStats.hit_rate > 50 ? 'bg-success' : 'bg-warning'} rounded-pill">${cacheStats.hit_rate}%</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>Tamaño actual:</span> 
+                  <span class="badge bg-info rounded-pill">${cacheStats.size}</span>
+                </li>
+              `;
+            }
+          } else {
+            console.warn('Cache stats response:', data);
+            if (cacheStatsContainer) {
+              cacheStatsContainer.innerHTML = '<div class="alert alert-warning mb-0">No se recibieron datos válidos del caché</div>';
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error al actualizar estadísticas del caché:', error);
+          // En caso de error, mostrar mensaje
+          if (cacheStatsContainer) {
+            cacheStatsContainer.innerHTML = '<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle"></i> Error al conectar con el servidor</div>';
+          }
+        });
+    }
+    
+    // Actualizar inmediatamente y luego cada 10 segundos
+    updateSystemStatus();
+    updateCacheStats();
+    setInterval(function() {
+      updateSystemStatus();
+      updateCacheStats();
+    }, 10000);
+  });
+  
+  // Función global para verificar conexión de base de datos
+  function testDatabaseConnection() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    // Deshabilitar botón y mostrar loading
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Verificando...';
+    
+    fetch('/admin/api/test-database')
+      .then(response => response.json())
+      .then(data => {
+        console.log('Database test response:', data);
+        
+        // Actualizar estado inmediatamente
+        const dbStatusElement = document.getElementById('database-status');
+        const dbLastCheckElement = document.getElementById('database-last-check');
+        
+        if (data.status === 'success' && data.data) {
+          const dbData = data.data;
+          
+          if (dbStatusElement) {
+            if (dbData.is_available) {
+              dbStatusElement.className = 'text-success';
+              dbStatusElement.innerHTML = '<i class="bi bi-check-circle"></i> Conectado';
+            } else {
+              dbStatusElement.className = 'text-danger';
+              dbStatusElement.innerHTML = '<i class="bi bi-x-circle"></i> Desconectado';
+            }
+          }
+          
+          if (dbLastCheckElement) {
+            dbLastCheckElement.textContent = `Última verificación: ${dbData.last_checked || 'Ahora mismo'}`;
+          }
+        }
+        
+        // Restaurar botón
+        button.disabled = false;
+        button.innerHTML = originalText;
+      })
+      .catch(error => {
+        console.error('Error al verificar base de datos:', error);
+        
+        // Mostrar error
+        const dbStatusElement = document.getElementById('database-status');
+        if (dbStatusElement) {
+          dbStatusElement.className = 'text-warning';
+          dbStatusElement.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error de verificación';
+        }
+        
+        // Restaurar botón
+        button.disabled = false;
+        button.innerHTML = originalText;
+      });
+  }
+  
+  // Función global para generar actividad de prueba en el caché
+  function testCacheActivity() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    // Deshabilitar botón y mostrar loading
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Generando actividad...';
+    
+    fetch('/admin/api/test-cache')
+      .then(response => response.json())
+      .then(data => {
+        console.log('Test cache response:', data);
+        
+        // Actualizar estadísticas inmediatamente después del test
+        setTimeout(() => {
+          // Buscar la función updateCacheStats en el scope global
+          if (typeof window.updateCacheStats === 'function') {
+            window.updateCacheStats();
+          } else {
+            // Fallback: llamar directamente al endpoint
+            fetch('/admin/api/cache-stats')
+              .then(response => response.json())
+              .then(data => {
+                if (data.status === 'success' && data.data) {
+                  const cacheStats = data.data;
+                  const cacheStatsContainer = document.getElementById('cache-stats-list');
+                  if (cacheStatsContainer) {
+                    cacheStatsContainer.innerHTML = `
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Hits:</span> 
+                        <span class="badge bg-success rounded-pill">${cacheStats.hit_count}</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Misses:</span> 
+                        <span class="badge bg-warning rounded-pill">${cacheStats.miss_count}</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Tasa de acierto:</span> 
+                        <span class="badge ${cacheStats.hit_rate > 50 ? 'bg-success' : 'bg-warning'} rounded-pill">${cacheStats.hit_rate}%</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Tamaño actual:</span> 
+                        <span class="badge bg-info rounded-pill">${cacheStats.size}</span>
+                      </li>
+                    `;
+                  }
+                }
+              });
+          }
+          
+          // Restaurar botón
+          button.disabled = false;
+          button.innerHTML = originalText;
+          
+          // Mostrar mensaje de éxito
+          const alert = document.createElement('div');
+          alert.className = 'alert alert-success alert-dismissible fade show mt-2';
+          alert.innerHTML = `
+            <i class="bi bi-check-circle"></i> Actividad de caché generada correctamente
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          `;
+          button.parentNode.appendChild(alert);
+          
+          // Auto-eliminar alerta después de 3 segundos
+          setTimeout(() => {
+            if (alert.parentNode) {
+              alert.remove();
+            }
+          }, 3000);
+        }, 500);
+      })
+      .catch(error => {
+        console.error('Error al generar actividad de caché:', error);
+        
+        // Restaurar botón
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+        // Mostrar mensaje de error
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show mt-2';
+        alert.innerHTML = `
+          <i class="bi bi-exclamation-triangle"></i> Error al generar actividad de caché
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        button.parentNode.appendChild(alert);
+      });
+  }
+</script>
+{% endblock %}

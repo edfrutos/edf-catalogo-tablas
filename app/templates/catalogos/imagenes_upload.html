@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Subir Imágenes al Catálogo "{{ catalogo.nombre }}"</h2>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="imagenes" class="form-label">Selecciona hasta 3 imágenes</label>
+        <input class="form-control" type="file" id="imagenes" name="imagenes" accept="image/*" multiple>
+    </div>
+    <button type="submit" class="btn btn-primary">Subir Imágenes</button>
+</form>
+{% endblock %}

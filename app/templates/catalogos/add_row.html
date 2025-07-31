@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Añadir Fila a {{ catalog.name }}</h2>
+<form method="POST" enctype="multipart/form-data">
+  {% for header in catalog.headers %}
+  <div class="mb-3">
+    <label class="form-label">{{ header }}</label>
+    <input type="text" class="form-control" name="{{ header }}">
+  </div>
+  {% endfor %}
+  <div class="mb-3">
+    <label class="form-label">Imágenes (máx. 3)</label>
+    <input type="file" class="form-control" name="images" accept="image/*" multiple>
+    <div class="form-text">Seleccione hasta 3 imágenes</div>
+  </div>
+  <div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-success">Añadir</button>
+    <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

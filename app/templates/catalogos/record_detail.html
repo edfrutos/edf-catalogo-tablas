@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Detalles del Registro en {{ catalogo.nombre }}</h2>
+
+<table class="table table-bordered">
+  <tbody>
+    {% for campo, valor in registro.items() if campo != '_id' %}
+      <tr>
+        <th>{{ campo | capitalize }}</th>
+        <td>{{ valor }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if imagenes %}
+  <h4>Imágenes asociadas</h4>
+  <div class="row">
+    {% for imagen_url in imagenes %}
+      <div class="col-md-4 mb-3">
+        <a href="{{ imagen_url }}" target="_blank">
+          <img src="{{ imagen_url }}" class="img-thumbnail" alt="Imagen del registro">
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<a href="{{ url_for('catalog.view', catalogo_id=catalogo._id) }}" class="btn btn-secondary">Volver al Catálogo</a>
+<a href="{{ url_for('catalog.edit_record', catalogo_id=catalogo._id, record_id=registro._id) }}" class="btn btn-warning">Editar</a>
+<a href="{{ url_for('catalog.delete_record', catalogo_id=catalogo._id, record_id=registro._id) }}" class="btn btn-danger">Eliminar</a>
+{% endblock %}

@@ -1,0 +1,16 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h2>Editar Catálogo</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label">Nombre</label>
+    <input type="text" class="form-control" name="name" value="{{ catalog.name }}" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Encabezados (separados por coma)</label>
+    <input type="text" class="form-control" name="headers" value="{{ catalog.headers | join(', ') }}" required>
+  </div>
+  <button type="submit" class="btn btn-success">Actualizar</button>
+</form>
+{% endblock %}

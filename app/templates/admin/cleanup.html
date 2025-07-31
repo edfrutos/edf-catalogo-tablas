@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Limpieza del Sistema{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Limpieza del Sistema</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+            Volver al Dashboard
+        </a>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Estadísticas del Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6>Total Usuarios</h6>
+                                <h3>{{ stats.total_users }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6>Total Tablas</h6>
+                                <h3>{{ stats.total_tables }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6>Archivos Huérfanos</h6>
+                                <h3>{{ orphan_files }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6>Registros Sin Archivo</h6>
+                                <h3>{{ missing_records }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones de Limpieza -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Limpieza de Archivos</h5>
+                </div>
+                <div class="card-body">
+                    <p>Se encontraron:</p>
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Archivos sin registro en la base de datos
+                            <span class="badge bg-warning rounded-pill">{{ orphan_files }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Registros sin archivo físico
+                            <span class="badge bg-danger rounded-pill">{{ missing_records }}</span>
+                        </li>
+                    </ul>
+                    
+                    <form action="{{ url_for('admin_cleanup') }}" method="POST">
+                        <input type="hidden" name="action" value="cleanup">
+                        <button type="submit" class="btn btn-warning w-100" 
+                                {% if orphan_files == 0 and missing_records == 0 %}disabled{% endif %}>
+                            Ejecutar Limpieza
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Acciones Adicionales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        <a href="{{ url_for('admin_suspicious_users') }}" class="btn btn-outline-warning">
+                            Revisar Usuarios Sospechosos
+                        </a>
+                        <a href="{{ url_for('admin_duplicate_users') }}" class="btn btn-outline-info">
+                            Gestionar Usuarios Duplicados
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

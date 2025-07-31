@@ -1,0 +1,285 @@
+{% extends "base.html" %} 
+{% block title %}Ver Catálogo {% endblock %} 
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h2 class="mb-0">{{ catalog.name }}</h2>
+          <div>
+            <a
+              href="{{ url_for('catalogs.edit', catalog_id=catalog._id|string) }}"
+              class="btn btn-primary"
+            >
+              <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{{ url_for('catalogs.list') }}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> Volver
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h5>Información General</h5>
+              <p><strong>Descripción:</strong> {{ catalog.description }}</p>
+              <p>
+                <strong>Propietario:</strong> {{ catalog.owner_name or
+                catalog.created_by or 'No disponible' }}
+              </p>
+              <p>
+                <strong>Estado:</strong>
+                <span class="badge bg-success">Activo</span>
+              </p>
+              <p>
+                <strong>Fecha de creación:</strong> {{ catalog.created_at }}
+              </p>
+              <p>
+                <strong>Última actualización:</strong> {{ catalog.updated_at }}
+              </p>
+            </div>
+            <div class="col-md-6">
+              <h5>Estadísticas</h5>
+              <p><strong>Total de filas:</strong> {{ catalog.rows|length }}</p>
+              <p><strong>Columnas:</strong> {{ catalog.headers|length }}</p>
+            </div>
+          </div>
+
+          <h5 class="mb-3">Filas del Catálogo</h5>
+          {% if catalog.rows %}
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover mt-4">
+              <thead>
+                <tr>
+                  {% for header in catalog.headers %}
+                  <th>{{ header }}</th>
+                  {% endfor %}
+                  <th>Imágenes</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in catalog.rows %}
+                <tr>
+                  {% for header in catalog.headers %}
+                  <td>{{ row[header] }}</td>
+                  {% endfor %}
+                  <td>
+                    {% if row.images and row.images|length > 0 %}
+                    <div class="d-flex flex-wrap gap-2">
+                      {% for img in row.images %} {% if img.startswith('http')
+                      %}
+                      <img
+                        src="{{ img }}"
+                        alt="Imagen {{ loop.index }}"
+                        class="catalog-img img-thumbnail"
+                        style="
+                          width: 60px;
+                          height: 60px;
+                          object-fit: cover;
+                          border-radius: 4px;
+                          border: 1px solid #ccc;
+                          cursor: pointer;
+                        "
+                        onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'"
+                      />
+
+                      {% else %}
+                      <img
+                        src="{{ url_for('static', filename='uploads/' ~ img) }}"
+                        alt="Imagen {{ loop.index }}"
+                        class="catalog-img img-thumbnail"
+                        style="
+                          width: 60px;
+                          height: 60px;
+                          object-fit: cover;
+                          border-radius: 4px;
+                          border: 1px solid #ccc;
+                          cursor: pointer;
+                        "
+                        onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'"
+                      />
+
+                      {% endif %} {% endfor %}
+                    </div>
+                    {% elif row.imagenes and row.imagenes|length > 0 %}
+                    <div class="d-flex flex-wrap gap-2">
+                      {% for img in row.imagenes %} {% if img.startswith('http')
+                      %}
+                      <img
+                        src="{{ img }}"
+                        alt="Imagen {{ loop.index }}"
+                        class="catalog-img img-thumbnail"
+                        style="
+                          width: 60px;
+                          height: 60px;
+                          object-fit: cover;
+                          border-radius: 4px;
+                          border: 1px solid #ccc;
+                          cursor: pointer;
+                        "
+                        onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'"
+                      />
+
+                      {% else %}
+                      <img
+                        src="{{ url_for('static', filename='uploads/' ~ img) }}"
+                        alt="Imagen {{ loop.index }}"
+                        class="catalog-img img-thumbnail"
+                        style="
+                          width: 60px;
+                          height: 60px;
+                          object-fit: cover;
+                          border-radius: 4px;
+                          border: 1px solid #ccc;
+                          cursor: pointer;
+                        "
+                        onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'"
+                      />
+
+                      {% endif %} {% endfor %}
+                    </div>
+                    {% else %}
+                    <span class="text-muted">Sin imágenes</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <a
+                        href="{{ url_for('catalogs.edit_row', catalog_id=catalog._id|string, row_index=loop.index0) }}"
+                        class="btn btn-sm btn-primary"
+                      >
+                        <i class="fas fa-edit"></i> Editar
+                      </a>
+                      {% if session.get('role') == 'admin' or catalog.owner == session.get('username') %}
+                        <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id|string, row_index=loop.index0) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                          <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i> Eliminar
+                          </button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="alert alert-info">No hay filas en este catálogo.</div>
+          {% endif %}
+
+          <div class="mt-4">
+            <a
+              href="{{ url_for('catalogs.add_row', catalog_id=catalog._id|string) }}"
+              class="btn btn-success"
+            >
+              <i class="fas fa-plus"></i> Agregar Fila
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para previsualización de imágenes -->
+<div
+  class="modal fade"
+  id="imageModal"
+  tabindex="-1"
+  aria-labelledby="imageModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">Vista Previa de Imagen</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body p-0">
+        <img src="" id="modalImage" class="img-fluid w-100" alt="imagen" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación para eliminar fila -->
+<div
+  class="modal fade"
+  id="eliminarModal"
+  tabindex="-1"
+  aria-labelledby="eliminarModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eliminarModalLabel">
+          Confirmar Eliminación
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        ¿Está seguro que desea eliminar esta fila? Esta acción no se puede
+        deshacer.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <form id="eliminarForm" method="POST" class="d-inline">
+          <button type="submit" class="btn btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+ 
+<script>
+  function eliminarFila(rowIndex) {
+    const modal = new bootstrap.Modal(document.getElementById("eliminarModal"));
+    const form = document.getElementById("eliminarForm");
+    // Crear la URL correctamente
+    const catalogId = "{{ catalog._id|string }}";
+    form.action = `/catalogs/delete-row/${catalogId}/${rowIndex}`;
+    console.log("URL de eliminación:", form.action);
+    modal.show();
+  }
+
+  // Configurar el modal para imágenes
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM cargado, configurando visor de imágenes");
+
+    // Obtener referencias
+    const modal = new bootstrap.Modal(document.getElementById("imageModal"));
+    const modalImage = document.getElementById("modalImage");
+
+    // Event listener para imágenes
+    document.querySelectorAll(".catalog-img").forEach((img) => {
+      img.addEventListener("click", function () {
+        console.log("Imagen clickeada");
+        const src = this.getAttribute("src");
+        if (modalImage) {
+          modalImage.src = src;
+          modal.show();
+        }
+      });
+    });
+  });
+</script>
+

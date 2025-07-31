@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Página de Mantenimiento - Catálogo Tablas</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-dark: #2980b9;
+            --success-color: #2ecc71;
+            --success-dark: #27ae60;
+            --warning-color: #f39c12;
+            --warning-dark: #e67e22;
+            --danger-color: #e74c3c;
+            --danger-dark: #c0392b;
+            --text-color: #333;
+            --light-bg: #f5f5f5;
+            --border-color: #ddd;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: var(--light-bg);
+            color: var(--text-color);
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 25px;
+        }
+        
+        .info-box {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .error-box {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background: var(--success-dark);
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background: var(--warning-dark);
+        }
+        
+        .btn-danger {
+            background: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-dark);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        table, th, td {
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        td {
+            padding: 12px;
+        }
+        
+        .label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .action-panel {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+        
+        .diagnostic-item {
+            margin-bottom: 8px;
+        }
+        
+        .timestamp {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            padding-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            button {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">CT</div>
+            <h1>Página de Mantenimiento</h1>
+        </header>
+        
+        <div class="warning-box">
+            <strong>Aviso:</strong> Esta es una página estática de emergencia. El sistema de Catálogo Tablas está temporalmente en mantenimiento o experimentando problemas técnicos.
+        </div>
+        
+        <div class="info-box">
+            <strong>Estado actual:</strong> El equipo técnico ha sido notificado automáticamente y está trabajando para resolver el problema lo antes posible.
+        </div>
+        
+        <h2>Información del Sistema</h2>
+        <table>
+            <tr>
+                <td class="label">Aplicación:</td>
+                <td>Catálogo Tablas</td>
+            </tr>
+            <tr>
+                <td class="label">Versión:</td>
+                <td>2.5.3</td>
+            </tr>
+            <tr>
+                <td class="label">Entorno:</td>
+                <td>Producción</td>
+            </tr>
+            <tr>
+                <td class="label">Última actualización:</td>
+                <td>17/05/2025</td>
+            </tr>
+            <tr>
+                <td class="label">Estado:</td>
+                <td><span class="status-badge status-error">Mantenimiento</span></td>
+            </tr>
+        </table>
+        
+        <h2>Comprobación de Servicios</h2>
+        <table>
+            <tr>
+                <th>Servicio</th>
+                <th>Estado</th>
+            </tr>
+            <tr>
+                <td>Servidor Web (Apache/Gunicorn)</td>
+                <td><span class="status-badge status-error">Inactivo</span></td>
+            </tr>
+            <tr>
+                <td>Base de Datos (MongoDB)</td>
+                <td><span class="status-badge status-success">Activo</span></td>
+            </tr>
+            <tr>
+                <td>Almacenamiento (AWS S3)</td>
+                <td><span class="status-badge status-success">Activo</span></td>
+            </tr>
+            <tr>
+                <td>Aplicación Flask</td>
+                <td><span class="status-badge status-error">Inactivo</span></td>
+            </tr>
+            <tr>
+                <td>Sesiones</td>
+                <td><span class="status-badge status-warning">Parcial</span></td>
+            </tr>
+        </table>
+        
+        <div class="action-panel">
+            <h2>Opciones Disponibles</h2>
+            <p>Mientras trabajamos en la solución, puede utilizar estas opciones:</p>
+            
+            <button class="btn-warning" onclick="checkStatus()">Verificar Estado</button>
+            <button class="btn-success" onclick="window.location.href='mailto:soporte@edefrutos.com?subject=Problema%20de%20acceso%20al%20Catálogo%20Tablas&body=Estoy%20experimentando%20problemas%20para%20acceder%20al%20sistema%20de%20Catálogo%20Tablas.'">Contactar Soporte</button>
+            <button onclick="window.location.href='/'">Reintentar Acceso</button>
+        </div>
+        
+        <h2>Diagnóstico del Sistema</h2>
+        <div id="diagnostics">
+            <p>Realizando diagnóstico automático...</p>
+        </div>
+        
+        <script>
+            // Función para obtener la fecha y hora actual formateada
+            function getCurrentTimestamp() {
+                const now = new Date();
+                return now.toLocaleString('es-ES', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
+            
+            // Función para verificar el estado del sistema
+            function checkStatus() {
+                document.getElementById('diagnostics').innerHTML = '<p>Verificando estado del sistema...</p>';
+                
+                // Simulamos una verificación
+                setTimeout(function() {
+                    updateDiagnostics();
+                }, 1000);
+            }
+            
+            // Función para actualizar el diagnóstico
+            function updateDiagnostics() {
+                const timestamp = getCurrentTimestamp();
+                
+                document.getElementById('diagnostics').innerHTML = `
+                    <div class="error-box">
+                        <p><strong>Diagnóstico completado a las ${timestamp}</strong></p>
+                        <ul>
+                            <li class="diagnostic-item">Error en la configuración del proxy de Apache a Gunicorn</li>
+                            <li class="diagnostic-item">Servicio Gunicorn no responde en el puerto configurado</li>
+                            <li class="diagnostic-item">Archivos de sesión inaccesibles por problemas de permisos</li>
+                            <li class="diagnostic-item">Aplicación Flask no puede inicializarse correctamente</li>
+                        </ul>
+                        <p>El equipo técnico ha sido notificado y está trabajando en la solución. Tiempo estimado de resolución: 30-60 minutos.</p>
+                    </div>
+                    <div class="timestamp">Próxima actualización automática: en 5 minutos</div>
+                `;
+            }
+            
+            // Iniciar diagnóstico al cargar la página
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(updateDiagnostics, 1500);
+            });
+        </script>
+        
+        <footer>
+            <p>© 2025 Catálogo Tablas - Página de mantenimiento v1.2</p>
+            <p>Si el problema persiste por más de 2 horas, por favor contacte al administrador del sistema.</p>
+        </footer>
+    </div>
+</body>
+</html>

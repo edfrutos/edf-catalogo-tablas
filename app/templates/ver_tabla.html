@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Ver Tabla{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .image-container {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        overflow: hidden;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+    
+    .catalog-image {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .modal-image-container {
+        position: relative;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #imagenModalSrc {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        max-width: 100%;
+        max-height: 70vh;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+    
+    .modal-xl {
+        max-width: 95vw;
+    }
+    
+    .modal-image-container {
+        max-height: 75vh;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Tabla: {{ table.name }}</h2>
+  <a href="{{ url_for('main.dashboard_user') }}" class="btn btn-secondary mb-3">&larr; Volver al panel</a>
+  <table class="table table-bordered mb-4">
+    <tr><th>Nombre</th><td>{{ table.name }}</td></tr>
+    <tr><th>Fecha de creación</th><td>{% if table.created_at %}{% if table.created_at is string %}{{ table.created_at }}{% else %}{{ table.created_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}{% else %}—{% endif %}</td></tr>
+    <tr><th>Propietario</th><td>{{ table.owner if table.owner else (table.owner_name if table.owner_name else (table.created_by if table.created_by else 'Usuario desconocido')) }}</td></tr>
+    <tr><th>Encabezados</th><td>{{ table.headers|join(', ') if table.headers else '—' }}</td></tr>
+    <tr><th>Número de filas</th><td>{{ table.data|length if table.data else 0 }}</td></tr>
+  </table>
+  {% if session.username == table.owner %}
+    <a href="{{ url_for('main.editar_tabla', id=table._id) }}" class="btn btn-success mb-3"><i class="bi bi-pencil"></i> Editar tabla</a>
+  {% endif %}
+  {% if session.role == 'admin' or session.username == table.owner %}
+    <a href="{{ url_for('main.agregar_fila', tabla_id=table._id|string) }}" class="btn btn-success mb-3">
+      <i class="bi bi-plus"></i> Agregar Fila
+    </a>
+  {% endif %}
+  <h4>Filas de la tabla</h4>
+  {% if table.data and table.headers %}
+    <div class="mb-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm" id="tablaFilas">
+        <thead>
+          <tr>
+            {% for header in table.headers %}
+              <th>{{ header }}</th>
+            {% endfor %}
+            <th>Imágenes</th>
+            {% if session.role == 'admin' or session.username == table.owner %}
+              <th>Acciones</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in table.data %}
+            <tr>
+              {% for header in table.headers %}
+                <td>{{ row[header] if row[header] is defined and row[header] is not none else '' }}</td>
+              {% endfor %}
+              <td>
+                {% if row.imagen_urls and row.imagen_urls|length > 0 %}
+                  <div class="d-flex flex-wrap gap-2">
+                    {% for img_url in row.imagen_urls %}
+                      <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;" class="position-relative">
+                        <div class="image-container" data-img-url="{{ img_url }}">
+                          <div class="spinner-border text-primary spinner-border-sm position-absolute top-50 start-50 translate-middle" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                          </div>
+                          <img src="{{ img_url }}" alt="Imagen" class="img-thumbnail catalog-image" 
+                               style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
+                               onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                               onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                               loading="lazy">
+                        </div>
+                      </a>
+                    {% endfor %}
+                    <small class="text-muted align-self-center ms-2">({{ row.imagen_urls|length }} imágenes)</small>
+                  </div>
+                {% else %}
+                  <span class="text-muted">Sin imágenes</span>
+                {% endif %}
+              </td>
+              {% if session.role == 'admin' or session.username == table.owner %}
+                <td>
+                  <a href="{{ url_for('main.editar_fila', tabla_id=table._id, fila_index=loop.index0) }}" class="btn btn-sm btn-warning me-1">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                  <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=table._id, row_index=loop.index0) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                    <button type="submit" class="btn btn-sm btn-danger">
+                      <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                  </form>
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav>
+      <ul class="pagination justify-content-center" id="paginacionTabla"></ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-info">Esta tabla no tiene filas aún.</div>
+  {% endif %}
+</div>
+
+<!-- Modal para visualizar imágenes -->
+<div class="modal fade" id="imagenModal" tabindex="-1" aria-labelledby="imagenModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imagenModalLabel">Visualizar Imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="modal-image-container">
+          <div class="spinner-border text-primary position-absolute" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <img id="imagenModalSrc" src="" alt="Imagen" 
+               onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+               onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'; this.style.opacity='1'; this.previousElementSibling.style.display='none';">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const filas = Array.from(document.querySelectorAll('#tablaFilas tbody tr'));
+const filasPorPagina = 10;
+let paginaActual = 1;
+
+function mostrarImagenModal(imagenUrl) {
+  // Restablecer el spinner y la opacidad antes de cargar la nueva imagen
+  const spinner = document.querySelector('#imagenModal .spinner-border');
+  const modalImg = document.getElementById('imagenModalSrc');
+  if (spinner) spinner.style.display = 'block';
+  if (modalImg) {
+    modalImg.style.opacity = '0';
+    modalImg.src = imagenUrl;
+  }
+  
+  // Mostrar el modal
+  const modal = new bootstrap.Modal(document.getElementById('imagenModal'));
+  modal.show();
+}
+
+function mostrarPagina(pagina) {
+  const inicio = (pagina - 1) * filasPorPagina;
+  const fin = inicio + filasPorPagina;
+  filas.forEach((fila, i) => {
+    fila.style.display = (i >= inicio && i < fin) ? '' : 'none';
+  });
+  renderizarPaginacion(pagina);
+}
+
+function renderizarPaginacion(pagina) {
+  const totalPaginas = Math.ceil(filas.filter(f => f.style.display !== 'none' || f.style.display === '').length / filasPorPagina);
+  const paginacion = document.getElementById('paginacionTabla');
+  paginacion.innerHTML = '';
+  if (totalPaginas <= 1) return;
+  for (let i = 1; i <= totalPaginas; i++) {
+    const li = document.createElement('li');
+    li.className = 'page-item' + (i === pagina ? ' active' : '');
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.textContent = i;
+    a.href = '#';
+    a.onclick = function(e) { e.preventDefault(); paginaActual = i; mostrarPagina(i); };
+    li.appendChild(a);
+    paginacion.appendChild(li);
+  }
+}
+
+function filtrarFilas() {
+  const valor = document.getElementById('searchInput').value.toLowerCase();
+  filas.forEach(fila => {
+    const texto = fila.textContent.toLowerCase();
+    fila.style.display = texto.includes(valor) ? '' : 'none';
+  });
+  paginaActual = 1;
+  mostrarPagina(1);
+}
+
+document.getElementById('searchInput').addEventListener('input', filtrarFilas);
+mostrarPagina(1);
+
+// Función para manejar errores de carga de imágenes
+document.addEventListener('DOMContentLoaded', function() {
+    // Crear una imagen de error por defecto si no existe
+    const errorImgPath = '{{ url_for('static', filename='img/image-error.svg') }}';
+    fetch(errorImgPath)
+        .catch(() => {
+            // Si la imagen de error no existe, crear un canvas con un icono de error
+            const canvas = document.createElement('canvas');
+            canvas.width = 80;
+            canvas.height = 80;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#f8d7da';
+            ctx.fillRect(0, 0, 80, 80);
+            ctx.font = '40px Arial';
+            ctx.fillStyle = '#721c24';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('!', 40, 40);
+            
+            // Convertir el canvas a una imagen base64
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            // Reemplazar todas las referencias a la imagen de error
+            document.querySelectorAll('img[onerror]').forEach(img => {
+                img.onerror = function() {
+                    this.src = dataUrl;
+                    this.style.opacity = '1';
+                    const spinner = this.previousElementSibling;
+                    if (spinner) spinner.style.display = 'none';
+                };
+            });
+        });
+});
+</script>
+{% endblock %}

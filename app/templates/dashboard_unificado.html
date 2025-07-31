@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Unificado{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Mis Catálogos y Tablas</h2>
+    <div class="row">
+        {% if registros|length == 0 %}
+            <div class="alert alert-warning">No tienes catálogos ni tablas registrados.</div>
+        {% else %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Miniatura</th>
+                        <th>Nombre</th>
+                        <th>Propietario</th>
+                        <th>Fecha de creación</th>
+                        <th>Número de filas</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registros %}
+                        <tr>
+                            <td>
+                                {% if reg.tipo == 'catalog' %}
+                                    <span class="badge bg-info">Catálogo</span>
+                                {% else %}
+                                    <span class="badge bg-success">Tabla</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if reg.miniatura %}
+                                    <img src="{{ reg.miniatura }}" alt="Miniatura" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ reg.name }}</td>
+                            <td>{{ reg.owner or reg.created_by or reg.owner_name or 'Desconocido' }}</td>
+                            <td>{{ reg.created_at }}</td>
+                            <td>{{ reg.row_count }}</td>
+                            <td>
+                                <a href="{{ url_for('main.ver_tabla', table_id=reg._id) }}" class="btn btn-primary btn-sm">Ver</a>
+                                {% if session.get('role') == 'admin' or reg.owner == session.get('username') %}
+                                    <a href="{{ url_for('main.editar', id=reg._id) }}" class="btn btn-warning btn-sm">Editar</a>
+                                    <form action="{{ url_for('main.delete_table', table_id=reg._id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas eliminar este elemento?');">
+                                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

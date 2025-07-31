@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Diagnóstico de Sesión de Administrador{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Diagnóstico de Sesión de Administrador</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Estado de la Sesión</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert {% if role_valid and not missing_keys %}alert-success{% else %}alert-danger{% endif %}">
+                <strong>Estado General:</strong> 
+                {% if role_valid and not missing_keys %}
+                    <span class="badge bg-success">Sesión de administrador válida</span>
+                {% else %}
+                    <span class="badge bg-danger">Sesión de administrador con problemas</span>
+                {% endif %}
+            </div>
+            
+            {% if missing_keys %}
+            <div class="alert alert-warning">
+                <strong>Claves faltantes en la sesión:</strong> 
+                <ul>
+                    {% for key in missing_keys %}
+                    <li>{{ key }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if not role_valid %}
+            <div class="alert alert-danger">
+                <strong>Problema de rol:</strong> El rol actual es "{{ session_data.role }}" pero debería ser "admin"
+            </div>
+            {% endif %}
+            
+            <h5 class="mt-3">Datos de Usuario</h5>
+            <table class="table table-striped">
+                <tr>
+                    <th>ID de Usuario</th>
+                    <td>{{ session_data.user_id or 'No disponible' }}</td>
+                </tr>
+                <tr>
+                    <th>Nombre de Usuario</th>
+                    <td>{{ session_data.username or 'No disponible' }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ session_data.email or 'No disponible' }}</td>
+                </tr>
+                <tr>
+                    <th>Rol</th>
+                    <td>
+                        {% if session_data.role == 'admin' %}
+                            <span class="badge bg-success">Administrador</span>
+                        {% else %}
+                            <span class="badge bg-danger">{{ session_data.role or 'No disponible' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Logged In</th>
+                    <td>
+                        {% if session_data.logged_in %}
+                            <span class="badge bg-success">Sí</span>
+                        {% else %}
+                            <span class="badge bg-danger">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Inicio de Sesión</th>
+                    <td>{{ session_data.login_time or 'No disponible' }}</td>
+                </tr>
+                <tr>
+                    <th>IP del Cliente</th>
+                    <td>{{ session_data.client_ip or 'No disponible' }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Configuración de Sesión</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <tr>
+                    <th>Nombre de Cookie</th>
+                    <td>{{ cookie_name }}</td>
+                </tr>
+                <tr>
+                    <th>Cookie Segura</th>
+                    <td>
+                        {% if cookie_secure %}
+                            <span class="badge bg-success">Sí</span>
+                        {% else %}
+                            <span class="badge bg-warning">No</span> (Desarrollo)
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Cookie HttpOnly</th>
+                    <td>
+                        {% if cookie_httponly %}
+                            <span class="badge bg-success">Sí</span>
+                        {% else %}
+                            <span class="badge bg-danger">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Duración de Sesión</th>
+                    <td>{{ session_lifetime }}</td>
+                </tr>
+                <tr>
+                    <th>ID de Sesión</th>
+                    <td>
+                        {% if session_data.session_id %}
+                            <small class="text-muted">{{ session_data.session_id[:10] }}...</small>
+                        {% else %}
+                            <span class="text-danger">No disponible</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('debug.fix_session') }}" class="btn btn-warning">
+            <i class="fas fa-wrench"></i> Intentar Reparar Sesión
+        </a>
+        <a href="{{ url_for('admin.dashboard_admin') }}" class="btn btn-primary">
+            <i class="fas fa-tachometer-alt"></i> Volver al Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

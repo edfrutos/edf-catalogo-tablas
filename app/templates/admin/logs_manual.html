@@ -1,0 +1,531 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Gestión de Logs</h2>
+    <div>
+      <button class="btn btn-outline-primary" id="refreshLogsList" onclick="actualizarListaLogs()" title="Actualizar lista de logs">
+        <i class="bi bi-arrow-clockwise"></i> Actualizar Lista
+      </button>
+      <div class="form-check form-switch d-inline-block ms-3">
+        <input class="form-check-input" type="checkbox" id="autoRefreshSwitch" checked>
+        <label class="form-check-label" for="autoRefreshSwitch">
+          Actualización automática (30s)
+        </label>
+      </div>
+    </div>
+  </div>
+  
+  <form id="log-select-form" class="mb-3">
+    <label for="logfile" class="form-label">Selecciona un archivo de log:</label>
+    <div class="input-group">
+      <select id="logfile" name="logfile" class="form-select" onchange="actualizarLogSeleccionado()">
+        <option value="">-- Selecciona un log --</option>
+        <!-- Las opciones se cargarán dinámicamente -->
+      </select>
+      <span class="input-group-text" id="logFileCount">Cargando...</span>
+    </div>
+  </form>
+  
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0">Filtros de visualización</h5>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label for="linesCount" class="form-label">Mostrar últimas líneas:</label>
+          <div class="input-group">
+            <input type="number" id="linesCount" class="form-control" value="50" min="1">
+            <button class="btn btn-primary" onclick="aplicarFiltros()">Aplicar</button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Filtrar por fecha:</label>
+          <div class="input-group">
+            <input type="date" id="dateFrom" class="form-control" placeholder="Desde">
+            <span class="input-group-text">a</span>
+            <input type="date" id="dateTo" class="form-control" placeholder="Hasta">
+            <button class="btn btn-outline-secondary" type="button" onclick="aplicarFiltroFechas()">
+              <i class="bi bi-funnel"></i> Filtrar
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="btn-group w-100" role="group">
+            <button class="btn btn-secondary" onclick="buscarLogs()" title="Buscar por palabra clave">
+              <i class="bi bi-search"></i> Buscar
+            </button>
+            <button class="btn btn-success" onclick="descargarLog()" title="Descargar log">
+              <i class="bi bi-download"></i>
+            </button>
+            <button class="btn btn-danger" onclick="mostrarModalTruncar()" title="Truncar log">
+              <i class="bi bi-trash"></i>
+            </button>
+            <button class="btn btn-info" onclick="verTamano()" title="Ver tamaño y rotaciones">
+              <i class="bi bi-info-circle"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <div class="input-group">
+            <input type="text" id="keyword" class="form-control" placeholder="Buscar por palabra clave...">
+            <button class="btn btn-outline-secondary" type="button" onclick="buscarLogs()">
+              <i class="bi bi-search"> Buscar</i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="filter-info" class="alert alert-info d-none"></div>
+  
+  <div class="card mb-3">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Contenido del Log</h5>
+      <div>
+        <button class="btn btn-sm btn-outline-light" id="copyLogsBtn" onclick="copyLogsToClipboard()" title="Copiar al portapapeles">
+          <i class="bi bi-clipboard"></i> Copiar al portapapeles
+        </button>
+        <button class="btn btn-sm btn-outline-light" onclick="descargarLog()" title="Descargar log">
+          <i class="bi bi-download"></i> Descargar
+        </button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <pre id="log-output" style="background:#222;color:#0f0;padding:1em;height:70vh;overflow:auto;margin:0"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para truncar log -->
+<div class="modal fade" id="modalTruncar" tabindex="-1" aria-labelledby="modalTruncarLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formTruncar" onsubmit="truncarLog(event)">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTruncarLabel">Truncar log seleccionado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="numLineas" class="form-label">Truncar a las últimas N líneas:</label>
+            <input type="number" class="form-control" id="numLineas" name="numLineas" min="10" placeholder="Ej: 100">
+          </div>
+          <div class="mb-3">
+            <label for="fechaCorte" class="form-label">O truncar a partir de fecha (YYYY-MM-DD):</label>
+            <input type="date" class="form-control" id="fechaCorte" name="fechaCorte">
+          </div>
+          <div class="form-text">Rellena solo una de las dos opciones.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Truncar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+let logSeleccionado = '';
+let currentFilters = {
+  lines: 50,
+  dateFrom: null,
+  dateTo: null,
+  keyword: ''
+};
+
+// Formatear fecha para mostrarla en el input date
+function formatDateForInput(date) {
+  if (!date) return '';
+  return new Date(date).toISOString().split('T')[0];
+}
+
+// Actualizar la información del filtro aplicado
+function updateFilterInfo() {
+  const infoEl = document.getElementById('filter-info');
+  let info = [];
+  
+  if (currentFilters.lines) {
+    info.push(`Mostrando ${currentFilters.lines} líneas`);
+  }
+  
+  if (currentFilters.dateFrom || currentFilters.dateTo) {
+    const from = currentFilters.dateFrom || 'inicio';
+    const to = currentFilters.dateTo || 'hoy';
+    info.push(`Filtro por fecha: ${from} a ${to}`);
+  }
+  
+  if (currentFilters.keyword) {
+    info.push(`Búsqueda: "${currentFilters.keyword}"`);
+  }
+  
+  if (info.length > 0) {
+    infoEl.innerHTML = `<strong>Filtros aplicados:</strong> ${info.join(' | ')} <button class="btn btn-sm btn-outline-danger float-end" onclick="resetFilters()">Limpiar filtros</button>`;
+    infoEl.classList.remove('d-none');
+  } else {
+    infoEl.classList.add('d-none');
+  }
+}
+
+// Aplicar filtros
+function aplicarFiltros() {
+  const lines = parseInt(document.getElementById('linesCount').value) || 50;
+  currentFilters.lines = lines > 0 ? lines : null;
+  
+  verUltimos(lines);
+  updateFilterInfo();
+}
+
+// Aplicar filtro por fechas
+function aplicarFiltroFechas() {
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo = document.getElementById('dateTo').value;
+  
+  currentFilters.dateFrom = dateFrom || null;
+  currentFilters.dateTo = dateTo || null;
+  
+  verUltimos(currentFilters.lines || 1000);
+  updateFilterInfo();
+}
+
+// Resetear todos los filtros
+function resetFilters() {
+  currentFilters = {
+    lines: 50,
+    dateFrom: null,
+    dateTo: null,
+    keyword: ''
+  };
+  
+  document.getElementById('linesCount').value = '50';
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  document.getElementById('keyword').value = '';
+  
+  verUltimos(50);
+  updateFilterInfo();
+}
+function actualizarLogSeleccionado() {
+  logSeleccionado = document.getElementById('logfile').value;
+}
+function getLogParam() {
+  if (!logSeleccionado) {
+    alert('Selecciona un archivo de log.');
+    return null;
+  }
+  return `?log_file=${encodeURIComponent(logSeleccionado)}`;
+}
+function verUltimos(n) {
+  if (!getLogParam()) return;
+  
+  const params = new URLSearchParams();
+  params.append('n', n);
+  
+  if (currentFilters.dateFrom) params.append('date_from', currentFilters.dateFrom);
+  if (currentFilters.dateTo) params.append('date_to', currentFilters.dateTo);
+  
+  // Agregar el parámetro de log_file si existe
+  if (logSeleccionado) {
+    params.append('log_file', logSeleccionado);
+  }
+  
+  const url = `/admin/logs/tail?${params.toString()}`;
+  
+  fetch(url)
+    .then(r => r.json())
+    .then(d => {
+      const output = document.getElementById('log-output');
+      output.textContent = d.logs.join('');
+      
+      // Actualizar información de filtros
+      if (d.total_lines !== undefined) {
+        const info = `Mostrando ${d.filtered_lines} de ${d.total_lines} líneas`;
+        if (d.filtered_lines === 0) {
+          output.textContent = 'No se encontraron registros que coincidan con los filtros actuales.';
+        }
+      }
+      
+      // Hacer scroll al final
+      output.scrollTop = output.scrollHeight;
+    })
+    .catch(error => {
+      console.error('Error al cargar los logs:', error);
+      document.getElementById('log-output').textContent = `Error al cargar los registros: ${error.message}`;
+    });
+}
+function buscarLogs() {
+  if (!getLogParam()) return;
+  
+  const keyword = document.getElementById('keyword').value;
+  if (!keyword) {
+    // Si no hay palabra clave, simplemente recargamos con los filtros actuales
+    verUltimos(currentFilters.lines || 50);
+    return;
+  }
+  
+  currentFilters.keyword = keyword;
+  updateFilterInfo();
+  
+  fetch(`/admin/logs/search${getLogParam()}&kw=${encodeURIComponent(keyword)}`)
+    .then(r => r.json())
+    .then(d => {
+      const output = document.getElementById('log-output');
+      if (d.logs && d.logs.length > 0) {
+        output.textContent = d.logs.join('');
+        output.scrollTop = output.scrollHeight;
+      } else {
+        output.textContent = 'No se encontraron coincidencias para la búsqueda actual.';
+      }
+    })
+    .catch(error => {
+      console.error('Error en la búsqueda:', error);
+      document.getElementById('log-output').textContent = `Error en la búsqueda: ${error.message}`;
+    });
+}
+function descargarLog() {
+  if (!getLogParam()) return;
+  window.location = `/admin/logs/download${getLogParam()}`;
+}
+function mostrarModalTruncar() {
+  if (!getLogParam()) return;
+  var modal = new bootstrap.Modal(document.getElementById('modalTruncar'));
+  modal.show();
+}
+function truncarLog(event) {
+  event.preventDefault();
+  if (!getLogParam()) return;
+  const numLineas = document.getElementById('numLineas').value;
+  const fechaCorte = document.getElementById('fechaCorte').value;
+  if (!numLineas && !fechaCorte) {
+    alert('Debes indicar número de líneas o fecha.');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('log_file', logSeleccionado);
+  if (numLineas) formData.append('lines', numLineas);
+  if (fechaCorte) formData.append('date', fechaCorte);
+  fetch('/admin/logs/clear' + getLogParam(), {method:'POST', body:formData})
+    .then(r => r.text())
+    .then(() => {
+      alert('Log truncado correctamente');
+      var modal = bootstrap.Modal.getInstance(document.getElementById('modalTruncar'));
+      modal.hide();
+      verUltimos(20);
+    });
+}
+function verTamano() {
+  if (!getLogParam()) return;
+  fetch(`/admin/logs/size${getLogParam()}`)
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('log-output').textContent = `Tamaño: ${d.size} bytes\nRotaciones: ${d.backups}`;
+    });
+}
+
+function copyLogsToClipboard() {
+  const logOutput = document.getElementById('log-output');
+  const textToCopy = logOutput.textContent;
+  
+  navigator.clipboard.writeText(textToCopy)
+    .then(() => {
+      // Mostrar mensaje de éxito
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-success alert-dismissible fade show';
+      alertDiv.innerHTML = `
+        <strong>¡Copiado!</strong> El contenido del log ha sido copiado al portapapeles.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      `;
+      
+      // Insertar alerta antes del div de filtros
+      const filterInfo = document.getElementById('filter-info');
+      filterInfo.parentNode.insertBefore(alertDiv, filterInfo);
+      
+      // Auto-cerrar después de 3 segundos
+      setTimeout(() => {
+        alertDiv.remove();
+      }, 3000);
+    })
+    .catch(err => {
+      console.error('Error al copiar al portapapeles:', err);
+      alert('No se pudo copiar al portapapeles. Error: ' + err);
+    });
+}
+
+// Variables para la actualización automática
+let autoRefreshInterval = null;
+let logFilesList = [];
+
+// Función para actualizar la lista de logs
+function actualizarListaLogs() {
+  const refreshBtn = document.getElementById('refreshLogsList');
+  const logFileCount = document.getElementById('logFileCount');
+  
+  // Mostrar estado de carga
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Actualizando...';
+  logFileCount.textContent = 'Actualizando...';
+  
+  fetch('/admin/logs/list')
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        logFilesList = data.files;
+        actualizarSelectLogs(data.files);
+        logFileCount.textContent = `${data.files.length} archivos`;
+        
+        // Mostrar mensaje de éxito temporal
+        mostrarMensajeTemporal('Lista de logs actualizada correctamente', 'success');
+      } else {
+        throw new Error('Error en la respuesta del servidor');
+      }
+    })
+    .catch(error => {
+      console.error('Error al actualizar lista de logs:', error);
+      logFileCount.textContent = 'Error al cargar';
+      mostrarMensajeTemporal('Error al actualizar la lista de logs', 'danger');
+    })
+    .finally(() => {
+      // Restaurar botón
+      refreshBtn.disabled = false;
+      refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Actualizar Lista';
+    });
+}
+
+// Función para actualizar el select con los archivos de log
+function actualizarSelectLogs(files) {
+  const select = document.getElementById('logfile');
+  const selectedValue = select.value; // Preservar selección actual
+  
+  // Limpiar opciones existentes
+  select.innerHTML = '<option value="">-- Selecciona un log --</option>';
+  
+  // Añadir nuevas opciones
+  files.forEach(file => {
+    const option = document.createElement('option');
+    option.value = file;
+    option.textContent = file;
+    select.appendChild(option);
+  });
+  
+  // Restaurar selección si el archivo aún existe
+  if (selectedValue && files.includes(selectedValue)) {
+    select.value = selectedValue;
+  }
+}
+
+// Función para mostrar mensajes temporales
+function mostrarMensajeTemporal(mensaje, tipo) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+  alertDiv.innerHTML = `
+    ${mensaje}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+  `;
+  
+  // Insertar al inicio del contenedor
+  const container = document.querySelector('.container');
+  container.insertBefore(alertDiv, container.firstChild);
+  
+  // Auto-cerrar después de 3 segundos
+  setTimeout(() => {
+    if (alertDiv.parentNode) {
+      alertDiv.remove();
+    }
+  }, 3000);
+}
+
+// Función para configurar la actualización automática
+function configurarActualizacionAutomatica() {
+  const autoRefreshSwitch = document.getElementById('autoRefreshSwitch');
+  
+  function iniciarActualizacionAutomatica() {
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+    }
+    
+    autoRefreshInterval = setInterval(() => {
+      if (autoRefreshSwitch.checked) {
+        actualizarListaLogs();
+      }
+    }, 30000); // 30 segundos
+  }
+  
+  function detenerActualizacionAutomatica() {
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+    }
+  }
+  
+  // Event listener para el switch
+  autoRefreshSwitch.addEventListener('change', function() {
+    if (this.checked) {
+      iniciarActualizacionAutomatica();
+      mostrarMensajeTemporal('Actualización automática activada (cada 30 segundos)', 'info');
+    } else {
+      detenerActualizacionAutomatica();
+      mostrarMensajeTemporal('Actualización automática desactivada', 'warning');
+    }
+  });
+  
+  // Iniciar automáticamente si está activado
+  if (autoRefreshSwitch.checked) {
+    iniciarActualizacionAutomatica();
+  }
+}
+
+// Añadir estilos CSS para la animación de rotación
+const style = document.createElement('style');
+style.textContent = `
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);
+
+// Modificar la función window.onload existente
+window.onload = function() {
+  // Cargar lista inicial de logs
+  actualizarListaLogs();
+  
+  // Configurar actualización automática
+  configurarActualizacionAutomatica();
+  
+  // Establecer fecha por defecto (hoy) en el campo de fecha hasta
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('dateTo').value = today;
+  
+  // Cargar los logs iniciales después de un breve delay
+  setTimeout(() => {
+    if (logSeleccionado) {
+      verUltimos(50);
+    }
+  }, 1000);
+  
+  updateFilterInfo();
+  
+  // Permitir usar Enter en el campo de búsqueda
+  document.getElementById('keyword').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      buscarLogs();
+    }
+  });
+};
+
+// Limpiar interval al salir de la página
+window.addEventListener('beforeunload', function() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Admin - Test Responsive Menu</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { background: #f8f9fa; }
+        .navbar-brand { font-weight: bold; }
+        .nav-admin .nav-link.active { font-weight: bold; color: #0d6efd !important; }
+        
+        /* Estilos responsive */
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                max-height: 80vh;
+                overflow-y: auto;
+                transition: all 0.3s ease-in-out;
+            }
+            .navbar-collapse:not(.show) {
+                display: block;
+                height: 0 !important;
+                padding: 0;
+                overflow: hidden;
+            }
+            .navbar-nav .dropdown-menu {
+                background-color: transparent;
+                border: none;
+                padding-left: 1rem;
+                margin-top: 0;
+                margin-bottom: 0.5rem;
+            }
+            .navbar-nav .dropdown-item {
+                color: rgba(255,255,255,.55);
+                padding: 0.5rem 1rem;
+                transition: all 0.2s ease;
+            }
+            .navbar-nav .dropdown-item:hover {
+                color: rgba(255,255,255,.75);
+                background-color: rgba(255,255,255,.1);
+                padding-left: 1.5rem;
+            }
+            .nav-admin {
+                padding-bottom: 1rem;
+                border-bottom: 1px solid rgba(255,255,255,.1);
+                margin-bottom: 1rem;
+            }
+            .navbar-toggler {
+                border: 2px solid rgba(255,255,255,.1);
+                padding: .5rem .75rem;
+                transition: all 0.3s ease;
+            }
+            .navbar-toggler:hover {
+                background-color: rgba(255,255,255,.1);
+            }
+            .navbar-toggler:focus {
+                box-shadow: 0 0 0 0.25rem rgba(255,255,255,.25);
+            }
+            .nav-link {
+                padding: 0.7rem 1rem;
+                transition: all 0.2s ease;
+            }
+            .nav-link:hover {
+                background-color: rgba(255,255,255,.1);
+                padding-left: 1.5rem;
+            }
+            .dropdown-toggle::after {
+                transition: transform 0.2s ease;
+            }
+            .dropdown-toggle[aria-expanded="true"]::after {
+                transform: rotate(180deg);
+            }
+        }
+        
+        /* Indicador de tamaño de pantalla para testing */
+        .screen-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+<div class="screen-indicator">
+    <span class="d-lg-none d-md-inline">MD</span>
+    <span class="d-md-none d-sm-inline">SM</span>
+    <span class="d-sm-none">XS</span>
+    <span class="d-none d-lg-inline">LG+</span>
+</div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Admin</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="adminNavbar">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 nav-admin">
+        <!-- Dashboard Principal -->
+        <li class="nav-item">
+          <a class="nav-link active" href="#" onclick="showAlert('Dashboard')">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </li>
+        
+        <!-- Gestión de Contenido -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="contentDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-people"></i> Gestión
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="contentDropdown">
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Usuarios')"><i class="bi bi-person-lines-fill"></i> Usuarios</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Catálogos')"><i class="bi bi-table"></i> Catálogos/Tablas</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Verificar Usuarios')"><i class="bi bi-person-check"></i> Verificar Usuarios</a></li>
+          </ul>
+        </li>
+
+        <!-- Base de Datos -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="dbDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-database"></i> Base de Datos
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="dbDropdown">
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Estado DB')"><i class="bi bi-activity"></i> Estado</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Monitor DB')"><i class="bi bi-graph-up"></i> Monitor</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Respaldo DB')"><i class="bi bi-shield-check"></i> Respaldo</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Rendimiento DB')"><i class="bi bi-speedometer"></i> Rendimiento</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Scripts DB')"><i class="bi bi-code-slash"></i> Scripts DB</a></li>
+          </ul>
+        </li>
+
+        <!-- Herramientas y Scripts -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-gear"></i> Herramientas
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Scripts')"><i class="bi bi-tools"></i> Scripts & Herramientas</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Mantenimiento')"><i class="bi bi-wrench"></i> Mantenimiento</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Herramientas Mant.')"><i class="bi bi-gear-wide-connected"></i> Herramientas Mant.</a></li>
+          </ul>
+        </li>
+
+        <!-- Backups -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="backupDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-archive"></i> Backups
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="backupDropdown">
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Backup CSV')"><i class="bi bi-filetype-csv"></i> Backup CSV</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Backup JSON')"><i class="bi bi-filetype-json"></i> Backup JSON</a></li>
+          </ul>
+        </li>
+
+        <!-- Sistema y Monitoreo -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="systemDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-cpu"></i> Sistema
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="systemDropdown">
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Estado Sistema')"><i class="bi bi-info-circle"></i> Estado del Sistema</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Logs')"><i class="bi bi-journal-text"></i> Logs</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Notificaciones')"><i class="bi bi-bell"></i> Notificaciones</a></li>
+          </ul>
+        </li>
+
+        <!-- Desarrollo -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="devTemplateDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-lightbulb"></i> <span class="d-lg-none">Desarrollo</span><span class="d-none d-lg-inline">Dev</span>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="devTemplateDropdown">
+            <li><a class="dropdown-item" href="#" onclick="showAlert('README Testing')"><i class="bi bi-file-earmark-text"></i> README Testing</a></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Testing Interactivo')"><i class="bi bi-rocket"></i> Testing Interactivo</a></li>
+          </ul>
+        </li>
+      </ul>
+      <div class="d-flex">
+        <div class="dropdown">
+          <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person"></i> Usuario Admin
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li>
+                <a class="dropdown-item" href="#" onclick="showAlert('Mi Perfil')">
+                    <i class="bi bi-person-badge"></i> Mi Perfil
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="showAlert('Cerrar Sesión')"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Prueba del Menú Responsive - Panel de Administración</strong><br>
+        <small>Redimensiona la ventana del navegador o usa las herramientas de desarrollador para simular dispositivos móviles.</small>
+        <br><br>
+        <strong>Instrucciones de prueba:</strong>
+        <ol class="mt-2 mb-0">
+            <li><strong>Desktop (>992px):</strong> Verifica que todos los dropdowns funcionan correctamente</li>
+            <li><strong>Tablet (768-991px):</strong> Comprueba que aparece el botón hamburguesa</li>
+            <li><strong>Móvil (<768px):</strong> Verifica que el menú se colapsa y los dropdowns funcionan</li>
+            <li><strong>Interactividad:</strong> Haz clic en cualquier enlace para verificar que funciona</li>
+            <li><strong>Animaciones:</strong> Observa las transiciones suaves en hover y click</li>
+        </ol>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <h2>Panel de Administración - Testing Responsive</h2>
+            <p>Este es el menú responsive implementado para el panel de administración.</p>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Características Implementadas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>✅ Funcionalidades Responsive:</h6>
+                            <ul>
+                                <li>Menú hamburguesa para móviles</li>
+                                <li>Dropdowns adaptados para touch</li>
+                                <li>Scroll vertical en menús largos</li>
+                                <li>Meta viewport configurado</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>✅ Mejoras UX:</h6>
+                            <ul>
+                                <li>Iconos Bootstrap para identificación</li>
+                                <li>Animaciones suaves</li>
+                                <li>Texto adaptativo</li>
+                                <li>Agrupación lógica de funciones</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery primero -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap JS después -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function showAlert(section) {
+    alert('Navegando a: ' + section + '\n\n✅ El enlace funciona correctamente!\n\nEn la aplicación real, esto te llevaría a la sección correspondiente.');
+}
+
+// Mostrar información del viewport
+function updateViewportInfo() {
+    const width = window.innerWidth;
+    let size = '';
+    if (width >= 1200) size = 'XL (≥1200px)';
+    else if (width >= 992) size = 'LG (≥992px)';
+    else if (width >= 768) size = 'MD (≥768px)';
+    else if (width >= 576) size = 'SM (≥576px)';
+    else size = 'XS (<576px)';
+    
+    console.log('Viewport:', width + 'px', '-', size);
+}
+
+window.addEventListener('resize', updateViewportInfo);
+updateViewportInfo();
+
+// Test de accesibilidad básica
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        console.log('✅ Navegación con teclado funcionando');
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Catálogo{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Catálogo: {{ session.selected_table_name if session.selected_table_name else '' }}</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'warning' if category=='error' else category }} alert-dismissible fade show mt-2" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  <div class="card mb-4">
+    <div class="card-header"><strong>Agregar nueva fila</strong></div>
+    <div class="card-body">
+      <form method="POST" enctype="multipart/form-data">
+        <div class="row">
+          {% for header in headers %}
+            <div class="col-md-3 mb-3">
+              <label for="{{ header }}" class="form-label">{{ header }}</label>
+              <input type="text" class="form-control" id="{{ header }}" name="{{ header }}" required>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="mb-3">
+          <label for="imagenes" class="form-label">Imágenes (máx. 3)</label>
+          <input type="file" class="form-control" id="imagenes" name="imagenes" multiple accept=".jpg, .jpeg, .png, .gif">
+          <div class="form-text">Formatos permitidos: JPG, JPEG, PNG, GIF. Tamaño máximo: 5MB.</div>
+        </div>
+        <button type="submit" class="btn btn-success"><i class="bi bi-plus"></i> Agregar Fila</button>
+      </form>
+    </div>
+  </div>
+  <h4>Filas del catálogo</h4>
+  {% if data and headers %}
+    <div class="mb-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm" id="tablaFilas">
+        <thead>
+          <tr>
+            {% for header in headers %}
+              <th>{{ header }}</th>
+            {% endfor %}
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data %}
+            <tr>
+              {% for header in headers %}
+                <td>{{ row[header.replace(' ', '_').replace('.', '_')] if row[header.replace(' ', '_').replace('.', '_')] is defined else '' }}</td>
+              {% endfor %}
+              <td>
+                <a href="{{ url_for('editar', id=row._id) }}" class="btn btn-sm btn-primary">Editar</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav>
+      <ul class="pagination justify-content-center" id="paginacionTabla"></ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-info">Este catálogo no tiene filas aún.</div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const filas = Array.from(document.querySelectorAll('#tablaFilas tbody tr'));
+const filasPorPagina = 10;
+let paginaActual = 1;
+function mostrarPagina(pagina) {
+  const inicio = (pagina - 1) * filasPorPagina;
+  const fin = inicio + filasPorPagina;
+  filas.forEach((fila, i) => {
+    fila.style.display = (i >= inicio && i < fin) ? '' : 'none';
+  });
+  renderizarPaginacion(pagina);
+}
+function renderizarPaginacion(pagina) {
+  const totalPaginas = Math.ceil(filas.filter(f => f.style.display !== 'none' || f.style.display === '').length / filasPorPagina);
+  const paginacion = document.getElementById('paginacionTabla');
+  paginacion.innerHTML = '';
+  if (totalPaginas <= 1) return;
+  for (let i = 1; i <= totalPaginas; i++) {
+    const li = document.createElement('li');
+    li.className = 'page-item' + (i === pagina ? ' active' : '');
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.textContent = i;
+    a.href = '#';
+    a.onclick = function(e) { e.preventDefault(); paginaActual = i; mostrarPagina(i); };
+    li.appendChild(a);
+    paginacion.appendChild(li);
+  }
+}
+function filtrarFilas() {
+  const valor = document.getElementById('searchInput').value.toLowerCase();
+  filas.forEach(fila => {
+    const texto = fila.textContent.toLowerCase();
+    fila.style.display = texto.includes(valor) ? '' : 'none';
+  });
+  paginaActual = 1;
+  mostrarPagina(1);
+}
+document.getElementById('searchInput')?.addEventListener('input', filtrarFilas);
+mostrarPagina(1);
+// Validación de máximo 3 imágenes
+const fileInput = document.getElementById('imagenes');
+if (fileInput) {
+  fileInput.addEventListener('change', function() {
+    if (this.files.length > 3) {
+      alert('Solo puede subir un máximo de 3 imágenes.');
+      this.value = '';
+    }
+  });
+}
+</script>
+{% endblock %}

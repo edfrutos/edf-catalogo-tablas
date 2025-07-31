@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Fila - {{ catalog.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Editar Fila - {{ catalog.name }}</h2>
+                    <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% for header in catalog.headers %}
+                        <div class="mb-3">
+                            <label for="{{ header }}" class="form-label">{{ header }}</label>
+                            <input type="text" class="form-control" id="{{ header }}" name="{{ header }}" value="{{ row[header] }}" required>
+                        </div>
+                        {% endfor %}
+
+                        {% if row.get('images') %}
+                        <div class="mb-3">
+                            <label class="form-label">Imágenes actuales</label>
+                            <div class="row">
+                                {% for img in row.get('images', []) %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card">
+                                        <img src="{{ url_for('static', filename='uploads/' + img) }}" class="card-img-top" alt="Imagen del producto">
+                                        <div class="card-body text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="delete_images" value="{{ img }}" id="delete_{{ loop.index }}">
+                                                <label class="form-check-label" for="delete_{{ loop.index }}">
+                                                    Eliminar
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="images" class="form-label">Subir nuevas imágenes (máx. 3)</label>
+                            <input type="file" class="form-control" id="images" name="images" multiple accept=".jpg, .jpeg, .png, .gif">
+                            <div class="form-text">Formatos permitidos: JPG, JPEG, PNG, GIF. Tamaño máximo: 5MB.</div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                            <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
+                            <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=row_index) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </form>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Validación del formulario
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('images');
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 3) {
+                    alert('Solo puede subir un máximo de 3 imágenes.');
+                    this.value = '';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

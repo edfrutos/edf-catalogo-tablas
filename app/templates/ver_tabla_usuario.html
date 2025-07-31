@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Ver Tabla{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Tabla: {{ table.name }}</h2>
+  <a href="{{ url_for('main.dashboard_user') }}" class="btn btn-secondary mb-3">&larr; Volver al panel</a>
+  <table class="table table-bordered mb-4">
+    <tr><th>Nombre</th><td>{{ table.name }}</td></tr>
+    <tr><th>Fecha de creación</th><td>{{ table.created_at.strftime('%Y-%m-%d %H:%M') if table.created_at else '—' }}</td></tr>
+    <tr><th>Encabezados</th><td>{% if headers %}{{ headers|join(', ') }}{% else %}—{% endif %}</td></tr>
+    <tr><th>Número de filas</th><td>{{ registros|length }}</td></tr>
+  </table>
+  {% if session.username == table.owner %}
+    <a href="{{ url_for('editar', id=table._id) }}" class="btn btn-success mb-3"><i class="bi bi-pencil"></i> Editar tabla</a>
+  {% endif %}
+  {% if session.role == 'admin' or session.username == table.owner %}
+    <a href="{{ url_for('catalogs.add_row', catalog_id=table._id) }}" class="btn btn-success mb-3">
+      <i class="bi bi-plus"></i> Agregar Fila
+    </a>
+  {% endif %}
+  <h4>Filas de la tabla</h4>
+  {% if registros and headers %}
+    <div class="mb-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm" id="tablaFilas">
+        <thead>
+          <tr>
+            {% for header in headers %}
+              <th>{{ header }}</th>
+            {% endfor %}
+            {% if session.role == 'admin' or session.username == table.owner %}
+              <th>Acciones</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in registros %}
+            <tr>
+              {% for header in headers %}
+                <td>{{ row[header] if row[header] is defined else '' }}</td>
+              {% endfor %}
+              {% if session.role == 'admin' or session.username == table.owner %}
+                <td>
+                  <a href="{{ url_for('main.editar_fila', fila_id=row._id) }}" class="btn btn-sm btn-primary">Editar</a>
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav>
+      <ul class="pagination justify-content-center" id="paginacionTabla"></ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-info">Esta tabla no tiene filas aún.</div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const filas = Array.from(document.querySelectorAll('#tablaFilas tbody tr'));
+const filasPorPagina = 10;
+let paginaActual = 1;
+
+function mostrarPagina(pagina) {
+  const inicio = (pagina - 1) * filasPorPagina;
+  const fin = inicio + filasPorPagina;
+  filas.forEach((fila, i) => {
+    fila.style.display = (i >= inicio && i < fin) ? '' : 'none';
+  });
+  renderizarPaginacion(pagina);
+}
+
+function renderizarPaginacion(pagina) {
+  const totalPaginas = Math.ceil(filas.filter(f => f.style.display !== 'none' || f.style.display === '').length / filasPorPagina);
+  const paginacion = document.getElementById('paginacionTabla');
+  paginacion.innerHTML = '';
+  if (totalPaginas <= 1) return;
+  for (let i = 1; i <= totalPaginas; i++) {
+    const li = document.createElement('li');
+    li.className = 'page-item' + (i === pagina ? ' active' : '');
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.textContent = i;
+    a.href = '#';
+    a.onclick = function(e) { e.preventDefault(); paginaActual = i; mostrarPagina(i); };
+    li.appendChild(a);
+    paginacion.appendChild(li);
+  }
+}
+
+function filtrarFilas() {
+  const valor = document.getElementById('searchInput').value.toLowerCase();
+  filas.forEach(fila => {
+    const texto = fila.textContent.toLowerCase();
+    fila.style.display = texto.includes(valor) ? '' : 'none';
+  });
+  paginaActual = 1;
+  mostrarPagina(1);
+}
+
+document.getElementById('searchInput').addEventListener('input', filtrarFilas);
+mostrarPagina(1);
+</script>
+{% endblock %} 

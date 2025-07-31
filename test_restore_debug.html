@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Google Drive Restore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Test Google Drive Restore</h1>
+        <div class="alert alert-info">
+            <h5>Debug Log de Cambios:</h5>
+            <ul>
+                <li>✅ Agregado logging detallado en JavaScript</li>
+                <li>✅ Agregado logging detallado en Python endpoint</li>
+                <li>✅ Forzado recarga de cache con nueva versión</li>
+                <li>✅ Agregado preventDefault() y stopPropagation()</li>
+                <li>✅ Agregado beforeSend para verificar headers</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5>Simular Botón de Restore</h5>
+                <p>Este botón simula el comportamiento del botón real:</p>
+                
+                <button class="btn btn-success restore-drive-backup" 
+                        data-id="test_file_id_123"
+                        data-filename="test_backup.json">
+                    <i class="bi bi-arrow-counterclockwise"></i> Test Restaurar
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <h6>Para probar:</h6>
+            <ol>
+                <li>Abre la consola del navegador (F12)</li>
+                <li>Haz clic en el botón "Test Restaurar" arriba</li>
+                <li>Observa los logs en la consola</li>
+                <li>Ve al dashboard real: <a href="http://localhost:5001/maintenance/dashboard" target="_blank">Dashboard</a></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            console.log("🧪 Test page loaded");
+            
+            // Mismo event listener que en dashboard.js
+            $(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-backup", function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const fileId = $(this).data("id");
+              const fileName = $(this).data("filename");
+              const btn = $(this);
+              const originalText = btn.html();
+              
+              console.log("🔄 Test Restore Drive Backup clicked");
+              console.log("📋 File ID:", fileId);
+              console.log("📋 File Name:", fileName);
+              
+              if (!fileId || !fileName) {
+                console.error("❌ Datos incompletos - fileId:", fileId, "fileName:", fileName);
+                alert("Error: Datos de archivo incompletos");
+                return;
+              }
+              
+              btn.prop("disabled", true).html("<span class='spinner-border spinner-border-sm'></span> Restaurando...");
+              
+              const requestData = { 
+                file_id: fileId,
+                file_name: fileName
+              };
+              
+              console.log("📤 Sending request data:", requestData);
+              console.log("📤 Content-Type: application/json");
+              
+              $.ajax({
+                url: "/maintenance/api/restore-drive",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(requestData),
+                xhrFields: { withCredentials: true },
+                beforeSend: function(xhr) {
+                  console.log("📤 Before send - Content-Type:", xhr.getRequestHeader("Content-Type"));
+                },
+                success: function (response) {
+                  console.log("✅ Response received:", response);
+                  alert("Éxito: " + JSON.stringify(response));
+                },
+                error: function (xhr, status, error) {
+                  console.error("❌ Error:", { xhr, status, error });
+                  alert("Error: " + (xhr.responseJSON?.message || xhr.statusText || error));
+                },
+                complete: function () {
+                  btn.prop("disabled", false).html(originalText);
+                }
+              });
+            });
+        });
+    </script>
+</body>
+</html>

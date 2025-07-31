@@ -1,0 +1,73 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h2>Catálogos</h2>
+
+<a href="{{ url_for('catalogs.create') }}" class="btn btn-primary">Crear Catálogo</a>
+<a href="{{ url_for('catalogs.import_catalog') }}" class="btn btn-secondary">Importar Catálogo</a>
+<table class="table mt-3">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Columnas</th>
+      <th>Registros</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for catalog in catalogs %}
+    <tr>
+      <td>{{ catalog.name }}</td>
+      <td>{{ catalog.headers | join(', ') }}</td>
+      <td>{{ catalog.row_count }}</td>
+      <td>
+        <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-sm btn-info"><i class="bi bi-eye"></i> Ver</a>
+        <a href="{{ url_for('catalogs.edit', catalog_id=catalog._id) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i> Editar</a>
+        <button type="button" class="btn btn-sm btn-danger" onclick="confirmarEliminar('{{ catalog._id }}', '{{ catalog.name|e }}')"><i class="bi bi-trash"></i> Eliminar</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<!-- Modal de confirmación para eliminar catálogo -->
+<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Está seguro que desea eliminar el catálogo <strong id="catalogoNombre"></strong>?</p>
+        <p class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Esta acción no se puede deshacer y eliminará todos los datos asociados.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="eliminarForm" method="POST" class="d-inline">
+          <button type="submit" class="btn btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmarEliminar(catalogId, catalogName) {
+    if (!catalogId) {
+        alert('No se puede eliminar. Identificador de catálogo no válido.');
+        return;
+    }
+    
+    // Actualizar el nombre del catálogo en el modal
+    document.getElementById('catalogoNombre').textContent = catalogName;
+    
+    // Configurar la acción del formulario
+    document.getElementById('eliminarForm').action = `{{ url_for('catalogs.delete_catalog', catalog_id='__catalog_id__') }}`.replace('__catalog_id__', catalogId);
+    
+    // Mostrar el modal
+    new bootstrap.Modal(document.getElementById('eliminarModal')).show();
+}
+</script>
+{% endblock %}

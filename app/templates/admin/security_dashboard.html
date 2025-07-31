@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Estadísticas de Seguridad -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Estadísticas de Seguridad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Últimas 24 horas</h6>
+                        <p class="mb-1">Intentos fallidos: {{ stats.failed_attempts_24h }}</p>
+                        <p class="mb-1">Cuentas bloqueadas: {{ stats.locked_accounts_24h }}</p>
+                        <p class="mb-0">Alertas de seguridad: {{ stats.security_alerts_24h }}</p>
+                    </div>
+                    <div>
+                        <h6>Este mes</h6>
+                        <p class="mb-1">Total inicios de sesión: {{ stats.total_logins_month }}</p>
+                        <p class="mb-0">Usuarios activos: {{ stats.active_users_month }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">Acciones Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-danger w-100 mb-2" onclick="unlockAllAccounts()">
+                        Desbloquear Todas las Cuentas
+                    </button>
+                    <button class="btn btn-warning w-100 mb-2" onclick="resetFailedAttempts()">
+                        Resetear Intentos Fallidos
+                    </button>
+                    <button class="btn btn-info w-100" onclick="downloadSecurityReport()">
+                        Descargar Reporte
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actividad Reciente -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Actividad Reciente</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-light btn-sm" onclick="filterActivity('all')">Todos</button>
+                        <button class="btn btn-light btn-sm" onclick="filterActivity('failed')">Fallidos</button>
+                        <button class="btn btn-light btn-sm" onclick="filterActivity('blocked')">Bloqueados</button>
+                        <button class="btn btn-light btn-sm" onclick="filterActivity('alerts')">Alertas</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Usuario</th>
+                                    <th>Evento</th>
+                                    <th>IP</th>
+                                    <th>Ubicación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in security_events %}
+                                <tr class="event-row {{ event.type }}">
+                                    <td>{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>{{ event.email }}</td>
+                                    <td>
+                                        {% if event.type == 'failed_login' %}
+                                        <span class="badge bg-danger">Intento Fallido</span>
+                                        {% elif event.type == 'account_locked' %}
+                                        <span class="badge bg-warning">Cuenta Bloqueada</span>
+                                        {% elif event.type == 'security_alert' %}
+                                        <span class="badge bg-info">Alerta</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ event.ip_address }}</td>
+                                    <td>{{ event.location or 'Desconocida' }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-primary" onclick="viewDetails('{{ event._id }}')">
+                                                Detalles
+                                            </button>
+                                            {% if event.type == 'account_locked' %}
+                                            <button class="btn btn-sm btn-success" onclick="unlockAccount('{{ event.user_id }}')">
+                                                Desbloquear
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalles -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles del Evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="eventDetailsContent">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterActivity(type) {
+    const rows = document.querySelectorAll('.event-row');
+    rows.forEach(row => {
+        if (type === 'all' || row.classList.contains(type)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function viewDetails(eventId) {
+    fetch(`/admin/security/event/${eventId}`)
+        .then(response => response.json())
+        .then(data => {
+            const content = document.getElementById('eventDetailsContent');
+            content.innerHTML = `
+                <dl>
+                    <dt>Usuario</dt>
+                    <dd>${data.email}</dd>
+                    <dt>Fecha</dt>
+                    <dd>${data.timestamp}</dd>
+                    <dt>IP</dt>
+                    <dd>${data.ip_address}</dd>
+                    <dt>Dispositivo</dt>
+                    <dd>${data.user_agent || 'Desconocido'}</dd>
+                    <dt>Detalles</dt>
+                    <dd>${data.details || 'No hay detalles adicionales'}</dd>
+                </dl>
+            `;
+            new bootstrap.Modal(document.getElementById('eventDetailsModal')).show();
+        });
+}
+
+function unlockAccount(userId) {
+    if (confirm('¿Estás seguro de que quieres desbloquear esta cuenta?')) {
+        fetch('/admin/security/unlock-account', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: userId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al desbloquear la cuenta: ' + data.message);
+            }
+        });
+    }
+}
+
+function unlockAllAccounts() {
+    if (confirm('¿Estás seguro de que quieres desbloquear todas las cuentas?')) {
+        fetch('/admin/security/unlock-all-accounts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al desbloquear las cuentas: ' + data.message);
+            }
+        });
+    }
+}
+
+function resetFailedAttempts() {
+    if (confirm('¿Estás seguro de que quieres resetear todos los intentos fallidos?')) {
+        fetch('/admin/security/reset-attempts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al resetear los intentos: ' + data.message);
+            }
+        });
+    }
+}
+
+function downloadSecurityReport() {
+    window.location.href = '/admin/security/report/download';
+}
+</script>
+{% endblock %}

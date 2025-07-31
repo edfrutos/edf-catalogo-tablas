@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Búsqueda en el Catálogo: {{ catalogo.nombre }}</h2>
+
+<form method="get" action="{{ url_for('catalog.search', catalogo_id=catalogo._id) }}" class="mb-4">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <input type="text" name="campo" class="form-control" placeholder="Campo (ej. nombre, modelo)" value="{{ request.args.get('campo', '') }}">
+    </div>
+    <div class="col-md-6">
+      <input type="text" name="valor" class="form-control" placeholder="Valor a buscar" value="{{ request.args.get('valor', '') }}">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Buscar</button>
+    </div>
+  </div>
+</form>
+
+{% if resultados is not none %}
+  {% if resultados %}
+    <h5>Resultados encontrados: {{ resultados | length }}</h5>
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          {% for campo in resultados[0].keys() if campo != '_id' %}
+            <th>{{ campo | capitalize }}</th>
+          {% endfor %}
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for registro in resultados %}
+          <tr>
+            {% for valor in registro.values() if not loop.index0 == 0 %}
+              <td>{{ valor }}</td>
+            {% endfor %}
+            <td>
+              <a href="{{ url_for('catalog.record_detail', catalogo_id=catalogo._id, record_id=registro._id) }}" class="btn btn-sm btn-info">Ver</a>
+              <a href="{{ url_for('catalog.edit_record', catalogo_id=catalogo._id, record_id=registro._id) }}" class="btn btn-sm btn-warning">Editar</a>
+              <a href="{{ url_for('catalog.delete_record', catalogo_id=catalogo._id, record_id=registro._id) }}" class="btn btn-sm btn-danger">Eliminar</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-warning">No se encontraron resultados.</div>
+  {% endif %}
+{% endif %}
+
+<a href="{{ url_for('catalog.view', catalogo_id=catalogo._id) }}" class="btn btn-secondary mt-3">Volver al Catálogo</a>
+{% endblock %}

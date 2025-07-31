@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">📚 Catálogos disponibles</h1>
+
+<div class="d-flex justify-content-between mb-3">
+    <a href="{{ url_for('catalogos.nuevo_catalogo') }}" class="btn btn-primary">➕ Crear nuevo catálogo</a>
+    <a href="{{ url_for('catalogos.importar_catalogo') }}" class="btn btn-secondary">📥 Importar desde archivo</a>
+</div>
+
+{% if catalogos %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Fecha de creación</th>
+                    <th>Entradas</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for catalogo in catalogos %}
+                <tr>
+                    <td>{{ catalogo.nombre }}</td>
+                    <td>{{ catalogo.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ catalogo.total_filas }}</td>
+                    <td>
+                        <a href="{{ url_for('catalogos.ver_catalogo', catalogo_id=catalogo._id) }}" class="btn btn-sm btn-outline-info">🔍 Ver</a>
+                        <a href="{{ url_for('catalogos.editar_catalogo', catalogo_id=catalogo._id) }}" class="btn btn-sm btn-outline-warning">✏️ Editar</a>
+                        <form method="POST" action="{{ url_for('catalogos.eliminar_catalogo', catalogo_id=catalogo._id) }}" class="d-inline-block" onsubmit="return confirm('¿Seguro que quieres eliminar este catálogo?');">
+                            <button class="btn btn-sm btn-outline-danger">🗑️ Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-warning">
+        No hay catálogos aún. Puedes <a href="{{ url_for('catalogos.nuevo_catalogo') }}">crear uno manualmente</a> o <a href="{{ url_for('catalogos.importar_catalogo') }}">importarlo</a>.
+    </div>
+{% endif %}
+{% endblock %}

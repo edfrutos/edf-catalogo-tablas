@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Editar tabla{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Editar tabla</h2>
+  <form method="post">
+    <div class="mb-3">
+      <label for="nombre" class="form-label">Nombre de la tabla</label>
+      <input type="text" class="form-control" id="name" name="name" value="{{ table.name }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="headers" class="form-label">Encabezados (separados por coma)</label>
+      <input type="text" class="form-control" id="headers" name="headers" value="{{ table.headers|join(', ') }}" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a href="{{ url_for('main.ver_tabla', table_id=table._id) }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %} 

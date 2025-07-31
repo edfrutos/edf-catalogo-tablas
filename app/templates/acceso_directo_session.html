@@ -1,0 +1,155 @@
+
+{% extends "base.html" %}
+{% block title %}Acceso Directo a Sesión{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Acceso Directo a Sesión</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h4 class="mb-0">Iniciar Sesión</h4>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <p>Selecciona un tipo de usuario para iniciar sesión:</p>
+                                    <div class="mt-auto">
+                                        <button onclick="loginAdmin()" class="btn btn-primary btn-block mb-2">
+                                            <i class="fas fa-user-shield"></i> Acceder como Administrador
+                                        </button>
+                                        <button onclick="loginUser()" class="btn btn-secondary btn-block">
+                                            <i class="fas fa-user"></i> Acceder como Usuario Normal
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h4 class="mb-0">Herramientas</h4>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <p>Utilidades para gestionar la sesión y catálogos:</p>
+                                    <div class="mt-auto">
+                                        <button onclick="verificarAcceso()" class="btn btn-info btn-block mb-2">
+                                            <i class="fas fa-search"></i> Verificar Acceso a Catálogos
+                                        </button>
+                                        <button onclick="crearCatalogo()" class="btn btn-success btn-block mb-2">
+                                            <i class="fas fa-plus-circle"></i> Crear Catálogo de Prueba
+                                        </button>
+                                        <button onclick="verificarBlueprint()" class="btn btn-warning btn-block mb-2">
+                                            <i class="fas fa-code"></i> Verificar Blueprint
+                                        </button>
+                                        <button onclick="verificarPermisos()" class="btn btn-danger btn-block">
+                                            <i class="fas fa-shield-alt"></i> Verificar/Corregir Permisos
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="resultContainer" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                <h4 class="mb-0">Resultado</h4>
+                            </div>
+                            <div class="card-body">
+                                <pre id="resultContent" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="http://127.0.0.1:8002" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a la Aplicación Principal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showResult(data) {
+    document.getElementById('resultContent').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('resultContainer').style.display = 'block';
+    window.scrollTo(0, document.body.scrollHeight);
+}
+
+function loginAdmin() {
+    fetch('/login_admin')
+        .then(response => response.json())
+        .then(data => {
+            showResult(data);
+        })
+        .catch(error => {
+            showResult({error: error.toString()});
+        });
+}
+
+function loginUser() {
+    fetch('/login_user')
+        .then(response => response.json())
+        .then(data => {
+            showResult(data);
+        })
+        .catch(error => {
+            showResult({error: error.toString()});
+        });
+}
+
+function verificarAcceso() {
+    fetch('/verificar_acceso')
+        .then(response => response.json())
+        .then(data => {
+            showResult(data);
+        })
+        .catch(error => {
+            showResult({error: error.toString()});
+        });
+}
+
+function crearCatalogo() {
+    fetch('/crear_catalogo')
+        .then(response => response.json())
+        .then(data => {
+            showResult(data);
+        })
+        .catch(error => {
+            showResult({error: error.toString()});
+        });
+}
+
+function verificarBlueprint() {
+    fetch('/verificar_blueprint')
+        .then(response => response.json())
+        .then(data => {
+            showResult(data);
+        })
+        .catch(error => {
+            showResult({error: error.toString()});
+        });
+}
+
+function verificarPermisos() {
+    fetch('/verificar_permisos')
+        .then(response => response.json())
+        .then(data => {
+            showResult(data);
+        })
+        .catch(error => {
+            showResult({error: error.toString()});
+        });
+}
+</script>
+{% endblock %}

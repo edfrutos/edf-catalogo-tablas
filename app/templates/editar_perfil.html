@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Editar perfil{% endblock %}
+{% block content %}
+<div class="container mt-4" style="max-width: 500px;">
+  <h2>Editar perfil</h2>
+  <form method="post" enctype="multipart/form-data">
+    <div class="mb-3 text-center">
+      <img src="{{ user.foto_perfil_url }}" alt="Foto de perfil" class="rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+    </div>
+    <div class="mb-3">
+      <label for="nombre" class="form-label">Nombre</label>
+      <input type="text" class="form-control" id="nombre" name="nombre" value="{{ user.nombre or '' }}">
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">Correo electrónico</label>
+      <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="foto" class="form-label">Foto de perfil</label>
+      <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
+    </div>
+    
+    <hr class="my-4">
+    <h4>Cambiar contraseña</h4>
+    <div class="mb-3">
+      <label for="password_actual" class="form-label">Contraseña actual</label>
+      <div class="input-group">
+        <input type="password" class="form-control" id="password_actual" name="password_actual">
+        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_actual">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="password_nuevo" class="form-label">Nueva contraseña</label>
+      <div class="input-group">
+        <input type="password" class="form-control" id="password_nuevo" name="password_nuevo">
+        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_nuevo">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
+      <div class="form-text">La contraseña debe tener al menos 8 caracteres.</div>
+    </div>
+    <div class="mb-3">
+      <label for="password_confirmacion" class="form-label">Confirmar nueva contraseña</label>
+      <div class="input-group">
+        <input type="password" class="form-control" id="password_confirmacion" name="password_confirmacion">
+        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_confirmacion">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
+    </div>
+    
+    <button type="submit" class="btn btn-success">Guardar cambios</button>
+    <a href="{{ url_for('main.perfil') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Obtener todos los botones de alternar contraseña
+    const toggleButtons = document.querySelectorAll('.toggle-password');
+    
+    // Añadir evento click a cada botón
+    toggleButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        // Obtener el campo de contraseña asociado
+        const targetId = this.getAttribute('data-target');
+        const passwordField = document.getElementById(targetId);
+        
+        // Cambiar el tipo de campo entre password y text
+        if (passwordField.type === 'password') {
+          passwordField.type = 'text';
+          this.querySelector('i').classList.remove('bi-eye');
+          this.querySelector('i').classList.add('bi-eye-slash');
+        } else {
+          passwordField.type = 'password';
+          this.querySelector('i').classList.remove('bi-eye-slash');
+          this.querySelector('i').classList.add('bi-eye');
+        }
+      });
+    });
+  });
+</script>
+{% endblock %} 

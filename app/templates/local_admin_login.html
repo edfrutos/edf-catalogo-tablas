@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Directo Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Acceso a Panel de Administración</h1>
+        <p>Este acceso directo funciona tanto en entorno local como en producción.</p>
+        
+        <form action="/set_admin_session" method="post">
+            <input type="hidden" name="admin_id" value="680bc20aa170ac7fe8e58bec">
+            <input type="hidden" name="email" value="admin@example.com">
+            <input type="hidden" name="username" value="administrator">
+            <button type="submit" class="btn btn-success">Acceder como Admin Por Defecto</button>
+        </form>
+        
+        <br>
+        
+        <form action="/set_admin_session" method="post">
+            <input type="hidden" name="admin_id" value="67ed5c96300befce1d631c44">
+            <input type="hidden" name="email" value="edfrutos@gmail.com">
+            <input type="hidden" name="username" value="edefrutos">
+            <button type="submit" class="btn">Acceder como ED Frutos</button>
+        </form>
+        
+        <br><br>
+        <div>
+            <a href="/login" class="btn btn-warning">Ir al Login Normal</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Catálogos</h2>
+                    <div>
+                        <a href="{{ url_for('catalogs.create') }}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Nuevo Catálogo
+                        </a>
+                        <a href="{{ url_for('admin.dashboard_admin') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver al Panel de Administración
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if catalogs %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th>Productos</th>
+                                        <th>Estado</th>
+                                        <th>Última Actualización</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for catalog in catalogs %}
+                                    <tr>
+                                        <td>{{ catalog.nombre }}</td>
+                                        <td>{{ catalog.descripcion }}</td>
+                                        <td>{{ catalog.productos|length }}</td>
+                                        <td>
+                                            {% if catalog.activo %}
+                                                <span class="badge bg-success">Activo</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactivo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ catalog.updated_at }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ url_for('catalogs.edit', catalog_id=catalog._id) }}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarCatalogo('{{ catalog._id }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">No hay catálogos disponibles.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar este catálogo?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="eliminarForm" method="POST" action="{{ url_for('catalogs.delete_catalog') }}">
+                    <input type="hidden" name="catalog_id" id="catalogId">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function eliminarCatalogo(catalogId) {
+    document.getElementById('catalogId').value = catalogId;
+    var modal = new bootstrap.Modal(document.getElementById('eliminarModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

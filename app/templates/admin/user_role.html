@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container superior">
+    <h2>Gestión de Usuarios</h2>
+    
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    Usuarios del Sistema
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Nombre</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <span class="user-email">{{ user.email }}</span>
+                                        <form class="edit-email-form d-none" data-user-id="{{ user.id }}">
+                                            <div class="input-group input-group-sm">
+                                                <input type="email" class="form-control" value="{{ user.email }}" required pattern="[^@]+@[^@]+\.[^@]+" title="Por favor, introduce un email válido">
+                                                <button type="submit" class="btn btn-success btn-sm">✓</button>
+                                                <button type="button" class="btn btn-danger btn-sm cancel-edit">✗</button>
+                                            </div>
+                                            <div class="invalid-feedback"></div>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <span class="user-nombre">{{ user.nombre }}</span>
+                                        <form class="edit-nombre-form d-none" data-user-id="{{ user.id }}">
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" class="form-control" value="{{ user.nombre }}" required>
+                                                <button type="submit" class="btn btn-success btn-sm">✓</button>
+                                                <button type="button" class="btn btn-danger btn-sm cancel-edit">✗</button>
+                                            </div>
+                                            <div class="invalid-feedback"></div>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm role-select" data-user-id="{{ user.id }}">
+                                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrador</option>
+                                            <option value="normal" {% if user.role == 'normal' %}selected{% endif %}>Normal</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-info btn-sm edit-email" title="Editar email">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <button class="btn btn-primary btn-sm edit-nombre" title="Editar nombre">
+                                                <i class="fas fa-user"></i>
+                                            </button>
+                                            <button class="btn btn-warning btn-sm change-password" data-user-id="{{ user.id }}" title="Cambiar contraseña">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cambiar contraseña -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cambiar Contraseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <input type="hidden" id="passwordUserId">
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="newPassword" required 
+                               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+                               title="La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números">
+                        <div id="passwordStrength" class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="password-requirements mt-2">
+                            <small class="d-block"><i class="fas fa-check text-success d-none"></i> Al menos 8 caracteres</small>
+                            <small class="d-block"><i class="fas fa-check text-success d-none"></i> Al menos una mayúscula</small>
+                            <small class="d-block"><i class="fas fa-check text-success d-none"></i> Al menos una minúscula</small>
+                            <small class="d-block"><i class="fas fa-check text-success d-none"></i> Al menos un número</small>
+                        </div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="savePassword">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestión de roles
+    document.querySelectorAll('.role-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const userId = this.dataset.userId;
+            const newRole = this.value;
+
+            fetch('/admin/user/update_role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    role: newRole
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Rol actualizado correctamente', 'success');
+                } else {
+                    showToast('Error al actualizar el rol', 'error');
+                    this.value = this.dataset.originalValue;
+                }
+            });
+        });
+    });
+
+    // Edición de email
+    document.querySelectorAll('.edit-email').forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            row.querySelector('.user-email').classList.add('d-none');
+            row.querySelector('.edit-email-form').classList.remove('d-none');
+        });
+    });
+
+    // Edición de nombre
+    document.querySelectorAll('.edit-nombre').forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            row.querySelector('.user-nombre').classList.add('d-none');
+            row.querySelector('.edit-nombre-form').classList.remove('d-none');
+        });
+    });
+
+    document.querySelectorAll('.cancel-edit').forEach(button => {
+        button.addEventListener('click', function() {
+            const form = this.closest('form');
+            const row = form.closest('tr');
+            form.classList.add('d-none');
+            
+            if (form.classList.contains('edit-email-form')) {
+                row.querySelector('.user-email').classList.remove('d-none');
+            } else if (form.classList.contains('edit-nombre-form')) {
+                row.querySelector('.user-nombre').classList.remove('d-none');
+            }
+        });
+    });
+
+    document.querySelectorAll('.edit-email-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userId = this.dataset.userId;
+            const newEmail = this.querySelector('input[type="email"]').value;
+
+            fetch('/admin/user/update_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    email: newEmail
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.message || (data.success ? 'Email actualizado correctamente' : 'Error al actualizar el email'), 
+                          data.success ? 'success' : 'error');
+                if (data.success) {
+                    const row = this.closest('tr');
+                    row.querySelector('.user-email').textContent = newEmail;
+                    this.classList.add('d-none');
+                    row.querySelector('.user-email').classList.remove('d-none');
+                }
+            });
+        });
+    });
+
+    document.querySelectorAll('.edit-nombre-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userId = this.dataset.userId;
+            const newNombre = this.querySelector('input[type="text"]').value;
+
+            fetch('/admin/user/update_nombre', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    nombre: newNombre
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.message || (data.success ? 'Nombre actualizado correctamente' : 'Error al actualizar el nombre'), 
+                          data.success ? 'success' : 'error');
+                if (data.success) {
+                    const row = this.closest('tr');
+                    row.querySelector('.user-nombre').textContent = newNombre;
+                    this.classList.add('d-none');
+                    row.querySelector('.user-nombre').classList.remove('d-none');
+                }
+            });
+        });
+    });
+
+    // Modal de cambio de contraseña
+    const passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+    
+    document.querySelectorAll('.change-password').forEach(button => {
+        button.addEventListener('click', function() {
+            document.getElementById('passwordUserId').value = this.dataset.userId;
+            passwordModal.show();
+        });
+    });
+
+    document.getElementById('savePassword').addEventListener('click', function() {
+        const userId = document.getElementById('passwordUserId').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (newPassword !== confirmPassword) {
+            showToast('Las contraseñas no coinciden', 'error');
+            return;
+        }
+
+        fetch('/admin/user/update_password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                password: newPassword
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Contraseña actualizada correctamente', 'success');
+                passwordModal.hide();
+                document.getElementById('passwordForm').reset();
+            } else {
+                showToast('Error al actualizar la contraseña', 'error');
+            }
+        });
+    });
+
+    // Validación de fortaleza de contraseña
+    document.getElementById('newPassword').addEventListener('input', function() {
+        const password = this.value;
+        let strength = 0;
+        
+        if (password.length >= 8) strength += 25;
+        if (password.match(/[A-Z]/)) strength += 25;
+        if (password.match(/[a-z]/)) strength += 25;
+        if (password.match(/[0-9]/)) strength += 25;
+
+        const progressBar = document.querySelector('#passwordStrength .progress-bar');
+        progressBar.style.width = strength + '%';
+        
+        if (strength < 50) {
+            progressBar.className = 'progress-bar bg-danger';
+        } else if (strength < 75) {
+            progressBar.className = 'progress-bar bg-warning';
+        } else {
+            progressBar.className = 'progress-bar bg-success';
+        }
+    });
+});
+
+function showToast(message, type) {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '1050';
+    document.body.appendChild(container);
+    return container;
+}
+</script>
+{% endblock %}

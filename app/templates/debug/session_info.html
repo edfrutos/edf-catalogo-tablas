@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Diagnóstico de Sesión{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Diagnóstico de Sesión</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Información de Sesión</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>Estado de Sesión:</strong> 
+                {% if session_info.session_data.logged_in %}
+                    <span class="badge bg-success">Activa</span>
+                {% else %}
+                    <span class="badge bg-danger">Inactiva</span>
+                {% endif %}
+            </div>
+            
+            <h6>Datos de Usuario</h6>
+            <table class="table table-striped">
+                <tr>
+                    <th>ID de Usuario</th>
+                    <td>{{ session_info.session_data.user_id or 'No disponible' }}</td>
+                </tr>
+                <tr>
+                    <th>Nombre de Usuario</th>
+                    <td>{{ session_info.session_data.username or 'No disponible' }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ session_info.session_data.email or 'No disponible' }}</td>
+                </tr>
+                <tr>
+                    <th>Rol</th>
+                    <td>
+                        {% if session_info.session_data.role == 'admin' %}
+                            <span class="badge bg-danger">Administrador</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ session_info.session_data.role or 'No disponible' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Inicio de Sesión</th>
+                    <td>{{ session_info.session_data.login_time or 'No disponible' }}</td>
+                </tr>
+                <tr>
+                    <th>IP del Cliente</th>
+                    <td>{{ session_info.session_data.client_ip or 'No disponible' }}</td>
+                </tr>
+            </table>
+            
+            <h6 class="mt-4">Configuración de Sesión</h6>
+            <table class="table table-striped">
+                <tr>
+                    <th>Nombre de Cookie</th>
+                    <td>{{ session_info.session_cookie_name }}</td>
+                </tr>
+                <tr>
+                    <th>Cookie Segura</th>
+                    <td>
+                        {% if session_info.session_cookie_secure %}
+                            <span class="badge bg-success">Sí</span>
+                        {% else %}
+                            <span class="badge bg-warning">No</span> (Desarrollo)
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Cookie HttpOnly</th>
+                    <td>
+                        {% if session_info.session_cookie_httponly %}
+                            <span class="badge bg-success">Sí</span>
+                        {% else %}
+                            <span class="badge bg-danger">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Cookie SameSite</th>
+                    <td>{{ session_info.session_cookie_samesite }}</td>
+                </tr>
+                <tr>
+                    <th>Duración de Sesión</th>
+                    <td>{{ session_info.permanent_session_lifetime }}</td>
+                </tr>
+                <tr>
+                    <th>Tipo de Secret Key</th>
+                    <td>{{ session_info.app_secret_key_type }}</td>
+                </tr>
+                <tr>
+                    <th>Longitud de Secret Key</th>
+                    <td>{{ session_info.app_secret_key_length }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Cookies Recibidas</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, value in session_info.request_cookies.items() %}
+                    <tr>
+                        <td><code>{{ name }}</code></td>
+                        <td><small>{{ value[:50] }}{% if value|length > 50 %}...{% endif %}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" class="text-center">No se encontraron cookies</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Datos Completos de Sesión</h5>
+        </div>
+        <div class="card-body">
+            <pre class="bg-light p-3"><code>{{ session_info.session_data|tojson(indent=2) }}</code></pre>
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('debug.fix_session') }}" class="btn btn-warning">
+            <i class="fas fa-wrench"></i> Intentar Reparar Sesión
+        </a>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-home"></i> Volver al Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

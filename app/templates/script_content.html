@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Contenido del Script - Catálogo Tablas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Contenido del Script: {{ script_name }}</h5>
+            <a href="{{ url_for('scripts.tools_dashboard') }}" class="btn btn-sm btn-outline-secondary">Volver</a>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>Ruta:</strong> {{ script_path }}
+            </div>
+            
+            <div class="bg-dark text-light p-3 rounded">
+                <pre class="mb-0"><code>{{ script_content }}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

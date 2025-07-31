@@ -1,0 +1,77 @@
+
+{% extends "base.html" %}
+{% block title %}Acceso Directo a Catálogos{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Acceso Directo a Catálogos</h2>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h4 class="mb-0">Iniciar Sesión</h4>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <p>Selecciona un tipo de usuario para acceder directamente a los catálogos:</p>
+                                    <div class="mt-auto">
+                                        <a href="{{ url_for('login_admin') }}" class="btn btn-primary btn-block mb-2">
+                                            <i class="fas fa-user-shield"></i> Acceder como Administrador
+                                        </a>
+                                        <a href="{{ url_for('login_user') }}" class="btn btn-secondary btn-block">
+                                            <i class="fas fa-user"></i> Acceder como Usuario Normal
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h4 class="mb-0">Herramientas</h4>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <p>Utilidades para gestionar los catálogos:</p>
+                                    <div class="mt-auto">
+                                        <a href="{{ url_for('crear_catalogo_prueba') }}" class="btn btn-success btn-block mb-2">
+                                            <i class="fas fa-plus-circle"></i> Crear Catálogo de Prueba
+                                        </a>
+                                        <a href="{{ url_for('verificar_permisos') }}" class="btn btn-warning btn-block">
+                                            <i class="fas fa-shield-alt"></i> Verificar/Corregir Permisos
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle"></i> Información</h5>
+                        <p>Esta herramienta te permite acceder directamente a los catálogos sin pasar por el proceso normal de inicio de sesión.</p>
+                        <p><strong>Credenciales de administrador:</strong> admin@example.com / admin123</p>
+                        <p><strong>Credenciales de usuario:</strong> usuario@example.com / usuario123</p>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="http://127.0.0.1:8002" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a la Aplicación Principal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

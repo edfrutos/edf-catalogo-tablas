@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi aplicación Web</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ css_version }}">
+    <link rel="icon" href="{{ url_for('static', filename='css/favicon.ico') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Mi Aplicación Flask</h1>
+            <nav>
+                <a href="/">Inicio</a>
+                <a href="/info">Información</a>
+            </nav>
+        </header>
+        <main>
+            <h2>¡Bienvenido!</h2>
+            <p>Esta aplicación Flask está funcionando correctamente con Gunicorn y Apache.</p>
+            <p>La aplicación está alojada en el servidor con IP: 208.76.221.20</p>
+        </main>
+        <footer>
+            <p>&copy; 2025 - Mi Aplicación Flask</p>
+        </footer>
+    </div>
+</body>
+</html>

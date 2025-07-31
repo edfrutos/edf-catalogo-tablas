@@ -1,0 +1,64 @@
+<!-- Barra de navegación principal -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('main.index') }}">Catálogo Tablas</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {% if session.get('role') == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == url_for('main.dashboard_user') %}active{% endif %}" href="{{ url_for('main.dashboard_user') }}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/catalogs' in request.path or '/tables' in request.path %}active{% endif %}" href="{{ url_for('catalogs.list') }}">
+                        <i class="fas fa-book"></i> Catálogos
+                    </a>
+                </li>
+                {% if session.get('role') == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/admin' in request.path %}active{% endif %}" href="{{ url_for('admin.dashboard_admin') }}">
+                        <i class="fas fa-user-shield"></i> Admin
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/admin/tools' in request.path %}active{% endif %}" href="{{ url_for('scripts.tools_dashboard') }}">
+                        <i class="fas fa-tools"></i> Scripts
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+            <div class="d-flex">
+                {% if 'username' in session %}
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user"></i> {{ session.get('username', 'Usuario') }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        {% if not session.get('is_admin') %}
+                        <li>
+                            <a class="dropdown-item" href="/perfil">
+                                <i class="bi bi-person-badge"></i> Mi Perfil
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-light me-2">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Importar Catálogo desde CSV</h2>
+<form method="POST" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label for="file" class="form-label">Archivo CSV</label>
+    <input type="file" class="form-control" name="file" accept=".csv" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Importar</button>
+  <a href="{{ url_for('catalogs.list') }}" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

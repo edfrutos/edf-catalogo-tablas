@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Catálogos</h2>
+<a class="btn btn-success mb-3" href="{{ url_for('catalogs.create') }}">Crear nuevo catálogo</a>
+<a class="btn btn-info mb-3" href="{{ url_for('catalogs.import_catalog') }}">Importar catálogo</a>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Encabezados</th>
+      <th>Filas</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cat in catalogs %}
+    <tr>
+      <td>{{ cat.name }}</td>
+      <td>{{ cat.headers | join(', ') }}</td>
+      <td>{{ cat.row_count }}</td>
+      <td>
+        <a href="{{ url_for('catalogs.view', catalog_id=cat._id) }}" class="btn btn-sm btn-primary">Ver</a>
+        <a href="{{ url_for('catalogs.edit', catalog_id=cat._id) }}" class="btn btn-sm btn-warning">Editar</a>
+        <a href="{{ url_for('catalogs.delete_catalog', catalog_id=cat._id) }}" class="btn btn-sm btn-danger">Eliminar</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

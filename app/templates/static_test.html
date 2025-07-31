@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnóstico de Archivos Estáticos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ css_version }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Diagnóstico de Archivos Estáticos</h1>
+    
+    <div class="test-section">
+        <h2>Rutas del sistema</h2>
+        <p><strong>Directorio raíz de la aplicación:</strong> {{ result.root_dir }}</p>
+        <p><strong>Directorio static existe:</strong> 
+            <span class="{% if result.static_dir_exists %}success{% else %}error{% endif %}">
+                {{ result.static_dir_exists }}
+            </span>
+        </p>
+        <p><strong>Directorio css existe:</strong> 
+            <span class="{% if result.css_dir_exists %}success{% else %}error{% endif %}">
+                {{ result.css_dir_exists }}
+            </span>
+        </p>
+        <p><strong>Archivo test.css existe:</strong> 
+            <span class="{% if result.test_css_exists %}success{% else %}error{% endif %}">
+                {{ result.test_css_exists }}
+            </span>
+        </p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Archivos encontrados</h2>
+        <p><strong>Archivos en /static:</strong></p>
+        <pre>{{ result.static_dir_files|join(', ') }}</pre>
+        
+        <p><strong>Archivos en /static/css:</strong></p>
+        <pre>{{ result.css_dir_files|join(', ') }}</pre>
+    </div>
+    
+    <div class="test-section">
+        <h2>Información del archivo test.css</h2>
+        <p><strong>Tamaño:</strong> {{ result.test_css_size }} bytes</p>
+        <p><strong>Permisos:</strong> {{ result.test_css_permissions }}</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Prueba de carga directa</h2>
+        <p>Intenta cargar directamente el archivo haciendo clic en este enlace:</p>
+        <p><a href="/static/css/test.css" target="_blank">/static/css/test.css</a></p>
+    </div>
+</body>
+</html>

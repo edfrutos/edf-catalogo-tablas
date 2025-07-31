@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablas - Acceso Garantizado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .alert-info {
+            color: #31708f;
+            background-color: #d9edf7;
+            border-color: #bce8f1;
+        }
+        .alert-success {
+            color: #3c763d;
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+        }
+        .alert-warning {
+            color: #8a6d3b;
+            background-color: #fcf8e3;
+            border-color: #faebcc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .btn {
+            display: inline-block;
+            font-weight: 400;
+            color: #212529;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+            background-color: transparent;
+            border: 1px solid transparent;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            text-decoration: none;
+            margin: 0.25rem;
+        }
+        .btn-primary {
+            color: #fff;
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-secondary {
+            color: #fff;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-success {
+            color: #fff;
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-danger {
+            color: #fff;
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .navbar {
+            background-color: #343a40;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        .user-info {
+            float: right;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <a href="/admin/">Panel Admin</a>
+            <a href="/tables_helper/">Tablas</a>
+            <a href="/admin.html">Acceso Directo</a>
+            <span class="user-info">
+                Usuario: {{ user.username }} ({{ user.role }})
+            </span>
+        </div>
+
+        <h1>Gestión de Tablas - Modo Garantizado</h1>
+        
+        {% if message %}
+        <div class="alert alert-warning">
+            {{ message }}
+        </div>
+        {% else %}
+        <div class="alert alert-success">
+            Acceso garantizado a la gestión de tablas
+        </div>
+        {% endif %}
+        
+        <div class="alert alert-info">
+            Esta es una versión simplificada y robusta del gestor de tablas, diseñada para funcionar en cualquier circunstancia.
+        </div>
+        
+        <h2>Tablas Disponibles</h2>
+        
+        {% if tables %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Usuario</th>
+                    <th>Fecha de Creación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for table in tables %}
+                <tr>
+                    <td>{{ table._id }}</td>
+                    <td>{{ table.name if table.name else "Sin nombre" }}</td>
+                    <td>{{ table.user_email if table.user_email else table.username if table.username else "Desconocido" }}</td>
+                    <td>{{ table.created_at if table.created_at else "Desconocida" }}</td>
+                    <td>
+                        <a href="/tables_helper/{{ table._id }}" class="btn btn-primary">Ver</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No se encontraron tablas en la base de datos.</p>
+        {% endif %}
+        
+        <p>
+            <a href="/admin/" class="btn btn-secondary">Volver al Panel Admin</a>
+        </p>
+    </div>
+</body>
+</html>

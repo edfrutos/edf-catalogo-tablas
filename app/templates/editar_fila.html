@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Editar Fila{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Editar Fila de "{{ catalog.name }}"</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% for header in headers %}
+        <div class="mb-3">
+            <label for="{{ header }}" class="form-label">{{ header }}</label>
+            <input type="text" class="form-control" id="{{ header }}" name="{{ header }}" value="{{ fila[header] }}">
+        </div>
+        {% endfor %}
+        <div class="mb-3">
+            <label for="imagenes" class="form-label">Imágenes (opcional)</label>
+            <input type="file" class="form-control" id="imagenes" name="imagenes" multiple accept="image/*">
+            <div class="form-text">Puede seleccionar múltiples imágenes. Las nuevas imágenes se añadirán a las existentes.</div>
+        </div>
+        {% if fila.imagenes and fila.imagenes|length > 0 %}
+        <div class="mb-3">
+            <label class="form-label">Imágenes actuales</label>
+            <div class="d-flex flex-wrap gap-3">
+                {% for img in fila.imagenes %}
+                <div class="position-relative">
+                    {% if img.startswith('http') %}
+                    <a href="#" onclick="mostrarImagenModal('{{ img }}'); return false;">
+                        <img src="{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'">
+                    </a>
+                    {% else %}
+                    <a href="#" onclick="mostrarImagenModal('{{ url_for('static', filename='uploads/' ~ img) }}'); return false;">
+                        <img src="{{ url_for('static', filename='uploads/' ~ img) }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'">
+                    </a>
+                    {% endif %}
+                    <div class="mt-1 text-center">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="confirmarEliminarImagen('{{ img|e }}', {{ loop.index0 }})">Eliminar</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="hidden" id="imagenes_a_eliminar" name="imagenes_a_eliminar" value="">
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <a href="{{ url_for('catalogs.view', catalog_id=catalog._id|string) }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<!-- Modal para visualizar imágenes -->
+<div class="modal fade" id="imagenModal" tabindex="-1" aria-labelledby="imagenModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imagenModalLabel">Visualizar Imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="imagenModalSrc" src="" alt="Imagen" style="max-width: 100%; max-height: 80vh;">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación para eliminar imagen -->
+<div class="modal fade" id="eliminarImagenModal" tabindex="-1" aria-labelledby="eliminarImagenModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eliminarImagenModalLabel">Confirmar Eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Está seguro que desea eliminar esta imagen? Esta acción no se puede deshacer.</p>
+        <div class="text-center">
+          <img id="imagenAEliminar" src="" alt="Imagen a eliminar" style="max-width: 200px; max-height: 200px; object-fit: contain;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+let imagenesAEliminar = [];
+let imagenActual = '';
+let indiceActual = -1;
+
+function mostrarImagenModal(imagenUrl) {
+  document.getElementById('imagenModalSrc').src = imagenUrl;
+  const modal = new bootstrap.Modal(document.getElementById('imagenModal'));
+  modal.show();
+}
+
+function confirmarEliminarImagen(imagen, indice) {
+  imagenActual = imagen;
+  indiceActual = indice;
+  
+  // Mostrar la imagen en el modal de confirmación
+  let rutaImagen;
+  if (imagen.startsWith('http')) {
+    rutaImagen = imagen;
+  } else {
+    rutaImagen = "{{ url_for('static', filename='uploads/') }}" + imagen;
+  }
+  document.getElementById('imagenAEliminar').src = rutaImagen;
+  
+  // Configurar el botón de confirmación
+  document.getElementById('btnConfirmarEliminar').onclick = function() {
+    eliminarImagen(imagen, indice);
+    bootstrap.Modal.getInstance(document.getElementById('eliminarImagenModal')).hide();
+  };
+  
+  // Mostrar el modal
+  const modal = new bootstrap.Modal(document.getElementById('eliminarImagenModal'));
+  modal.show();
+}
+
+function eliminarImagen(imagen, indice) {
+  // Agregar la imagen al array de imágenes a eliminar
+  if (!imagenesAEliminar.includes(imagen)) {
+    imagenesAEliminar.push(imagen);
+  }
+  
+  // Actualizar el campo oculto con las imágenes a eliminar
+  document.getElementById('imagenes_a_eliminar').value = JSON.stringify(imagenesAEliminar);
+  
+  // Ocultar visualmente la imagen eliminada
+  const contenedorImagen = document.querySelectorAll('.position-relative')[indice];
+  if (contenedorImagen) {
+    contenedorImagen.style.display = 'none';
+  }
+}
+</script>
+{% endblock %}

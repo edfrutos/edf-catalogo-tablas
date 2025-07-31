@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Agregar Fila{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Agregar Fila a "{{ catalog.name }}"</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% for header in catalog.headers %}
+        <div class="mb-3">
+            <label for="{{ header }}" class="form-label">{{ header }}</label>
+            <input type="text" class="form-control" id="{{ header }}" name="{{ header }}">
+        </div>
+        {% endfor %}
+        <div class="mb-3">
+            <label for="imagenes" class="form-label">Imágenes (opcional)</label>
+            <input type="file" class="form-control" id="imagenes" name="imagenes" multiple accept="image/*">
+            <div class="form-text">Puede seleccionar múltiples imágenes.</div>
+        </div>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

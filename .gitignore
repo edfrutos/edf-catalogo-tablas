@@ -1,0 +1,287 @@
+# -------------------------------------------
+# IGNORAR ENTORNOS VIRTUALES
+# -------------------------------------------
+.venv/
+venv/
+ENV/
+env/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# -------------------------------------------
+# IGNORAR ENTORNOS IDE
+# -------------------------------------------
+
+.blackboxrules
+.cspell.json
+.eslintignore
+.flake8
+.markdownlint.json
+.prettierignore
+.prettierrc.json
+.spellright.dict
+.windwurf-setting.json
+
+# -------------------------------------------
+# IGNORAR ARCHIVOS DE CONFIGURACIÓN SENSIBLES
+# -------------------------------------------
+.env
+.env.*
+*.env
+backups/.env*
+backups/*/.env*
+# Ignorar cualquier archivo que pueda contener claves API o credenciales
+*credentials*
+*secret*
+*api_key*
+*apikey*
+*password*
+*token*
+dev_template/tests/legacy/config_debug.py
+config/mongodb_config.json
+
+# -------------------------------------------
+# IGNORAR ARCHIVOS Y CARPETAS TEMPORALESblackboxrules
+# -------------------------------------------
+*.sqlite3
+*.log
+*.zip
+*.tar.gz
+*.bak*
+*.bak.*
+*.tmp
+.DS_Store
+Thumbs.db
+temp_files_to_remove/
+flask_session/
+logs/*
+flask.log
+exportados/
+docs/
+
+# IGNORAR ARCHIVOS DE MÉTRICAS Y MONITOREO
+# -------------------------------------------
+app_data/edefrutos2025_metrics.json
+app_data/*.json
+*_metrics.json
+*_stats.json
+
+# IGNORAR ARCHIVOS DE ENTORNO Y CONFIGURACIÓN
+# -------------------------------------------
+.venv310/
+.venv/
+venv310/
+venv/
+setup.py
+run.py
+
+# IGNORAR ARCHIVOS DE CONSTRUCCIÓN Y DISTRIBUCIÓN
+# -------------------------------------------
+build/
+dist/
+*.spec
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# IGNORAR ARCHIVOS DE SISTEMA
+# -------------------------------------------
+.DS_Store
+Thumbs.db
+
+# IGNORAR ARCHIVOS DE REGISTRO
+# -------------------------------------------
+logs/*
+*.log
+
+# IGNORAR ARCHIVOS DE ENTRENAMIENTO Y DATOS
+# -------------------------------------------
+*.csv
+*.xlsx
+*.xls
+*.db
+*.sqlite3
+
+# IGNORAR ARCHIVOS DE ENTORNO VIRTUAL
+# -------------------------------------------
+ENV/
+env/
+
+# IGNORAR ARCHIVOS DE CONFIGURACIÓN SENSIBLES
+# -------------------------------------------
+.env
+.env.*
+*.env
+*credentials*
+*secret*
+*api_key*
+*apikey*
+*password*
+*token*
+logs/gunicorn_access.log
+logs/flask_debug.log
+logs/gunicorn_error.log
+sensitive_backup/
+
+# -------------------------------------------
+# IGNORAR ARCHIVOS DE RESPALDO Y TEMPORALES ESPECÍFICOS
+# -------------------------------------------
+**/scripts_routes.py.bak.*
+app.py.bak.*
+.env.bak.*
+wsgi.py.bak.*
+=*
+*.pid
+journal*.txt
+
+
+# -------------------------------------------
+# IGNORAR ARCHIVOS Y CARPETAS DE DEPLOYMENT
+# -------------------------------------------
+instance/
+uploads/
+imagenes_subidas/
+spreadsheets/
+mi_config.json
+token.pickle
+*.json
+*.pickle
+tools/basura/
+mcp-server-demo/
+node_modules/
+
+# -------------------------------------------
+# IGNORAR ARCHIVOS DE IDEs (Visual Studio Code, PyCharm, etc.)
+# -------------------------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.windsurf-settings.json
+.cspell.json
+.markdownlint.json
+
+# -------------------------------------------
+# IGNORAR TEST OUTPUTS
+# -------------------------------------------
+htmlcov/
+coverage.xml
+.tox/
+.pytest_cache/
+.pixi/
+
+# -------------------------------------------
+# IGNORAR ARCHIVOS DE AWS (si usas SAM o CDK)
+# -------------------------------------------
+.aws-sam/
+.cdk.staging/
+.qodo
+
+tools/_backup_scripts/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Respaldos automáticos y carpetas de backup
+backups/
+tools_backup_*/
+
+# Archivo# Basura temporal de limpieza
+basura/
+
+# Archivos de credenciales y tokens adicionales
+tools/db_utils/credentials.json
+tools/db_utils/token.pickle
+tools/maintenance/mi_config.json
+
+# Archivos temporales y de subida
+app/static/uploads/
+app/static/imagenes_subidas/
+tools/image_utils/app/static/uploads/
+
+# Logs adicionales
+scripts/logs/
+scripts/maintenance/logs/
+tools/maintenance/logs/
+tools/db_utils/mongodb_backup.log
+
+# Archivos de prueba y limpieza
+clean_project.py
+app/static/___prueba_cascade.txt
+cookies.txt
+
+# Archivos temporales y de estructura grandes
+estriuctura_buid.txt
+estriuctura
+
+# Logs generales
+*.log
+
+# Archivos grandes generados
+generated-docs/
+
+# Archivos temporales de Git
+.git-rewrite/
+
+# -------------------------------------------
+# IGNORAR GEMINI CLI
+# -------------------------------------------
+gemini-cli/
+
+# -------------------------------------------
+# ARCHIVOS ADICIONALES DE IDE Y EDITORES
+# -------------------------------------------
+*.swp
+*.swo
+*~
+.vim/
+.emacs.d/
+.atom/
+.brackets.json
+
+# -------------------------------------------
+# ARCHIVOS DE CERTIFICADOS Y CLAVES
+# -------------------------------------------
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+*.der
+
+# -------------------------------------------
+# ARCHIVOS DE CONFIGURACIÓN ADICIONALES
+# -------------------------------------------
+.env.local
+.env.development
+.env.test
+.env.production
+config.local.*
+settings.local.*
+
+# -------------------------------------------
+# ARCHIVOS DE HERRAMIENTAS DE DESARROLLO
+# -------------------------------------------
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.coverage
+htmlcov/
+.nyc_output/
+coverage/
+
+# -------------------------------------------
+# ARCHIVOS DE TOURS Y DOCUMENTACIÓN GENERADA
+# -------------------------------------------
+.tours/
+generated-docs/
+*.drawio.bkp
+*.drawio~

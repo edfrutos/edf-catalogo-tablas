@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Catálogos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestión de Catálogos</h1>
+        <div>
+            <a href="{{ url_for('catalogs.create') }}" class="btn btn-primary me-2">
+                <i class="fas fa-plus"></i> Nuevo Catálogo
+            </a>
+            <a href="{{ url_for('admin.dashboard_admin') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Panel de Administración
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for catalog in catalogs %}
+                        <tr>
+                            <td>{{ catalog.name }}</td>
+                            <td>{{ catalog.description }}</td>
+                            <td>
+                                <span class="badge bg-success">Activo</span>
+                            </td>
+                            <td>{{ catalog.created_at }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="editarCatalogo('{{ catalog._id }}')" title="Editar">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-info" onclick="viewCatalog('{{ catalog._id }}')" title="Ver">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteCatalog('{{ catalog._id }}')" title="Eliminar">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea eliminar este catálogo?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editarCatalogo(catalogId) {
+    if (!catalogId) {
+        alert('No se puede editar. Por favor, inicia sesión primero.');
+        return;
+    }
+    window.location.href = `{{ url_for('catalogs.edit', catalog_id='__catalog_id__') }}`.replace('__catalog_id__', catalogId);
+}
+
+function viewCatalog(catalogId) {
+    if (!catalogId) {
+        alert('No se puede ver. Por favor, inicia sesión primero.');
+        return;
+    }
+    window.location.href = `{{ url_for('catalogs.view', catalog_id='__catalog_id__') }}`.replace('__catalog_id__', catalogId);
+}
+
+function deleteCatalog(catalogId) {
+    if (!catalogId) {
+        alert('No se puede eliminar. Por favor, inicia sesión primero.');
+        return;
+    }
+    document.getElementById('deleteForm').action = `{{ url_for('catalogs.delete_catalog', catalog_id='__catalog_id__') }}`.replace('__catalog_id__', catalogId);
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}
