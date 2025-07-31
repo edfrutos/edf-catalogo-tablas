@@ -1,11 +1,21 @@
 {
-  "server_ip": "208.76.221.20",
-  "mongodb_info": {
-    "username": "edfrutos",
-    "password": "rYjwUC6pUNrLtbaI",
-    "hostname": "cluster0-shard-00-02.pmokh.mongodb.net",
-    "database": "app_catalogojoyero_nueva",
-    "project_name": "cluster0"
+  "mongodb_uri": "mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority",
+  "database_name": "app_catalogojoyero_nueva",
+  "collections": {
+    "users": "users",
+    "spreadsheets": "spreadsheets",
+    "catalogs": "catalogs",
+    "backups": "backups"
   },
-  "last_updated": "2025-05-18T11:17:36.137836"
+  "connection_options": {
+    "maxPoolSize": 10,
+    "minPoolSize": 1,
+    "maxIdleTimeMS": 30000,
+    "waitQueueTimeoutMS": 5000,
+    "serverSelectionTimeoutMS": 5000,
+    "connectTimeoutMS": 5000,
+    "socketTimeoutMS": 30000,
+    "retryReads": true,
+    "retryWrites": true
+  }
 }

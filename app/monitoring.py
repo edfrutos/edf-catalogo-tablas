@@ -259,23 +259,6 @@ def get_health_status():
     # Determinar el estado general basado en criterios múltiples
     if not _app_metrics["database_status"]["is_available"]:
         health_report["status"] = "degraded"
-<<<<<<< Updated upstream
-    
-    # Verificar uso de CPU
-    cpu_usage = _app_metrics["system_status"].get("cpu_usage", 0)
-    if cpu_usage > 90:
-        health_report["status"] = "at_risk"
-    
-    # Verificar uso de memoria - manejar tanto int como dict
-    memory_usage = _app_metrics["system_status"].get("memory_usage", 0)
-    if isinstance(memory_usage, dict):
-        memory_percent = memory_usage.get("percent", 0)
-    else:
-        memory_percent = memory_usage
-    
-    if memory_percent > 90:
-        health_report["status"] = "at_risk"
-=======
 
     # Verificar métricas del sistema de forma segura
     system_status = _app_metrics.get("system_status", {})
@@ -304,7 +287,6 @@ def get_health_status():
         )
 
     # Calcular tasa de error
->>>>>>> Stashed changes
     error_rate = 0
     total_requests = _app_metrics["request_stats"].get("total_requests", 0)
     error_count = _app_metrics["request_stats"].get("error_count", 0)

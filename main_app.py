@@ -299,7 +299,7 @@ def create_app():
     
     # Registrar rutas de mantenimiento y API usando la función dedicada
     register_maintenance_routes(app)
-    print(f"RUTAS DE MANTENIMIENTO Y API REGISTRADAS EXITOSAMENTE")
+    print("RUTAS DE MANTENIMIENTO Y API REGISTRADAS EXITOSAMENTE")
     
     app.register_blueprint(bp_dev_template)  # Blueprint para plantilla de desarrollo
     app.register_blueprint(errors_bp)
@@ -438,7 +438,6 @@ def create_app():
         return redirect(url_for("catalogs.list"))
 
     def ensure_db():
-        from flask import g
         from app.database import get_mongo_db, get_mongo_client
 
         client = get_mongo_client()
@@ -1038,7 +1037,7 @@ def renumerar_registros(table_name):
 
 @app.route("/renumerar/<table_name>")
 def renumerar(table_name):
-    """Renumera todos los registros de una tabla y redirecciona al catálogo"""
+    """Renumera todos los registros de una tabla y redirige al catálogo"""
     if "username" not in session:
         return redirect(url_for("welcome"))
 

@@ -340,7 +340,6 @@ def system_status():
         backup_dir = os.path.abspath(os.path.join(os.getcwd(), "backups"))
         backup_files = get_backup_files(backup_dir)
         # Pasar cache_stats y temp_files como variables independientes para el template
-<<<<<<< Updated upstream
         cache_stats = data.get('cache_stats', {})
         temp_files = data.get('temp_files', {'count': 0, 'total_size_mb': 0, 'files': []})
         
@@ -354,19 +353,6 @@ def system_status():
             
         return render_template('admin/system_status.html', data=data, log_files=log_files, backup_files=backup_files, cache_stats=cache_stats, temp_files=temp_files)
     except Exception as e:
-=======
-        cache_stats = data.get("cache_stats")
-        temp_files = data.get("temp_files")
-        return render_template(
-            "admin/system_status.html",
-            data=data,
-            log_files=log_files,
-            backup_files=backup_files,
-            cache_stats=cache_stats,
-            temp_files=temp_files,
-        )
-    except (AttributeError, KeyError, OSError, IOError) as e:
->>>>>>> Stashed changes
         logger.error(f"Error en system_status: {str(e)}", exc_info=True)
         flash("Error al obtener el estado del sistema", "danger")
         return redirect(url_for("admin.dashboard_admin"))

@@ -290,22 +290,31 @@ Cargando registros...</pre
             </button>
           </div>
 
-<<<<<<< Updated upstream
-=======
           <!-- FIN DEL MODAL DE LOGS -->
         </div>
       </div>
     </div>
 
     <!-- Modal para Google Drive Backups (independiente) -->
-    <div class="modal fade" id="restoreDriveModal" tabindex="-1" aria-labelledby="restoreDriveModalLabel" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="restoreDriveModal"
+      tabindex="-1"
+      aria-labelledby="restoreDriveModalLabel"
+      aria-hidden="true"
+    >
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header bg-primary text-white">
             <h5 class="modal-title" id="restoreDriveModalLabel">
               <i class="bi bi-google"></i> Restaurar desde Google Drive
             </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Cerrar"
+            ></button>
           </div>
           <div class="modal-body">
             <!-- Estado de carga -->
@@ -313,21 +322,31 @@ Cargando registros...</pre
               <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Cargando...</span>
               </div>
-              <p class="mt-2">Cargando backups disponibles desde Google Drive...</p>
+              <p class="mt-2">
+                Cargando backups disponibles desde Google Drive...
+              </p>
             </div>
 
             <!-- Contenedor principal de backups -->
             <div id="driveBackupsContent" style="display: none">
-              <div class="d-flex justify-content-between align-items-center mb-3">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3"
+              >
                 <h6 class="mb-0">
-                  <i class="bi bi-cloud-download"></i> Backups Disponibles en Google Drive
-                  <span id="driveBackupsCount" class="badge bg-secondary ms-2">0 respaldos</span>
+                  <i class="bi bi-cloud-download"></i> Backups Disponibles en
+                  Google Drive
+                  <span id="driveBackupsCount" class="badge bg-secondary ms-2"
+                    >0 respaldos</span
+                  >
                 </h6>
                 <div class="d-flex gap-2">
                   <!-- Control de número de backups a mostrar -->
-                  <div class="input-group input-group-sm" style="width: 200px;">
+                  <div class="input-group input-group-sm" style="width: 200px">
                     <span class="input-group-text">Mostrar:</span>
-                    <select id="backupsPerPage" class="form-select form-select-sm">
+                    <select
+                      id="backupsPerPage"
+                      class="form-select form-select-sm"
+                    >
                       <option value="10">10 backups</option>
                       <option value="25" selected>25 backups</option>
                       <option value="50">50 backups</option>
@@ -335,33 +354,56 @@ Cargando registros...</pre
                       <option value="-1">Todos</option>
                     </select>
                   </div>
-                  <button type="button" class="btn btn-outline-primary btn-sm" id="refreshDriveBackups">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    id="refreshDriveBackups"
+                  >
                     <i class="bi bi-arrow-clockwise"></i> Actualizar
                   </button>
                 </div>
               </div>
-              
+
               <!-- Controles de selección múltiple -->
-              <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded"
+              >
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="selectAllBackups">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="selectAllBackups"
+                  />
                   <label class="form-check-label" for="selectAllBackups">
                     Seleccionar todos
                   </label>
                 </div>
                 <div>
-                  <span id="selectedCount" class="text-muted me-3">0 seleccionados</span>
-                  <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBackups" disabled>
+                  <span id="selectedCount" class="text-muted me-3"
+                    >0 seleccionados</span
+                  >
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    id="deleteSelectedBackups"
+                    disabled
+                  >
                     <i class="bi bi-trash"></i> Eliminar seleccionados
                   </button>
                 </div>
               </div>
-              
+
               <div class="table-responsive">
                 <table class="table table-hover table-striped">
                   <thead class="table-dark">
                     <tr>
-                      <th width="40"><input type="checkbox" id="selectAllHeader" class="form-check-input"></th>
+                      <th width="40">
+                        <input
+                          type="checkbox"
+                          id="selectAllHeader"
+                          class="form-check-input"
+                        />
+                      </th>
                       <th><i class="bi bi-file-earmark-zip"></i> Archivo</th>
                       <th><i class="bi bi-hdd"></i> Tamaño</th>
                       <th><i class="bi bi-calendar"></i> Fecha</th>
@@ -374,14 +416,22 @@ Cargando registros...</pre
                   </tbody>
                 </table>
               </div>
-              
+
               <!-- Paginación -->
-              <div id="backupsPagination" class="d-flex justify-content-between align-items-center mt-3">
+              <div
+                id="backupsPagination"
+                class="d-flex justify-content-between align-items-center mt-3"
+              >
                 <div class="text-muted">
-                  Mostrando <span id="showingFrom">1</span> a <span id="showingTo">25</span> de <span id="totalBackups">0</span> backups
+                  Mostrando <span id="showingFrom">1</span> a
+                  <span id="showingTo">25</span> de
+                  <span id="totalBackups">0</span> backups
                 </div>
                 <nav>
-                  <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                  <ul
+                    class="pagination pagination-sm mb-0"
+                    id="paginationControls"
+                  >
                     <!-- Controles de paginación se generarán aquí -->
                   </ul>
                 </nav>
@@ -389,24 +439,45 @@ Cargando registros...</pre
             </div>
 
             <!-- Mensaje cuando no hay backups -->
-            <div id="driveBackupsEmpty" class="text-center py-4" style="display: none">
-              <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+            <div
+              id="driveBackupsEmpty"
+              class="text-center py-4"
+              style="display: none"
+            >
+              <i class="bi bi-inbox text-muted" style="font-size: 3rem"></i>
               <h5 class="text-muted mt-3">No hay backups disponibles</h5>
-              <p class="text-muted">No se encontraron backups en Google Drive.</p>
+              <p class="text-muted">
+                No se encontraron backups en Google Drive.
+              </p>
             </div>
 
             <!-- Mensaje de error -->
-            <div id="driveBackupsError" class="alert alert-danger" style="display: none">
+            <div
+              id="driveBackupsError"
+              class="alert alert-danger"
+              style="display: none"
+            >
               <i class="bi bi-exclamation-triangle"></i>
               <strong>Error al cargar backups</strong>
-              <p class="mb-0" id="driveBackupsErrorMessage">No se pudieron cargar los backups desde Google Drive.</p>
+              <p class="mb-0" id="driveBackupsErrorMessage">
+                No se pudieron cargar los backups desde Google Drive.
+              </p>
             </div>
 
             <!-- Input file para restaurar backup local -->
-            <input type="file" id="restoreFileInput" accept=".json,.gz,.zip" style="display: none;">
+            <input
+              type="file"
+              id="restoreFileInput"
+              accept=".json,.gz,.zip"
+              style="display: none"
+            />
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
               <i class="bi bi-x-circle"></i> Cerrar
             </button>
           </div>
@@ -482,23 +553,22 @@ Cargando registros...</pre
 
 <!-- Script adicional para diagnóstico -->
 <script>
-$(document).ready(function() {
-  // Esperar a que se cargue el script de diagnóstico
-  setTimeout(function() {
-    // Configuración personalizada para producción
-    if (typeof configurarDiagnostico === 'function') {
-      configurarDiagnostico({
-        autoEjecutar: true,
-        intervaloActualizacion: 30000, // 30 segundos
-        mostrarEnConsola: false,
-        mostrarEnPagina: true
-      });
-      
-      // Ejecutar diagnóstico inicial
-      ejecutarDiagnostico();
-    }
-  }, 2000);
-});
+  $(document).ready(function () {
+    // Esperar a que se cargue el script de diagnóstico
+    setTimeout(function () {
+      // Configuración personalizada para producción
+      if (typeof configurarDiagnostico === "function") {
+        configurarDiagnostico({
+          autoEjecutar: true,
+          intervaloActualizacion: 30000, // 30 segundos
+          mostrarEnConsola: false,
+          mostrarEnPagina: true,
+        });
+
+        // Ejecutar diagnóstico inicial
+        ejecutarDiagnostico();
+      }
+    }, 2000);
+  });
 </script>
->>>>>>> Stashed changes
 {% endblock %}
