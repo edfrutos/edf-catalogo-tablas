@@ -6,7 +6,7 @@
 # Autor: [Tu nombre o equipo] - 2025-07-29
 
 """
-System management and monitoring routes for admin functionality.
+Rutas de gestión y monitoreo de sistemas para la funcionalidad de administración.
 """
 import logging
 import os

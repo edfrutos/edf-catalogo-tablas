@@ -12,12 +12,13 @@ Proporciona funciones para registrar eventos y consultar el historial de auditor
 
 import logging
 import datetime
+from typing import Optional, Dict, Any
 from bson.objectid import ObjectId
 
 from app.database import get_audit_logs_collection
 
 
-def audit_log(event_type, user_id=None, details=None, ip_address=None, success=True):
+def audit_log(event_type: str, user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None, ip_address: Optional[str] = None, success: bool = True) -> bool:
     """
     Registra un evento de auditoría en la base de datos.
 
@@ -34,7 +35,7 @@ def audit_log(event_type, user_id=None, details=None, ip_address=None, success=T
     return log_event(event_type, user_id, details, ip_address, success)
 
 
-def log_event(event_type, user_id=None, details=None, ip_address=None, success=True):
+def log_event(event_type: str, user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None, ip_address: Optional[str] = None, success: bool = True) -> bool:
     """
     Registra un evento de auditoría en la base de datos.
 

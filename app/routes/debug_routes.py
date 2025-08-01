@@ -77,8 +77,10 @@ def fix_session():
 
     # Buscar el usuario en la base de datos
     users_collection = getattr(g, "users_collection", None)
-    if users_collection is None and hasattr(current_app, "mongo"):
-        users_collection = current_app.mongo.db.users
+    if users_collection is None:
+        from app.extensions import mongo
+        if mongo and mongo.db is not None:
+            users_collection = mongo.db.users
 
     from bson import ObjectId
 

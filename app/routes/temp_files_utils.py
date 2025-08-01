@@ -10,17 +10,18 @@ import time  # noqa: F401
 import tempfile
 import platform
 from datetime import datetime
+from typing import List, Dict, Optional, Union
 
 
-def list_temp_files(prefix="edefrutos2025_", directory=None):
+def list_temp_files(prefix: str = "edefrutos2025_", directory: Optional[str] = None) -> List[Dict[str, Union[str, float]]]:
     """
     Devuelve una lista de archivos temporales con detalles (nombre, tamaño MB, fecha modificación).
     Busca en múltiples ubicaciones según el sistema operativo.
     """
-    files = []
+    files: List[Dict[str, Union[str, float]]] = []
 
     # Determinar directorios a buscar según el SO
-    temp_dirs = []
+    temp_dirs: List[str] = []
     if directory:
         temp_dirs.append(directory)
     else:
@@ -59,8 +60,8 @@ def list_temp_files(prefix="edefrutos2025_", directory=None):
             continue  # Ignorar directorios sin permisos
 
     # Eliminar duplicados y ordenar
-    seen = set()
-    unique_files = []
+    seen: set[str] = set()
+    unique_files: List[Dict[str, Union[str, float]]] = []
     for file in files:
         if file["name"] not in seen:
             seen.add(file["name"])
@@ -70,9 +71,9 @@ def list_temp_files(prefix="edefrutos2025_", directory=None):
     return unique_files
 
 
-def _scan_directory(directory, prefix):
+def _scan_directory(directory: str, prefix: str) -> List[Dict[str, Union[str, float]]]:
     """Escanea un directorio específico buscando archivos con el prefijo dado."""
-    files = []
+    files: List[Dict[str, Union[str, float]]] = []
     try:
         for file in os.listdir(directory):
             if file.startswith(prefix):
@@ -99,7 +100,7 @@ def _scan_directory(directory, prefix):
     return files
 
 
-def delete_temp_files(filenames, prefix="edefrutos2025_", directory=None):
+def delete_temp_files(filenames: List[str], prefix: str = "edefrutos2025_", directory: Optional[str] = None) -> int:
     """
     Elimina archivos temporales seleccionados por nombre.
     Busca en múltiples ubicaciones si no se especifica directorio.
@@ -108,7 +109,7 @@ def delete_temp_files(filenames, prefix="edefrutos2025_", directory=None):
 
     # Obtener lista actual de archivos temporales con sus rutas
     current_files = list_temp_files(prefix, directory)
-    file_paths = {f["name"]: f["path"] for f in current_files}
+    file_paths: Dict[str, str] = {f["name"]: f["path"] for f in current_files}
 
     for filename in filenames:
         if filename.startswith(prefix) and filename in file_paths:

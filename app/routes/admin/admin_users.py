@@ -13,7 +13,7 @@ from datetime import datetime
 from bson import ObjectId
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from werkzeug.security import generate_password_hash
-from app.database import get_users_collection, get_db
+from app.database import get_users_collection
 from app.routes.maintenance_routes import admin_required
 from app.audit import audit_log
 
