@@ -1,471 +1,591 @@
-{% extends 'admin/base.html' %}
-{% block title %}Gestión de Respaldo de Base de Datos{% endblock %}
-
-{% block content %}
+{% extends 'admin/base.html' %} {% block title %}Gestión de Respaldo de Base de
+Datos{% endblock %} {% block content %}
 <div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-database-check me-2"></i>Gestión de Respaldo</h2>
-        <div>
-            <a href="{{ url_for('admin.list_drive_backups') }}" class="btn btn-outline-primary me-2">
-                <i class="bi bi-google me-1"></i> Ver en Google Drive
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-database-check me-2"></i>Gestión de Respaldo</h2>
+    <div>
+      <a
+        href="{{ url_for('admin.list_drive_backups') }}"
+        class="btn btn-outline-primary me-2"
+      >
+        <i class="bi bi-google me-1"></i> Ver en Google Drive
+      </a>
+      <button
+        onclick="window.location.reload()"
+        class="btn btn-outline-secondary"
+      >
+        <i class="bi bi-arrow-repeat"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Tarjeta de resumen de Google Drive -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div
+                class="text-xs font-weight-bold text-primary text-uppercase mb-1"
+              >
+                Respaldo en Google Drive
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ drive_backups_count }} respaldos almacenados
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="bi bi-google fa-2x text-gray-300"></i>
+            </div>
+          </div>
+          <div class="mt-2">
+            <a href="{{ url_for('admin.list_drive_backups') }}" class="text-xs">
+              Ver todos los respaldos <i class="bi bi-arrow-right"></i>
             </a>
-            <a href="{{ url_for('admin.db_backup') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-repeat"></i> Actualizar
-            </a>
+          </div>
         </div>
+      </div>
     </div>
-    
-    <!-- Tarjeta de resumen de Google Drive -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Respaldo en Google Drive</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ drive_backups_count }} respaldos almacenados</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-google fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <a href="{{ url_for('admin.list_drive_backups') }}" class="text-xs">
-                            Ver todos los respaldos <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
 
-    <!-- Panel de acciones -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <i class="bi bi-database-down me-2"></i>Crear Respaldo
-                </div>
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <p class="mb-0">Crea un nuevo respaldo completo de la base de datos. Se recomienda realizar esta acción antes de actualizaciones importantes.</p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button id="createBackupBtn" type="button" class="btn btn-primary">
-                                <i class="bi bi-download me-2"></i>Crear Respaldo Ahora
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <!-- Panel de acciones -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <i class="bi bi-database-down me-2"></i>Crear Respaldo Local
         </div>
-    </div>
-
-    <!-- Sección de Google Drive Backups -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-google me-2"></i>Respaldos en Google Drive</h5>
-                    <div class="d-flex gap-2">
-                        <button id="refreshDriveBackups" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-arrow-clockwise"></i> Actualizar
-                        </button>
-                        <span class="badge bg-info rounded-pill" id="driveBackupsCount">{{ drive_backups_count }} respaldos</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div id="driveBackupsLoading" class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                        </div>
-                        <p class="mt-2">Cargando respaldos desde Google Drive...</p>
-                    </div>
-                    
-                    <div id="driveBackupsContent" style="display: none;">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0" id="driveBackupsTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Nombre del Archivo</th>
-                                        <th>Tamaño</th>
-                                        <th>Fecha de Subida</th>
-                                        <th>Subido por</th>
-                                        <th class="text-end">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="driveBackupsTableBody">
-                                    <!-- Se llena dinámicamente -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div id="driveBackupsEmpty" class="text-center p-5" style="display: none;">
-                        <i class="bi bi-cloud text-muted" style="font-size: 3rem;"></i>
-                        <p class="mt-3 mb-0 text-muted">No hay respaldos en Google Drive</p>
-                    </div>
-                    
-                    <div id="driveBackupsError" class="alert alert-danger" style="display: none;">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <span id="driveBackupsErrorMessage">Error al cargar respaldos</span>
-                    </div>
-                </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <p class="mb-0">
+                Crea un nuevo respaldo local completo de la base de datos en el
+                directorio <code>backups/</code>. Se recomienda realizar esta
+                acción antes de actualizaciones importantes.
+              </p>
             </div>
+            <div class="col-md-4 text-end">
+              <button
+                id="createBackupBtn"
+                type="button"
+                class="btn btn-primary"
+              >
+                <i class="bi bi-download me-2"></i>Crear Respaldo Local
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Lista de respaldos locales -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-hdd me-2"></i>Respaldos Locales</h5>
-                    <span class="badge bg-primary rounded-pill">{{ backups|length }} respaldos</span>
-                </div>
-                <div class="card-body p-0">
-                    {% if backups %}
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Nombre del Archivo</th>
-                                        <th>Tamaño</th>
-                                        <th>Fecha de Creación</th>
-                                        <th>Estado</th>
-                                        <th class="text-end">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for backup in backups %}
-                                    <tr>
-                                        <td class="align-middle">
-                                            <i class="bi bi-file-earmark-zip-fill text-primary me-2"></i>
-                                            {{ backup }}
-                                        </td>
-                                        <td class="align-middle">
-                                            {% set file_path = [backup_dir, backup]|join('/') %}
-                                            {% set file_info = get_file_info(file_path) %}
-                                            {% if file_info.exists %}
-                                                {{ "%.2f"|format(file_info.size / (1024*1024)) }} MB
-                                            {% else %}
-                                                <span class="text-muted">No disponible</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="align-middle">
-                                            {{ file_info.mtime.strftime('%Y-%m-%d %H:%M:%S') if file_info.exists else 'N/A' }}
-                                        </td>
-                                        <td class="align-middle">
-                                            <span class="badge bg-secondary">Local</span>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ url_for('admin.download_backup', filename=backup) }}" 
-                                                   class="btn btn-sm btn-outline-primary"
-                                                   title="Descargar">
-                                                    <i class="bi bi-download"></i>
-                                                </a>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-outline-success"
-                                                        onclick="uploadToDrive('{{ backup }}')"
-                                                        title="Subir a Google Drive">
-                                                    <i class="bi bi-cloud-upload"></i>
-                                                </button>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-outline-danger"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#deleteBackupModal"
-                                                        data-backup="{{ backup }}"
-                                                        title="Eliminar local">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center p-5">
-                            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                            <p class="mt-3 mb-0 text-muted">No hay respaldos disponibles</p>
-                        </div>
+  <!-- Lista de respaldos locales -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div
+          class="card-header bg-white d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0"><i class="bi bi-hdd me-2"></i>Respaldos Locales</h5>
+          <span class="badge bg-primary rounded-pill"
+            >{{ backups|length }} respaldos</span
+          >
+        </div>
+        <div class="card-body p-0">
+          {% if backups %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Nombre del Archivo</th>
+                  <th>Tamaño</th>
+                  <th>Fecha de Creación</th>
+                  <th>Estado</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for backup in backups %}
+                <tr>
+                  <td class="align-middle">
+                    <i
+                      class="bi bi-file-earmark-zip-fill text-primary me-2"
+                    ></i>
+                    {{ backup }}
+                  </td>
+                  <td class="align-middle">
+                    {% set file_path = [backup_dir, backup]|join('/') %} {% set
+                    file_info = get_file_info(file_path) %} {% if
+                    file_info.exists %} {{ "%.2f"|format(file_info.size /
+                    (1024*1024)) }} MB {% else %}
+                    <span class="text-muted">No disponible</span>
                     {% endif %}
-                </div>
-                {% if backups and backups|length > 5 %}
-                <div class="card-footer bg-white">
-                    <small class="text-muted">Mostrando los 5 respaldos más recientes. Se mantendrán automáticamente los 5 más recientes.</small>
-                </div>
-                {% endif %}
-            </div>
+                  </td>
+                  <td class="align-middle">
+                    {% if file_info.exists %} {% if
+                    file_info.timestamp_from_name %}
+                    <div class="small">
+                      <div>
+                        <strong>✅ Hora Correcta:</strong> {{
+                        file_info.timestamp_from_name.strftime('%Y-%m-%d
+                        %H:%M:%S') }}
+                      </div>
+                      <div class="text-muted">
+                        <small
+                          ><strong>Archivo:</strong> {{
+                          file_info.mtime.strftime('%Y-%m-%d %H:%M:%S')
+                          }}</small
+                        >
+                      </div>
+                    </div>
+                    {% else %} {{ file_info.mtime.strftime('%Y-%m-%d %H:%M:%S')
+                    }} {% endif %} {% else %} N/A {% endif %}
+                  </td>
+                  <td class="align-middle">
+                    {% if backup.startswith('backup_') %}
+                    <span class="badge bg-success">JSON</span>
+                    {% else %}
+                    <span class="badge bg-warning">Binario</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    <div class="btn-group" role="group">
+                      <a
+                        href="{{ url_for('admin.download_backup', filename=backup) }}"
+                        class="btn btn-sm btn-outline-primary"
+                        title="Descargar"
+                      >
+                        <i class="bi bi-download"></i>
+                      </a>
+                      {% if backup.startswith('backup_') %}
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-warning"
+                        onclick="restoreLocalBackup('{{ backup }}')"
+                        title="Restaurar desde este backup"
+                      >
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                      </button>
+                      {% else %}
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        disabled
+                        title="Solo se pueden restaurar backups JSON"
+                      >
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                      </button>
+                      {% endif %}
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-success"
+                        onclick="uploadToDrive('{{ backup }}')"
+                        title="Subir a Google Drive"
+                      >
+                        <i class="bi bi-cloud-upload"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteBackupModal"
+                        data-backup="{{ backup }}"
+                        title="Eliminar local"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center p-5">
+            <i class="bi bi-inbox text-muted" style="font-size: 3rem"></i>
+            <p class="mt-3 mb-0 text-muted">No hay respaldos disponibles</p>
+          </div>
+          {% endif %}
         </div>
+        {% if backups and backups|length > 5 %}
+        <div class="card-footer bg-white">
+          <small class="text-muted"
+            >Mostrando los 5 respaldos más recientes. Se mantendrán
+            automáticamente los 5 más recientes.</small
+          >
+        </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Modal de confirmación para eliminar respaldo -->
 <div class="modal fade" id="deleteBackupModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirmar Eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Eliminación</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          ¿Estás seguro de que deseas eliminar el respaldo
+          <strong id="backupToDelete"></strong>?
+        </p>
+        <p class="text-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Esta acción no se
+          puede deshacer.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          onclick="deleteLocalBackup()"
+        >
+          <i class="bi bi-trash me-2"></i>Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  // Función simple para crear backup
+  // Función para mostrar notificaciones emergentes
+  function showNotification(title, message, type = "info", duration = 5000) {
+    // Crear el modal de notificación
+    const modalHtml = `
+      <div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header ${type === "success" ? "bg-success text-white" : type === "error" ? "bg-danger text-white" : "bg-info text-white"}">
+              <h5 class="modal-title">
+                ${type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️"} ${title}
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar el respaldo <strong id="backupToDelete"></strong>?</p>
-                <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Esta acción no se puede deshacer.</p>
+              <p class="mb-0">${message}</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteBackupForm" method="POST" action="" class="d-inline">
-                    <input type="hidden" name="_method" value="DELETE">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash me-2"></i>Eliminar
-                    </button>
-                </form>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
+          </div>
         </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Función para mostrar notificaciones
-function showAlert(type, title, message, details = '') {
-    // Crear el elemento de alerta
-    const alertElement = document.createElement('div');
-    alertElement.className = `alert alert-${type} alert-dismissible fade show`;
-    alertElement.role = 'alert';
-    
-    // Determinar el ícono según el tipo de alerta
-    let icon = '';
-    switch(type) {
-        case 'success':
-            icon = '<i class="bi bi-check-circle-fill"></i>';
-            break;
-        case 'danger':
-            icon = '<i class="bi bi-x-circle-fill"></i>';
-            break;
-        case 'warning':
-            icon = '<i class="bi bi-exclamation-triangle-fill"></i>';
-            break;
-        case 'info':
-        default:
-            icon = '<i class="bi bi-info-circle-fill"></i>';
-    }
-    
-    // Construir el contenido de la alerta
-    let alertContent = `
-        <div class="d-flex">
-            <div class="flex-shrink-0 me-3">
-                ${icon}
-            </div>
-            <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-start">
-                    <h6 class="alert-heading mb-1">${title}</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                </div>
-                <div class="alert-message">
-                    <p class="mb-1">${message}</p>
-                    ${details ? `<div class="alert-details mt-2">${details}</div>` : ''}
-                </div>
-            </div>
-        </div>
+      </div>
     `;
-    
-    alertElement.innerHTML = alertContent;
-    
-    // Agregar la alerta al contenedor de alertas
-    let alertsContainer = document.getElementById('alerts-container');
-    if (!alertsContainer) {
-        // Si no existe el contenedor, crearlo al principio del body
-        alertsContainer = document.createElement('div');
-        alertsContainer.id = 'alerts-container';
-        alertsContainer.className = 'position-fixed top-0 end-0 p-3';
-        alertsContainer.style.zIndex = '1100';
-        alertsContainer.style.maxWidth = '400px';
-        document.body.prepend(alertsContainer);
-    }
-    
-    // Insertar la nueva alerta al principio
-    alertsContainer.prepend(alertElement);
-    
-    // Mostrar la alerta con animación
-    const bsAlert = new bootstrap.Alert(alertElement);
-    
-    // Configurar el cierre automático después de 8 segundos (más tiempo para alertas con detalles)
-    const timeoutDuration = details ? 15000 : 8000;
-    const timeoutId = setTimeout(() => {
-        bsAlert.close();
-    }, timeoutDuration);
-    
-    // Limpiar el timeout si el usuario cierra manualmente la alerta
-    alertElement.addEventListener('closed.bs.alert', () => {
-        clearTimeout(timeoutId);
-    });
-    
-    // Devolver el elemento para permitir manipulación adicional si es necesario
-    return alertElement;
-}
 
-// Función para subir un respaldo a Google Drive
-function uploadToDrive(filename) {
-    if (!confirm(`¿Estás seguro de que deseas subir '${filename}' a Google Drive?`)) {
-        return;
+    // Remover modal anterior si existe
+    const existingModal = document.getElementById("notificationModal");
+    if (existingModal) {
+      existingModal.remove();
     }
 
-    const button = event.target.closest('button');
-    const row = button.closest('tr');
-    
-    // Deshabilitar botones y mostrar indicador de carga
-    const buttons = row.querySelectorAll('button');
-    buttons.forEach(btn => {
-        btn.disabled = true;
-        const spinner = document.createElement('span');
-        spinner.className = 'spinner-border spinner-border-sm d-none';
-        btn.prepend(spinner);
-    });
-    
-    button.querySelector('i').classList.add('d-none');
-    button.querySelector('.spinner-border').classList.remove('d-none');
-    
-    // Mostrar notificación de inicio
-    showAlert('info', '⏳ Subiendo a Google Drive', `Iniciando subida de '${filename}'. Por favor espera...`);
-    
-    // Realizar la petición al servidor
-    fetch(`/admin/backup/upload-to-drive/${encodeURIComponent(filename)}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
+    // Agregar nuevo modal al body
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+    // Mostrar modal
+    const modal = new bootstrap.Modal(
+      document.getElementById("notificationModal")
+    );
+    modal.show();
+
+    // Auto-cerrar después del tiempo especificado
+    if (duration > 0) {
+      setTimeout(() => {
+        modal.hide();
+      }, duration);
+    }
+  }
+
+  // Función para mostrar progreso
+  function showProgress(title, message) {
+    const progressHtml = `
+      <div class="modal fade" id="progressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title">🔄 ${title}</h5>
+            </div>
+            <div class="modal-body text-center">
+              <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Procesando...</span>
+              </div>
+              <p class="mb-0">${message}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remover modal anterior si existe
+    const existingModal = document.getElementById("progressModal");
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Agregar nuevo modal al body
+    document.body.insertAdjacentHTML("beforeend", progressHtml);
+
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById("progressModal"));
+    modal.show();
+    return modal;
+  }
+
+  function createLocalBackup() {
+    const button = document.getElementById("createBackupBtn");
+    if (!button) {
+      showNotification("Error", "No se encontró el botón de backup", "error");
+      return;
+    }
+
+    // Deshabilitar botón
+    button.disabled = true;
+    button.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-2"></span>Creando respaldo...';
+
+    // Mostrar progreso
+    const progressModal = showProgress(
+      "Creando Respaldo Local",
+      "Generando backup de la base de datos..."
+    );
+
+    // Realizar petición POST
+    fetch("/admin/db/backup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
     })
-    .then(response => {
+      .then((response) => {
+        console.log("Response status:", response.status);
+        console.log("Response headers:", response.headers);
+
         if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.error || 'Error en la respuesta del servidor');
-            });
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+
         return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Actualizar la fila con el nuevo estado
-            const statusCell = row.querySelector('td:nth-child(4)');
-            const sizeCell = row.querySelector('td:nth-child(2)');
-            const actionsCell = row.querySelector('td:last-child');
-            
-            // Actualizar estado
-            statusCell.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <span class="badge bg-success me-2">En Google Drive</span>
-                    <a href="${data.file_info?.web_view_url || data.file_info?.download_url || '#'}" 
-                       target="_blank" 
-                       class="ms-2"
-                       title="Ver en Google Drive">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                    </a>
-                </div>
-            `;
-            
-            // Actualizar tamaño si está disponible
-            if (data.file_info?.file_size_mb) {
-                sizeCell.textContent = `${data.file_info.file_size_mb} MB`;
-            }
-            
-            // Actualizar acciones
-            actionsCell.innerHTML = `
-                <div class="btn-group" role="group">
-                    <a href="${data.file_info.download_url}" 
-                       class="btn btn-sm btn-outline-primary"
-                       target="_blank"
-                       data-bs-toggle="tooltip"
-                       title="Descargar desde Google Drive">
-                        <i class="bi bi-cloud-download"></i>
-                    </a>
-                    <a href="${data.file_info.web_view_url}" 
-                       class="btn btn-sm btn-outline-info"
-                       target="_blank"
-                       data-bs-toggle="tooltip"
-                       title="Ver en Google Drive">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                    </a>
-                </div>
-            `;
-            
-            // Mostrar notificación de éxito
-            showAlert('success', 
-                '✅ Subida completada', 
-                `El archivo se ha subido correctamente a Google Drive.`,
-                `
-                    <div class="mt-2">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-muted small">Tamaño:</span>
-                            <span class="fw-medium">${data.file_info.file_size_mb || 'N/A'} MB</span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="text-muted small">Carpeta:</span>
-                            <span class="fw-medium">${data.file_info.folder_name || 'N/A'}</span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="text-muted small">ID de archivo:</span>
-                            <span class="text-truncate ms-2" style="max-width: 150px;" title="${data.file_info.file_id || ''}">
-                                ${data.file_info.file_id ? data.file_info.file_id.substring(0, 8) + '...' : 'N/A'}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="mt-3 d-flex justify-content-between">
-                        <a href="${data.file_info.download_url || '#'}" 
-                           class="btn btn-sm btn-outline-primary"
-                           ${!data.file_info.download_url ? 'disabled' : ''}>
-                            <i class="bi bi-download me-1"></i> Descargar
-                        </a>
-                        <a href="${data.file_info.web_view_url || '#'}" 
-                           class="btn btn-sm btn-outline-secondary" 
-                           target="_blank"
-                           ${!data.file_info.web_view_url ? 'disabled' : ''}>
-                            <i class="bi bi-box-arrow-up-right me-1"></i> Abrir en Drive
-                        </a>
-                    </div>
-                `
-            );
-            
-            // Si se eliminó el archivo local, actualizar la fila
-            if (data.deleted) {
-                row.classList.add('table-success');
-                setTimeout(() => {
-                    row.remove();
-                }, 2000);
-            }
+      })
+      .then((data) => {
+        console.log("Response data:", data);
+        progressModal.hide();
+
+        if (data.status === "success") {
+          showNotification(
+            "Éxito",
+            "✅ Respaldo local creado exitosamente!",
+            "success"
+          );
+          setTimeout(() => window.location.reload(), 2000);
         } else {
-            throw new Error(data.error || 'Error desconocido al subir el archivo');
+          throw new Error(data.message || "Error desconocido");
         }
-    })
-    .catch(error => {
-        console.error('Error al subir a Google Drive:', error);
-        
-        // Mostrar notificación de error
-        showAlert('danger', 
-            '❌ Error en la subida', 
-            'No se pudo subir el archivo a Google Drive.',
-            `
-                <div class="mt-2">
-                    <p class="mb-2">${error.message || 'Error desconocido'}</p>
-                    <p class="small text-muted mb-0">Por favor, verifica tu conexión a internet e inténtalo de nuevo más tarde.</p>
-                </div>
-            `
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        progressModal.hide();
+        showNotification(
+          "Error",
+          "❌ Error al crear respaldo: " + error.message,
+          "error"
         );
-        
-        // Restaurar botones
-        buttons.forEach(btn => {
-            btn.disabled = false;
-            const spinner = btn.querySelector('.spinner-border');
-            if (spinner) spinner.remove();
-        });
-        button.querySelector('i').classList.remove('d-none');
-    });
-}
+      })
+      .finally(() => {
+        // Restaurar botón
+        button.disabled = false;
+        button.innerHTML =
+          '<i class="bi bi-download me-2"></i>Crear Respaldo Local';
+      });
+  }
+
+  // Variable global para almacenar el archivo a eliminar
+  let backupToDelete = null;
+
+  // Configurar modal de eliminación
+  document.addEventListener("DOMContentLoaded", function () {
+    const backupBtn = document.getElementById("createBackupBtn");
+    if (backupBtn) {
+      backupBtn.addEventListener("click", createLocalBackup);
+    }
+
+    // Configurar modal de eliminación
+    const deleteModal = document.getElementById("deleteBackupModal");
+    if (deleteModal) {
+      deleteModal.addEventListener("show.bs.modal", function (event) {
+        const button = event.relatedTarget;
+        const backup = button.getAttribute("data-backup");
+        backupToDelete = backup;
+
+        const backupNameElement = document.getElementById("backupToDelete");
+        if (backupNameElement) {
+          backupNameElement.textContent = backup;
+        }
+      });
+    }
+  });
+
+  // Función para restaurar backup
+  function restoreLocalBackup(filename) {
+    if (!confirm("¿Restaurar desde " + filename + "?")) {
+      return;
+    }
+
+    // Mostrar progreso
+    const progressModal = showProgress(
+      "Restaurando Backup",
+      "Restaurando datos desde " + filename + "..."
+    );
+
+    fetch("/admin/restore-local-backup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({ filename: filename }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        progressModal.hide();
+
+        if (data.success) {
+          showNotification(
+            "Éxito",
+            "✅ Backup restaurado exitosamente!",
+            "success"
+          );
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          throw new Error(data.error || "Error desconocido");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        progressModal.hide();
+        showNotification(
+          "Error",
+          "❌ Error al restaurar: " + error.message,
+          "error"
+        );
+      });
+  }
+
+  // Función para subir a Google Drive
+  function uploadToDrive(filename) {
+    if (!confirm("¿Subir " + filename + " a Google Drive?")) {
+      return;
+    }
+
+    // Mostrar progreso
+    const progressModal = showProgress(
+      "Subiendo a Google Drive",
+      "Subiendo " + filename + " a Google Drive..."
+    );
+
+    fetch("/admin/backup/upload-to-drive/" + encodeURIComponent(filename), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        progressModal.hide();
+
+        if (data.success) {
+          showNotification(
+            "Éxito",
+            "✅ Backup subido a Google Drive exitosamente!",
+            "success"
+          );
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          throw new Error(data.error || "Error desconocido");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        progressModal.hide();
+        showNotification(
+          "Error",
+          "❌ Error al subir a Google Drive: " + error.message,
+          "error"
+        );
+      });
+  }
+
+  // Función para eliminar backup local
+  function deleteLocalBackup() {
+    if (!backupToDelete) {
+      showNotification("Error", "No se especificó archivo a eliminar", "error");
+      return;
+    }
+
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById("deleteBackupModal")
+    );
+    if (modal) {
+      modal.hide();
+    }
+
+    // Mostrar progreso
+    const progressModal = showProgress(
+      "Eliminando Backup",
+      "Eliminando " + backupToDelete + "..."
+    );
+
+    fetch("/admin/backup/delete-local/" + encodeURIComponent(backupToDelete), {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        progressModal.hide();
+
+        if (data.success) {
+          showNotification(
+            "Éxito",
+            "✅ Backup eliminado exitosamente!",
+            "success"
+          );
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          throw new Error(data.error || "Error desconocido");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        progressModal.hide();
+        showNotification(
+          "Error",
+          "❌ Error al eliminar backup: " + error.message,
+          "error"
+        );
+      });
+  }
+</script>
 {% endblock %}

@@ -18,6 +18,7 @@ from flask import Blueprint, request, jsonify, render_template, send_file, curre
 from werkzeug.utils import secure_filename
 from bson import ObjectId
 import pymongo
+from pymongo import errors as pymongo_errors
 
 from app.decorators import admin_required
 from app.database import get_mongo_db
@@ -162,7 +163,7 @@ class GoogleDriveManager:
         """Obtiene el cliente de Google Drive."""
         if not self.storage_client:
             try:
-                from tools.db_utils.google_drive_utils import get_storage_client
+                from app.utils.storage_utils import get_storage_client
                 self.storage_client = get_storage_client()
             except Exception as e:
                 log_error(f"Error obteniendo cliente de Google Drive: {str(e)}")
@@ -212,7 +213,7 @@ class GoogleDriveManager:
             if success:
                 # Eliminar metadatos de la base de datos
                 db = get_mongo_db()
-                if db:
+                if db is not None:
                     db.backups.delete_one({"file_id": file_id})
             
             return success
@@ -322,7 +323,7 @@ class BackupManager:
                 # Insertar documento
                 collection.insert_one(doc)
                 inserted_count += 1
-            except pymongo.errors.DuplicateKeyError:
+            except pymongo_errors.DuplicateKeyError:
                 # Documento duplicado, continuar
                 continue
             except Exception as e:

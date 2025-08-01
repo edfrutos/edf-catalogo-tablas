@@ -17,6 +17,7 @@ from pathlib import Path
 
 from bson import ObjectId
 import pymongo
+from pymongo import errors as pymongo_errors
 from flask import current_app, Blueprint, jsonify, request, send_file
 
 import psutil
@@ -401,7 +402,7 @@ class BackupManager:
                 # Insertar documento
                 collection.insert_one(doc)
                 inserted_count += 1
-            except pymongo.errors.DuplicateKeyError:
+            except pymongo_errors.DuplicateKeyError:
                 # Documento duplicado, continuar
                 continue
             except Exception as e:
@@ -681,7 +682,10 @@ def create_backup():
         # Importar función de Google Drive
         import sys
         import os
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'tools', 'db_utils'))
+        # Agregar la ruta de tools/db_utils al path
+        db_utils_path = os.path.join(os.path.dirname(__file__), '..', '..', 'tools', 'db_utils')
+        if db_utils_path not in sys.path:
+            sys.path.insert(0, db_utils_path)
         from google_drive_utils import upload_to_drive
         
         backup_manager = BackupManager()

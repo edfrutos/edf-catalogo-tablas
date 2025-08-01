@@ -17,6 +17,7 @@ from pathlib import Path
 
 from bson import ObjectId
 import pymongo
+from pymongo import errors as pymongo_errors
 from flask import current_app
 
 from app.database import get_mongo_db
@@ -481,7 +482,7 @@ class BackupManager:
                 # Insertar documento
                 collection.insert_one(processed_doc)
                 inserted_count += 1
-            except pymongo.errors.DuplicateKeyError:
+            except pymongo_errors.DuplicateKeyError:
                 # Documento duplicado, continuar
                 skipped_count += 1
                 continue

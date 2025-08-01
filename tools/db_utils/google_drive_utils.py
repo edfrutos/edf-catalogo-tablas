@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # Script: google_drive_utils.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: Utilidades para interactuar con Google Drive API
 # Uso: python3 google_drive_utils.py [opciones]
-# Requiere: [librerías externas, si aplica]
+# Requiere: pydrive2, google-auth-oauthlib, google-auth, google-api-python-client
 # Variables de entorno: [si aplica]
 # Autor: EDF Equipo de Desarrollo - 2025-05-28
 
@@ -11,9 +11,53 @@ from pydrive2.drive import GoogleDrive
 import os
 import argparse
 import logging
+import datetime
+import tempfile
+import pickle
+import traceback
+from typing import Dict, Union, Any, TypedDict, cast, Optional, List
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+# Configurar logging
 logging.basicConfig(level=logging.DEBUG)
 
-def get_drive():
+# Configurar tipos para suprimir advertencias de Pyright
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnusedCallResult=false
+
+# Tipo para el resultado de upload_to_drive
+class UploadResult(TypedDict, total=False):
+    success: bool
+    file_id: str
+    file_name: str
+    file_size: float
+    file_url: str
+    error: str
+    filename: str
+    suggested_solution: str
+
+# Tipo para el resultado de reset_gdrive_token
+class ResetTokenResult(TypedDict, total=False):
+    success: bool
+    error: str
+    message: str
+    next_steps: str
+
+# Tipo para la información de archivos en Google Drive
+class FileInfo(TypedDict):
+    id: str
+    name: str
+    size: int
+    created: str
+    modified: str
+    download_url: str
+
+def get_drive() -> GoogleDrive:
     """
     Inicializa y devuelve una instancia autenticada de Google Drive.
     
@@ -48,39 +92,43 @@ def get_drive():
         
         # Configuración de autenticación
         gauth = GoogleAuth()
+        gauth_any = cast(Any, gauth)  # Para evitar problemas de tipos
         
         # Configurar el archivo de credenciales
-        gauth.settings['client_config_file'] = creds_file
+        settings = cast(Dict[str, Any], gauth.settings)
+        settings['client_config_file'] = creds_file
         
         # Configuración del flujo OAuth
-        gauth.DEFAULT_SETTINGS['client_config_file'] = creds_file
-        gauth.DEFAULT_SETTINGS['save_credentials_file'] = token_file
-        gauth.DEFAULT_SETTINGS['get_refresh_token'] = True
-        gauth.DEFAULT_SETTINGS['oauth_scope'] = ['https://www.googleapis.com/auth/drive']
+        default_settings = cast(Dict[str, Any], gauth.DEFAULT_SETTINGS)
+        default_settings['client_config_file'] = creds_file
+        default_settings['save_credentials_file'] = token_file
+        default_settings['get_refresh_token'] = True
+        default_settings['oauth_scope'] = ['https://www.googleapis.com/auth/drive']
         
         # Configurar el backend de autenticación
-        gauth.settings['client_config_backend'] = 'file'
-        gauth.settings['save_credentials_backend'] = 'file'
-        gauth.settings['save_credentials'] = True
+        settings = cast(Dict[str, Any], gauth.settings)
+        settings['client_config_backend'] = 'file'
+        settings['save_credentials_backend'] = 'file'
+        settings['save_credentials'] = True
         
         # Cargar credenciales existentes si existen
         if os.path.exists(token_file):
             try:
                 print(f"Cargando credenciales desde: {token_file}")
-                gauth.LoadCredentialsFile(token_file)
+                gauth_any.LoadCredentialsFile(token_file)
                 print("✓ Credenciales cargadas correctamente")
                 
                 # Verificar si el token ha expirado y necesita refresh
                 # Usar hasattr para verificar si existe access_token_expired en GoogleAuth, NO en GoogleDrive
                 needs_refresh = False
                 try:
-                    if hasattr(gauth, 'access_token_expired') and gauth.access_token_expired:
+                    if hasattr(gauth_any, 'access_token_expired') and gauth_any.access_token_expired:
                         needs_refresh = True
-                    elif hasattr(gauth, 'credentials') and gauth.credentials:
+                    elif hasattr(gauth_any, 'credentials') and gauth_any.credentials:
                         # Verificar de manera alternativa si las credenciales están válidas
-                        import datetime
-                        if hasattr(gauth.credentials, 'token_expiry') and gauth.credentials.token_expiry:
-                            if gauth.credentials.token_expiry <= datetime.datetime.utcnow():
+                        credentials = gauth_any.credentials
+                        if hasattr(credentials, 'token_expiry') and credentials.token_expiry:
+                            if credentials.token_expiry <= datetime.datetime.utcnow():
                                 needs_refresh = True
                 except Exception as check_error:
                     print(f"⚠️ No se pudo verificar el estado del token: {check_error}")
@@ -90,8 +138,8 @@ def get_drive():
                 if needs_refresh:
                     print("⚠️ Token expirado, intentando refresh...")
                     try:
-                        gauth.Refresh()
-                        gauth.SaveCredentialsFile(token_file)
+                        gauth_any.Refresh()
+                        gauth_any.SaveCredentialsFile(token_file)
                         print("✓ Token refrescado exitosamente")
                     except Exception as refresh_error:
                         print(f"✗ Error al refrescar token: {refresh_error}")
@@ -103,18 +151,18 @@ def get_drive():
                 # NO eliminamos el archivo automáticamente
                 # En su lugar, proporcionamos instrucciones claras
                 raise Exception(f"Error con credenciales guardadas: {str(e)}. "
-                              f"Si el problema persiste, ejecute: "
-                              f"cd {script_dir} && python setup_google_drive.py")
+                              + f"Si el problema persiste, ejecute: "
+                              + f"cd {script_dir} && python setup_google_drive.py")
         
         # Iniciar autenticación si es necesario
         # Verificar si necesitamos autenticación con verificaciones más robustas
         needs_auth = False
-        if not hasattr(gauth, 'credentials') or gauth.credentials is None:
+        if not hasattr(gauth_any, 'credentials') or gauth_any.credentials is None:
             needs_auth = True
         else:
             # Verificar expiración de manera segura SOLO en GoogleAuth
             try:
-                if hasattr(gauth, 'access_token_expired') and gauth.access_token_expired:
+                if hasattr(gauth_any, 'access_token_expired') and gauth_any.access_token_expired:
                     needs_auth = True
             except Exception:
                 # Si hay error verificando, asumimos que está bien
@@ -125,14 +173,14 @@ def get_drive():
                 # Intentar cargar credenciales existentes
                 try:
                     print("Intentando cargar credenciales guardadas...")
-                    gauth.LoadCredentialsFile(token_file)
+                    gauth_any.LoadCredentialsFile(token_file)
                     # ⚠️ IMPORTANTE: solo verificar access_token_expired en GoogleAuth, NO en GoogleDrive
-                    if gauth.credentials and hasattr(gauth, 'access_token_expired') and not gauth.access_token_expired:
+                    if gauth_any.credentials and hasattr(gauth_any, 'access_token_expired') and not gauth_any.access_token_expired:
                         print("✓ Credenciales cargadas y válidas")
                     else:
                         print("⚠️ Las credenciales expiraron, intentando refrescar...")
-                        gauth.Refresh()
-                        gauth.SaveCredentialsFile(token_file)
+                        gauth_any.Refresh()
+                        gauth_any.SaveCredentialsFile(token_file)
                         print("✓ Token refrescado correctamente")
                 except Exception as e:
                     print(f"✗ Error al cargar/refrescar credenciales: {str(e)}")
@@ -167,7 +215,7 @@ def get_drive():
         print("="*80 + "\n")
         raise Exception(error_msg)
 
-def get_or_create_folder(drive, folder_name):
+def get_or_create_folder(drive: GoogleDrive, folder_name: str) -> str:
     """
     Busca una carpeta por nombre en Google Drive y la devuelve si existe.
     Si no existe, la crea.
@@ -213,7 +261,7 @@ def get_or_create_folder(drive, folder_name):
         print(error_msg)
         raise Exception(error_msg)
 
-def upload_to_drive(file_path, folder_name='Backups_CatalogoTablas'):
+def upload_to_drive(file_path: str, folder_name: str = 'Backups_CatalogoTablas') -> UploadResult:
     """
     Sube un archivo a Google Drive en la carpeta especificada.
     
@@ -222,15 +270,16 @@ def upload_to_drive(file_path, folder_name='Backups_CatalogoTablas'):
         folder_name (str): Nombre de la carpeta en Google Drive (se creará si no existe)
         
     Returns:
-        dict: Diccionario con el resultado de la operación
+        Dict[str, Union[bool, str, float]]: Diccionario con el resultado de la operación
+            - success (bool): True si la operación fue exitosa
+            - file_id (str): ID del archivo en Google Drive (solo si success=True)
+            - file_name (str): Nombre del archivo
+            - file_size (float): Tamaño del archivo en MB (solo si success=True)
+            - file_url (str): URL de vista previa del archivo (solo si success=True)
+            - error (str): Mensaje de error (solo si success=False)
+            - filename (str): Nombre del archivo (solo si success=False)
+            - suggested_solution (str): Solución sugerida (solo si success=False)
     """
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    from google.auth.transport.requests import Request
-    from googleapiclient.discovery import build
-    from googleapiclient.http import MediaFileUpload
-    import pickle
-    import os
     
     print("\n" + "="*80)
     print(f"INICIANDO SUBIDA A GOOGLE DRIVE: {os.path.basename(file_path)}")
@@ -310,7 +359,7 @@ def upload_to_drive(file_path, folder_name='Backups_CatalogoTablas'):
         results = service.files().list(q=query, fields="files(id, name)").execute()
         items = results.get('files', [])
         
-        file_metadata = {
+        file_upload_metadata: Dict[str, Any] = {
             'name': file_name,
             'parents': [folder_id]
         }
@@ -327,7 +376,7 @@ def upload_to_drive(file_path, folder_name='Backups_CatalogoTablas'):
             print(f"   Archivo actualizado exitosamente con ID: {file_id}")
         else:
             file = service.files().create(
-                body=file_metadata,
+                body=file_upload_metadata,
                 media_body=media,
                 fields='id'
             ).execute()
@@ -371,7 +420,7 @@ def upload_to_drive(file_path, folder_name='Backups_CatalogoTablas'):
             'suggested_solution': 'Verifica la conexión a internet y los permisos de Google Drive.'
         }
 
-def delete_file(file_id):
+def delete_file(file_id: str) -> bool:
     """
     Elimina un archivo de Google Drive por su ID.
     
@@ -412,7 +461,7 @@ def delete_file(file_id):
         print(error_msg)
         raise Exception(error_msg)
 
-def download_file(file_id, output_path=None):
+def download_file(file_id: str, output_path: Optional[str] = None) -> Union[bytes, str]:
     """
     Descarga un archivo de Google Drive por su ID.
     
@@ -449,8 +498,6 @@ def download_file(file_id, output_path=None):
         print("Descargando contenido...")
         try:
             # Usar un archivo temporal para la descarga
-            import tempfile
-            import os
             
             with tempfile.NamedTemporaryFile(delete=False) as temp_file:
                 temp_path = temp_file.name
@@ -492,7 +539,7 @@ def download_file(file_id, output_path=None):
         print(error_msg)
         raise Exception(error_msg)
 
-def list_files_in_folder(folder_name='Backups_CatalogoTablas'):
+def list_files_in_folder(folder_name: str = 'Backups_CatalogoTablas') -> List[Dict[str, Any]]:
     """
     Lista todos los archivos en una carpeta específica de Google Drive.
     
@@ -500,7 +547,7 @@ def list_files_in_folder(folder_name='Backups_CatalogoTablas'):
         folder_name (str): Nombre de la carpeta a listar
     
     Returns:
-        list: Lista de diccionarios con información de los archivos
+        List[Dict[str, Any]]: Lista de diccionarios con información de los archivos
     """
     try:
         print(f"Listando archivos en la carpeta: {folder_name}")
@@ -523,7 +570,8 @@ def list_files_in_folder(folder_name='Backups_CatalogoTablas'):
                 'size': int(file_obj.get('fileSize', 0)),
                 'created': file_obj.get('createdDate', ''),
                 'modified': file_obj.get('modifiedDate', ''),
-                'download_url': f"https://drive.google.com/file/d/{file_obj['id']}/view"
+                'download_url': f"https://drive.google.com/file/d/{file_obj['id']}/view",
+                'file_id': file_obj['id']  # Agregar file_id para descarga directa
             }
             files_info.append(file_info)
         
@@ -535,7 +583,7 @@ def list_files_in_folder(folder_name='Backups_CatalogoTablas'):
         print(error_msg)
         raise Exception(error_msg)
 
-def reset_gdrive_token():
+def reset_gdrive_token() -> ResetTokenResult:
     """
     Elimina el token.json y muestra instrucciones para regenerar el refresh_token de Google Drive.
     
@@ -623,13 +671,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.reset_token:
-        reset_gdrive_token()
+        _ = reset_gdrive_token()
     elif args.filepath:
         try:
             enlace = upload_to_drive(args.filepath, args.folder)
             print(f"Archivo subido correctamente. Enlace: {enlace}")
         except Exception as e:
-            import traceback
             print(f"Error al subir el archivo: {e}")
             traceback.print_exc()
     else:

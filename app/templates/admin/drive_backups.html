@@ -1,416 +1,636 @@
-{% extends "admin/base.html" %}
-
-{% block title %}{{ title }} - {{ super() }}{% endblock %}
-
-{% block content %}
+{% extends "admin/base.html" %} {% block title %}{{ title }} - {{ super() }}{%
+endblock %} {% block content %}
 <div class="container-fluid">
-    <h1 class="h3 mb-4 text-dark">Respaldo en Google Drive</h1>
-    
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 fw-bold text-primary">Archivos de Respaldo</h6>
-            <div class="d-flex gap-2">
-                <button id="refreshBackups" class="btn btn-sm btn-success">
-                    <i class="bi bi-arrow-clockwise"></i> Actualizar
-                </button>
-                <a href="{{ url_for('admin.db_backup') }}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-arrow-left"></i> Volver a copias de seguridad
-                </a>
-            </div>
-        </div>
-        <div class="card-body">
-            {% if backups %}
-                <!-- Botones de acciones masivas -->
-                <div class="mb-3">
-                    <button id="deleteSelectedBackups" class="btn btn-danger btn-sm" disabled>
-                        <i class="bi bi-trash"></i> Eliminar Seleccionados
-                    </button>
-                    <span id="selectedCount" class="ms-2 text-muted">0 elementos seleccionados</span>
-                </div>
-                
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="backupsTable" width="100%" cellspacing="0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th width="50"><input type="checkbox" id="selectAll" class="form-check-input"></th>
-                                <th>Nombre del Archivo</th>
-                                <th width="100">Tamaño</th>
-                                <th width="150">Subido el</th>
-                                <th width="120">Subido por</th>
-                                <th width="200" class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for backup in backups %}
-                            <tr>
-                                <td><input type="checkbox" class="form-check-input backup-checkbox" data-backup-id="{{ backup._id }}" data-file-id="{{ backup.file_id if backup.file_id else backup._id }}"></td>
-                                <td>
-                                    <strong>{{ backup.filename }}</strong>
-                                    {% if backup.description %}
-                                    <br><small class="text-muted">{{ backup.description }}</small>
-                                    {% endif %}
-                                </td>
-                                <td><span class="badge bg-info">{{ "%.2f"|format(backup.file_size / (1024 * 1024)) }} MB</span></td>
-                                <td>
-                                    <small>{{ backup.uploaded_at.strftime('%d/%m/%Y') if backup.uploaded_at else 'N/A' }}</small>
-                                    <br><small class="text-muted">{{ backup.uploaded_at.strftime('%H:%M') if backup.uploaded_at else '' }}</small>
-                                </td>
-                                <td><span class="badge bg-secondary">{{ backup.uploaded_by_name|default('Sistema') }}</span></td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group" aria-label="Acciones de backup">
-                                        <a href="{{ backup.download_url }}" 
-                                           class="btn btn-primary btn-sm" 
-                                           title="Descargar respaldo"
-                                           target="_blank">
-                                            <i class="bi bi-download"></i>
-                                        </a>
-                                        <button class="btn btn-success btn-sm restore-backup-btn" 
-                                                data-backup-id="{{ backup._id }}"
-                                                data-filename="{{ backup.filename|e }}"
-                                                data-download-url="{{ backup.download_url }}"
-                                                title="Restaurar backup">
-                                            <i class="bi bi-arrow-counterclockwise"></i>
-                                        </button>
-                                        <a href="{{ backup.web_view_url }}" 
-                                           class="btn btn-info btn-sm" 
-                                           title="Abrir en Google Drive"
-                                           target="_blank">
-                                            <i class="bi bi-google"></i>
-                                        </a>
-                                        <button class="btn btn-danger btn-sm delete-backup-btn" 
-                                                data-backup-id="{{ backup._id }}"
-                                                data-file-id="{{ backup.file_id if backup.file_id else backup._id }}"
-                                                data-filename="{{ backup.filename|e }}"
-                                                title="Eliminar backup">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="alert alert-info d-flex align-items-center" role="alert">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <div>
-                        No hay respaldos en Google Drive.
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-{% endblock %}
+  <h1 class="h3 mb-4 text-dark">Respaldo en Google Drive</h1>
 
-{% block scripts %}
-{{ super() }}
+  <div class="card shadow mb-4">
+    <div
+      class="card-header py-3 d-flex justify-content-between align-items-center"
+    >
+      <h6 class="m-0 fw-bold text-primary">Archivos de Respaldo</h6>
+      <div class="d-flex gap-2">
+        <button id="createBackupToDrive" class="btn btn-sm btn-warning">
+          <i class="bi bi-cloud-upload"></i> Crear Backup Directo
+        </button>
+        <button id="refreshBackups" class="btn btn-sm btn-success">
+          <i class="bi bi-arrow-clockwise"></i> Actualizar
+        </button>
+        <a
+          href="{{ url_for('admin.db_backup') }}"
+          class="btn btn-sm btn-primary"
+        >
+          <i class="bi bi-arrow-left"></i> Volver a copias de seguridad
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if backups %}
+      <!-- Botones de acciones masivas -->
+      <div class="mb-3">
+        <button
+          id="deleteSelectedBackups"
+          class="btn btn-danger btn-sm"
+          disabled
+        >
+          <i class="bi bi-trash"></i> Eliminar Seleccionados
+        </button>
+        <span id="selectedCount" class="ms-2 text-muted"
+          >0 elementos seleccionados</span
+        >
+      </div>
+
+      <div class="table-responsive">
+        <table
+          class="table table-striped table-hover"
+          id="backupsTable"
+          width="100%"
+          cellspacing="0"
+        >
+          <thead class="table-dark">
+            <tr>
+              <th width="50">
+                <input
+                  type="checkbox"
+                  id="selectAll"
+                  class="form-check-input"
+                />
+              </th>
+              <th>Nombre del Archivo</th>
+              <th width="100">Tamaño</th>
+              <th width="150">Subido el</th>
+              <th width="120">Subido por</th>
+              <th width="200" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for backup in backups %}
+            <tr>
+              <td>
+                <input
+                  type="checkbox"
+                  class="form-check-input backup-checkbox"
+                  data-backup-id="{{ backup._id }}"
+                  data-file-id="{{ backup.file_id if backup.file_id else backup._id }}"
+                />
+              </td>
+              <td>
+                <strong>{{ backup.filename }}</strong>
+                {% if backup.description %}
+                <br /><small class="text-muted">{{ backup.description }}</small>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-info"
+                  >{{ "%.2f"|format(backup.file_size / (1024 * 1024)) }}
+                  MB</span
+                >
+              </td>
+              <td>
+                {% if backup.uploaded_at %} {% if backup.uploaded_at is string
+                %}
+                <small
+                  >{{ backup.uploaded_at[:10] if backup.uploaded_at else 'N/A'
+                  }}</small
+                >
+                <br /><small class="text-muted"
+                  >{{ backup.uploaded_at[11:16] if backup.uploaded_at and
+                  backup.uploaded_at|length > 16 else '' }}</small
+                >
+                {% else %}
+                <small>{{ backup.uploaded_at.strftime('%d/%m/%Y') }}</small>
+                <br /><small class="text-muted"
+                  >{{ backup.uploaded_at.strftime('%H:%M') }}</small
+                >
+                {% endif %} {% else %}
+                <small>N/A</small>
+                <br /><small class="text-muted"></small>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-secondary"
+                  >{{ backup.uploaded_by_name|default('Sistema') }}</span
+                >
+              </td>
+              <td class="text-center">
+                <div
+                  class="btn-group"
+                  role="group"
+                  aria-label="Acciones de backup"
+                >
+                  <a
+                    href="{{ backup.download_url }}"
+                    class="btn btn-primary btn-sm"
+                    title="Descargar respaldo"
+                    target="_blank"
+                  >
+                    <i class="bi bi-download"></i>
+                  </a>
+                  <button
+                    class="btn btn-success btn-sm restore-backup-btn"
+                    data-backup-id="{{ backup._id }}"
+                    data-filename="{{ backup.filename|e }}"
+                    data-download-url="{{ backup.download_url }}"
+                    title="Restaurar backup"
+                  >
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+                  <a
+                    href="{{ backup.web_view_url }}"
+                    class="btn btn-info btn-sm"
+                    title="Abrir en Google Drive"
+                    target="_blank"
+                  >
+                    <i class="bi bi-google"></i>
+                  </a>
+                  <button
+                    class="btn btn-danger btn-sm delete-backup-btn"
+                    data-backup-id="{{ backup._id }}"
+                    data-file-id="{{ backup.file_id if backup.file_id else backup._id }}"
+                    data-filename="{{ backup.filename|e }}"
+                    title="Eliminar backup"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        <div>No hay respaldos en Google Drive.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %} {{ super() }}
 <!-- DataTables CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css"
+/>
 <!-- DataTables JS -->
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script
+  type="text/javascript"
+  charset="utf8"
+  src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"
+></script>
+<script
+  type="text/javascript"
+  charset="utf8"
+  src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"
+></script>
 
 <script>
-$(document).ready(function() {
-    {% if backups %}
-    // Inicializar DataTable solo si hay backups
-    var table = $('#backupsTable').DataTable({
-        "order": [[3, "desc"]], // Ordenar por fecha (columna 3)
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
-        },
-        "columnDefs": [
-            { "orderable": false, "targets": [0, 5] }, // Deshabilitar ordenación en checkbox y acciones
-            { "searchable": false, "targets": [0, 5] } // No buscar en checkbox y acciones
-        ],
-        "pageLength": 10,
-        "responsive": true,
-        "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-               '<"row"<"col-sm-12"tr>>' +
-               '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
-    });
-    {% endif %}
+  $(document).ready(function() {
+      {% if backups %}
+      // Inicializar DataTable solo si hay backups
+      var table = $('#backupsTable').DataTable({
+          "order": [[3, "desc"]], // Ordenar por fecha (columna 3)
+          "language": {
+              "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+          },
+          "columnDefs": [
+              { "orderable": false, "targets": [0, 5] }, // Deshabilitar ordenación en checkbox y acciones
+              { "searchable": false, "targets": [0, 5] } // No buscar en checkbox y acciones
+          ],
+          "pageLength": 10,
+          "responsive": true,
+          "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+      });
+      {% endif %}
 
-    // Manejar selección de todos los checkboxes
-    $('#selectAll').change(function() {
-        $('.backup-checkbox').prop('checked', $(this).is(':checked'));
-        updateSelectedCount();
-        updateActionButtons();
-    });
+      // Manejar selección de todos los checkboxes
+      $('#selectAll').change(function() {
+          $('.backup-checkbox').prop('checked', $(this).is(':checked'));
+          updateSelectedCount();
+          updateActionButtons();
+      });
 
-    // Manejar selección individual de checkboxes
-    $(document).on('change', '.backup-checkbox', function() {
-        updateSelectedCount();
-        updateActionButtons();
-        
-        // Actualizar estado del checkbox "Seleccionar todo"
-        var totalCheckboxes = $('.backup-checkbox').length;
-        var checkedCheckboxes = $('.backup-checkbox:checked').length;
-        $('#selectAll').prop('checked', totalCheckboxes === checkedCheckboxes);
-        $('#selectAll').prop('indeterminate', checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
-    });
+      // Manejar selección individual de checkboxes
+      $(document).on('change', '.backup-checkbox', function() {
+          updateSelectedCount();
+          updateActionButtons();
 
-    // Actualizar contador de elementos seleccionados
-    function updateSelectedCount() {
-        var count = $('.backup-checkbox:checked').length;
-        $('#selectedCount').text(count + ' elemento' + (count !== 1 ? 's' : '') + ' seleccionado' + (count !== 1 ? 's' : ''));
-    }
+          // Actualizar estado del checkbox "Seleccionar todo"
+          var totalCheckboxes = $('.backup-checkbox').length;
+          var checkedCheckboxes = $('.backup-checkbox:checked').length;
+          $('#selectAll').prop('checked', totalCheckboxes === checkedCheckboxes);
+          $('#selectAll').prop('indeterminate', checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
+      });
 
-    // Actualizar estado de botones de acción
-    function updateActionButtons() {
-        var hasSelected = $('.backup-checkbox:checked').length > 0;
-        $('#deleteSelectedBackups').prop('disabled', !hasSelected);
-    }
+      // Actualizar contador de elementos seleccionados
+      function updateSelectedCount() {
+          var count = $('.backup-checkbox:checked').length;
+          $('#selectedCount').text(count + ' elemento' + (count !== 1 ? 's' : '') + ' seleccionado' + (count !== 1 ? 's' : ''));
+      }
 
-    // Botón de actualizar lista
-    $('#refreshBackups').click(function() {
-        var btn = $(this);
-        var originalHtml = btn.html();
-        
-        btn.html('<i class="bi bi-arrow-clockwise"></i> Actualizando...').prop('disabled', true);
-        
-        // Recargar la página
-        setTimeout(function() {
-            window.location.reload();
-        }, 500);
-    });
+      // Actualizar estado de botones de acción
+      function updateActionButtons() {
+          var hasSelected = $('.backup-checkbox:checked').length > 0;
+          $('#deleteSelectedBackups').prop('disabled', !hasSelected);
+      }
 
-    // Botón de eliminar seleccionados
-    $('#deleteSelectedBackups').click(function() {
-        var selectedBackups = [];
-        $('.backup-checkbox:checked').each(function() {
-            selectedBackups.push({
-                id: $(this).data('backup-id'),
-                fileId: $(this).data('file-id'),
-                filename: $(this).closest('tr').find('td:nth-child(2)').text().trim()
-            });
-        });
+      // Botón de actualizar lista
+      $('#refreshBackups').click(function() {
+          var btn = $(this);
+          var originalHtml = btn.html();
 
-        if (selectedBackups.length === 0) {
-            showAlert('warning', 'No hay backups seleccionados');
-            return;
-        }
+          btn.html('<i class="bi bi-arrow-clockwise"></i> Actualizando...').prop('disabled', true);
 
-        var confirmMsg = '¿Está seguro de que desea eliminar ' + selectedBackups.length + ' backup(s) seleccionado(s)?';
-        if (confirm(confirmMsg)) {
-            deleteMultipleBackups(selectedBackups);
-        }
-    });
+          // Recargar la página
+          setTimeout(function() {
+              window.location.reload();
+          }, 500);
+      });
 
-    // Botón de restaurar backup individual
-    $(document).on('click', '.restore-backup-btn', function() {
-        var backupId = $(this).data('backup-id');
-        var filename = $(this).data('filename');
-        var downloadUrl = $(this).data('download-url');
-        
-        if (confirm('¿Está seguro de que desea restaurar el backup "' + filename + '"? Esta acción sobrescribirá los datos actuales.')) {
-            restoreBackup(backupId, downloadUrl, filename);
-        }
-    });
+      // Botón de eliminar seleccionados
+      $('#deleteSelectedBackups').click(function() {
+          var selectedBackups = [];
+          $('.backup-checkbox:checked').each(function() {
+              selectedBackups.push({
+                  id: $(this).data('backup-id'),
+                  fileId: $(this).data('file-id'),
+                  filename: $(this).closest('tr').find('td:nth-child(2)').text().trim()
+              });
+          });
 
-    // Botón de eliminar backup individual
-    $(document).on('click', '.delete-backup-btn', function() {
-        var backupId = $(this).data('backup-id');
-        var fileId = $(this).data('file-id');
-        var filename = $(this).data('filename');
-        
-        if (confirm('¿Está seguro de que desea eliminar el backup "' + filename + '"?')) {
-            deleteBackup(backupId, fileId, filename);
-        }
-    });
+          if (selectedBackups.length === 0) {
+              showAlert('warning', 'No hay backups seleccionados');
+              return;
+          }
 
-    // Función para restaurar backup
-    function restoreBackup(backupId, downloadUrl, filename) {
-        var btn = $('.restore-backup-btn[data-backup-id="' + backupId + '"]');
-        var originalHtml = btn.html();
-        
-        btn.html('<i class="bi bi-arrow-clockwise"></i>').prop('disabled', true);
-        
-        // Mostrar mensaje de progreso
-        showAlert('info', 'Iniciando restauración del backup "' + filename + '"...');
-        
-        $.ajax({
-            url: '/admin/restore-drive-backup',
-            type: 'POST',
-            data: {
-                backup_id: backupId,
-                download_url: downloadUrl
-            },
-            success: function(response) {
-                if (response.status === 'success') {
-                    showAlert('success', 'Backup restaurado exitosamente: ' + (response.message || ''));
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 2000);
-                } else {
-                    showAlert('danger', 'Error al restaurar backup: ' + (response.message || 'Error desconocido'));
-                }
-            },
-            error: function(xhr, status, error) {
-                var errorMsg = 'Error al restaurar backup';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg += ': ' + xhr.responseJSON.message;
-                }
-                showAlert('danger', errorMsg);
-                console.error('Error details:', xhr, status, error);
-            },
-            complete: function() {
-                btn.html(originalHtml).prop('disabled', false);
-            }
-        });
-    }
+          var confirmMsg = '¿Está seguro de que desea eliminar ' + selectedBackups.length + ' backup(s) seleccionado(s)?';
+          if (confirm(confirmMsg)) {
+              deleteMultipleBackups(selectedBackups);
+          }
+      });
 
-    // Función para eliminar backup individual
-    function deleteBackup(backupId, fileId, filename) {
-        var btn = $('.delete-backup-btn[data-backup-id="' + backupId + '"]');
-        var originalHtml = btn.html();
-        
-        btn.html('<i class="bi bi-arrow-clockwise"></i>').prop('disabled', true);
-        
-        $.ajax({
-            url: '/admin/maintenance/drive/delete/' + fileId,
-            type: 'DELETE',
-            // Parámetro data eliminado - no es necesario ya que fileId va en la URL
-            success: function(response) {
-                if (response.status === 'success') {
-                    showAlert('success', 'Backup eliminado exitosamente');
-                    // Remover la fila de la tabla
-                    var row = btn.closest('tr');
-                    {% if backups %}
-                    table.row(row).remove().draw();
-                    {% else %}
-                    row.fadeOut(500, function() {
-                        $(this).remove();
-                    });
-                    {% endif %}
-                    updateSelectedCount();
-                    updateActionButtons();
-                } else {
-                    showAlert('danger', 'Error al eliminar backup: ' + (response.message || 'Error desconocido'));
-                }
-            },
-            error: function(xhr, status, error) {
-                var errorMsg = 'Error al eliminar backup';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg += ': ' + xhr.responseJSON.message;
-                }
-                showAlert('danger', errorMsg);
-                console.error('Error details:', xhr, status, error);
-            },
-            complete: function() {
-                btn.html(originalHtml).prop('disabled', false);
-            }
-        });
-    }
+      // Botón de restaurar backup individual
+      $(document).on('click', '.restore-backup-btn', function() {
+          var backupId = $(this).data('backup-id');
+          var filename = $(this).data('filename');
+          var downloadUrl = $(this).data('download-url');
 
-    // Función para eliminar múltiples backups
-    function deleteMultipleBackups(backups) {
-        $('#deleteSelectedBackups').prop('disabled', true).html('<i class="bi bi-arrow-clockwise"></i> Eliminando...');
-        
-        var promises = [];
-        var successCount = 0;
-        var errorCount = 0;
-        var processedRows = [];
-        
-        backups.forEach(function(backup) {
-            var promise = $.ajax({
-                url: '/admin/maintenance/drive/delete/' + backup.fileId,
-                type: 'DELETE'
-                // Parámetro data eliminado - no es necesario ya que fileId va en la URL
-            }).done(function(response) {
-                if (response.status === 'success') {
-                    successCount++;
-                    // Marcar fila para eliminación
-                    var row = $('.backup-checkbox[data-backup-id="' + backup.id + '"]').closest('tr');
-                    processedRows.push({row: row, success: true});
-                } else {
-                    errorCount++;
-                }
-            }).fail(function() {
-                errorCount++;
-            });
-            
-            promises.push(promise);
-        });
-        
-        Promise.all(promises.map(p => p.catch(e => e))).then(function() {
-            // Eliminar filas exitosas
-            processedRows.forEach(function(item) {
-                if (item.success) {
-                    {% if backups %}
-                    table.row(item.row).remove();
-                    {% else %}
-                    item.row.fadeOut(500, function() {
-                        $(this).remove();
-                    });
-                    {% endif %}
-                }
-            });
-            
-            {% if backups %}
-            table.draw();
-            {% endif %}
-            
-            var message = '';
-            if (successCount > 0) {
-                message += successCount + ' backup(s) eliminado(s) exitosamente';
-            }
-            if (errorCount > 0) {
-                if (message) message += '. ';
-                message += errorCount + ' backup(s) no pudieron ser eliminados';
-            }
-            
-            showAlert(errorCount === 0 ? 'success' : 'warning', message);
-            
-            // Resetear selecciones
-            $('#selectAll').prop('checked', false);
-            $('.backup-checkbox').prop('checked', false);
-            updateSelectedCount();
-            updateActionButtons();
-            
-            $('#deleteSelectedBackups').prop('disabled', false).html('<i class="bi bi-trash"></i> Eliminar Seleccionados');
-        });
-    }
+          if (confirm('¿Está seguro de que desea restaurar el backup "' + filename + '"? Esta acción sobrescribirá los datos actuales.')) {
+              restoreBackup(backupId, downloadUrl, filename);
+          }
+      });
 
-    // Función para mostrar alertas
-    function showAlert(type, message) {
-        // Mapear tipos de alerta a clases de Bootstrap 5
-        var alertClass = 'alert-' + type;
-        
-        var alertHtml = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' +
-                       '<div class="d-flex align-items-center">' +
-                       '<i class="bi ' + getAlertIcon(type) + ' me-2"></i>' +
-                       '<div>' + message + '</div>' +
-                       '</div>' +
-                       '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>' +
-                       '</div>';
-        
-        // Remover alertas existentes
-        $('.alert').not('.alert-permanent').remove();
-        
-        // Insertar alerta al principio del contenido
-        $('.container-fluid h1').after(alertHtml);
-        
-        // Auto-remover después de 5 segundos para alertas de éxito
-        if (type === 'success') {
-            setTimeout(function() {
-                $('.alert-' + type).fadeOut();
-            }, 5000);
-        }
-    }
-    
-    // Función para obtener iconos según el tipo de alerta
-    function getAlertIcon(type) {
-        switch(type) {
-            case 'success': return 'bi-check-circle-fill';
-            case 'danger': return 'bi-exclamation-triangle-fill';
-            case 'warning': return 'bi-exclamation-triangle-fill';
-            case 'info': return 'bi-info-circle-fill';
-            default: return 'bi-info-circle-fill';
-        }
-    }
-});
+      // Botón de eliminar backup individual
+      $(document).on('click', '.delete-backup-btn', function() {
+          var backupId = $(this).data('backup-id');
+          var fileId = $(this).data('file-id');
+          var filename = $(this).data('filename');
+
+          if (confirm('¿Está seguro de que desea eliminar el backup "' + filename + '"?')) {
+              deleteBackup(backupId, fileId, filename);
+          }
+      });
+
+      // Función para restaurar backup
+      function restoreBackup(backupId, downloadUrl, filename) {
+          var btn = $('.restore-backup-btn[data-backup-id="' + backupId + '"]');
+          var originalHtml = btn.html();
+
+          btn.html('<i class="bi bi-arrow-clockwise"></i>').prop('disabled', true);
+
+          // Mostrar mensaje de progreso
+          showAlert('info', 'Iniciando restauración del backup "' + filename + '"...');
+
+          $.ajax({
+              url: '/admin/restore-drive-backup',
+              type: 'POST',
+              data: {
+                  backup_id: backupId,
+                  download_url: downloadUrl
+              },
+              success: function(response) {
+                  if (response.success === true) {
+                      showAlert('success', 'Backup restaurado exitosamente: ' + (response.message || ''));
+                      setTimeout(function() {
+                          window.location.reload();
+                      }, 2000);
+                  } else {
+                      showAlert('danger', 'Error al restaurar backup: ' + (response.message || 'Error desconocido'));
+                  }
+              },
+              error: function(xhr, status, error) {
+                  var errorMsg = 'Error al restaurar backup';
+                  if (xhr.responseJSON && xhr.responseJSON.message) {
+                      errorMsg += ': ' + xhr.responseJSON.message;
+                  }
+                  showAlert('danger', errorMsg);
+                  console.error('Error details:', xhr, status, error);
+              },
+              complete: function() {
+                  btn.html(originalHtml).prop('disabled', false);
+              }
+          });
+      }
+
+      // Función para eliminar backup individual
+      function deleteBackup(backupId, fileId, filename) {
+          var btn = $('.delete-backup-btn[data-backup-id="' + backupId + '"]');
+          var originalHtml = btn.html();
+
+          btn.html('<i class="bi bi-arrow-clockwise"></i>').prop('disabled', true);
+
+          $.ajax({
+              url: '/admin/maintenance/drive/delete/' + fileId,
+              type: 'DELETE',
+              // Parámetro data eliminado - no es necesario ya que fileId va en la URL
+              success: function(response) {
+                  if (response.success === true) {
+                      showAlert('success', 'Backup eliminado exitosamente');
+                      // Remover la fila de la tabla
+                      var row = btn.closest('tr');
+                      {% if backups %}
+                      table.row(row).remove().draw();
+                      {% else %}
+                      row.fadeOut(500, function() {
+                          $(this).remove();
+                      });
+                      {% endif %}
+                      updateSelectedCount();
+                      updateActionButtons();
+                  } else {
+                      showAlert('danger', 'Error al eliminar backup: ' + (response.message || 'Error desconocido'));
+                  }
+              },
+              error: function(xhr, status, error) {
+                  var errorMsg = 'Error al eliminar backup';
+                  if (xhr.responseJSON && xhr.responseJSON.message) {
+                      errorMsg += ': ' + xhr.responseJSON.message;
+                  }
+                  showAlert('danger', errorMsg);
+                  console.error('Error details:', xhr, status, error);
+              },
+              complete: function() {
+                  btn.html(originalHtml).prop('disabled', false);
+              }
+          });
+      }
+
+      // Función para eliminar múltiples backups
+      function deleteMultipleBackups(backups) {
+          $('#deleteSelectedBackups').prop('disabled', true).html('<i class="bi bi-arrow-clockwise"></i> Eliminando...');
+
+          var promises = [];
+          var successCount = 0;
+          var errorCount = 0;
+          var processedRows = [];
+
+          backups.forEach(function(backup) {
+              var promise = $.ajax({
+                  url: '/admin/maintenance/drive/delete/' + backup.fileId,
+                  type: 'DELETE'
+                  // Parámetro data eliminado - no es necesario ya que fileId va en la URL
+              }).done(function(response) {
+                  if (response.success === true) {
+                      successCount++;
+                      // Marcar fila para eliminación
+                      var row = $('.backup-checkbox[data-backup-id="' + backup.id + '"]').closest('tr');
+                      processedRows.push({row: row, success: true});
+                  } else {
+                      errorCount++;
+                  }
+              }).fail(function() {
+                  errorCount++;
+              });
+
+              promises.push(promise);
+          });
+
+          Promise.all(promises.map(p => p.catch(e => e))).then(function() {
+              // Eliminar filas exitosas
+              processedRows.forEach(function(item) {
+                  if (item.success) {
+                      {% if backups %}
+                      table.row(item.row).remove();
+                      {% else %}
+                      item.row.fadeOut(500, function() {
+                          $(this).remove();
+                      });
+                      {% endif %}
+                  }
+              });
+
+              {% if backups %}
+              table.draw();
+              {% endif %}
+
+              var message = '';
+              if (successCount > 0) {
+                  message += successCount + ' backup(s) eliminado(s) exitosamente';
+              }
+              if (errorCount > 0) {
+                  if (message) message += '. ';
+                  message += errorCount + ' backup(s) no pudieron ser eliminados';
+              }
+
+              showAlert(errorCount === 0 ? 'success' : 'warning', message);
+
+              // Resetear selecciones
+              $('#selectAll').prop('checked', false);
+              $('.backup-checkbox').prop('checked', false);
+              updateSelectedCount();
+              updateActionButtons();
+
+              $('#deleteSelectedBackups').prop('disabled', false).html('<i class="bi bi-trash"></i> Eliminar Seleccionados');
+          });
+      }
+
+      // Función para mostrar alertas
+      function showAlert(type, message) {
+          // Mapear tipos de alerta a clases de Bootstrap 5
+          var alertClass = 'alert-' + type;
+
+          var alertHtml = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' +
+                         '<div class="d-flex align-items-center">' +
+                         '<i class="bi ' + getAlertIcon(type) + ' me-2"></i>' +
+                         '<div>' + message + '</div>' +
+                         '</div>' +
+                         '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>' +
+                         '</div>';
+
+          // Remover alertas existentes
+          $('.alert').not('.alert-permanent').remove();
+
+          // Insertar alerta al principio del contenido
+          $('.container-fluid h1').after(alertHtml);
+
+          // Auto-remover después de 5 segundos para alertas de éxito
+          if (type === 'success') {
+              setTimeout(function() {
+                  $('.alert-' + type).fadeOut();
+              }, 5000);
+          }
+      }
+
+      // Función para obtener iconos según el tipo de alerta
+      function getAlertIcon(type) {
+          switch(type) {
+              case 'success': return 'bi-check-circle-fill';
+              case 'danger': return 'bi-exclamation-triangle-fill';
+              case 'warning': return 'bi-exclamation-triangle-fill';
+              case 'info': return 'bi-info-circle-fill';
+              default: return 'bi-info-circle-fill';
+          }
+      }
+
+      // Función para mostrar notificaciones emergentes
+      function showNotification(title, message, type = 'info', duration = 5000) {
+          const modalHtml = `
+              <div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                          <div class="modal-header ${type === 'success' ? 'bg-success text-white' : type === 'error' ? 'bg-danger text-white' : 'bg-info text-white'}">
+                              <h5 class="modal-title">
+                                  ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'} ${title}
+                              </h5>
+                              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                          </div>
+                          <div class="modal-body">
+                              <p class="mb-0">${message}</p>
+                          </div>
+                          <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+
+          const existingModal = document.getElementById('notificationModal');
+          if (existingModal) {
+              existingModal.remove();
+          }
+
+          document.body.insertAdjacentHTML('beforeend', modalHtml);
+          const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+          modal.show();
+
+          if (duration > 0) {
+              setTimeout(() => {
+                  modal.hide();
+              }, duration);
+          }
+      }
+
+      // Función para mostrar progreso
+      function showProgress(title, message) {
+          const progressHtml = `
+              <div class="modal fade" id="progressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                  <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                          <div class="modal-header bg-primary text-white">
+                              <h5 class="modal-title">🔄 ${title}</h5>
+                          </div>
+                          <div class="modal-body text-center">
+                              <div class="spinner-border text-primary mb-3" role="status">
+                                  <span class="visually-hidden">Procesando...</span>
+                              </div>
+                              <p class="mb-0">${message}</p>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+
+          const existingModal = document.getElementById('progressModal');
+          if (existingModal) {
+              existingModal.remove();
+          }
+
+          document.body.insertAdjacentHTML('beforeend', progressHtml);
+          const modal = new bootstrap.Modal(document.getElementById('progressModal'));
+          modal.show();
+          return modal;
+      }
+
+      // Función para crear backup directo a Google Drive
+      function createBackupToDrive() {
+          console.log("=== INICIO FUNCIÓN createBackupToDrive ===");
+          console.log("Función createBackupToDrive ejecutada");
+
+          const button = document.getElementById("createBackupToDrive");
+          if (!button) {
+              console.error("No se encontró el botón createBackupToDrive");
+              showNotification("Error", "No se encontró el botón de backup", "error");
+              return;
+          }
+
+          console.log("Botón encontrado, solicitando confirmación");
+          if (!confirm("¿Crear backup y subirlo directamente a Google Drive?")) {
+              console.log("Usuario canceló la operación");
+              return;
+          }
+
+          console.log("Usuario confirmó, iniciando proceso");
+          // Deshabilitar botón
+          button.disabled = true;
+          button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creando...';
+
+          // Mostrar progreso
+          const progressModal = showProgress("Creando Backup Directo", "Generando backup y subiendo a Google Drive...");
+
+          console.log("Enviando petición a /admin/backup/create-and-upload");
+          // Crear backup y subir a Google Drive
+          fetch("/admin/backup/create-and-upload", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  "X-Requested-With": "XMLHttpRequest",
+              },
+              credentials: "same-origin",
+          })
+              .then((response) => {
+                  console.log("Response status:", response.status);
+                  console.log("Response headers:", response.headers);
+
+                  if (!response.ok) {
+                      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                  }
+
+                  return response.json();
+              })
+              .then((data) => {
+                  console.log("Response data:", data);
+                  progressModal.hide();
+
+                  if (data.success) {
+                      showNotification("Éxito", "✅ Backup creado y subido a Google Drive exitosamente!", "success");
+                      setTimeout(() => window.location.reload(), 2000);
+                  } else {
+                      throw new Error(data.error || "Error desconocido");
+                  }
+              })
+              .catch((error) => {
+                  console.error("Error:", error);
+                  progressModal.hide();
+                  showNotification("Error", "❌ Error al crear backup directo: " + error.message, "error");
+              })
+              .finally(() => {
+                  // Restaurar botón
+                  button.disabled = false;
+                  button.innerHTML = '<i class="bi bi-cloud-upload"></i> Crear Backup Directo';
+                  console.log("=== FIN FUNCIÓN createBackupToDrive ===");
+              });
+      }
+
+      // Botón de crear backup directo a Google Drive
+      $('#createBackupToDrive').click(function() {
+          console.log("Botón createBackupToDrive clickeado (jQuery)");
+          createBackupToDrive();
+      });
+  });
 </script>
 {% endblock %}
