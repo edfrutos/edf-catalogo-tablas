@@ -48,4 +48,4 @@ Para actualizar esta documentación:
 
 ---
 
-*Última actualización: $(date)*
+*Última actualización: $(date)* 
