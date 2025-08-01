@@ -71,7 +71,7 @@ def connect_to_mongodb():
                 logger.warning("Usando URI de MongoDB hardcodeada por defecto")
         
         # Extraer nombre de base de datos de la URI
-        if "mongodb" in mongo_uri and "/" in mongo_uri:
+        if mongo_uri and "mongodb" in mongo_uri and "/" in mongo_uri:
             uri_parts = mongo_uri.split("/")
             if len(uri_parts) > 3:
                 db_name_part = uri_parts[3].split("?")[0]
@@ -110,7 +110,7 @@ def get_user_collection():
     """Obtiene la colección de usuarios"""
     global mongo_db
     
-    if not mongo_db:
+    if mongo_db is None:
         logger.error("Base de datos no inicializada")
         return None
     
@@ -130,7 +130,7 @@ def get_user_collection():
 def ensure_admin_user():
     """Crea o actualiza el usuario administrador"""
     users_collection = get_user_collection()
-    if not users_collection:
+    if users_collection is None:
         return False
     
     try:
@@ -219,7 +219,7 @@ def ensure_admin_user():
 def list_users():
     """Lista todos los usuarios del sistema"""
     users_collection = get_user_collection()
-    if not users_collection:
+    if users_collection is None:
         return False
     
     try:
@@ -266,7 +266,7 @@ def list_users():
 def unlock_user():
     """Desbloquea una cuenta de usuario"""
     users_collection = get_user_collection()
-    if not users_collection:
+    if users_collection is None:
         return False
     
     try:

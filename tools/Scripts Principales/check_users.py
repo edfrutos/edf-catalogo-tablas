@@ -6,11 +6,6 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 import certifi
 
-# Añadir el directorio padre al PYTHONPATH
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app.models import get_db_connection, get_users_collection, get_users_unified_collection
-
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,13 +13,18 @@ logger = logging.getLogger(__name__)
 # Cargar variables de entorno
 load_dotenv()
 
-# Conectar a MongoDB
-client = get_db_connection(tlsCAFile=certifi.where())
-db = client.get_database('app_catalogojoyero_nueva')
+# Conectar directamente a MongoDB
+mongo_uri = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+if not mongo_uri:
+    raise ValueError("No se ha configurado MONGO_URI en las variables de entorno")
+
+client: MongoClient = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
+db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
+db = client[db_name]
 
 # Obtener colecciones
-users = get_users_collection()
-unified = get_users_unified_collection()
+users = db.users
+unified = db.users_unified
 
 def check_users():
     print("\n=== Usuarios en la colección 'users' ===")

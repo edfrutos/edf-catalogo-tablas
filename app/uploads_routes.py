@@ -43,9 +43,9 @@ def upload_image():
         # Subir a S3
         with open(filepath, "rb") as f:
             if upload_file_to_s3(f, S3_BUCKET_NAME, filename):
-            flash("Imagen subida correctamente.", "success")
-        else:
-            flash("Error al subir imagen a S3.", "error")
+                flash("Imagen subida correctamente.", "success")
+            else:
+                flash("Error al subir imagen a S3.", "error")
 
         return redirect(url_for("main.home"))
 

@@ -1,21 +1,24 @@
-{% extends "admin/base.html" %} {% block title %}Herramientas y Scripts{%
-endblock %} {% block content %}
+{% extends "admin/base.html" %} {% block title %}Testing y Validación{% endblock
+%} {% block content %}
 <div class="container-fluid">
   <div class="row">
     <div class="col-12">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">
-          <i class="bi bi-tools me-2"></i>Herramientas y Scripts
+          <i class="bi bi-bug me-2"></i>Testing y Validación
         </h1>
         <div class="d-flex gap-2">
-          <button class="btn btn-outline-primary" onclick="refreshScripts()">
+          <button class="btn btn-outline-primary" onclick="refreshTests()">
             <i class="bi bi-arrow-clockwise"></i> Actualizar
           </button>
+          <button class="btn btn-success" onclick="runAllTests()">
+            <i class="bi bi-play-circle"></i> Ejecutar Todos
+          </button>
           <a
-            href="{{ url_for('admin.list_drive_backups') }}"
+            href="{{ url_for('scripts.tools_dashboard') }}"
             class="btn btn-outline-secondary"
           >
-            <i class="bi bi-cloud"></i> Google Drive
+            <i class="bi bi-tools"></i> Herramientas
           </a>
         </div>
       </div>
@@ -34,8 +37,8 @@ endblock %} {% block content %}
             <input
               type="text"
               class="form-control"
-              id="script-search"
-              placeholder="Buscar herramientas y scripts..."
+              id="test-search"
+              placeholder="Buscar tests..."
             />
             <button
               class="btn btn-outline-secondary"
@@ -56,23 +59,21 @@ endblock %} {% block content %}
     <div class="col-md-3">
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0"><i class="bi bi-list me-2"></i>Categorías</h5>
+          <h5 class="mb-0">
+            <i class="bi bi-list me-2"></i>Categorías de Tests
+          </h5>
         </div>
         <div class="card-body p-0">
-          <div
-            class="list-group list-group-flush"
-            id="category-menu"
-            role="tablist"
-          >
+          <div class="list-group list-group-flush" id="category-menu">
             <!-- Se llena dinámicamente -->
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Contenido de scripts -->
+    <!-- Contenido de tests -->
     <div class="col-md-9">
-      <div id="scripts-content" class="tab-content">
+      <div id="tests-content">
         <!-- Se llena dinámicamente -->
       </div>
     </div>
@@ -85,7 +86,7 @@ endblock %} {% block content %}
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="executionModalTitle">
-          <i class="bi bi-play-circle me-2"></i>Ejecutando Script
+          <i class="bi bi-play-circle me-2"></i>Ejecutando Test
         </h5>
         <button
           type="button"
@@ -98,7 +99,7 @@ endblock %} {% block content %}
           <div class="spinner-border text-primary mb-3" role="status">
             <span class="visually-hidden">Ejecutando...</span>
           </div>
-          <p class="mb-0">Ejecutando script...</p>
+          <p class="mb-0">Ejecutando test...</p>
         </div>
         <div id="executionResult" style="display: none">
           <div class="mb-3">
@@ -124,18 +125,13 @@ endblock %} {% block content %}
   </div>
 </div>
 
-<!-- Modal de contenido del script -->
-<div
-  class="modal fade"
-  id="scriptContentModal"
-  tabindex="-1"
-  aria-hidden="true"
->
+<!-- Modal de ejecución de todos los tests -->
+<div class="modal fade" id="runAllModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="scriptContentModalTitle">
-          <i class="bi bi-file-code me-2"></i>Contenido del Script
+        <h5 class="modal-title">
+          <i class="bi bi-play-circle me-2"></i>Ejecutando Todos los Tests
         </h5>
         <button
           type="button"
@@ -144,11 +140,27 @@ endblock %} {% block content %}
         ></button>
       </div>
       <div class="modal-body">
-        <pre
-          id="scriptContent"
-          class="bg-light p-3 rounded"
-          style="max-height: 500px; overflow-y: auto"
-        ></pre>
+        <div id="runAllProgress" class="text-center">
+          <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Ejecutando...</span>
+          </div>
+          <p class="mb-0">Ejecutando todos los tests del proyecto...</p>
+          <small class="text-muted">Esto puede tomar varios minutos</small>
+        </div>
+        <div id="runAllResult" style="display: none">
+          <div class="mb-3">
+            <h6>Resultado:</h6>
+            <div id="runAllStatus" class="alert"></div>
+          </div>
+          <div class="mb-3">
+            <h6>Salida completa:</h6>
+            <pre
+              id="runAllOutput"
+              class="bg-light p-3 rounded"
+              style="max-height: 400px; overflow-y: auto"
+            ></pre>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -160,20 +172,17 @@ endblock %} {% block content %}
 </div>
 {% endblock %} {% block scripts %}
 <script>
-  let scriptsData = [];
+  let testsData = [];
 
-  // Cargar scripts al iniciar
+  // Cargar tests al iniciar
   document.addEventListener("DOMContentLoaded", function () {
-    // Pequeño retraso para asegurar que Bootstrap esté listo
-    setTimeout(() => {
-      loadScripts();
-    }, 100);
+    loadTests();
   });
 
-  // Función para cargar scripts
-  async function loadScripts() {
+  // Función para cargar tests
+  async function loadTests() {
     try {
-      const response = await fetch("/admin/tools/api/scripts_metadata", {
+      const response = await fetch("/dev-template/testing/api/tests_metadata", {
         credentials: "same-origin",
       });
 
@@ -181,40 +190,33 @@ endblock %} {% block content %}
         throw new Error(`HTTP ${response.status}`);
       }
 
-      scriptsData = await response.json();
-      renderScripts();
+      testsData = await response.json();
+      renderTests();
     } catch (error) {
-      console.error("Error cargando scripts:", error);
-      showNotification(
-        "Error",
-        "No se pudieron cargar las herramientas",
-        "error"
-      );
+      console.error("Error cargando tests:", error);
+      showNotification("Error", "No se pudieron cargar los tests", "error");
     }
   }
 
-  // Función para renderizar scripts
-  function renderScripts() {
+  // Función para renderizar tests
+  function renderTests() {
     const categoryMenu = document.getElementById("category-menu");
-    const scriptsContent = document.getElementById("scripts-content");
+    const testsContent = document.getElementById("tests-content");
 
     // Limpiar contenido
     categoryMenu.innerHTML = "";
-    scriptsContent.innerHTML = "";
+    testsContent.innerHTML = "";
 
     // Crear menú de categorías
-    scriptsData.forEach((category, index) => {
+    testsData.forEach((category, index) => {
       const menuItem = document.createElement("a");
       menuItem.href = `#cat-${index}`;
-      menuItem.id = `cat-${index}-tab`;
       menuItem.className = `list-group-item list-group-item-action ${index === 0 ? "active" : ""}`;
       menuItem.setAttribute("data-bs-toggle", "list");
-      menuItem.setAttribute("role", "tab");
-      menuItem.setAttribute("aria-selected", index === 0 ? "true" : "false");
       menuItem.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
                 <span>${category.categoria}</span>
-                <span class="badge bg-primary rounded-pill">${category.scripts.length}</span>
+                <span class="badge bg-primary rounded-pill">${category.tests.length}</span>
             </div>
         `;
       categoryMenu.appendChild(menuItem);
@@ -223,8 +225,6 @@ endblock %} {% block content %}
       const categoryContent = document.createElement("div");
       categoryContent.className = `tab-pane fade ${index === 0 ? "show active" : ""}`;
       categoryContent.id = `cat-${index}`;
-      categoryContent.setAttribute("role", "tabpanel");
-      categoryContent.setAttribute("aria-labelledby", `cat-${index}-tab`);
 
       const categoryHeader = document.createElement("div");
       categoryHeader.className = "card mb-4";
@@ -236,76 +236,41 @@ endblock %} {% block content %}
             </div>
         `;
 
-      const scriptsList = document.createElement("div");
-      scriptsList.className = "list-group list-group-flush";
+      const testsList = document.createElement("div");
+      testsList.className = "list-group list-group-flush";
 
-      category.scripts.forEach((script) => {
-        const scriptItem = document.createElement("div");
-        scriptItem.className =
+      category.tests.forEach((test) => {
+        const testItem = document.createElement("div");
+        testItem.className =
           "list-group-item d-flex justify-content-between align-items-start";
-        scriptItem.innerHTML = `
+        testItem.innerHTML = `
                 <div class="ms-2 me-auto">
                     <div class="fw-bold">
-                        <i class="bi bi-${script.tipo === "python" ? "file-code" : "terminal"} me-2"></i>
-                        ${script.nombre}
+                        <i class="bi bi-file-code me-2"></i>
+                        ${test.nombre}
                     </div>
-                    <div class="text-muted small">${script.descripcion}</div>
+                    <div class="text-muted small">${test.descripcion}</div>
                     <div class="mt-1">
-                        <span class="badge bg-secondary me-1">${script.tipo}</span>
-                        <span class="badge bg-${script.executable ? "success" : "warning"}">${script.executable ? "Ejecutable" : "Solo lectura"}</span>
+                        <span class="badge bg-info me-1">${test.tipo}</span>
                     </div>
                 </div>
                 <div class="btn-group" role="group">
-                    ${
-                      script.executable
-                        ? `
-                        <button type="button" class="btn btn-primary btn-sm" onclick="executeScript('${script.path}')">
-                            <i class="bi bi-play"></i> Ejecutar
-                        </button>
-                    `
-                        : ""
-                    }
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="viewScriptContent('${script.path}')">
-                        <i class="bi bi-eye"></i> Ver
+                    <button type="button" class="btn btn-primary btn-sm" onclick="executeTest('${test.path}')">
+                        <i class="bi bi-play"></i> Ejecutar
                     </button>
                 </div>
             `;
-        scriptsList.appendChild(scriptItem);
+        testsList.appendChild(testItem);
       });
 
-      categoryHeader.appendChild(scriptsList);
+      categoryHeader.appendChild(testsList);
       categoryContent.appendChild(categoryHeader);
-      scriptsContent.appendChild(categoryContent);
+      testsContent.appendChild(categoryContent);
     });
-
-    // Agregar manejador de eventos para el cambio de pestañas
-    const tabElements = categoryMenu.querySelectorAll(
-      '[data-bs-toggle="list"]'
-    );
-    tabElements.forEach((tab) => {
-      tab.addEventListener("shown.bs.list", function (event) {
-        // Actualizar estado activo
-        tabElements.forEach((t) => t.classList.remove("active"));
-        event.target.classList.add("active");
-      });
-    });
-
-    // Inicializar la primera pestaña como activa
-    if (tabElements.length > 0) {
-      const firstTab = tabElements[0];
-      const firstTabContent = document.querySelector(
-        firstTab.getAttribute("href")
-      );
-      if (firstTabContent) {
-        firstTabContent.classList.add("show", "active");
-        firstTab.classList.add("active");
-        firstTab.setAttribute("aria-selected", "true");
-      }
-    }
   }
 
-  // Función para ejecutar script
-  async function executeScript(scriptPath) {
+  // Función para ejecutar test individual
+  async function executeTest(testPath) {
     const modal = new bootstrap.Modal(
       document.getElementById("executionModal")
     );
@@ -317,14 +282,14 @@ endblock %} {% block content %}
     const stderr = document.getElementById("executionStderr");
 
     // Mostrar modal
-    title.innerHTML = `<i class="bi bi-play-circle me-2"></i>Ejecutando: ${scriptPath.split("/").pop()}`;
+    title.innerHTML = `<i class="bi bi-play-circle me-2"></i>Ejecutando: ${testPath.split("/").pop()}`;
     progress.style.display = "block";
     result.style.display = "none";
     modal.show();
 
     try {
       const response = await fetch(
-        `/admin/tools/run/${encodeURIComponent(scriptPath)}`,
+        `/dev-template/testing/run/${encodeURIComponent(testPath)}`,
         {
           method: "POST",
           headers: {
@@ -364,85 +329,99 @@ endblock %} {% block content %}
     }
   }
 
-  // Función para ver contenido del script
-  async function viewScriptContent(scriptPath) {
-    try {
-      const response = await fetch(
-        `/admin/tools/content/${encodeURIComponent(scriptPath)}`,
-        {
-          credentials: "same-origin",
-        }
-      );
+  // Función para ejecutar todos los tests
+  async function runAllTests() {
+    const modal = new bootstrap.Modal(document.getElementById("runAllModal"));
+    const progress = document.getElementById("runAllProgress");
+    const result = document.getElementById("runAllResult");
+    const status = document.getElementById("runAllStatus");
+    const output = document.getElementById("runAllOutput");
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+    // Mostrar modal
+    progress.style.display = "block";
+    result.style.display = "none";
+    modal.show();
+
+    try {
+      const response = await fetch("/dev-template/testing/run-all", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "same-origin",
+      });
 
       const data = await response.json();
 
-      const modal = new bootstrap.Modal(
-        document.getElementById("scriptContentModal")
-      );
-      const title = document.getElementById("scriptContentModalTitle");
-      const content = document.getElementById("scriptContent");
+      // Ocultar progreso y mostrar resultado
+      progress.style.display = "none";
+      result.style.display = "block";
 
-      title.innerHTML = `<i class="bi bi-file-code me-2"></i>${scriptPath.split("/").pop()}`;
-      content.textContent = data.content;
-      modal.show();
+      // Configurar estado
+      if (data.status === "success") {
+        status.className = "alert alert-success";
+        status.innerHTML = `<i class="bi bi-check-circle me-2"></i>${data.message}`;
+      } else {
+        status.className = "alert alert-danger";
+        status.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${data.message || data.error}`;
+      }
+
+      // Mostrar salida
+      const fullOutput = (data.stdout || "") + (data.stderr || "");
+      output.textContent = fullOutput || "(Sin salida)";
     } catch (error) {
-      console.error("Error cargando contenido:", error);
-      showNotification(
-        "Error",
-        "No se pudo cargar el contenido del script",
-        "error"
-      );
+      progress.style.display = "none";
+      result.style.display = "block";
+
+      status.className = "alert alert-danger";
+      status.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>Error de conexión: ${error.message}`;
+      output.textContent = "(Error de conexión)";
     }
   }
 
-  // Función para buscar scripts
+  // Función para buscar tests
   document
-    .getElementById("script-search")
+    .getElementById("test-search")
     .addEventListener("input", function (e) {
       const searchTerm = e.target.value.toLowerCase();
 
       // Filtrar categorías
-      scriptsData.forEach((category, categoryIndex) => {
+      testsData.forEach((category, categoryIndex) => {
         const categoryContent = document.getElementById(`cat-${categoryIndex}`);
         const menuItem = document.querySelector(
           `[href="#cat-${categoryIndex}"]`
         );
 
-        const visibleScripts = category.scripts.filter(
-          (script) =>
-            script.nombre.toLowerCase().includes(searchTerm) ||
-            script.descripcion.toLowerCase().includes(searchTerm)
+        const visibleTests = category.tests.filter(
+          (test) =>
+            test.nombre.toLowerCase().includes(searchTerm) ||
+            test.descripcion.toLowerCase().includes(searchTerm)
         );
 
-        if (visibleScripts.length > 0) {
-          // Mostrar pestaña usando clases de Bootstrap
-          categoryContent.classList.remove("d-none");
-          menuItem.classList.remove("d-none");
+        if (visibleTests.length > 0) {
+          categoryContent.style.display = "block";
+          menuItem.style.display = "block";
 
           // Actualizar contador
           const badge = menuItem.querySelector(".badge");
-          badge.textContent = visibleScripts.length;
+          badge.textContent = visibleTests.length;
         } else {
-          // Ocultar pestaña usando clases de Bootstrap
-          categoryContent.classList.add("d-none");
-          menuItem.classList.add("d-none");
+          categoryContent.style.display = "none";
+          menuItem.style.display = "none";
         }
       });
     });
 
   // Función para limpiar búsqueda
   function clearSearch() {
-    document.getElementById("script-search").value = "";
-    document.getElementById("script-search").dispatchEvent(new Event("input"));
+    document.getElementById("test-search").value = "";
+    document.getElementById("test-search").dispatchEvent(new Event("input"));
   }
 
-  // Función para refrescar scripts
-  function refreshScripts() {
-    loadScripts();
+  // Función para refrescar tests
+  function refreshTests() {
+    loadTests();
   }
 
   // Función para mostrar notificaciones

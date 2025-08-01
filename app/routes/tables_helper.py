@@ -42,7 +42,7 @@ def list_tables():
         
         # Obtener la base de datos
         db = get_mongo_db()
-        if not db:
+        if db is None:
             return render_template('admin/tables_emergency.html', 
                                 message="Error de conexión a MongoDB", 
                                 tables=[], 
@@ -58,7 +58,7 @@ def list_tables():
         elif 'tables_data' in collections:
             tables_collection = db.tables_data
         
-        if not tables_collection:
+        if tables_collection is None:
             return render_template('admin/tables_emergency.html',
                                 message="No se encontró la colección de tablas",
                                 tables=[],
@@ -84,19 +84,19 @@ def list_tables():
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Tablas - Acceso de Emergencia</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                h1 { color: #2c3e50; }
-                .alert { background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
-                .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
-                table { width: 100%; border-collapse: collapse; }
-                table, th, td { border: 1px solid #ddd; }
-                th, td { padding: 12px; text-align: left; }
-                th { background-color: #f2f2f2; }
-                tr:nth-child(even) { background-color: #f9f9f9; }
-                .btn { display: inline-block; padding: 6px 12px; margin: 2px; text-decoration: none; background-color: #6c757d; color: white; border-radius: 4px; }
-                .btn-primary { background-color: #007bff; }
-                .nav { margin-bottom: 20px; }
-                .nav a { margin-right: 15px; }
+                body {{ font-family: Arial, sans-serif; margin: 40px; }}
+                h1 {{ color: #2c3e50; }}
+                .alert {{ background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin-bottom: 20px; }}
+                .success {{ background-color: #d4edda; border: 1px solid #c3e6cb; }}
+                table {{ width: 100%; border-collapse: collapse; }}
+                table, th, td {{ border: 1px solid #ddd; }}
+                th, td {{ padding: 12px; text-align: left; }}
+                th {{ background-color: #f2f2f2; }}
+                tr:nth-child(even) {{ background-color: #f9f9f9; }}
+                .btn {{ display: inline-block; padding: 6px 12px; margin: 2px; text-decoration: none; background-color: #6c757d; color: white; border-radius: 4px; }}
+                .btn-primary {{ background-color: #007bff; }}
+                .nav {{ margin-bottom: 20px; }}
+                .nav a {{ margin-right: 15px; }}
             </style>
         </head>
         <body>

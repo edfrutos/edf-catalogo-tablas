@@ -148,8 +148,11 @@ def main():
         if os.path.exists(script):
             perms = check_file_permissions(script)
             print(f"Script: {os.path.basename(script)}")
-            for key, value in perms.items():
-                print(f"  {key}: {value}")
+            if isinstance(perms, dict):
+                for key, value in perms.items():
+                    print(f"  {key}: {value}")
+            else:
+                print(f"  {perms}")
             print()
     
     print_header("PRUEBA DE EJECUCIÓN DE SCRIPTS")

@@ -57,7 +57,7 @@ def get_spreadsheet_by_id(spreadsheet_id: str) -> Optional[Dict[str, Any]]:
     """
     try:
         collection = get_spreadsheet_collection()
-        if not collection:
+        if collection is None:
             logger.error("No se pudo obtener la colección de spreadsheets")
             return None
 
@@ -79,7 +79,7 @@ def get_spreadsheets_by_owner(owner: str) -> List[Dict[str, Any]]:
     """
     try:
         collection = get_spreadsheet_collection()
-        if not collection:
+        if collection is None:
             logger.error("No se pudo obtener la colección de spreadsheets")
             return []
 
@@ -101,7 +101,7 @@ def save_spreadsheet(data: Dict[str, Any]) -> Optional[str]:
     """
     try:
         collection = get_spreadsheet_collection()
-        if not collection:
+        if collection is None:
             logger.error("No se pudo obtener la colección de spreadsheets")
             return None
 
@@ -125,7 +125,7 @@ def update_spreadsheet(spreadsheet_id: str, update_data: Dict[str, Any]) -> bool
     """
     try:
         collection = get_spreadsheet_collection()
-        if not collection:
+        if collection is None:
             logger.error("No se pudo obtener la colección de spreadsheets")
             return False
 
@@ -151,7 +151,7 @@ def delete_spreadsheet(spreadsheet_id: str) -> bool:
     """
     try:
         collection = get_spreadsheet_collection()
-        if not collection:
+        if collection is None:
             logger.error("No se pudo obtener la colección de spreadsheets")
             return False
 

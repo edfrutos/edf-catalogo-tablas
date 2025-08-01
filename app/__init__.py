@@ -174,7 +174,7 @@ def create_app(testing=False):
     app.register_blueprint(admin_logs_bp, url_prefix="/admin")
     app.register_blueprint(scripts_bp)
     app.register_blueprint(scripts_tools_bp)  # Usa su url_prefix propio
-
+    
     # Registrar blueprints principales
     for bp, prefix in blueprints:
         try:
@@ -183,6 +183,14 @@ def create_app(testing=False):
             app.logger.error(f"Error registrando blueprint {bp.name}: {str(e)}")
     # Registrar blueprint de plantilla de desarrollo SIEMPRE
     app.register_blueprint(bp_dev_template)
+    
+    # Registrar blueprint de testing DESPUÉS de bp_dev_template
+    try:
+        from app.routes.testing_routes import testing_bp
+        app.register_blueprint(testing_bp)
+        app.logger.info("Blueprint de testing registrado correctamente")
+    except Exception as e:
+        app.logger.error(f"Error registrando blueprint de testing: {str(e)}")
 
     # ---
     # Error handlers globales para API (devuelven JSON en endpoints tipo /api/ o si se acepta JSON)

@@ -2,6 +2,7 @@
 # app/routes/scripts_routes.py
 
 import os
+import sys
 import subprocess
 from datetime import datetime
 from functools import wraps
@@ -22,12 +23,27 @@ def extract_description(script_path):
     try:
         with open(script_path, 'r', encoding='utf-8') as f:
             for line in f:
+                line = line.strip()
                 # Para scripts Python con comentarios tipo '# Descripción:'
-                if line.strip().startswith("# Descripción:"):
-                    return line.strip().replace("# Descripción:", "").strip()
+                if line.startswith("# Descripción:"):
+                    return line.replace("# Descripción:", "").strip()
                 # Para scripts bash con comentarios tipo '# Descripción:'
-                if line.strip().startswith("#") and "Descripción:" in line:
-                    return line.strip().split("Descripción:")[1].strip()
+                if line.startswith("#") and "Descripción:" in line:
+                    return line.split("Descripción:")[1].strip()
+                # Para scripts con descripción en la segunda línea (formato común)
+                if line.startswith("# Script") and "para" in line:
+                    return line.replace("# Script", "").strip()
+                # Para scripts con descripción simple en comentario
+                if line.startswith("#") and len(line) > 2 and not line.startswith("#!"):
+                    # Buscar descripción después de "Script" o "para"
+                    if "Script" in line and "para" in line:
+                        parts = line.split("para")
+                        if len(parts) > 1:
+                            return parts[1].strip()
+                    elif "para" in line:
+                        parts = line.split("para")
+                        if len(parts) > 1:
+                            return parts[1].strip()
     except (IOError, OSError, UnicodeDecodeError) as e:
         print(f"Error al extraer descripción de {script_path}: {e}")
     return ""
@@ -37,7 +53,7 @@ def extract_description(script_path):
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if "username" not in session or session.get("role") != "admin":
+        if "user_id" not in session or session.get("role") != "admin":
             flash("No tiene permisos para acceder a esta página", "error")
             return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
@@ -58,48 +74,90 @@ scripts_bp = Blueprint("scripts", __name__, url_prefix="/admin/tools")
 @admin_required
 def scripts_metadata():
     """Devuelve un JSON con todos los scripts agrupados por categoría."""
-    tools_dir_local = os.path.join(ROOT_DIR, "tools")
     resultado = []
-
-    print(f"[scripts_metadata] Buscando scripts en: {tools_dir_local}")
-
-    # Primero, agregar scripts del directorio raíz tools/
-    scripts_root = []
-    if os.path.isdir(tools_dir):
-        for fname in os.listdir(tools_dir):
-            fpath = os.path.join(tools_dir, fname)
-            if os.path.isfile(fpath) and (fname.endswith('.py') or fname.endswith('.sh')):
-                descripcion = extract_description(fpath)
-                if not descripcion:
-                    descripcion = "Sin descripción"
-                scripts_root.append({"nombre": fname, "descripcion": descripcion})
-
-    if scripts_root:
-        resultado.append({"categoria": "Scripts Raíz", "scripts": scripts_root})
-
-    # Luego, buscar en subdirectorios
-    for item in os.listdir(tools_dir):
-        item_path = os.path.join(tools_dir, item)
-        if os.path.isdir(item_path):
-            scripts = []
-            try:
-                for fname in os.listdir(item_path):
-                    fpath = os.path.join(item_path, fname)
-                    if os.path.isfile(fpath) and (fname.endswith('.py') or fname.endswith('.sh')):
-                        descripcion = extract_description(fpath)
-                        if not descripcion:
-                            descripcion = "Sin descripción"
-                        scripts.append({"nombre": fname, "descripcion": descripcion})
-            except (IOError, OSError) as e:
-                print(f"[scripts_metadata] Error procesando {item}: {e}")
-                continue
-
-            if scripts:  # Solo agregar categorías que tienen scripts
-                # Formatear el nombre de la categoría
-                categoria_nombre = item.replace('_', ' ').title()
-                resultado.append({"categoria": categoria_nombre, "scripts": scripts})
-
+    
+    # Definir categorías y sus directorios correspondientes
+    categorias = {
+        "Database Utils": [
+            "tools/db_utils",
+            "tools/Db Utils",
+            "scripts/maintenance"
+        ],
+        "System Maintenance": [
+            "scripts/maintenance",
+            "tools/maintenance",
+            "tools/system"
+        ],
+        "User Management": [
+            "tools/Users Tools",
+            "tools/Admin Utils"
+        ],
+        "File Management": [
+            "tools/utils",
+            "tools/Scripts Principales",
+            "tools/Scripts Raíz"
+        ],
+        "Monitoring": [
+            "tools/monitoring",
+            "tools/diagnostico"
+        ],
+        "Testing": [
+            "tests",
+            "tests/integration",
+            "tests/app/routes",
+            "tools/Test Scripts"
+        ],
+        "Development Tools": [
+            "tools/app",
+            "tools/src"
+        ],
+        "Infrastructure": [
+            "tools/aws_utils",
+            "tools/producción"
+        ],
+        "Root Tools": [
+            "tools"
+        ]
+    }
+    
+    for categoria, directorios in categorias.items():
+        scripts_categoria = []
+        
+        for directorio in directorios:
+            dir_path = os.path.join(ROOT_DIR, directorio)
+            if os.path.isdir(dir_path):
+                try:
+                    for fname in os.listdir(dir_path):
+                        fpath = os.path.join(dir_path, fname)
+                        # Solo incluir archivos, no directorios
+                        if os.path.isfile(fpath) and (fname.endswith('.py') or fname.endswith('.sh')):
+                            descripcion = extract_description(fpath)
+                            if not descripcion:
+                                descripcion = "Sin descripción"
+                            
+                            # Determinar si es ejecutable
+                            executable = fname.endswith('.py') or os.access(fpath, os.X_OK)
+                            
+                            scripts_categoria.append({
+                                "nombre": fname,
+                                "descripcion": descripcion,
+                                "path": os.path.join(directorio, fname),
+                                "executable": executable,
+                                "tipo": "python" if fname.endswith('.py') else "bash"
+                            })
+                except (IOError, OSError) as e:
+                    print(f"Error procesando {directorio}: {e}")
+                    continue
+        
+        if scripts_categoria:
+            resultado.append({
+                "categoria": categoria,
+                "scripts": scripts_categoria
+            })
+    
     return jsonify(resultado)
+
+
 
 
 # Ruta alternativa para ejecutar scripts sin path variables
@@ -261,7 +319,7 @@ def get_script_path(script_path):
 @scripts_bp.route("/content/<path:script_path>")
 @admin_required
 def view_script_content_route(script_path):
-    """Muestra el contenido de un script específico."""
+    """Devuelve el contenido de un script específico como JSON."""
     try:
         # Decodificar la ruta URL
         import urllib.parse
@@ -270,26 +328,28 @@ def view_script_content_route(script_path):
         abs_path = get_script_path(decoded_path)
         
         if not os.path.exists(abs_path):
-            flash(f"Script no encontrado: {decoded_path}", "error")
-            return redirect(url_for("scripts.tools_dashboard"))
+            return jsonify({
+                "error": f"Script no encontrado: {decoded_path}"
+            }), 404
         
         # Verificar que está dentro del directorio del proyecto
         if not abs_path.startswith(ROOT_DIR):
-            flash(f"Script fuera del directorio del proyecto: {abs_path}", "error")
-            return redirect(url_for("scripts.tools_dashboard"))
+            return jsonify({
+                "error": f"Script fuera del directorio del proyecto: {abs_path}"
+            }), 403
         
         with open(abs_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        return render_template(
-            "admin/script_content.html",
-            script_name=os.path.basename(abs_path),
-            script_path=abs_path,
-            script_content=content,
-        )
+        return jsonify({
+            "content": content,
+            "path": abs_path,
+            "name": os.path.basename(abs_path)
+        })
     except Exception as e:
-        flash(f"Error al leer el script: {str(e)}", "error")
-        return redirect(url_for("scripts.tools_dashboard"))
+        return jsonify({
+            "error": f"Error al leer el script: {str(e)}"
+        }), 500
 
 
 @scripts_bp.route("/")
@@ -297,6 +357,8 @@ def view_script_content_route(script_path):
 def tools_dashboard():
     """Dashboard principal de herramientas."""
     return render_template("admin/scripts_tools_overview.html")
+
+
 
 
 @scripts_bp.route("/run/<path:script_path>", methods=["POST"])
@@ -314,13 +376,78 @@ def run_script(script_path):
                 }
             ), 404
 
-        # Resto de la lógica de ejecución...
-        # (Similar a execute_script pero usando script_path del URL)
+        # Verificar que está dentro del directorio del proyecto
+        if not abs_script_path.startswith(ROOT_DIR):
+            return jsonify(
+                {
+                    "error": f"Script fuera del directorio del proyecto: {abs_script_path}",
+                    "script": script_path,
+                }
+            ), 403
 
+        # Determinar el tipo de script y ejecutarlo
+        script_name = os.path.basename(abs_script_path)
+        script_ext = os.path.splitext(script_name)[1].lower()
+        
+        # Configurar el entorno de ejecución
+        env = os.environ.copy()
+        env['PYTHONPATH'] = ROOT_DIR
+        
+        if script_ext == '.py':
+            # Script Python
+            cmd = [sys.executable, abs_script_path]
+        elif script_ext == '.sh':
+            # Script Bash
+            cmd = ['bash', abs_script_path]
+        else:
+            return jsonify(
+                {
+                    "error": f"Tipo de script no soportado: {script_ext}",
+                    "script": script_path,
+                }
+            ), 400
+
+        # Ejecutar el script
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=ROOT_DIR,
+            env=env,
+            timeout=300  # 5 minutos de timeout
+        )
+
+        # Preparar la respuesta
+        response = {
+            "script": script_path,
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "execution_time": datetime.now().isoformat()
+        }
+
+        if result.returncode == 0:
+            response["status"] = "success"
+            response["message"] = f"Script ejecutado exitosamente: {script_name}"
+        else:
+            response["status"] = "error"
+            response["message"] = f"Script falló con código {result.returncode}: {script_name}"
+
+        return jsonify(response)
+
+    except subprocess.TimeoutExpired:
+        return jsonify(
+            {
+                "error": f"Script excedió el tiempo límite de ejecución: {script_path}",
+                "script": script_path,
+                "status": "timeout"
+            }
+        ), 408
     except Exception as e:
         return jsonify(
             {
                 "error": f"Error al ejecutar script: {str(e)}",
                 "script": script_path,
+                "status": "error"
             }
         ), 500

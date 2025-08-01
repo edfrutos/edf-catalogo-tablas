@@ -68,7 +68,7 @@ def check_srv_records(hostname):
         print(f"  Registros SRV encontrados: {len(answers)}")
 
         servers = []
-        for rdata in answers:
+        for rdata in answers.rrset:
             server = str(rdata.target).rstrip(".")
             print(
                 f"  {server} (prioridad: {rdata.priority}, peso: {rdata.weight}, puerto: {rdata.port})"

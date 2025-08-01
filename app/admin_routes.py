@@ -26,7 +26,7 @@ def check_admin():
 def get_catalogs_collection():
     """Obtiene la colección de catálogos desde la base de datos"""
     db = get_mongo_db()
-    return db["spreadsheets"] if db else None
+    return db["spreadsheets"] if db is not None else None
 
 
 # -------------------------------------------

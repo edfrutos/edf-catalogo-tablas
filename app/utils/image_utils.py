@@ -62,10 +62,10 @@ def save_image(uploaded_file, directory='uploads'):
         if use_s3:
             try:
                 # Si S3 está habilitado, subir también a S3
-                from app.utils.s3_utils import upload_to_s3
-                s3_success = upload_to_s3(file_path, unique_filename)
-                if not s3_success:
-                    logger.warning(f"No se pudo subir la imagen a S3: {unique_filename}")
+                from app.utils.s3_utils import upload_file_to_s3
+                s3_result = upload_file_to_s3(file_path, unique_filename)
+                if not s3_result['success']:
+                    logger.warning(f"No se pudo subir la imagen a S3: {unique_filename} - {s3_result.get('error', 'Error desconocido')}")
             except ImportError:
                 logger.warning("No se pudo importar s3_utils, la imagen solo se guardará localmente")
         
@@ -97,8 +97,8 @@ def delete_image(image_filename):
         use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
         if use_s3:
             try:
-                from app.utils.s3_utils import delete_from_s3
-                s3_success = delete_from_s3(image_filename)
+                from app.utils.s3_utils import delete_file_from_s3
+                s3_success = delete_file_from_s3(image_filename)
                 if not s3_success:
                     logger.warning(f"No se pudo eliminar la imagen de S3: {image_filename}")
             except ImportError:

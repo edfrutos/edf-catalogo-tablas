@@ -24,7 +24,7 @@ if __name__ == "__main__":
     summary = normalize_users_in_db(apply_changes=False)
     print(f"Usuarios totales: {summary['total_users']}")
     print(f"Usuarios a modificar: {summary['users_changed']}")
-    if summary['users_changed'] > 0:
+    if int(summary['users_changed']) > 0:
         print("Ejemplos de cambios:")
         pprint.pprint(summary['changes'])
     else:

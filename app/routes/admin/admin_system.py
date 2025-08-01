@@ -13,9 +13,9 @@ import os
 import psutil
 import platform
 from datetime import datetime
-from flask import Blueprint, render_template, jsonify, flash, redirect, url_for, current_app
+from flask import Blueprint, render_template, jsonify, flash, redirect, url_for, current_app, request
 from app.routes.maintenance_routes import admin_required
-from app.monitoring import check_system_health, get_app_metrics
+from app.monitoring import check_system_health, get_health_status
 from app.cache_system import get_cache_stats
 from app.routes.temp_files_utils import list_temp_files, delete_temp_files
 
@@ -30,7 +30,8 @@ def get_system_status_data(full=False):
         # Obtener informe completo de estado
         health_report = check_system_health()
         # Obtener estadísticas de solicitudes
-        metrics = get_app_metrics()
+        health_status = get_health_status()
+        metrics = health_status.get("metrics", {})
         request_stats = metrics.get("request_stats", {})
         
         # Calcular uptime

@@ -5,6 +5,11 @@
 import os
 import sys
 import pymongo
+from pymongo.errors import (
+    ConfigurationError,
+    ServerSelectionTimeoutError,
+    OperationFailure,
+)
 import certifi
 import socket
 import dns.resolver
@@ -35,7 +40,8 @@ def check_srv_records(hostname):
         # Intentar resolver los registros SRV
         answers = dns.resolver.resolve(f"_mongodb._tcp.{hostname}", "SRV")
         print(f"  Registros SRV encontrados: {len(answers)}")
-        for rdata in answers:
+        # Convertir a lista para asegurar iterabilidad
+        for rdata in list(answers):
             print(f"  {rdata.target} (prioridad: {rdata.priority}, peso: {rdata.weight}, puerto: {rdata.port})")
         return True
     except Exception as e:
@@ -65,11 +71,11 @@ def test_mongodb_connection(uri):
         print(f"  Bases de datos disponibles: {', '.join(databases)}")
         
         return True, None
-    except pymongo.errors.ConfigurationError as e:
+    except ConfigurationError as e:
         return False, f"Error de configuración: {str(e)}"
-    except pymongo.errors.ServerSelectionTimeoutError as e:
+    except ServerSelectionTimeoutError as e:
         return False, f"Timeout al conectar al servidor: {str(e)}"
-    except pymongo.errors.OperationFailure as e:
+    except OperationFailure as e:
         return False, f"Error de operación (posiblemente credenciales incorrectas): {str(e)}"
     except Exception as e:
         return False, f"Error inesperado: {str(e)}"

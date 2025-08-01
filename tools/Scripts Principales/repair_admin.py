@@ -46,7 +46,7 @@ def main():
         
         # Determinar el nombre de la base de datos
         db_name = "app_catalogojoyero_nueva"
-        if "app_catalogojoyero_nueva" not in mongo_uri and "/" in mongo_uri:
+        if mongo_uri and "app_catalogojoyero_nueva" not in mongo_uri and "/" in mongo_uri:
             parts = mongo_uri.split("/")
             if len(parts) > 3:
                 db_name_part = parts[3].split("?")[0]
