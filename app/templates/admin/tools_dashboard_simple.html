@@ -1,0 +1,165 @@
+{% extends 'admin/base.html' %} {% block title %}Herramientas y Scripts - Test{%
+endblock %} {% block content %}
+<div class="container mt-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div
+          class="card-header bg-primary text-white d-flex align-items-center"
+        >
+          <i class="fas fa-tools me-2"></i>
+          <h1 class="h3 mb-0">Herramientas y Scripts - TEST</h1>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Test:</strong> Esta es una versión simplificada para probar
+            las pestañas.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navegación por pestañas -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <ul class="nav nav-tabs" id="toolsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link active"
+                id="scripts-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#scripts"
+                type="button"
+                role="tab"
+              >
+                <i class="fas fa-terminal me-2"></i>Scripts de Shell
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="system-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#system"
+                type="button"
+                role="tab"
+              >
+                <i class="fas fa-cogs me-2"></i>Utilidades del Sistema
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="maintenance-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#maintenance"
+                type="button"
+                role="tab"
+              >
+                <i class="fas fa-wrench me-2"></i>Mantenimiento
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="data-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#data"
+                type="button"
+                role="tab"
+              >
+                <i class="fas fa-database me-2"></i>Gestión de Datos
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido de las pestañas -->
+  <div class="tab-content" id="toolsTabContent">
+    <!-- Pestaña de Scripts de Shell -->
+    <div class="tab-pane fade show active" id="scripts" role="tabpanel">
+      <div class="card">
+        <div class="card-body">
+          <h5>Scripts de Shell</h5>
+          <p>
+            Esta es la pestaña de Scripts de Shell. Si puedes ver esto, las
+            pestañas funcionan.
+          </p>
+          <div class="alert alert-success">
+            ✅ Las pestañas están funcionando correctamente!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pestaña de Utilidades del Sistema -->
+    <div class="tab-pane fade" id="system" role="tabpanel">
+      <div class="card">
+        <div class="card-body">
+          <h5>Utilidades del Sistema</h5>
+          <p>Esta es la pestaña de Utilidades del Sistema.</p>
+          <ul>
+            <li>Logging Unificado</li>
+            <li>Limpieza de Logs</li>
+            <li>Configuración Embebida</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pestaña de Mantenimiento -->
+    <div class="tab-pane fade" id="maintenance" role="tabpanel">
+      <div class="card">
+        <div class="card-body">
+          <h5>Mantenimiento</h5>
+          <p>Esta es la pestaña de Mantenimiento.</p>
+          <ul>
+            <li>Normalizar Usuarios</li>
+            <li>Backup de Usuarios</li>
+            <li>Crear Imagen Perfil</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pestaña de Gestión de Datos -->
+    <div class="tab-pane fade" id="data" role="tabpanel">
+      <div class="card">
+        <div class="card-body">
+          <h5>Gestión de Datos</h5>
+          <p>Esta es la pestaña de Gestión de Datos.</p>
+          <ul>
+            <li>Crear Backup Completo</li>
+            <li>Restaurar Backup</li>
+            <li>Validar Integridad</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("✅ Template cargado correctamente");
+    console.log(
+      "📋 Pestañas disponibles:",
+      document.querySelectorAll(".nav-tabs .nav-link").length
+    );
+
+    // Verificar que Bootstrap está disponible
+    if (typeof bootstrap !== "undefined") {
+      console.log("✅ Bootstrap disponible");
+    } else {
+      console.log("❌ Bootstrap no disponible");
+    }
+  });
+</script>
+{% endblock %}

@@ -4572,6 +4572,14 @@ def tools_dashboard():
     """
     return render_template('admin/tools_dashboard.html')
 
+@admin_bp.route("/tools-test")
+@admin_required
+def tools_dashboard_test():
+    """
+    Dashboard de prueba para verificar que las pestañas funcionan.
+    """
+    return render_template('admin/tools_dashboard_simple.html')
+
 
 app = None
 try:
