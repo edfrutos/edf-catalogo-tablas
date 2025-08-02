@@ -121,44 +121,8 @@ def edit():
     return render_template("auth/edit.html", user=user)
 
 
-@usuarios_bp.route("/admin/usuarios")
-@admin_required
-def gestionar_usuarios():
-    import logging  # noqa: F811
-
-    logger = logging.getLogger(__name__)
-    logger.info("[DEPURACIÓN] Entrando en gestionar_usuarios")
-    try:
-        users_collection = getattr(g, "users_collection", None)
-        logger.info(f"[DEPURACIÓN] users_collection: {users_collection}")
-        if users_collection is None:
-            logger.error("[DEPURACIÓN] No se pudo acceder a la colección de usuarios")
-            flash("No se pudo acceder a la colección de usuarios.", "error")
-            return render_template(
-                "error.html", mensaje="No se pudo conectar a la colección de usuarios."
-            )
-        usuarios = list(users_collection.find())
-        logger.info(f"[DEPURACIÓN] Usuarios recuperados: {len(usuarios)}")
-        # Calcular estadísticas
-        stats = {
-            "total": len(usuarios),
-            "roles": {"admin": 0, "normal": 0, "no_role": 0},
-        }
-        for user in usuarios:
-            role = user.get("role")
-            if role == "admin":
-                stats["roles"]["admin"] += 1
-            elif role in ("user", "normal"):
-                stats["roles"]["normal"] += 1
-            else:
-                stats["roles"]["no_role"] += 1
-        return render_template("admin/users.html", usuarios=usuarios, stats=stats)
-    except Exception as e:
-        logger.error(f"[DEPURACIÓN] Error en gestionar_usuarios: {e}", exc_info=True)
-        flash("Error al cargar los usuarios.", "error")
-        return render_template(
-            "error.html", mensaje=f"Error al cargar los usuarios: {e}"
-        )
+# Ruta eliminada - duplicada con admin_routes.py
+# La funcionalidad de gestión de usuarios está en admin_routes.py
 
 
 # NUEVO ENDPOINT: Forzar cambio de contraseña

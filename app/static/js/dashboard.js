@@ -43,17 +43,17 @@ $(function () {
 
     if (driveBtn.length > 0 && modal.length > 0) {
       console.log("✅ Inicializando eventos de Google Drive...");
-window.initializeGoogleDriveEvents();
+      window.initializeGoogleDriveEvents();
     }
 
-window.initializeOtherEvents();
+    window.initializeOtherEvents();
     console.log("✅ Inicialización parcial completada");
   }
 
   function initializeAllEvents() {
     initializeBackupEvents();
-window.initializeGoogleDriveEvents();
-window.initializeOtherEvents();
+    window.initializeGoogleDriveEvents();
+    window.initializeOtherEvents();
   }
 
   // ============================================
@@ -87,8 +87,8 @@ window.initializeOtherEvents();
           xhrFields: { withCredentials: true },
           timeout: 60000,
           success: function (response) {
-  if (response.status === "success" && response.uploaded_to_drive) {
-    const successMsg = `
+            if (response.status === "success" && response.uploaded_to_drive) {
+              const successMsg = `
       <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle"></i>
         <strong>Backup subido a Google Drive exitosamente</strong><br>
@@ -105,16 +105,16 @@ window.initializeOtherEvents();
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     `;
-    $("#backupResult").html(successMsg);
-    showAlert("Backup subido a Google Drive correctamente", "success");
-    
-    // Actualizar lista de backups de Google Drive si está visible
-    if (typeof window.loadDriveBackups === "function") {
-      setTimeout(() => window.loadDriveBackups(), 2000);
-    }
-    
-  } else if (response.status === "warning" && !response.uploaded_to_drive) {
-    const warningMsg = `
+              $("#backupResult").html(successMsg);
+              showAlert("Backup subido a Google Drive correctamente", "success");
+
+              // Actualizar lista de backups de Google Drive si está visible
+              if (typeof window.loadDriveBackups === "function") {
+                setTimeout(() => window.loadDriveBackups(), 2000);
+              }
+
+            } else if (response.status === "warning" && !response.uploaded_to_drive) {
+              const warningMsg = `
       <div class="alert alert-warning alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle"></i>
         <strong>Backup creado con advertencias</strong><br>
@@ -127,19 +127,19 @@ window.initializeOtherEvents();
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     `;
-    $("#backupResult").html(warningMsg);
-    showAlert("Backup creado pero no subido a Google Drive", "warning");
-    
-  } else {
-    $("#backupResult").html(`
+              $("#backupResult").html(warningMsg);
+              showAlert("Backup creado pero no subido a Google Drive", "warning");
+
+            } else {
+              $("#backupResult").html(`
       <div class="alert alert-warning alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle"></i>
         Backup completado con advertencias
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     `);
-  }
-},
+            }
+          },
           error: function (xhr) {
             const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText;
             $("#backupResult").html(`
@@ -159,17 +159,17 @@ window.initializeOtherEvents();
   }
 
   // Función para mostrar ventanas emergentes de confirmación
-function showConfirmationModal(title, message, type = "info", autoClose = true) {
-  const iconClass = {
-    success: "bi-check-circle-fill text-success",
-    error: "bi-exclamation-triangle-fill text-danger",
-    warning: "bi-exclamation-triangle-fill text-warning",
-    info: "bi-info-circle-fill text-info"
-  }[type] || "bi-info-circle-fill text-info";
+  function showConfirmationModal(title, message, type = "info", autoClose = true) {
+    const iconClass = {
+      success: "bi-check-circle-fill text-success",
+      error: "bi-exclamation-triangle-fill text-danger",
+      warning: "bi-exclamation-triangle-fill text-warning",
+      info: "bi-info-circle-fill text-info"
+    }[type] || "bi-info-circle-fill text-info";
 
-  const modalId = `confirmationModal_${Date.now()}`;
+    const modalId = `confirmationModal_${Date.now()}`;
 
-  const modalHtml = `
+    const modalHtml = `
     <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Label" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -192,109 +192,109 @@ function showConfirmationModal(title, message, type = "info", autoClose = true) 
     </div>
   `;
 
-  // Añadir modal al DOM
-  $("body").append(modalHtml);
+    // Añadir modal al DOM
+    $("body").append(modalHtml);
 
-  // Mostrar modal
-  const modal = new bootstrap.Modal(document.getElementById(modalId));
-  modal.show();
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
 
-  // Auto-cerrar después de 5 segundos si está habilitado
-  if (autoClose) {
-    setTimeout(() => {
-      modal.hide();
-    }, 5000);
+    // Auto-cerrar después de 5 segundos si está habilitado
+    if (autoClose) {
+      setTimeout(() => {
+        modal.hide();
+      }, 5000);
+    }
+
+    // Limpiar modal del DOM cuando se cierre
+    document.getElementById(modalId).addEventListener("hidden.bs.modal", function () {
+      $(this).remove();
+    });
   }
-
-  // Limpiar modal del DOM cuando se cierre
-  document.getElementById(modalId).addEventListener("hidden.bs.modal", function () {
-    $(this).remove();
-  });
-}
 
   // ============================================
   // EVENTOS DE GOOGLE DRIVE
   // ============================================
-  window.initializeGoogleDriveEvents = function() {
+  window.initializeGoogleDriveEvents = function () {
     console.log("✅ Inicializando eventos de Google Drive...");
 
-    $("#restoreDriveModal").off("show.bs.modal").on("show.bs.modal", function() {
+    $("#restoreDriveModal").off("show.bs.modal").on("show.bs.modal", function () {
       console.log("🔵 [EVENT] show.bs.modal - Modal va a abrirse");
     });
 
-    $("#restoreDriveModal").off("shown.bs.modal").on("shown.bs.modal", function() {
+    $("#restoreDriveModal").off("shown.bs.modal").on("shown.bs.modal", function () {
       console.log("✅ [EVENT] shown.bs.modal - Modal abierto exitosamente");
       loadDriveBackups();
     });
 
     // ✅ PRESERVADO: El botón principal sigue funcionando
-    $("#restoreDriveBtn").off("click").on("click", function() {
+    $("#restoreDriveBtn").off("click").on("click", function () {
       console.log("🔵 [EVENT] Botón Google Drive clickeado");
       loadDriveBackups();
     });
 
     // ✅ CORREGIDO: Solo cambio el selector del botón actualizar
-    $("#refreshDriveBackups").off("click").on("click", function() {
+    $("#refreshDriveBackups").off("click").on("click", function () {
       console.log("🔄 Actualizando lista de backups...");
       loadDriveBackups();
     });
 
-// Actualizar función de restauración con ventana emergente
-$(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-backup", function (e) {
-  e.preventDefault();
-  e.stopPropagation();
+    // Actualizar función de restauración con ventana emergente
+    $(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-backup", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
 
-  const fileId = $(this).data("id");
-  const filename = $(this).data("filename");
-  const btn = $(this);
-  const originalText = btn.html();
+      const fileId = $(this).data("id");
+      const filename = $(this).data("filename");
+      const btn = $(this);
+      const originalText = btn.html();
 
-  // Verificar si el botón ya está procesando
-  if (btn.prop("disabled")) {
-    return false;
-  }
-
-  if (!confirm(`¿Estás seguro de que quieres restaurar el backup "${filename}"?\n\nEsta acción sobrescribirá los datos actuales.`)) {
-    return false;
-  }
-
-  btn.prop("disabled", true).html("<span class=\"spinner-border spinner-border-sm\"></span> Restaurando...");
-
-  $.ajax({
-    url: `/admin/maintenance/drive/restore/${fileId}`,
-    method: "POST",
-    contentType: "application/json",
-    data: JSON.stringify({ filename: filename }),
-    xhrFields: { withCredentials: true },
-    success: function (response) {
-      if (response.status === "success" || response.success) {
-        showConfirmationModal(
-          "Restauración Completada",
-          `El backup "${filename}" se ha restaurado correctamente. Los datos han sido actualizados.`,
-          "success"
-        );
-      } else {
-        showConfirmationModal(
-          "Error en Restauración",
-          `No se pudo restaurar el backup "${filename}". ${response.message || "Error desconocido"}.`,
-          "error"
-        );
+      // Verificar si el botón ya está procesando
+      if (btn.prop("disabled")) {
+        return false;
       }
-    },
-    error: function (xhr) {
-      showConfirmationModal(
-        "Error en Restauración",
-        `Error al restaurar el backup "${filename}": ${xhr.responseJSON?.message || xhr.statusText}`,
-        "error"
-      );
-    },
-    complete: function () {
-      btn.prop("disabled", false).html(originalText);
-    }
-  });
 
-  return false;
-});
+      if (!confirm(`¿Estás seguro de que quieres restaurar el backup "${filename}"?\n\nEsta acción sobrescribirá los datos actuales.`)) {
+        return false;
+      }
+
+      btn.prop("disabled", true).html("<span class=\"spinner-border spinner-border-sm\"></span> Restaurando...");
+
+      $.ajax({
+        url: `/admin/maintenance/drive/restore/${fileId}`,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ filename: filename }),
+        xhrFields: { withCredentials: true },
+        success: function (response) {
+          if (response.status === "success" || response.success) {
+            showConfirmationModal(
+              "Restauración Completada",
+              `El backup "${filename}" se ha restaurado correctamente. Los datos han sido actualizados.`,
+              "success"
+            );
+          } else {
+            showConfirmationModal(
+              "Error en Restauración",
+              `No se pudo restaurar el backup "${filename}". ${response.message || "Error desconocido"}.`,
+              "error"
+            );
+          }
+        },
+        error: function (xhr) {
+          showConfirmationModal(
+            "Error en Restauración",
+            `Error al restaurar el backup "${filename}": ${xhr.responseJSON?.message || xhr.statusText}`,
+            "error"
+          );
+        },
+        complete: function () {
+          btn.prop("disabled", false).html(originalText);
+        }
+      });
+
+      return false;
+    });
 
     $(document).off("click", ".download-drive-backup").on("click", ".download-drive-backup", function (e) {
       e.preventDefault();
@@ -345,71 +345,71 @@ $(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-ba
     });
 
     $(document).off("click", ".delete-drive-backup").on("click", ".delete-drive-backup", function (e) {
-  e.preventDefault();
-  e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
 
-  const fileId = $(this).data("id");
-  const filename = $(this).data("filename");
-  const btn = $(this);
-  const originalText = btn.html();
+      const fileId = $(this).data("id");
+      const filename = $(this).data("filename");
+      const btn = $(this);
+      const originalText = btn.html();
 
-  // Verificar si el botón ya está procesando
-  if (btn.prop("disabled")) {
-    return false;
-  }
-
-  if (!confirm(`¿Estás seguro de que quieres eliminar el backup "${filename}"?\n\nEsta acción no se puede deshacer.`)) {
-    return false;
-  }
-
-  btn.prop("disabled", true).html("<span class=\"spinner-border spinner-border-sm\"></span> Eliminando...");
-
-  $.ajax({
-    url: `/admin/maintenance/drive/delete/${fileId}`,
-    method: "DELETE",
-    contentType: "application/json",
-    xhrFields: { withCredentials: true },
-    success: function (response) {
-      if (response.status === "success" || response.success) {
-        showConfirmationModal(
-          "Eliminación Completada",
-          `El backup "${filename}" se ha eliminado correctamente de Google Drive.`,
-          "success"
-        );
-        loadDriveBackups(); // Recargar lista
-      } else {
-        showConfirmationModal(
-          "Error en Eliminación",
-          `No se pudo eliminar el backup "${filename}". ${response.message || "Error desconocido"}.`,
-          "error"
-        );
+      // Verificar si el botón ya está procesando
+      if (btn.prop("disabled")) {
+        return false;
       }
-    },
-    error: function (xhr) {
-      showConfirmationModal(
-        "Error en Eliminación",
-        `Error al eliminar el backup "${filename}": ${xhr.responseJSON?.message || xhr.statusText}`,
-        "error"
-      );
-    },
-    complete: function () {
-      btn.prop("disabled", false).html(originalText);
-    }
-  });
 
-  return false;
-});
+      if (!confirm(`¿Estás seguro de que quieres eliminar el backup "${filename}"?\n\nEsta acción no se puede deshacer.`)) {
+        return false;
+      }
+
+      btn.prop("disabled", true).html("<span class=\"spinner-border spinner-border-sm\"></span> Eliminando...");
+
+      $.ajax({
+        url: `/admin/maintenance/drive/delete/${fileId}`,
+        method: "DELETE",
+        contentType: "application/json",
+        xhrFields: { withCredentials: true },
+        success: function (response) {
+          if (response.status === "success" || response.success) {
+            showConfirmationModal(
+              "Eliminación Completada",
+              `El backup "${filename}" se ha eliminado correctamente de Google Drive.`,
+              "success"
+            );
+            loadDriveBackups(); // Recargar lista
+          } else {
+            showConfirmationModal(
+              "Error en Eliminación",
+              `No se pudo eliminar el backup "${filename}". ${response.message || "Error desconocido"}.`,
+              "error"
+            );
+          }
+        },
+        error: function (xhr) {
+          showConfirmationModal(
+            "Error en Eliminación",
+            `Error al eliminar el backup "${filename}": ${xhr.responseJSON?.message || xhr.statusText}`,
+            "error"
+          );
+        },
+        complete: function () {
+          btn.prop("disabled", false).html(originalText);
+        }
+      });
+
+      return false;
+    });
   };
 
   // ============================================
   // OTROS EVENTOS
   // ============================================
   // Agregar manejo del botón exportar CSV
-  window.initializeOtherEvents = function() {
+  window.initializeOtherEvents = function () {
     console.log("✅ Inicializando otros eventos...");
 
     // ✅ AÑADIR: Event listeners para botones de tareas programadas
-    $(document).off("click", ".run-task").on("click", ".run-task", function(e) {
+    $(document).off("click", ".run-task").on("click", ".run-task", function (e) {
       e.preventDefault();
       e.stopPropagation();
 
@@ -423,7 +423,7 @@ $(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-ba
     });
 
     // Prevenir auto-ejecución del botón exportar CSV
-    $("#exportSystemStatusBtn").off("click").on("click", function(e) {
+    $("#exportSystemStatusBtn").off("click").on("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
       console.log("📊 Exportando estado del sistema...");
@@ -431,13 +431,13 @@ $(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-ba
     });
 
     // Agregar manejo del botón restaurarG140
-    $("#restoreBtn").off("click").on("click", function(e) {
+    $("#restoreBtn").off("click").on("click", function (e) {
       e.preventDefault();
       $("#restoreFileInput").click();
     });
 
     // Handle file selection
-    $("#restoreFileInput").off("change").on("change", function(e) {
+    $("#restoreFileInput").off("change").on("change", function (e) {
       e.preventDefault();
       e.stopPropagation();
 
@@ -448,7 +448,7 @@ $(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-ba
 
       // Validate file type
       if (!file.name.toLowerCase().endsWith(".json") &&
-          !file.name.toLowerCase().endsWith(".gz")) {
+        !file.name.toLowerCase().endsWith(".gz")) {
         showAlert("Invalid file type. Please select a .json or .gz backup file", "danger");
         return;
       }
@@ -470,14 +470,14 @@ $(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-ba
       processData: false,
       contentType: false,
       xhrFields: { withCredentials: true },
-      success: function(response) {
+      success: function (response) {
         if (response.status === "success") {
           showAlert("Restauración completada correctamente.", "success");
         } else {
           showAlert("Error en la restauración: " + response.message, "danger");
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         showAlert("Error al restaurar: " + (xhr.responseJSON?.message || xhr.statusText), "danger");
       }
     });
@@ -525,7 +525,7 @@ $(document).off("click", ".restore-drive-backup").on("click", ".restore-drive-ba
   }
 
   // Función para mostrar backups con paginación
-function displayBackupsWithPagination() {
+  function displayBackupsWithPagination() {
     const totalBackups = allBackups.length;
     const startIndex = (currentPage - 1) * backupsPerPage;
     const endIndex = backupsPerPage === -1 ? totalBackups : Math.min(startIndex + backupsPerPage, totalBackups);
@@ -536,16 +536,16 @@ function displayBackupsWithPagination() {
 
     // Mostrar backups
     backupsToShow.forEach(function (backup, index) {
-        const sizeDisplay = backup.file_size ? `${(backup.file_size / (1024 * 1024)).toFixed(2)} MB` : "N/A";
-        const uploadDate = backup.uploaded_at ? new Date(backup.uploaded_at).toLocaleString() : "N/A";
-        const filename = backup.filename || `backup_${index + 1}`;
-        const isSelected = selectedBackups.has(backup._id);
-        const isPlaceholder = backup.is_placeholder || false;
+      const sizeDisplay = backup.file_size ? `${(backup.file_size / (1024 * 1024)).toFixed(2)} MB` : "N/A";
+      const uploadDate = backup.uploaded_at ? new Date(backup.uploaded_at).toLocaleString() : "N/A";
+      const filename = backup.filename || `backup_${index + 1}`;
+      const isSelected = selectedBackups.has(backup._id);
+      const isPlaceholder = backup.is_placeholder || false;
 
-        let actionButtons;
-        if (isPlaceholder) {
-            // Mostrar botones deshabilitados para placeholders
-            actionButtons = `
+      let actionButtons;
+      if (isPlaceholder) {
+        // Mostrar botones deshabilitados para placeholders
+        actionButtons = `
                 <div class="btn-group" role="group">
                     <button class="btn btn-sm btn-secondary" disabled title="Google Drive no configurado">
                         <i class="bi bi-gear"></i> Configurar
@@ -555,12 +555,12 @@ function displayBackupsWithPagination() {
                     </small>
                 </div>
             `;
-        } else {
-            // Generar URL de descarga directa de Google Drive
-            const downloadUrl = `https://drive.google.com/uc?export=download&id=${backup._id}`;
-            const viewUrl = `https://drive.google.com/file/d/${backup._id}/view`;
-            
-            actionButtons = `
+      } else {
+        // Generar URL de descarga directa de Google Drive
+        const downloadUrl = `https://drive.google.com/uc?export=download&id=${backup._id}`;
+        const viewUrl = `https://drive.google.com/file/d/${backup._id}/view`;
+
+        actionButtons = `
                 <div class="btn-group" role="group">
                     <button class="btn btn-sm btn-primary download-drive-backup"
                             data-id="${backup._id}"
@@ -589,9 +589,9 @@ function displayBackupsWithPagination() {
                     </a>
                 </div>
             `;
-        }
+      }
 
-        const row = `
+      const row = `
             <tr data-backup-id="${backup._id}" ${isPlaceholder ? "class=\"table-warning\"" : ""}>
                 <td>
                     <input type="checkbox" class="form-check-input backup-checkbox"
@@ -610,7 +610,7 @@ function displayBackupsWithPagination() {
                 </td>
             </tr>
         `;
-        $("#driveBackupsTableBody").append(row);
+      $("#driveBackupsTableBody").append(row);
     });
 
     // Actualizar contadores
@@ -624,7 +624,7 @@ function displayBackupsWithPagination() {
 
     // Actualizar contador de seleccionados
     updateSelectedCount();
-}
+  }
 
   // Función para generar controles de paginación
   function generatePagination(totalBackups) {
@@ -669,16 +669,16 @@ function displayBackupsWithPagination() {
   }
 
   // Event listeners para las nuevas funcionalidades
-  $(document).ready(function() {
+  $(document).ready(function () {
     // Control de backups por página
-    $(document).on("change", "#backupsPerPage", function() {
+    $(document).on("change", "#backupsPerPage", function () {
       backupsPerPage = parseInt($(this).val());
       currentPage = 1;
       displayBackupsWithPagination();
     });
 
     // Paginación
-    $(document).on("click", "#paginationControls a", function(e) {
+    $(document).on("click", "#paginationControls a", function (e) {
       e.preventDefault();
       const page = parseInt($(this).data("page"));
       if (page && page !== currentPage) {
@@ -688,7 +688,7 @@ function displayBackupsWithPagination() {
     });
 
     // Selección individual
-    $(document).on("change", ".backup-checkbox", function() {
+    $(document).on("change", ".backup-checkbox", function () {
       const backupId = $(this).data("backup-id");
       if ($(this).is(":checked")) {
         selectedBackups.add(backupId);
@@ -700,12 +700,12 @@ function displayBackupsWithPagination() {
     });
 
     // Seleccionar todos
-    $(document).on("change", "#selectAllBackups, #selectAllHeader", function() {
+    $(document).on("change", "#selectAllBackups, #selectAllHeader", function () {
       const isChecked = $(this).is(":checked");
       $(".backup-checkbox").prop("checked", isChecked);
 
       if (isChecked) {
-        $(".backup-checkbox").each(function() {
+        $(".backup-checkbox").each(function () {
           selectedBackups.add($(this).data("backup-id"));
         });
       } else {
@@ -716,7 +716,7 @@ function displayBackupsWithPagination() {
     });
 
     // Eliminar seleccionados
-    $(document).on("click", "#deleteSelectedBackups", function() {
+    $(document).on("click", "#deleteSelectedBackups", function () {
       if (selectedBackups.size === 0) return;
 
       if (!confirm(`¿Estás seguro de que quieres eliminar ${selectedBackups.size} backup(s) seleccionado(s)?\n\nEsta acción no se puede deshacer.`)) {
@@ -926,7 +926,18 @@ function displayBackupsWithPagination() {
   // Después de la función initializeOtherEvents() (alrededor de la línea 300)
 
   // Función global para ejecutar tareas
+  // Variable para evitar ejecuciones múltiples
+  let taskExecutionInProgress = false;
+
   window.runTask = function runTask(task) {
+    // Evitar ejecuciones múltiples simultáneas
+    if (taskExecutionInProgress) {
+      console.log("⚠️ Tarea ya en ejecución, ignorando nueva solicitud");
+      return;
+    }
+
+    taskExecutionInProgress = true;
+
     const btn = $(`.run-task[data-task="${task}"]`);
     const originalText = btn.html();
 
@@ -958,6 +969,7 @@ function displayBackupsWithPagination() {
       },
       complete: function () {
         btn.html(originalText).prop("disabled", false);
+        taskExecutionInProgress = false;
       }
     });
   };
@@ -983,7 +995,7 @@ function displayBackupsWithPagination() {
   }
 
   // Función global para restaurar desde Google Drive
-  window.restoreFromDrive = function(fileId, downloadUrl, filename) {
+  window.restoreFromDrive = function (fileId, downloadUrl, filename) {
     if (!confirm(`¿Estás seguro de que quieres restaurar el backup "${filename}"?\n\nEsto sobrescribirá los datos actuales.`)) {
       return;
     }
@@ -1011,7 +1023,7 @@ function displayBackupsWithPagination() {
   };
 
   // Inicialización
-  $(document).ready(function() {
+  $(document).ready(function () {
     console.log("🚀 Inicializando Dashboard...");
     waitForButtons();
     setTimeout(loadSystemStatus, 1000);
@@ -1023,134 +1035,134 @@ function displayBackupsWithPagination() {
 
 // Función para detectar la página actual
 function getCurrentPage() {
-    const path = window.location.pathname;
-    if (path.includes("/admin/db/backup")) {
-        return "db_backup";
-    } else if (path.includes("/admin/maintenance/dashboard")) {
-        return "dashboard";
-    }
-    return "unknown";
+  const path = window.location.pathname;
+  if (path.includes("/admin/db/backup")) {
+    return "db_backup";
+  } else if (path.includes("/admin/maintenance/dashboard")) {
+    return "dashboard";
+  }
+  return "unknown";
 }
 
 // Inicialización condicional según la página
-$(function() {
-    const currentPage = getCurrentPage();
+$(function () {
+  const currentPage = getCurrentPage();
 
-    // Esperar a que los elementos estén disponibles
-    function waitForElements(selectors, callback, maxAttempts = 50) {
-        let attempts = 0;
+  // Esperar a que los elementos estén disponibles
+  function waitForElements(selectors, callback, maxAttempts = 50) {
+    let attempts = 0;
 
-        function checkElements() {
-            attempts++;
-            const elements = selectors.map(selector => $(selector));
-            const allFound = elements.every(el => el.length > 0);
+    function checkElements() {
+      attempts++;
+      const elements = selectors.map(selector => $(selector));
+      const allFound = elements.every(el => el.length > 0);
 
-            if (allFound || attempts >= maxAttempts) {
-                callback(allFound);
-            } else {
-                setTimeout(checkElements, 100);
-            }
+      if (allFound || attempts >= maxAttempts) {
+        callback(allFound);
+      } else {
+        setTimeout(checkElements, 100);
+      }
+    }
+
+    checkElements();
+  }
+
+  // Selectores según la página
+  if (currentPage === "db_backup") {
+    // Para la página de db_backup
+    waitForElements(["#createBackupBtn", "#refreshDriveBackups"], function (found) {
+      if (found) {
+        initializeDbBackupEvents();
+      }
+    });
+  } else if (currentPage === "dashboard") {
+    // Para la página de dashboard
+    waitForElements(["#backupBtn", "#restoreDriveBtn", "#restoreDriveModal"], function (found) {
+      if (found) {
+        initializeDbBackupEvents();
+        // Check if function exists before calling - CORREGIDO
+        if (typeof window.initializeGoogleDriveEvents === "function") {
+          window.initializeGoogleDriveEvents();
+        } else {
+          console.warn("Warning: initializeGoogleDriveEvents function is not defined");
+          // Attempt to initialize basic Google Drive functionality
+          try {
+            $("#restoreDriveBtn").off("click").on("click", function () {
+              console.log("Google Drive button clicked but handler not fully initialized");
+            });
+          } catch (e) {
+            console.error("Failed to initialize fallback Google Drive handlers:", e);
+          }
         }
 
-        checkElements();
-    }
+        if (typeof window.initializeOtherEvents === "function") {
+          window.initializeOtherEvents();
+        } else {
+          console.warn("Warning: initializeOtherEvents function is not defined");
+        }
 
-    // Selectores según la página
-    if (currentPage === "db_backup") {
-        // Para la página de db_backup
-        waitForElements(["#createBackupBtn", "#refreshDriveBackups"], function(found) {
-            if (found) {
-                initializeDbBackupEvents();
-            }
-        });
-    } else if (currentPage === "dashboard") {
-        // Para la página de dashboard
-        waitForElements(["#backupBtn", "#restoreDriveBtn", "#restoreDriveModal"], function(found) {
-            if (found) {
-                initializeDbBackupEvents();
-                // Check if function exists before calling - CORREGIDO
-                if (typeof window.initializeGoogleDriveEvents === "function") {
-                    window.initializeGoogleDriveEvents();
-                } else {
-                    console.warn("Warning: initializeGoogleDriveEvents function is not defined");
-                    // Attempt to initialize basic Google Drive functionality
-                    try {
-                        $("#restoreDriveBtn").off("click").on("click", function() {
-                            console.log("Google Drive button clicked but handler not fully initialized");
-                        });
-                    } catch (e) {
-                        console.error("Failed to initialize fallback Google Drive handlers:", e);
-                    }
-                }
-
-                if (typeof window.initializeOtherEvents === "function") {
-                    window.initializeOtherEvents();
-                } else {
-                    console.warn("Warning: initializeOtherEvents function is not defined");
-                }
-
-                if (typeof window.loadSystemStatus === "function") {
-                    window.loadSystemStatus();
-                } else {
-                    console.warn("Warning: loadSystemStatus function is not defined");
-                }
-            }
-        });
-    }
+        if (typeof window.loadSystemStatus === "function") {
+          window.loadSystemStatus();
+        } else {
+          console.warn("Warning: loadSystemStatus function is not defined");
+        }
+      }
+    });
+  }
 });
 
 // Nueva función para eventos específicos de db_backup
 function initializeDbBackupEvents() {
-    // Evento para crear backup (ID diferente en db_backup.html)
-    $("#createBackupBtn").off("click").on("click", function() {
-        const button = $(this);
-        const originalText = button.html();
+  // Evento para crear backup (ID diferente en db_backup.html)
+  $("#createBackupBtn").off("click").on("click", function () {
+    const button = $(this);
+    const originalText = button.html();
 
-        button.prop("disabled", true)
-              .html("<i class=\"bi bi-hourglass-split me-2\"></i>Creando...");
+    button.prop("disabled", true)
+      .html("<i class=\"bi bi-hourglass-split me-2\"></i>Creando...");
 
-        $.ajax({
-            url: "/admin/backup/create",
-            method: "POST",
-            success: function(response) {
-                if (response.success) {
-                    if (typeof window.showAlert === "function") {
-                        window.showAlert("Backup creado correctamente", "success");
-                    }
-                    setTimeout(() => {
-                        if (typeof window.location !== "undefined") {
-                            window.location.reload();
-                        }
-                    }, 2000);
-                } else {
-                    if (typeof window.showAlert === "function") {
-                        window.showAlert("Error al crear el backup", "danger");
-                    }
-                }
-            },
-            error: function() {
-                // CORREGIDO: Variable no utilizada
-                if (typeof window.showAlert === "function") {
-                    window.showAlert("Error al crear el backup", "danger");
-                }
-            },
-            complete: function() {
-                button.prop("disabled", false).html(originalText);
+    $.ajax({
+      url: "/admin/backup/create",
+      method: "POST",
+      success: function (response) {
+        if (response.success) {
+          if (typeof window.showAlert === "function") {
+            window.showAlert("Backup creado correctamente", "success");
+          }
+          setTimeout(() => {
+            if (typeof window.location !== "undefined") {
+              window.location.reload();
             }
-        });
-    });
-
-    // Evento para actualizar lista de Google Drive
-    $("#refreshDriveBackups").off("click").on("click", function() {
-        if (typeof window.loadDriveBackups === "function") {
-            window.loadDriveBackups();
+          }, 2000);
         } else {
-            console.warn("loadDriveBackups function is not defined");
+          if (typeof window.showAlert === "function") {
+            window.showAlert("Error al crear el backup", "danger");
+          }
         }
+      },
+      error: function () {
+        // CORREGIDO: Variable no utilizada
+        if (typeof window.showAlert === "function") {
+          window.showAlert("Error al crear el backup", "danger");
+        }
+      },
+      complete: function () {
+        button.prop("disabled", false).html(originalText);
+      }
     });
+  });
 
-    // Cargar backups de Google Drive al inicializar
+  // Evento para actualizar lista de Google Drive
+  $("#refreshDriveBackups").off("click").on("click", function () {
     if (typeof window.loadDriveBackups === "function") {
-        window.loadDriveBackups();
+      window.loadDriveBackups();
+    } else {
+      console.warn("loadDriveBackups function is not defined");
     }
+  });
+
+  // Cargar backups de Google Drive al inicializar
+  if (typeof window.loadDriveBackups === "function") {
+    window.loadDriveBackups();
+  }
 }

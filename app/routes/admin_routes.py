@@ -110,12 +110,9 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.route("/")
 @admin_required
 def dashboard_admin():
-    # Mostrar advertencia si el sistema de monitoreo no está disponible
+    mensaje_monitoreo = None
     if not current_app.config.get("MONITORING_ENABLED", False):
-        flash(
-            "El sistema de monitoreo no está disponible actualmente. Contacte con el administrador.",
-            "warning",
-        )
+        mensaje_monitoreo = "El sistema de monitoreo no está disponible actualmente. Contacte con el administrador."
     db = get_mongo_db()
     if db is None:
         flash(
@@ -138,17 +135,14 @@ def dashboard_admin():
                 users_collection = db["users"]
             except Exception:
                 users_collection = None
-    
     if users_collection is None:
         flash("No se pudo acceder a la colección de usuarios.", "error")
         return render_template(
             "error.html", mensaje="No se pudo conectar a la colección de usuarios."
         )
     try:
-        # Obtener parámetros de búsqueda
         search = request.args.get("search", "").strip()
         search_type = request.args.get("search_type", "name")
-        # Obtener todos los usuarios
         usuarios = list(users_collection.find())
         total_usuarios = len(usuarios)
         try:
@@ -158,7 +152,6 @@ def dashboard_admin():
             tablas = []
         try:
             catalogos = list(db["catalogs"].find().sort("created_at", -1))
-
         except (KeyError, AttributeError, TypeError) as e:
             print(f"[ERROR][ADMIN] Consulta a catalogs falló: {e}")
             catalogos = []
@@ -169,7 +162,6 @@ def dashboard_admin():
             c["tipo"] = "catalog"
             c["data"] = c.get("rows", [])
         registros = tablas + catalogos
-        # Procesar usuarios con catálogos/tablas
         catalogos_por_usuario = {}
         for usuario in usuarios:
             catalogos_por_usuario[str(usuario["_id"])] = {
@@ -207,83 +199,34 @@ def dashboard_admin():
                             catalogos_por_usuario[user_id]["last_update"] = last_update
         usuarios_con_catalogos = []
         for user_id, user_info in catalogos_por_usuario.items():
-            if user_info["last_update"]:
-                user_info["last_update_str"] = user_info["last_update"].strftime(
-                    "%d/%m/%Y, %H:%M:%S"
-                )
-            else:
-                user_info["last_update_str"] = "No disponible"
-            user_info["id"] = user_id
             usuarios_con_catalogos.append(user_info)
-        usuarios_con_catalogos.sort(key=lambda x: x["count"], reverse=True)
-        # FILTRO: aplicar búsqueda a registros y usuarios
-        registros_filtrados = registros
-        usuarios_filtrados = usuarios_con_catalogos
+        # Filtrar registros por usuario si es necesario
+        mis_registros = []
         if search:
-            if search_type == "name":
-                registros_filtrados = [
-                    r
-                    for r in registros
-                    if search.lower() in (r.get("name", "").lower())
-                ]
-            elif search_type == "owner":
-                registros_filtrados = [
-                    r
-                    for r in registros
-                    if search.lower() in str(r.get("owner", "")).lower()
-                    or search.lower() in str(r.get("created_by", "")).lower()
-                    or search.lower() in str(r.get("owner_name", "")).lower()
-                ]
-            # Filtrar usuarios también
             if search_type == "owner":
-                usuarios_filtrados = [
-                    u
-                    for u in usuarios_con_catalogos
-                    if search.lower() in u["username"].lower()
-                    or search.lower() in u["email"].lower()
-                    or search.lower() in u["nombre"].lower()
-                ]
-            elif search_type == "name":
-                # Mostrar todos los usuarios si se busca por nombre de catálogo
-                usuarios_filtrados = usuarios_con_catalogos
-        porcentaje = (
-            float(len(registros_filtrados)) / float(total_usuarios) * 100.0
-            if total_usuarios > 0
-            else 0.0
-        )
-        # Filtrar catálogos/tablas propios del usuario logueado
-        username = session.get("username")
-        mis_registros = [
-            r
-            for r in registros
-            if r.get("owner") == username
-            or r.get("created_by") == username
-            or r.get("owner_name") == username
-        ]
-        response = make_response(
-            render_template(
-                "admin/dashboard_admin.html",
-                total_usuarios=total_usuarios,
-                total_catalogos=len(registros_filtrados),
-                registros=registros_filtrados,
-                mis_registros=mis_registros,
-                usuarios=usuarios_filtrados,
-                porcentaje=porcentaje,
-                tablas=[r for r in registros_filtrados if r["tipo"] == "spreadsheet"],
-                catalogos=[r for r in registros_filtrados if r["tipo"] == "catalog"],
-                search=search,
-                search_type=search_type,
-            )
-        )
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
-        return response
-    except (AttributeError, KeyError, TypeError, ValueError) as e:
-        logger.error(f"Error en dashboard_admin: {str(e)}")
+                mis_registros = [r for r in registros if search.lower() in (r.get("owner", "") or r.get("created_by", "") or r.get("owner_name", "")).lower()]
+            else:
+                mis_registros = [r for r in registros if search.lower() in r.get("name", "").lower()]
+        else:
+            mis_registros = registros
+        total_catalogos = len(mis_registros)
+        porcentaje = (total_catalogos / total_usuarios * 100) if total_usuarios else 0
         return render_template(
-            "error.html", error=f"Error en el panel de administración: {str(e)}"
-        ), 500
+            "admin/dashboard_admin.html",
+            total_usuarios=total_usuarios,
+            total_catalogos=total_catalogos,
+            porcentaje=porcentaje,
+            mis_registros=mis_registros,
+            search=search,
+            search_type=search_type,
+            mensaje_monitoreo=mensaje_monitoreo,
+        )
+    except Exception as e:
+        print(f"[ERROR][ADMIN] Error en dashboard_admin: {e}")
+        flash(f"Error al cargar el dashboard: {e}", "error")
+        return render_template(
+            "error.html", mensaje=f"Error al cargar el dashboard: {e}"
+        )
 
 
 # Ruta adicional para compatibilidad con /admin/dashboard

@@ -5,27 +5,39 @@
 Esta documentación está organizada en las siguientes categorías:
 
 ### 🔧 [Setup](./setup/)
+
 Documentación de configuración e instalación del proyecto.
 
+```sh
+
+```
+
 ### 🛠️ [Maintenance](./maintenance/)
+
 Guías de mantenimiento, backups y operaciones del sistema.
 
 ### 💻 [Development](./development/)
+
 Documentación para desarrolladores, testing y guías de desarrollo.
 
 ### 🚀 [Deployment](./deployment/)
+
 Guías de despliegue y configuración en producción.
 
 ### 📖 [Tutorials](./tutorials/)
+
 Tutoriales y guías paso a paso.
 
 ### 🔍 [Troubleshooting](./troubleshooting/)
+
 Solución de problemas y errores comunes.
 
 ### 🔐 [Security](./security/)
+
 Documentación de seguridad y autenticación.
 
 ### 🔌 [API](./api/)
+
 Documentación de APIs y endpoints.
 
 ---
@@ -33,7 +45,7 @@ Documentación de APIs y endpoints.
 ## 📋 Archivos Principales
 
 - **[README.md](./README.md)** - Documentación principal del proyecto
-- **[Configuración de Despliegue](./deployment/configuracion_despliegue.md)** - Guía completa de despliegue
+- __[Configuración de Despliegue](./deployment/configuracion_despliegue.md)__ - Guía completa de despliegue
 - **[Checklist de Mantenimiento](./maintenance/Checklist%20de%20Mantenimiento,%20Seguridad%20y%20Backups.md)** - Checklist de mantenimiento
 
 ---
@@ -48,4 +60,4 @@ Para actualizar esta documentación:
 
 ---
 
-*Última actualización: $(date)* 
+*Última actualización: $(date)*

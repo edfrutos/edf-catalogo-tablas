@@ -541,8 +541,8 @@ Cargando registros...</pre
       $("#memDisponible").text((memUsage.available_mb / 1024).toFixed(2));
     }
 
-    if (systemStatus.system_details) {
-      const details = systemStatus.system_details;
+    if (systemStatus.system_info) {
+      const details = systemStatus.system_info;
       $("#so").text(details.os || "N/A");
       $("#arquitectura").text(details.architecture || "N/A");
       $("#usuario").text(details.user || "N/A");
