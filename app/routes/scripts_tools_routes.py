@@ -22,7 +22,9 @@ BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 DIRECTORY_INFOS = [
     {'name': 'scripts', 'path': os.path.join(BASE_PATH, 'scripts')},
     {'name': 'tests', 'path': os.path.join(BASE_PATH, 'tests')},
-    {'name': 'tools', 'path': os.path.join(BASE_PATH, 'tools')}
+    {'name': 'tools', 'path': os.path.join(BASE_PATH, 'tools')},
+    {'name': 'app_scripts', 'path': os.path.join(BASE_PATH, 'app')},
+    {'name': 'app_utils', 'path': os.path.join(BASE_PATH, 'app/utils')}
 ]
 
 def list_files_with_info(directory, page=1, per_page=20, filetype=None):
@@ -55,6 +57,17 @@ def list_files_with_info(directory, page=1, per_page=20, filetype=None):
             
         # Obtener información del archivo
         is_dir = os.path.isdir(full_path)
+        
+        # Solo incluir archivos Python (.py) y Shell (.sh), excluir __pycache__ y archivos de configuración
+        if not is_dir:
+            if not (name.endswith('.py') or name.endswith('.sh')):
+                continue
+            # Excluir archivos de configuración y cache
+            if name in ['__init__.py', '__pycache__', '.pyc', '.pyo']:
+                continue
+            # Para app/, excluir archivos que no son scripts principales
+            if 'app/' in rel_path and name in ['models.py', 'extensions.py', 'decorators.py', 'error_handlers.py', 'filters.py']:
+                continue
         
         try:
             stat = os.stat(full_path)
