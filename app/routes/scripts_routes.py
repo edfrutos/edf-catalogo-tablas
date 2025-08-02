@@ -356,7 +356,7 @@ def view_script_content_route(script_path):
 @admin_required
 def tools_dashboard():
     """Dashboard principal de herramientas."""
-    return render_template("admin/scripts_tools_overview.html")
+    return render_template("admin/tools_dashboard.html")
 
 
 
