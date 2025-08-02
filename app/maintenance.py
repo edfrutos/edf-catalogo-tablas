@@ -1,5 +1,5 @@
 # Script: maintenance.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: [Módulo para mantenimiento de la base de datos. Permite normalizar campos de usuarios y realizar backups.]
 # Uso: python3 maintenance.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]

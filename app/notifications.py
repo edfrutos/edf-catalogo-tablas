@@ -1,5 +1,5 @@
 # Script: notifications.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: [Sistema de notificaciones y alertas Este módulo se encarga de enviar notificaciones y alertas cuando se detectan problemas en el sistema o cuando se alcanzan umbrales críticos.]
 # Uso: python3 notifications.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]

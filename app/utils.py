@@ -1,5 +1,5 @@
 # Script: utils.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: ["Acceso restringido a administradores", "danger"]
 # Uso: python3 utils.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]

@@ -1,5 +1,5 @@
 # Script: data_fallback.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: [Sistema de fallback de datos para cuando la conexión a MongoDB no está disponible. Permite que la aplicación siga funcionando con datos básicos.]
 # Uso: python3 data_fallback.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]

@@ -1,5 +1,5 @@
 # Script: database.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: [Módulo para gestionar la conexión a la base de datos MongoDB de forma resiliente. Permite modo fallback y reconexión automática.]
 # Uso: python3 database.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]

@@ -1,5 +1,5 @@
 # Script: monitoring.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: [Sistema de monitoreo para la aplicación Este módulo proporciona herramientas para monitorear la salud de la aplicación y generar alertas cuando se detectan problemas.]
 # Uso: python3 monitoring.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]

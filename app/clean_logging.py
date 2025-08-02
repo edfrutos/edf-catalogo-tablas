@@ -1,4 +1,10 @@
-# app/clean_logging.py
+# Script: clean_logging.py
+# Descripción: [Configuración para limpiar el logging excesivo de la aplicación. Aplica configuraciones para reducir la información verbosa que ya no es necesaria.]
+# Uso: python3 clean_logging.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: EDF Developer - 2025-05-28
+
 """
 Configuración para limpiar el logging excesivo de la aplicación.
 Aplica configuraciones para reducir la información verbosa que ya no es necesaria.

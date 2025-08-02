@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Script: config_embedded.py
+# Descripción: [Configuración para la aplicación empaquetada. Aplica configuraciones para reducir la información verbosa que ya no es necesaria.]
+# Uso: python3 config_embedded.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: EDF Developer - 2025-05-28
 """
 Configuración para aplicación empaquetada
-Autor: Eduardo de Frutos
+Autor: Eugenio de Frutos
 Fecha: 2025-06-29
 """
 

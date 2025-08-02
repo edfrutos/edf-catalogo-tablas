@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""
-Script: logging_unified.py
-Descripción: Sistema de logging centralizado y unificado para la aplicación
-Uso: from app.logging_unified import setup_unified_logging
-Autor: EDF Developer - 2025-01-16
-"""
+
+# Script: logging_unified.py
+# Descripción: [Sistema de logging centralizado y unificado para la aplicación]
+# Uso: from app.logging_unified import setup_unified_logging
+# Autor: EDF Developer - 2025-01-16
+
 
 import os
 import logging

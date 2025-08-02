@@ -1,5 +1,5 @@
 # Script: crear_imagen_perfil_default.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: [Función temporalmente deshabilitada para evitar dependencia de Pillow. Devuelve None para indicar que no se pudo crear la imagen.]
 # Uso: python3 crear_imagen_perfil_default.py [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
