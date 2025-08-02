@@ -4563,6 +4563,16 @@ def test_database():
         ), 500
 
 
+@admin_bp.route("/tools")
+@admin_required
+def tools_dashboard():
+    """
+    Dashboard de herramientas y scripts del sistema.
+    Requiere login de administrador.
+    """
+    return render_template('admin/tools_dashboard.html')
+
+
 app = None
 try:
     from flask import current_app as flask_current_app

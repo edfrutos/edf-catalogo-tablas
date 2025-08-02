@@ -13,14 +13,15 @@ from app.routes.maintenance_routes import admin_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-@admin_bp.route("/tools")
-@admin_required
-def tools_dashboard():
-    """
-    Dashboard de herramientas y scripts del sistema.
-    Requiere login de administrador.
-    """
-    return render_template('admin/tools_dashboard.html')
+# Ruta movida a admin_routes.py para evitar conflictos de blueprints
+# @admin_bp.route("/tools")
+# @admin_required
+# def tools_dashboard():
+#     """
+#     Dashboard de herramientas y scripts del sistema.
+#     Requiere login de administrador.
+#     """
+#     return render_template('admin/tools_dashboard.html')
 
 # @admin_bp.route("/scripts-tools")
 # def scripts_tools_overview():
