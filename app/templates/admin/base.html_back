@@ -96,8 +96,8 @@
     <i class="bi bi-lightbulb"></i> Plantilla Desarrollo
   </a>
   <ul class="dropdown-menu" aria-labelledby="devTemplateDropdown">
-    <li><a class="dropdown-item" href="/dev-template/readme"><i class="bi bi-file-earmark-text"></i> README Testing</a></li>
-    <li><a class="dropdown-item" href="/dev-template/testing"><i class="bi bi-rocket"></i> Testing Interactivo</a></li>
+    <li><a class="dropdown-item" href="//dev_template//readme"><i class="bi bi-file-earmark-text"></i> README Testing</a></li>
+    <li><a class="dropdown-item" href="//dev_template//testing"><i class="bi bi-rocket"></i> Testing Interactivo</a></li>
   </ul>
 </li>
       </ul>

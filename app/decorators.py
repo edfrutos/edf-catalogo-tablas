@@ -46,7 +46,7 @@ def admin_required(f: F) -> F:
     def decorated_function(*args: Any, **kwargs: Any) -> ResponseReturnValue:
         logger.info(f"[ADMIN_REQUIRED] Ruta: {request.path}, Método: {request.method}, Sesión actual: {dict(session)}")
         # Verificar si el usuario está logueado (verificar tanto user_id como logged_in)
-        if 'user_id' not in session or not session.get('logged_in', False):
+        if not session.get('logged_in', False) or 'user_id' not in session:
             logger.warning(f"[ADMIN_REQUIRED] Usuario no autenticado intentando acceder a ruta admin: {request.path}")
             flash('Debes iniciar sesión para acceder.', 'warning')
             return redirect(url_for('auth.login', next=request.url))

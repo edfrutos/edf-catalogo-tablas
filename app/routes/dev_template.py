@@ -72,7 +72,7 @@ def admin_required(f):
 bp_dev_template = Blueprint("dev_template", __name__, url_prefix="/dev-template")
 
 README_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../dev_template/README.md")
+    os.path.join(os.path.dirname(__file__), "../templates/dev_template/README.md")
 )
 
 
@@ -128,12 +128,12 @@ import subprocess  # noqa: E402
 import threading  # noqa: E402
 
 TESTS_BASE = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../dev_template/tests")
+    os.path.join(os.path.dirname(__file__), "../..//dev_template//tests")
 )
 INTEGRATION_DIR = os.path.join(TESTS_BASE, "integration")
 APP_ROUTES_DIR = os.path.join(TESTS_BASE, "app", "routes")
 PYTEST_REPORT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../dev_template/pytest_report.html")
+    os.path.join(os.path.dirname(__file__), "../..//dev_template/pytest_report.html")
 )
 
 _test_lock = threading.Lock()
@@ -148,10 +148,10 @@ def update_tests_readme():
     import re
 
     TESTS_DIR = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../dev_template/tests")
+        os.path.join(os.path.dirname(__file__), "../..//dev_template/tests")
     )
     README_PATH = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../tools/README.md")
+        os.path.join(os.path.dirname(__file__), "../templates/dev_template/README.md")
     )
     START = "<!-- TESTS-AUTO-START -->"
     END = "<!-- TESTS-AUTO-END -->"
@@ -243,10 +243,10 @@ def script_params_help():
     if not rel_path:
         return jsonify({"success": False, "error": "Falta script_path"}), 400
     script_abs = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../dev_template/tests", rel_path)
+        os.path.join(os.path.dirname(__file__), "../..//dev_template/tests", rel_path)
     )
     TESTS_BASE = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../dev_template/tests")
+        os.path.join(os.path.dirname(__file__), "../..//dev_template/tests")
     )
     if not script_abs.startswith(TESTS_BASE) or not os.path.isfile(script_abs):
         return jsonify({"success": False, "error": "Ruta de script no permitida"}), 400
@@ -303,7 +303,7 @@ def testing():
     import os
 
     test_dirs = {}
-    base_dir = "/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/dev_template/tests"
+    base_dir = "/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas//dev_template/tests"
     for root, dirs, files in os.walk(base_dir):
         rel_dir = os.path.relpath(root, base_dir)
         if rel_dir == ".":

@@ -14,9 +14,9 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
           <div class="alert alert-info">
             <i class="fas fa-info-circle me-2"></i>
             <strong>Información:</strong> Esta herramienta permite visualizar y
-            ejecutar los scripts de shell (.sh) y utilidades del sistema
-            disponibles. Utilice con precaución, ya que algunos scripts pueden
-            afectar la configuración del sistema.
+            ejecutar los scripts y utilidades del sistema disponibles. Utilice
+            con precaución, ya que algunos scripts pueden afectar la
+            configuración del sistema.
           </div>
         </div>
       </div>
@@ -117,16 +117,14 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
           </div>
         </div>
       </div>
-
       <div class="row" id="scriptAccordionContainer">
-        <!-- Aquí se inyectará dinámicamente el acordeón de scripts por JS -->
+        <!-- Los scripts se cargarán dinámicamente aquí -->
       </div>
-
       <div class="row" id="noScriptsAlert" style="display: none">
         <div class="col-12">
           <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            No se encontraron scripts en el sistema.
+            <i class="fas fa-exclamation-triangle me-2"></i> No se encontraron
+            scripts en el sistema.
           </div>
         </div>
       </div>
@@ -143,133 +141,22 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
               </h5>
             </div>
             <div class="card-body">
-              <div class="row">
-                <!-- Configuración y Logging -->
-                <div class="col-md-6 mb-3">
-                  <div class="card h-100">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0">
-                        <i class="fas fa-cog me-2"></i>Configuración y Logging
-                      </h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="list-group list-group-flush">
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Logging Unificado</strong>
-                            <br /><small class="text-muted"
-                              >Sistema de logging centralizado</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-primary"
-                            onclick="runSystemUtility('logging_unified')"
-                          >
-                            <i class="fas fa-play"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Limpieza de Logs</strong>
-                            <br /><small class="text-muted"
-                              >Eliminar logs verbosos</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-warning"
-                            onclick="runSystemUtility('clean_logging')"
-                          >
-                            <i class="fas fa-broom"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Configuración Embebida</strong>
-                            <br /><small class="text-muted"
-                              >Configuración para app empaquetada</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-info"
-                            onclick="runSystemUtility('config_embedded')"
-                          >
-                            <i class="fas fa-cog"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              <div class="mb-3">
+                <div
+                  id="systemCategoryFilterContainer"
+                  class="btn-group"
+                  role="group"
+                >
+                  <button
+                    class="btn btn-outline-primary active"
+                    data-category="all"
+                  >
+                    Todos
+                  </button>
                 </div>
-
-                <!-- Monitoreo y Notificaciones -->
-                <div class="col-md-6 mb-3">
-                  <div class="card h-100">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0">
-                        <i class="fas fa-chart-line me-2"></i>Monitoreo y
-                        Notificaciones
-                      </h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="list-group list-group-flush">
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Sistema de Monitoreo</strong>
-                            <br /><small class="text-muted"
-                              >Monitoreo del servidor y recursos</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-success"
-                            onclick="runSystemUtility('monitoring')"
-                          >
-                            <i class="fas fa-eye"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Notificaciones</strong>
-                            <br /><small class="text-muted"
-                              >Sistema de alertas y notificaciones</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-info"
-                            onclick="runSystemUtility('notifications')"
-                          >
-                            <i class="fas fa-bell"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Datos de Respaldo</strong>
-                            <br /><small class="text-muted"
-                              >Gestión de datos de fallback</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-secondary"
-                            onclick="runSystemUtility('data_fallback')"
-                          >
-                            <i class="fas fa-shield-alt"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              </div>
+              <div id="systemScriptsContainer" class="row">
+                <!-- Los scripts se cargarán dinámicamente aquí -->
               </div>
             </div>
           </div>
@@ -288,117 +175,22 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
               </h5>
             </div>
             <div class="card-body">
-              <div class="row">
-                <!-- Mantenimiento de Usuarios -->
-                <div class="col-md-6 mb-3">
-                  <div class="card h-100">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0">
-                        <i class="fas fa-users me-2"></i>Mantenimiento de
-                        Usuarios
-                      </h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="list-group list-group-flush">
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Normalizar Usuarios</strong>
-                            <br /><small class="text-muted"
-                              >Normalizar campos username, email y nombre</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-primary"
-                            onclick="runMaintenanceUtility('normalize_users')"
-                          >
-                            <i class="fas fa-magic"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Backup de Usuarios</strong>
-                            <br /><small class="text-muted"
-                              >Crear backup de la colección de usuarios</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-success"
-                            onclick="runMaintenanceUtility('backup_users')"
-                          >
-                            <i class="fas fa-download"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Crear Imagen Perfil</strong>
-                            <br /><small class="text-muted"
-                              >Generar imagen de perfil por defecto</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-info"
-                            onclick="runMaintenanceUtility('create_profile_image')"
-                          >
-                            <i class="fas fa-image"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              <div class="mb-3">
+                <div
+                  id="maintenanceCategoryFilterContainer"
+                  class="btn-group"
+                  role="group"
+                >
+                  <button
+                    class="btn btn-outline-primary active"
+                    data-category="all"
+                  >
+                    Todos
+                  </button>
                 </div>
-
-                <!-- Utilidades Generales -->
-                <div class="col-md-6 mb-3">
-                  <div class="card h-100">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0">
-                        <i class="fas fa-tools me-2"></i>Utilidades Generales
-                      </h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="list-group list-group-flush">
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Procesar Excel</strong>
-                            <br /><small class="text-muted"
-                              >Utilidades para archivos Excel</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-success"
-                            onclick="runMaintenanceUtility('excel_utils')"
-                          >
-                            <i class="fas fa-file-excel"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Limpieza del Proyecto</strong>
-                            <br /><small class="text-muted"
-                              >Script de limpieza general</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-warning"
-                            onclick="runMaintenanceUtility('cleanup_project')"
-                          >
-                            <i class="fas fa-broom"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              </div>
+              <div id="maintenanceScriptsContainer" class="row">
+                <!-- Los scripts se cargarán dinámicamente aquí -->
               </div>
             </div>
           </div>
@@ -417,133 +209,22 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
               </h5>
             </div>
             <div class="card-body">
-              <div class="row">
-                <!-- Backups y Restauración -->
-                <div class="col-md-6 mb-3">
-                  <div class="card h-100">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0">
-                        <i class="fas fa-cloud-upload-alt me-2"></i>Backups y
-                        Restauración
-                      </h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="list-group list-group-flush">
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Crear Backup Completo</strong>
-                            <br /><small class="text-muted"
-                              >Backup de todas las colecciones</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-success"
-                            onclick="runDataUtility('create_backup')"
-                          >
-                            <i class="fas fa-download"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Restaurar Backup</strong>
-                            <br /><small class="text-muted"
-                              >Restaurar desde archivo de backup</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-warning"
-                            onclick="runDataUtility('restore_backup')"
-                          >
-                            <i class="fas fa-upload"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Validar Integridad</strong>
-                            <br /><small class="text-muted"
-                              >Verificar integridad de la base de datos</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-info"
-                            onclick="runDataUtility('validate_integrity')"
-                          >
-                            <i class="fas fa-check-circle"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              <div class="mb-3">
+                <div
+                  id="dataCategoryFilterContainer"
+                  class="btn-group"
+                  role="group"
+                >
+                  <button
+                    class="btn btn-outline-primary active"
+                    data-category="all"
+                  >
+                    Todos
+                  </button>
                 </div>
-
-                <!-- Gestión de Archivos -->
-                <div class="col-md-6 mb-3">
-                  <div class="card h-100">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0">
-                        <i class="fas fa-file me-2"></i>Gestión de Archivos
-                      </h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="list-group list-group-flush">
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Procesar Imágenes</strong>
-                            <br /><small class="text-muted"
-                              >Utilidades para gestión de imágenes</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-primary"
-                            onclick="runDataUtility('image_utils')"
-                          >
-                            <i class="fas fa-image"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Procesar Hojas de Cálculo</strong>
-                            <br /><small class="text-muted"
-                              >Utilidades para Excel y CSV</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-success"
-                            onclick="runDataUtility('spreadsheet_utils')"
-                          >
-                            <i class="fas fa-table"></i>
-                          </button>
-                        </div>
-                        <div
-                          class="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <div>
-                            <strong>Almacenamiento S3</strong>
-                            <br /><small class="text-muted"
-                              >Gestión de archivos en Amazon S3</small
-                            >
-                          </div>
-                          <button
-                            class="btn btn-sm btn-outline-info"
-                            onclick="runDataUtility('s3_utils')"
-                          >
-                            <i class="fas fa-cloud"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              </div>
+              <div id="dataScriptsContainer" class="row">
+                <!-- Los scripts se cargarán dinámicamente aquí -->
               </div>
             </div>
           </div>
@@ -574,6 +255,34 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
       </div>
       <div class="modal-body">
         <div class="script-path mb-3 text-muted small" id="modalPath"></div>
+
+        <!-- Campo para comandos requeridos -->
+        <div id="commandInputContainer" class="mb-3" style="display: none">
+          <label for="commandInput" class="form-label">
+            <i class="fas fa-terminal me-2"></i>Comando requerido:
+          </label>
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              id="commandInput"
+              placeholder="Ingrese el comando requerido por el script..."
+            />
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              id="helpCommandBtn"
+            >
+              <i class="fas fa-question-circle"></i> Ayuda
+            </button>
+          </div>
+          <div class="form-text">
+            <i class="fas fa-info-circle me-1"></i>
+            Algunos scripts requieren comandos adicionales para funcionar
+            correctamente.
+          </div>
+        </div>
+
         <pre class="bg-light p-3 rounded" id="scriptContent"><code></code></pre>
         <div id="outputContainer" class="mt-4" style="display: none">
           <h6 class="border-bottom pb-2 mb-3">Salida del Script:</h6>
@@ -597,49 +306,16 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           Cerrar
         </button>
-        <button type="button" class="btn btn-success" id="modalRunBtn">
-          <i class="fas fa-play me-1"></i> Ejecutar Script
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal para utilidades del sistema -->
-<div
-  class="modal fade"
-  id="utilityModal"
-  tabindex="-1"
-  aria-labelledby="utilityModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="utilityModalTitle">Ejecutar Utilidad</h5>
         <button
           type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <div id="utilityOutput" class="bg-light p-3 rounded">
-          <div class="d-flex align-items-center">
-            <div
-              class="spinner-border spinner-border-sm text-primary me-2"
-              role="status"
-            >
-              <span class="visually-hidden">Ejecutando...</span>
-            </div>
-            <span>Ejecutando utilidad...</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Cerrar
+          class="btn btn-info"
+          id="modalViewBtn"
+          style="display: none"
+        >
+          <i class="fas fa-eye me-1"></i> Ver Código
+        </button>
+        <button type="button" class="btn btn-success" id="modalRunBtn">
+          <i class="fas fa-play me-1"></i> Ejecutar Script
         </button>
       </div>
     </div>
@@ -658,18 +334,183 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
 
     // Función para cargar los scripts desde la API
     function loadScripts() {
-      fetch("/admin/scripts-tools-api/list")
+      fetch("/admin/tools/api/scripts_metadata")
         .then((response) => response.json())
         .then((data) => {
-          scriptsData = data.scripts || [];
+          scriptsData = data || [];
           filteredData = [...scriptsData];
           renderScripts();
           updateCategoryFilter();
+
+          // Inicializar todas las pestañas
+          initializeAllTabs();
         })
         .catch((error) => {
           console.error("Error cargando scripts:", error);
           document.getElementById("noScriptsAlert").style.display = "block";
         });
+    }
+
+    // Función para inicializar todas las pestañas
+    function initializeAllTabs() {
+      // Pestaña de Scripts de Shell (ya está inicializada) - Todas las categorías
+
+      // Pestaña de Utilidades del Sistema - Solo categorías específicas
+      initializeTab("system", ["Development Tools", "Infrastructure"]);
+
+      // Pestaña de Mantenimiento - Solo categorías específicas
+      initializeTab("maintenance", [
+        "System Maintenance",
+        "User Management",
+        "File Management",
+      ]);
+
+      // Pestaña de Gestión de Datos - Solo categorías específicas
+      initializeTab("data", ["Database Utils", "Monitoring"]);
+    }
+
+    // Función para inicializar una pestaña específica
+    function initializeTab(tabId, categories) {
+      const container = document.getElementById(`${tabId}ScriptsContainer`);
+      const filterContainer = document.getElementById(
+        `${tabId}CategoryFilterContainer`
+      );
+
+      if (!container || !filterContainer) return;
+
+      // Filtrar scripts por categorías
+      const tabScripts = scriptsData.filter((cat) =>
+        categories.includes(cat.categoria)
+      );
+
+      // Crear filtros de categoría
+      createCategoryFilters(filterContainer, tabScripts);
+
+      // Renderizar scripts
+      renderTabScripts(container, tabScripts);
+    }
+
+    // Función para crear filtros de categoría para una pestaña
+    function createCategoryFilters(container, scripts) {
+      const categories = scripts.map((cat) => cat.categoria);
+
+      // Limpiar el contenedor
+      container.innerHTML = "";
+
+      // Crear el botón "Todos" con event listener
+      const todosButton = document.createElement("button");
+      todosButton.className = "btn btn-outline-primary active";
+      todosButton.setAttribute("data-category", "all");
+      todosButton.textContent = "Todos";
+      todosButton.onclick = (event) =>
+        filterTabByCategory(container, scripts, "all", event);
+      container.appendChild(todosButton);
+
+      // Agregar botones para cada categoría
+      categories.forEach((category) => {
+        const button = document.createElement("button");
+        button.className = "btn btn-outline-secondary";
+        button.setAttribute("data-category", category);
+        button.textContent = category;
+        button.onclick = (event) =>
+          filterTabByCategory(container, scripts, category, event);
+        container.appendChild(button);
+      });
+    }
+
+    // Función para filtrar por categoría en una pestaña específica
+    function filterTabByCategory(container, allScripts, category, event) {
+      // Actualizar botones activos
+      container.querySelectorAll(".btn").forEach((btn) => {
+        btn.classList.remove("active");
+        btn.classList.remove("btn-primary");
+        btn.classList.add("btn-outline-secondary");
+      });
+
+      event.target.classList.add("active");
+      event.target.classList.remove("btn-outline-secondary");
+      event.target.classList.add("btn-primary");
+
+      let filteredScripts;
+      if (category === "all") {
+        // Para "Todos", mostrar todas las categorías disponibles en esta pestaña
+        filteredScripts = allScripts;
+      } else {
+        // Para una categoría específica, filtrar solo esa categoría
+        filteredScripts = allScripts.filter(
+          (cat) => cat.categoria === category
+        );
+      }
+
+      // Encontrar el contenedor de scripts correspondiente
+      const tabId = container.id.replace("CategoryFilterContainer", "");
+      const scriptsContainer = document.getElementById(
+        `${tabId}ScriptsContainer`
+      );
+
+      if (scriptsContainer) {
+        renderTabScripts(scriptsContainer, filteredScripts);
+      }
+    }
+
+    // Función para renderizar scripts en una pestaña específica
+    function renderTabScripts(container, scripts) {
+      if (scripts.length === 0) {
+        container.innerHTML =
+          '<div class="col-12"><div class="alert alert-info">No hay scripts disponibles en esta categoría.</div></div>';
+        return;
+      }
+
+      let html = "";
+      let scriptIndex = 0;
+
+      scripts.forEach((category) => {
+        if (category.scripts && category.scripts.length > 0) {
+          // Agregar título de categoría
+          html += `
+          <div class="col-12 mb-3">
+            <h5 class="text-primary"><i class="fas fa-folder me-2"></i>${category.categoria}</h5>
+          </div>
+        `;
+
+          // Agregar scripts de esta categoría
+          category.scripts.forEach((script) => {
+            html += `
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-header" id="heading${scriptIndex}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button class="btn btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${scriptIndex}">
+                                <i class="fas fa-file-code me-2"></i>
+                                <strong>${script.nombre}</strong>
+                            </button>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewScript('${script.path}')">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="runScript('${script.path}')">
+                                    <i class="fas fa-play"></i> Ejecutar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="collapse${scriptIndex}" class="collapse" data-bs-parent="#scriptAccordionContainer">
+                        <div class="card-body">
+                            <p><strong>Descripción:</strong> ${script.descripcion || "Sin descripción disponible"}</p>
+                            <p><strong>Ruta:</strong> <code>${script.path}</code></p>
+                            <p><strong>Tipo:</strong> <span class="badge bg-info">${script.tipo}</span></p>
+                            <p><strong>Ejecutable:</strong> <span class="badge ${script.executable ? "bg-success" : "bg-warning"}">${script.executable ? "Sí" : "No"}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          `;
+            scriptIndex++;
+          });
+        }
+      });
+
+      container.innerHTML = html;
     }
 
     // Función para renderizar los scripts
@@ -682,56 +523,74 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
 
       document.getElementById("noScriptsAlert").style.display = "none";
 
-      const accordionHtml = filteredData
-        .map(
-          (script, index) => `
+      let accordionHtml = "";
+      let scriptIndex = 0;
+
+      // Procesar cada categoría
+      filteredData.forEach((category) => {
+        if (category.scripts && category.scripts.length > 0) {
+          // Agregar título de categoría
+          accordionHtml += `
+          <div class="col-12 mb-3">
+            <h5 class="text-primary"><i class="fas fa-folder me-2"></i>${category.categoria}</h5>
+          </div>
+        `;
+
+          // Agregar scripts de esta categoría
+          category.scripts.forEach((script) => {
+            accordionHtml += `
             <div class="col-12 mb-3">
                 <div class="card">
-                    <div class="card-header" id="heading${index}">
+                    <div class="card-header" id="heading${scriptIndex}">
                         <div class="d-flex justify-content-between align-items-center">
-                            <button class="btn btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
+                            <button class="btn btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${scriptIndex}">
                                 <i class="fas fa-file-code me-2"></i>
-                                <strong>${script.name}</strong>
+                                <strong>${script.nombre}</strong>
                             </button>
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewScript('${script.rel_path}')">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewScript('${script.path}')">
                                     <i class="fas fa-eye"></i> Ver
                                 </button>
-                                <button class="btn btn-sm btn-outline-success" onclick="runScript('${script.rel_path}')">
+                                <button class="btn btn-sm btn-outline-success" onclick="runScript('${script.path}')">
                                     <i class="fas fa-play"></i> Ejecutar
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div id="collapse${index}" class="collapse" data-bs-parent="#scriptAccordionContainer">
+                    <div id="collapse${scriptIndex}" class="collapse" data-bs-parent="#scriptAccordionContainer">
                         <div class="card-body">
-                            <p><strong>Descripción:</strong> ${script.description || "Sin descripción disponible"}</p>
-                            <p><strong>Ruta:</strong> <code>${script.rel_path}</code></p>
-                            <p><strong>Tamaño:</strong> ${script.size ? (script.size / 1024).toFixed(2) + " KB" : "N/A"}</p>
-                            <p><strong>Última modificación:</strong> ${script.mtime || "N/A"}</p>
+                            <p><strong>Descripción:</strong> ${script.descripcion || "Sin descripción disponible"}</p>
+                            <p><strong>Ruta:</strong> <code>${script.path}</code></p>
+                            <p><strong>Tipo:</strong> <span class="badge bg-info">${script.tipo}</span></p>
+                            <p><strong>Ejecutable:</strong> <span class="badge ${script.executable ? "bg-success" : "bg-warning"}">${script.executable ? "Sí" : "No"}</span></p>
                         </div>
                     </div>
                 </div>
             </div>
-        `
-        )
-        .join("");
+          `;
+            scriptIndex++;
+          });
+        }
+      });
 
       scriptAccordionContainer.innerHTML = accordionHtml;
     }
 
     // Función para actualizar el filtro de categorías
     function updateCategoryFilter() {
-      const categories = [
-        ...new Set(
-          scriptsData.map((script) => script.category || "Sin categoría")
-        ),
-      ];
+      const categories = scriptsData.map((category) => category.categoria);
       const container = document.getElementById("categoryFilterContainer");
 
-      // Mantener el botón "Todos"
-      container.innerHTML =
-        '<button class="btn btn-outline-primary active" data-category="all">Todos</button>';
+      // Limpiar el contenedor
+      container.innerHTML = "";
+
+      // Crear el botón "Todos" con event listener
+      const todosButton = document.createElement("button");
+      todosButton.className = "btn btn-outline-primary active";
+      todosButton.setAttribute("data-category", "all");
+      todosButton.textContent = "Todos";
+      todosButton.onclick = (event) => filterByCategory("all", event);
+      container.appendChild(todosButton);
 
       // Agregar botones para cada categoría
       categories.forEach((category) => {
@@ -739,13 +598,17 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
         button.className = "btn btn-outline-secondary";
         button.setAttribute("data-category", category);
         button.textContent = category;
-        button.onclick = () => filterByCategory(category);
+        button.onclick = (event) => filterByCategory(category, event);
         container.appendChild(button);
       });
+
+      // Asegurar que se muestren todas las categorías al inicio
+      filteredData = [...scriptsData];
+      renderScripts();
     }
 
     // Función para filtrar por categoría
-    function filterByCategory(category) {
+    function filterByCategory(category, event) {
       // Actualizar botones activos
       document
         .querySelectorAll("#categoryFilterContainer .btn")
@@ -762,9 +625,7 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
       if (category === "all") {
         filteredData = [...scriptsData];
       } else {
-        filteredData = scriptsData.filter(
-          (script) => (script.category || "Sin categoría") === category
-        );
+        filteredData = scriptsData.filter((cat) => cat.categoria === category);
       }
 
       renderScripts();
@@ -773,123 +634,180 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
     // Función para buscar scripts
     searchInput.addEventListener("input", function () {
       const searchTerm = this.value.toLowerCase();
-      filteredData = scriptsData.filter(
-        (script) =>
-          script.name.toLowerCase().includes(searchTerm) ||
-          (script.description &&
-            script.description.toLowerCase().includes(searchTerm))
-      );
+      filteredData = scriptsData
+        .map((category) => ({
+          ...category,
+          scripts: category.scripts.filter(
+            (script) =>
+              script.nombre.toLowerCase().includes(searchTerm) ||
+              (script.descripcion &&
+                script.descripcion.toLowerCase().includes(searchTerm))
+          ),
+        }))
+        .filter((category) => category.scripts.length > 0);
       renderScripts();
     });
 
     // Cargar scripts al inicializar
     loadScripts();
+
+    // Configurar el botón "Ejecutar Script" del modal
+    document
+      .getElementById("modalRunBtn")
+      .addEventListener("click", function () {
+        if (currentScriptPath) {
+          // Ocultar el contenido del script y mostrar la salida
+          document.getElementById("scriptContent").style.display = "none";
+          document.getElementById("outputContainer").style.display = "block";
+
+          // Mostrar el botón "Ver Código" y ocultar el botón "Ejecutar Script"
+          document.getElementById("modalViewBtn").style.display =
+            "inline-block";
+          document.getElementById("modalRunBtn").style.display = "none";
+
+          // Ejecutar el script usando la función runScript
+          runScriptFromModal(currentScriptPath);
+        } else {
+          alert("No hay script seleccionado para ejecutar");
+        }
+      });
+
+    // Configurar el botón "Ver Código" del modal
+    document
+      .getElementById("modalViewBtn")
+      .addEventListener("click", function () {
+        // Mostrar el contenido del script y ocultar la salida
+        document.getElementById("scriptContent").style.display = "block";
+        document.getElementById("outputContainer").style.display = "none";
+
+        // Ocultar el botón "Ver Código" y mostrar el botón "Ejecutar Script"
+        document.getElementById("modalViewBtn").style.display = "none";
+        document.getElementById("modalRunBtn").style.display = "inline-block";
+
+        // Restaurar el título original
+        document.getElementById("modalTitle").textContent =
+          `Contenido: ${currentScriptPath.split("/").pop()}`;
+      });
+
+    // Configurar el botón de ayuda para comandos
+    document
+      .getElementById("helpCommandBtn")
+      .addEventListener("click", function () {
+        const scriptName = currentScriptPath.split("/").pop();
+        let helpText = "";
+
+        if (scriptName.toLowerCase().includes("backup")) {
+          helpText =
+            "Para scripts de backup, ingrese el directorio o archivo a respaldar.\nEjemplo: /ruta/al/directorio";
+        } else if (scriptName.toLowerCase().includes("restore")) {
+          helpText =
+            "Para scripts de restore, ingrese la ruta del archivo de respaldo.\nEjemplo: backup_2024-01-01.tar.gz";
+        } else if (scriptName.toLowerCase().includes("clean")) {
+          helpText =
+            "Para scripts de limpieza, ingrese el patrón de archivos a limpiar.\nEjemplo: *.tmp";
+        } else if (scriptName.toLowerCase().includes("test")) {
+          helpText =
+            "Para scripts de prueba, ingrese los parámetros de prueba.\nEjemplo: --verbose --all";
+        } else {
+          helpText =
+            "Revise el código del script para ver qué parámetros requiere.\nBusque palabras como 'input', 'sys.argv', 'argparse' en el código.";
+        }
+
+        alert(`Ayuda para ${scriptName}:\n\n${helpText}`);
+      });
   });
 
-  // Funciones globales para utilidades del sistema
-  function runSystemUtility(utility) {
-    const modal = new bootstrap.Modal(document.getElementById("utilityModal"));
-    const output = document.getElementById("utilityOutput");
-    const title = document.getElementById("utilityModalTitle");
+  // Variable global para almacenar la ruta del script actual en el modal
+  let currentScriptPath = "";
 
-    title.textContent = `Ejecutando: ${utility}`;
-    output.innerHTML =
-      '<div class="d-flex align-items-center"><div class="spinner-border spinner-border-sm text-primary me-2"></div><span>Ejecutando utilidad...</span></div>';
+  // Función para detectar si un script requiere comandos
+  function checkIfScriptRequiresCommand(content, path) {
+    const scriptName = path.split("/").pop().toLowerCase();
+    const contentLower = content.toLowerCase();
 
-    modal.show();
+    // Lista de scripts que típicamente requieren comandos
+    const scriptsRequiringCommands = [
+      "backup",
+      "restore",
+      "migrate",
+      "export",
+      "import",
+      "sync",
+      "clean",
+      "optimize",
+      "analyze",
+      "validate",
+      "test",
+    ];
 
-    // Conectar con la API real
-    fetch(`/admin/scripts-tools-api/system/${utility}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          output.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>${data.message}</div><pre class="mt-2">${data.output}</pre>`;
-        } else {
-          output.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error: ${data.error}</div>`;
-        }
-      })
-      .catch((error) => {
-        output.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error de conexión: ${error.message}</div>`;
-      });
+    // Verificar por nombre del script
+    for (const keyword of scriptsRequiringCommands) {
+      if (scriptName.includes(keyword)) {
+        return true;
+      }
+    }
+
+    // Verificar por contenido del script
+    const commandIndicators = [
+      "input(",
+      "raw_input(",
+      "sys.argv",
+      "argparse",
+      "getopt",
+      "require",
+      "necesita",
+      "comando",
+      "parameter",
+      "argument",
+    ];
+
+    for (const indicator of commandIndicators) {
+      if (contentLower.includes(indicator)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  function runMaintenanceUtility(utility) {
-    const modal = new bootstrap.Modal(document.getElementById("utilityModal"));
-    const output = document.getElementById("utilityOutput");
-    const title = document.getElementById("utilityModalTitle");
-
-    title.textContent = `Mantenimiento: ${utility}`;
-    output.innerHTML =
-      '<div class="d-flex align-items-center"><div class="spinner-border spinner-border-sm text-warning me-2"></div><span>Ejecutando mantenimiento...</span></div>';
-
-    modal.show();
-
-    // Conectar con la API real
-    fetch(`/admin/scripts-tools-api/maintenance/${utility}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          output.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>${data.message}</div><pre class="mt-2">${data.output}</pre>`;
-        } else {
-          output.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error: ${data.error}</div>`;
-        }
-      })
-      .catch((error) => {
-        output.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error de conexión: ${error.message}</div>`;
-      });
-  }
-
-  function runDataUtility(utility) {
-    const modal = new bootstrap.Modal(document.getElementById("utilityModal"));
-    const output = document.getElementById("utilityOutput");
-    const title = document.getElementById("utilityModalTitle");
-
-    title.textContent = `Gestión de Datos: ${utility}`;
-    output.innerHTML =
-      '<div class="d-flex align-items-center"><div class="spinner-border spinner-border-sm text-success me-2"></div><span>Procesando datos...</span></div>';
-
-    modal.show();
-
-    // Conectar con la API real
-    fetch(`/admin/scripts-tools-api/data/${utility}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          output.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>${data.message}</div><pre class="mt-2">${data.output}</pre>`;
-        } else {
-          output.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error: ${data.error}</div>`;
-        }
-      })
-      .catch((error) => {
-        output.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error de conexión: ${error.message}</div>`;
-      });
-  }
-
-  // Funciones para scripts (mantener compatibilidad)
+  // Funciones globales para scripts
   function viewScript(path) {
-    fetch(`/admin/scripts-tools-api/download?path=${encodeURIComponent(path)}`)
-      .then((response) => response.text())
-      .then((content) => {
+    // Almacenar la ruta del script actual
+    currentScriptPath = path;
+
+    fetch(`/admin/tools/content/${encodeURIComponent(path)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          alert(`Error: ${data.error}`);
+          return;
+        }
+
         document.getElementById("modalTitle").textContent =
-          `Contenido: ${path.split("/").pop()}`;
-        document.getElementById("modalPath").textContent = path;
-        document.getElementById("scriptContent").textContent = content;
+          `Contenido: ${data.name || path.split("/").pop()}`;
+        document.getElementById("modalPath").textContent = data.path || path;
+        document.getElementById("scriptContent").textContent = data.content;
+        document.getElementById("scriptContent").style.display = "block";
         document.getElementById("outputContainer").style.display = "none";
+
+        // Verificar si el script requiere comandos
+        const requiresCommand = checkIfScriptRequiresCommand(
+          data.content,
+          path
+        );
+        const commandContainer = document.getElementById(
+          "commandInputContainer"
+        );
+        if (requiresCommand) {
+          commandContainer.style.display = "block";
+          document.getElementById("commandInput").value = "";
+        } else {
+          commandContainer.style.display = "none";
+        }
+
+        // Resetear el estado de los botones
+        document.getElementById("modalRunBtn").style.display = "inline-block";
+        document.getElementById("modalViewBtn").style.display = "none";
 
         const modal = new bootstrap.Modal(
           document.getElementById("scriptModal")
@@ -912,12 +830,17 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
     }
 
     const modal = document.getElementById("scriptModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalPath = document.getElementById("modalPath");
     const outputContainer = document.getElementById("outputContainer");
     const runningIndicator = document.getElementById("runningIndicator");
     const statusBadge = document.getElementById("statusBadge");
     const scriptOutput = document.getElementById("scriptOutput");
     const timestampInfo = document.getElementById("timestampInfo");
 
+    // Configurar el modal
+    modalTitle.textContent = `Ejecutando: ${path.split("/").pop()}`;
+    modalPath.textContent = path;
     outputContainer.style.display = "block";
     runningIndicator.style.display = "inline-block";
     statusBadge.textContent = "Ejecutando";
@@ -925,26 +848,105 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
     scriptOutput.textContent = "Iniciando ejecución...";
     timestampInfo.textContent = new Date().toLocaleString();
 
-    fetch("/admin/scripts-tools-api/run", {
+    // Mostrar el modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+
+    fetch(`/admin/tools/run/${encodeURIComponent(path)}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ path: path }),
     })
       .then((response) => response.json())
       .then((data) => {
         runningIndicator.style.display = "none";
 
-        if (data.success) {
+        if (data.status === "success") {
           statusBadge.textContent = "Completado";
           statusBadge.className = "badge bg-success me-2";
           scriptOutput.textContent =
-            data.output || "Script ejecutado correctamente";
+            data.stdout || "Script ejecutado correctamente";
         } else {
           statusBadge.textContent = "Error";
           statusBadge.className = "badge bg-danger me-2";
-          scriptOutput.textContent = data.error || "Error desconocido";
+          scriptOutput.textContent =
+            data.stderr || data.error || data.message || "Error desconocido";
+        }
+      })
+      .catch((error) => {
+        runningIndicator.style.display = "none";
+        statusBadge.textContent = "Error";
+        statusBadge.className = "badge bg-danger me-2";
+        scriptOutput.textContent = `Error de conexión: ${error.message}`;
+      });
+  }
+
+  // Función específica para ejecutar scripts desde el modal
+  function runScriptFromModal(path) {
+    // Verificar si se requiere un comando
+    const commandInput = document.getElementById("commandInput");
+    const commandContainer = document.getElementById("commandInputContainer");
+    let command = "";
+
+    if (commandContainer.style.display !== "none") {
+      command = commandInput.value.trim();
+      if (!command) {
+        alert(
+          "Este script requiere un comando. Por favor, ingrese el comando requerido."
+        );
+        commandInput.focus();
+        return;
+      }
+    }
+
+    if (
+      !confirm(
+        `¿Está seguro de que desea ejecutar el script "${path.split("/").pop()}"${command ? ` con el comando: ${command}` : ""}?`
+      )
+    ) {
+      return;
+    }
+
+    const modalTitle = document.getElementById("modalTitle");
+    const modalPath = document.getElementById("modalPath");
+    const runningIndicator = document.getElementById("runningIndicator");
+    const statusBadge = document.getElementById("statusBadge");
+    const scriptOutput = document.getElementById("scriptOutput");
+    const timestampInfo = document.getElementById("timestampInfo");
+
+    // Configurar el modal para ejecución
+    modalTitle.textContent = `Ejecutando: ${path.split("/").pop()}`;
+    modalPath.textContent = path;
+    runningIndicator.style.display = "inline-block";
+    statusBadge.textContent = "Ejecutando";
+    statusBadge.className = "badge bg-warning me-2";
+    scriptOutput.textContent = "Iniciando ejecución...";
+    timestampInfo.textContent = new Date().toLocaleString();
+
+    fetch(`/admin/tools/run/${encodeURIComponent(path)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        command: command,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        runningIndicator.style.display = "none";
+
+        if (data.status === "success") {
+          statusBadge.textContent = "Completado";
+          statusBadge.className = "badge bg-success me-2";
+          scriptOutput.textContent =
+            data.stdout || "Script ejecutado correctamente";
+        } else {
+          statusBadge.textContent = "Error";
+          statusBadge.className = "badge bg-danger me-2";
+          scriptOutput.textContent =
+            data.stderr || data.error || data.message || "Error desconocido";
         }
       })
       .catch((error) => {

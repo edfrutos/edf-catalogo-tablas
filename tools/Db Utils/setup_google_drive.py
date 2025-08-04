@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# Script: setup_google_drive.py
+# Descripción: [Script para configurar inicialmente la autenticación de Google Drive. Debe ejecutarse una vez para generar el token inicial.]
+# Uso: python3 setup_google_drive.py [opciones]
+# Requiere: [librerías externas, si aplica]
+# Variables de entorno: [si aplica]
+# Autor: EDF Equipo de Desarrollo - 2025-05-28
 """
 Script para configurar inicialmente la autenticación de Google Drive
 Debe ejecutarse una vez para generar el token inicial

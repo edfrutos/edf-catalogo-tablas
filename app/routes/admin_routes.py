@@ -2661,9 +2661,9 @@ def get_db_ops():
 def get_backup_dir() -> str:
     """Obtiene el directorio de respaldos, asegurando que exista"""
     # Usar la ruta absoluta basada en el directorio raíz del proyecto
-    # El archivo está en app/routes/, necesitamos ir 2 niveles arriba para llegar a la raíz
+    # El archivo está en app/routes/, necesitamos ir 3 niveles arriba para llegar a la raíz
     # app/routes/ -> app/ -> edf_catalogotablas/
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     backup_dir = os.path.join(project_root, "backups")
     
     # Log para depuración
@@ -2912,13 +2912,33 @@ def db_backup():
             backup_files_info = get_backup_files(backup_dir)
             current_app.logger.info(f"Archivos de backup encontrados: {len(backup_files_info)}")
             
-            # Extraer solo los nombres de archivo
-            backups = [file_info["name"] for file_info in backup_files_info]
-            current_app.logger.info(f"Nombres de archivos de backup: {backups}")
+            # Configuración de paginación
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 10, type=int)
+            
+            # Validar parámetros
+            page = max(1, page)
+            per_page = max(1, min(50, per_page))  # Entre 1 y 50 elementos por página
+            
+            # Calcular paginación
+            total_backups = len(backup_files_info)
+            total_pages = (total_backups + per_page - 1) // per_page
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+            
+            # Aplicar paginación
+            backups = backup_files_info[start_idx:end_idx]
+            
+            current_app.logger.info(f"Paginación: página {page}/{total_pages}, {per_page} elementos por página")
+            current_app.logger.info(f"Información de archivos de backup: {len(backups)} archivos mostrados de {total_backups} total")
             
         except Exception as e:
             current_app.logger.error(f"Error al listar respaldos: {str(e)}")
             flash("Error al listar los respaldos existentes", "error")
+            page = 1
+            per_page = 10
+            total_backups = 0
+            total_pages = 0
 
         # Obtener el conteo de respaldos en Google Drive
         drive_backups_count = 0
@@ -2943,6 +2963,11 @@ def db_backup():
             backup_dir=backup_dir,
             get_file_info=get_file_info,
             drive_backups_count=drive_backups_count,
+            # Parámetros de paginación
+            page=page,
+            per_page=per_page,
+            total_backups=total_backups,
+            total_pages=total_pages,
         )
 
     except (OSError, IOError, PermissionError, AttributeError, KeyError, TypeError, ValueError) as e:
@@ -2954,7 +2979,12 @@ def db_backup():
             backups=[],
             backup_dir=get_backup_dir(),
             get_file_info=lambda x: type('FileInfo', (), {'exists': False, 'size': 0, 'mtime': None, 'timestamp_from_name': None})(),
-            drive_backups_count=0
+            drive_backups_count=0,
+            # Parámetros de paginación por defecto
+            page=1,
+            per_page=10,
+            total_backups=0,
+            total_pages=0,
         )
 
 
@@ -3938,9 +3968,20 @@ def delete_local_backup_route(filename: str):
         if not os.path.exists(backup_file):
             return jsonify({"success": False, "error": "Archivo no encontrado"}), 404
         
-        # Verificar que es un archivo de backup válido
-        if not (filename.startswith("backup_") or filename.startswith("mongodb_backup_")):
-            return jsonify({"success": False, "error": "Archivo no válido"}), 400
+        # Verificar que es un archivo de backup válido (usar la misma lógica que get_backup_files)
+        valid_extensions = [
+            ".bak", ".backup", ".zip", ".tar", ".gz", ".json.gz",
+            ".sql", ".dump", ".old", ".back", ".tmp", ".swp",
+            "~", ".csv", ".json"
+        ]
+        
+        # Verificar que el archivo tiene una extensión válida
+        if not any(filename.endswith(ext) for ext in valid_extensions):
+            return jsonify({"success": False, "error": "Archivo no válido - extensión no permitida"}), 400
+        
+        # Verificar que no contiene caracteres peligrosos
+        if ".." in filename or "/" in filename or "\\" in filename:
+            return jsonify({"success": False, "error": "Archivo no válido - nombre inseguro"}), 400
         
         # Eliminar el archivo
         os.remove(backup_file)

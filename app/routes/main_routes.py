@@ -43,6 +43,7 @@ def welcome():
     return render_template("welcome.html")
 
 
+@main_bp.route("/dashboard_user")
 @main_bp.route("/admin/maintenance/dashboard_user")
 def dashboard_user():
     # Protección: requerir login
@@ -554,14 +555,18 @@ def perfil():
             users_collection = mongo.db.users  # type: ignore
 
         # Obtener datos del usuario actual
-        user = users_collection.find_one({"_id": ObjectId(session["user_id"])})
-        if not user:
+        user_data = users_collection.find_one({"_id": ObjectId(session["user_id"])})
+        if not user_data:
             flash("Usuario no encontrado", "error")
             return redirect(url_for("main.dashboard_user"))
+        
+        # Crear objeto User para tener acceso a foto_perfil_url
+        from app.models.user import User
+        user = User(user_data)
 
         # Asegurar que existe la imagen de perfil predeterminada
         default_profile_path = os.path.join(
-            current_app.root_path, "static", "default_profile.png"
+            current_app.static_folder, "default_profile.png"
         )
         if not os.path.exists(default_profile_path):
             try:
@@ -596,10 +601,14 @@ def editar_perfil():
 
     # Obtener datos del usuario actual
     try:
-        user = users_collection.find_one({"_id": ObjectId(session["user_id"])})
-        if not user:
+        user_data = users_collection.find_one({"_id": ObjectId(session["user_id"])})
+        if not user_data:
             flash("Usuario no encontrado", "error")
             return redirect(url_for("main.dashboard_user"))
+        
+        # Crear objeto User para tener acceso a foto_perfil_url
+        from app.models.user import User
+        user = User(user_data)
     except Exception as e:
         logger.error(f"Error al obtener datos del usuario: {str(e)}", exc_info=True)
         flash("Error al cargar los datos del usuario", "error")
@@ -627,7 +636,7 @@ def editar_perfil():
             # Verificar que la contraseña actual sea correcta
             from werkzeug.security import check_password_hash, generate_password_hash
 
-            if not check_password_hash(user.get("password", ""), password_actual):
+            if not check_password_hash(user.password_hash, password_actual):
                 flash("La contraseña actual es incorrecta.", "error")
                 return render_template("editar_perfil.html", user=user)
 
@@ -645,13 +654,13 @@ def editar_perfil():
             update_data["password"] = generate_password_hash(password_nuevo)
 
         # Asegurarse de que existe la carpeta de uploads
-        uploads_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+        uploads_folder = os.path.join(current_app.static_folder, 'uploads')
         
         # Crear la carpeta si no existe
         os.makedirs(uploads_folder, exist_ok=True)
         # Asegurar que existe la imagen de perfil predeterminada
         default_profile_path = os.path.join(
-            current_app.root_path, "static", "default_profile.png"
+            current_app.static_folder, "default_profile.png"
         )
         if not os.path.exists(default_profile_path):
             try:

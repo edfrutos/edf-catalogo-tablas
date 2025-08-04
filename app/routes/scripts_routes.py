@@ -53,7 +53,7 @@ def extract_description(script_path):
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if "user_id" not in session or session.get("role") != "admin":
+        if not session.get("logged_in") or session.get("role") != "admin":
             flash("No tiene permisos para acceder a esta página", "error")
             return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
@@ -290,20 +290,45 @@ def get_script_path(script_path):
     if os.path.isabs(script_path):
         return script_path
 
-    # Buscar en varios directorios posibles
-    possible_paths = [
-        # Ruta directa desde ROOT_DIR
-        os.path.join(ROOT_DIR, script_path),
-        # Dentro del directorio tools
-        os.path.join(ROOT_DIR, 'tools', script_path),
-        # Dentro del directorio scripts
-        os.path.join(ROOT_DIR, 'scripts', script_path),
+    # Definir todos los directorios donde buscar (igual que en scripts_metadata)
+    search_directories = [
+        "tools/db_utils",
+        "tools/Db Utils", 
+        "scripts/maintenance",
+        "tools/maintenance",
+        "tools/system",
+        "tools/Users Tools",
+        "tools/Admin Utils",
+        "tools/utils",
+        "tools/Scripts Principales",
+        "tools/Scripts Raíz",
+        "tools/monitoring",
+        "tools/diagnostico",
+        "tests",
+        "tests/integration",
+        "tests/app/routes",
+        "tools/Test Scripts",
+        "tools/app",
+        "tools/src",
+        "tools/aws_utils",
+        "tools/producción",
+        "tools"
     ]
 
-    # Agregar subdirectorios comunes
-    for subdir in ['maintenance', 'admin_utils', 'backup', 'monitoring', 'security', 'database']:
-        possible_paths.append(os.path.join(ROOT_DIR, 'tools', subdir, script_path))
-        possible_paths.append(os.path.join(ROOT_DIR, 'scripts', subdir, script_path))
+    # Buscar en todos los directorios posibles
+    possible_paths = []
+    
+    # 1. Ruta directa desde ROOT_DIR
+    possible_paths.append(os.path.join(ROOT_DIR, script_path))
+    
+    # 2. Buscar en todos los directorios definidos
+    for directory in search_directories:
+        possible_paths.append(os.path.join(ROOT_DIR, directory, script_path))
+    
+    # 3. Buscar solo el nombre del archivo en todos los directorios
+    script_name = os.path.basename(script_path)
+    for directory in search_directories:
+        possible_paths.append(os.path.join(ROOT_DIR, directory, script_name))
 
     # Buscar el primer archivo que exista
     for path in possible_paths:
@@ -366,6 +391,18 @@ def tools_dashboard():
 def run_script(script_path):
     """Ejecuta un script específico."""
     try:
+        # Obtener el comando del request si existe
+        command = ""
+        try:
+            if request.is_json:
+                data = request.get_json()
+                command = data.get('command', '').strip()
+            elif request.form:
+                command = request.form.get('command', '').strip()
+        except Exception as e:
+            print(f"Error parsing request data: {e}")
+            command = ""
+        
         abs_script_path = get_script_path(script_path)
 
         if not os.path.exists(abs_script_path):
@@ -395,10 +432,16 @@ def run_script(script_path):
         
         if script_ext == '.py':
             # Script Python
-            cmd = [sys.executable, abs_script_path]
+            if command:
+                cmd = [sys.executable, abs_script_path, command]
+            else:
+                cmd = [sys.executable, abs_script_path]
         elif script_ext == '.sh':
             # Script Bash
-            cmd = ['bash', abs_script_path]
+            if command:
+                cmd = ['bash', abs_script_path, command]
+            else:
+                cmd = ['bash', abs_script_path]
         else:
             return jsonify(
                 {
@@ -423,7 +466,8 @@ def run_script(script_path):
             "return_code": result.returncode,
             "stdout": result.stdout,
             "stderr": result.stderr,
-            "execution_time": datetime.now().isoformat()
+            "execution_time": datetime.now().isoformat(),
+            "command_used": command if command else None
         }
 
         if result.returncode == 0:

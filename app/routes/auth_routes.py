@@ -146,6 +146,7 @@ def register():
         # Crear documento de usuario
         nuevo_usuario = {
             "nombre": nombre,
+            "username": nombre,  # Usar el nombre como username por defecto
             "email": email,
             "password": hashed_password,
             "created_at": datetime.utcnow(),
@@ -407,17 +408,58 @@ def forgot_password():
             f"Para restablecer tu contraseña, haz clic en el siguiente enlace:\n"
             f"{reset_link}\n\nEste enlace caduca en 30 minutos."
         )
+        # TEMPORAL: Deshabilitar envío de correos hasta que se configure correctamente
+        logger.warning("Envío de correos temporalmente deshabilitado")
+        flash(
+            "El envío de correos está temporalmente deshabilitado. Para recuperar tu contraseña, contacta directamente con el administrador.", 
+            "warning"
+        )
+        return redirect(url_for("auth.forgot_password"))
+      
+        # CÓDIGO ORIGINAL COMENTADO TEMPORALMENTE
+        """
         try:
+            # Verificar si el servidor de correo está configurado
+            if not current_app.config.get('MAIL_SERVER') or not current_app.config.get('MAIL_USERNAME'):
+                logger.warning("Servidor de correo no configurado")
+                flash(
+                    "El servidor de correo no está configurado. Contacte con el administrador para configurar el envío de emails.", 
+                    "warning"
+                )
+                return redirect(url_for("auth.forgot_password"))
+            
+            # Verificar si las credenciales son válidas
+            mail_server = current_app.config.get('MAIL_SERVER')
+            mail_username = current_app.config.get('MAIL_USERNAME')
+            
+            logger.info(f"Intentando enviar email usando servidor: {mail_server}")
+            logger.info(f"Usuario SMTP: {mail_username}")
+            
             mail.send(msg)
             logger.info("Email de recuperación enviado a: %s", user["email"])
+            flash("Se ha enviado un enlace de recuperación a tu email.", "info")
+            return redirect(url_for("auth.login"))
         except Exception as e:
             logger.exception("Error al enviar el email de recuperación")
-            flash(
-                "No se pudo enviar el email. Contacte con el administrador.", "danger"
-            )
-
-        flash("Se ha enviado un enlace de recuperación a tu email.", "info")
-        return redirect(url_for("auth.login"))
+            
+            # Mensaje más específico según el tipo de error
+            if "Authentication failed" in str(e):
+                flash(
+                    "Error de autenticación en el servidor de correo. Las credenciales SMTP pueden haber expirado. Contacte con el administrador.", 
+                    "error"
+                )
+            elif "Connection refused" in str(e):
+                flash(
+                    "No se pudo conectar al servidor de correo. Verifique la configuración SMTP.", 
+                    "error"
+                )
+            else:
+                flash(
+                    f"Error al enviar el email: {str(e)}. Contacte con el administrador.", 
+                    "error"
+                )
+            return redirect(url_for("auth.forgot_password"))
+        """
 
     return render_template("forgot_password.html")
 

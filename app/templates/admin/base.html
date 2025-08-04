@@ -17,6 +17,7 @@
       href="{{ url_for('static', filename='favicon.ico') }}"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {% block head %}{% endblock %}
     <style>
       body {
         background: #f8f9fa;
@@ -327,12 +328,16 @@
               </a>
               <ul class="dropdown-menu" aria-labelledby="devTemplateDropdown">
                 <li>
-                  <a class="dropdown-item" href="/dev-template/readme"
+                  <a
+                    class="dropdown-item"
+                    href="/dev-template/readme"
                     ><i class="bi bi-file-earmark-text"></i> README Testing</a
                   >
                 </li>
                 <li>
-                  <a class="dropdown-item" href="/dev-template/testing"
+                  <a
+                    class="dropdown-item"
+                    href="/dev-template/testing"
                     ><i class="bi bi-rocket"></i> Testing Interactivo</a
                   >
                 </li>

@@ -10,16 +10,16 @@ from datetime import datetime
 
 # Agregar el directorio raíz al path
 script_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.dirname(script_dir)
+root_dir = os.path.dirname(os.path.dirname(script_dir))  # Subir dos niveles: utils -> app -> raíz
 sys.path.insert(0, root_dir)
 
 def setup_logging():
     """Configurar el sistema de logging unificado"""
     try:
-        from app.logging_unified import setup_logging_system
+        from app.logging_unified import setup_unified_logging
         
         print("🔧 Configurando sistema de logging unificado...")
-        setup_logging_system()
+        setup_unified_logging()
         print("✅ Sistema de logging configurado correctamente")
         
         # Mostrar información del logging

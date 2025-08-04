@@ -27,6 +27,9 @@ class User(UserMixin):
         self.active = user_data.get("active", True)
         self.created_at = user_data.get("created_at")
         self.last_login = user_data.get("last_login")
+        self.foto_perfil = user_data.get("foto_perfil")
+        self.nombre = user_data.get("nombre")
+        self.username = user_data.get("username")
 
     def get_id(self):
         return self.id
@@ -38,6 +41,15 @@ class User(UserMixin):
     @property
     def is_active(self):
         return self.active
+
+    @property
+    def foto_perfil_url(self):
+        """Obtiene la URL de la foto de perfil del usuario."""
+        from flask import url_for
+        if self.foto_perfil:
+            return url_for('static', filename=f'uploads/{self.foto_perfil}')
+        else:
+            return url_for('static', filename='default_profile.png')
 
     def set_password(self, password):
         """Genera un hash de la contraseña y lo guarda."""

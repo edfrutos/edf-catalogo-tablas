@@ -17,19 +17,10 @@ endblock %} {% block content %}
     </div>
     <div class="col-md-3 mb-2">
       <select class="form-select" name="search_type">
-        <option value="name" {% if search_type="" ="name" %}selected{% endif %}>
+        <option value="name" {% if search_type == 'name' %}selected{% endif %}>
           Nombre de catálogo/tabla
         </option>
-        <option
-          value="owner"
-          {%
-          if
-          search_type=""
-          ="owner"
-          %}selected{%
-          endif
-          %}
-        >
+        <option value="owner" {% if search_type == 'owner' %}selected{% endif %}>
           Usuario propietario
         </option>
       </select>

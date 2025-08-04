@@ -416,8 +416,8 @@ def create_app():
         app.logger.info("Sesión establecida para administrador mediante acceso directo")
         app.logger.info(f"Datos de sesión: {dict(session)}")
 
-        # Redirigir a los catálogos
-        return redirect(url_for("catalogs.list"))
+        # Redirigir al dashboard de administración
+        return redirect(url_for("admin.dashboard"))
 
     # Ruta de acceso directo para usuario normal
     @app.route("/acceso_directo_usuario")

@@ -564,12 +564,48 @@ def list_files_in_folder(folder_name: str = 'Backups_CatalogoTablas') -> List[Di
         
         files_info = []
         for file_obj in file_list:
+            # Convertir fechas UTC a zona horaria local
+            created_date = file_obj.get('createdDate', '')
+            modified_date = file_obj.get('modifiedDate', '')
+            
+            # Función para convertir fecha UTC a local
+            def convert_utc_to_local(utc_date_str):
+                if not utc_date_str:
+                    return ''
+                try:
+                    # Parsear fecha UTC (formato: 2025-08-04T18:33:45.123Z)
+                    if utc_date_str.endswith('Z'):
+                        # Remover 'Z' y agregar '+00:00' para indicar UTC
+                        utc_date_str = utc_date_str[:-1] + '+00:00'
+                    
+                    # Parsear como datetime con zona horaria
+                    from datetime import datetime, timezone
+                    
+                    # Parsear la fecha UTC
+                    dt_utc = datetime.fromisoformat(utc_date_str)
+                    
+                    # Convertir a zona horaria local (CEST = UTC+2)
+                    # Obtener offset local
+                    import time
+                    local_offset = time.timezone if time.daylight == 0 else time.altzone
+                    local_offset_hours = -local_offset / 3600  # Convertir segundos a horas
+                    
+                    # Aplicar offset manualmente
+                    from datetime import timedelta
+                    dt_local = dt_utc + timedelta(hours=local_offset_hours)
+                    
+                    # Formatear como string
+                    return dt_local.strftime('%Y-%m-%d %H:%M:%S')
+                except Exception as e:
+                    print(f"Error convirtiendo fecha {utc_date_str}: {e}")
+                    return utc_date_str
+            
             file_info = {
                 'id': file_obj['id'],
                 'name': file_obj['title'],
                 'size': int(file_obj.get('fileSize', 0)),
-                'created': file_obj.get('createdDate', ''),
-                'modified': file_obj.get('modifiedDate', ''),
+                'created': convert_utc_to_local(created_date),
+                'modified': convert_utc_to_local(modified_date),
                 'download_url': f"https://drive.google.com/file/d/{file_obj['id']}/view",
                 'file_id': file_obj['id']  # Agregar file_id para descarga directa
             }

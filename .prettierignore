@@ -16,4 +16,34 @@ package-lock.json
 
 # Logs y temporales
 *.log
-*.tmp 
+*.tmp
+
+# Templates Flask/Jinja2 - NO formatear con Prettier
+app/templates/**/*.html
+templates/**/*.html
+**/templates/**/*.html
+
+# Archivos Python
+*.py
+
+# Archivos de configuración específicos
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv*/
+ENV/
+env.bak/
+venv.bak/
+
+# Archivos de base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos de backup
+*.back
+*.backup
+*.bak 
