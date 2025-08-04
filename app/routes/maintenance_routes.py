@@ -216,11 +216,13 @@ class GoogleDriveManager:
             backups = []
             for file_info in files:
                 backup = {
-                    'id': file_info['id'],
-                    'name': file_info['name'],
-                    'size': f"{file_info['size'] / (1024 * 1024):.2f} MB" if file_info['size'] > 0 else '0 MB',
-                    'created_time': file_info.get('created', ''),
-                    'modified_time': file_info.get('modified', '')
+                    '_id': file_info['id'],  # ID único para el JavaScript
+                    'filename': file_info['name'],  # Nombre del archivo
+                    'file_size': file_info['size'],  # Tamaño en bytes
+                    'uploaded_at': file_info.get('created', ''),  # Fecha de creación
+                    'modified_at': file_info.get('modified', ''),  # Fecha de modificación
+                    'download_url': file_info.get('download_url', ''),  # URL de descarga
+                    'user': 'Sistema'  # Usuario por defecto
                 }
                 backups.append(backup)
             
@@ -270,6 +272,42 @@ class GoogleDriveManager:
         except Exception as e:
             log_error(f"Error eliminando archivo {file_id}: {str(e)}")
             return False
+    
+    def upload_file(self, filename: str, file_content: bytes) -> str:
+        """Sube un archivo a Google Drive desde contenido en bytes."""
+        try:
+            # Importar la función de subida real
+            import sys
+            import os
+            import tempfile
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'tools', 'db_utils'))
+            from google_drive_utils import upload_to_drive
+            
+            # Crear archivo temporal
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
+                temp_file.write(file_content)
+                temp_file_path = temp_file.name
+            
+            try:
+                # Subir archivo usando la función real
+                result = upload_to_drive(temp_file_path)
+                
+                if result and result.get('success'):
+                    file_id = result.get('file_id')
+                    log_info(f"Archivo {filename} subido exitosamente a Google Drive con ID: {file_id}")
+                    return file_id
+                else:
+                    error_msg = result.get('error', 'Error desconocido') if result else 'No se pudo subir el archivo'
+                    raise Exception(f"Error subiendo a Google Drive: {error_msg}")
+                    
+            finally:
+                # Limpiar archivo temporal
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+                    
+        except Exception as e:
+            log_error(f"Error subiendo archivo {filename}: {str(e)}")
+            raise Exception(f"Error al subir archivo a Google Drive: {str(e)}")
 
 # ============================================================================
 # CLASES DE UTILIDAD PARA BACKUP Y RESTAURACIÓN
@@ -912,6 +950,271 @@ def delete_drive_backup(file_id):
     except Exception as e:
         log_error(f"Error eliminando backup de Google Drive: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@maintenance_bp.route('/export/csv', methods=['POST'])
+@admin_required
+def export_system_status_csv():
+    """Exporta el estado del sistema a un archivo CSV."""
+    try:
+        # Obtener estado del sistema
+        system_status = get_system_status_data()
+        
+        # Crear archivo CSV en memoria
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Escribir encabezados
+        writer.writerow(['Métrica', 'Valor', 'Unidad', 'Timestamp'])
+        
+        # Escribir datos del sistema
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Información del sistema
+        if system_status.get('system_details'):
+            details = system_status['system_details']
+            writer.writerow(['Sistema Operativo', details.get('os', 'N/A'), '', timestamp])
+            writer.writerow(['Arquitectura', details.get('arch', 'N/A'), '', timestamp])
+            writer.writerow(['Usuario del Sistema', details.get('user', 'N/A'), '', timestamp])
+        
+        # Información de memoria
+        if system_status.get('memory_usage'):
+            mem = system_status['memory_usage']
+            writer.writerow(['Uso de Memoria', f"{mem.get('percent', 0):.1f}", '%', timestamp])
+            writer.writerow(['Memoria Total', f"{mem.get('total_gb', 0):.2f}", 'GB', timestamp])
+            writer.writerow(['Memoria Disponible', f"{mem.get('available_gb', 0):.2f}", 'GB', timestamp])
+            writer.writerow(['Memoria Usada', f"{mem.get('used_gb', 0):.2f}", 'GB', timestamp])
+        
+        # Información de CPU
+        if 'cpu_usage' in system_status:
+            writer.writerow(['Uso de CPU', f"{system_status['cpu_usage']:.1f}", '%', timestamp])
+        
+        # Información de disco
+        if system_status.get('disk_usage'):
+            disk = system_status['disk_usage']
+            writer.writerow(['Uso de Disco', f"{disk.get('percent', 0):.1f}", '%', timestamp])
+            writer.writerow(['Espacio Total', f"{disk.get('total_gb', 0):.2f}", 'GB', timestamp])
+            writer.writerow(['Espacio Libre', f"{disk.get('free_gb', 0):.2f}", 'GB', timestamp])
+            writer.writerow(['Espacio Usado', f"{disk.get('used_gb', 0):.2f}", 'GB', timestamp])
+        
+        # Información de red
+        if system_status.get('network_info'):
+            net = system_status['network_info']
+            writer.writerow(['Bytes Enviados', str(net.get('bytes_sent', 0)), 'bytes', timestamp])
+            writer.writerow(['Bytes Recibidos', str(net.get('bytes_recv', 0)), 'bytes', timestamp])
+        
+        # Información de procesos
+        if system_status.get('process_info'):
+            proc = system_status['process_info']
+            writer.writerow(['Procesos Activos', str(proc.get('active_processes', 0)), '', timestamp])
+            writer.writerow(['Procesos Totales', str(proc.get('total_processes', 0)), '', timestamp])
+        
+        # Obtener contenido del CSV
+        csv_content = output.getvalue()
+        output.close()
+        
+        # Crear respuesta con archivo CSV
+        filename = f"system_status_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        
+        return send_file(
+            io.BytesIO(csv_content.encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        log_error(f"Error exportando CSV del estado del sistema: {str(e)}")
+        return jsonify({'error': f'Error al exportar CSV: {str(e)}'}), 500
+
+def get_system_status_data():
+    """Obtiene los datos del estado del sistema."""
+    try:
+        # Información del sistema
+        system_info = {
+            'os': platform.system(),
+            'arch': platform.machine(),
+            'user': getpass.getuser()
+        }
+        
+        # Información de memoria
+        memory = psutil.virtual_memory()
+        memory_info = {
+            'percent': memory.percent,
+            'total_gb': memory.total / (1024**3),
+            'available_gb': memory.available / (1024**3),
+            'used_gb': memory.used / (1024**3)
+        }
+        
+        # Información de CPU
+        cpu_percent = psutil.cpu_percent(interval=1)
+        
+        # Información de disco
+        disk = psutil.disk_usage('/')
+        disk_info = {
+            'percent': (disk.used / disk.total) * 100,
+            'total_gb': disk.total / (1024**3),
+            'free_gb': disk.free / (1024**3),
+            'used_gb': disk.used / (1024**3)
+        }
+        
+        # Información de red
+        network = psutil.net_io_counters()
+        network_info = {
+            'bytes_sent': network.bytes_sent,
+            'bytes_recv': network.bytes_recv
+        }
+        
+        # Información de procesos
+        processes = psutil.pids()
+        process_info = {
+            'total_processes': len(processes),
+            'active_processes': len([p for p in processes if psutil.pid_exists(p)])
+        }
+        
+        return {
+            'system_details': system_info,
+            'memory_usage': memory_info,
+            'cpu_usage': cpu_percent,
+            'disk_usage': disk_info,
+            'network_info': network_info,
+            'process_info': process_info
+        }
+        
+    except Exception as e:
+        log_error(f"Error obteniendo datos del sistema: {str(e)}")
+        return {}
+
+@maintenance_bp.route('/local-backups')
+@admin_required
+def list_local_backups():
+    """Lista los backups disponibles localmente."""
+    try:
+        # Directorio de backups (usando ruta absoluta directa)
+        backup_dir = '/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/branch_edf_catalogotablas/edf_catalogotablas/backups'
+        
+        log_info(f"🔍 DEBUG: Función list_local_backups llamada")
+        log_info(f"🔍 DEBUG: backup_dir = {backup_dir}")
+        log_info(f"🔍 DEBUG: backup_dir existe = {os.path.exists(backup_dir)}")
+        
+        if not os.path.exists(backup_dir):
+            log_info(f"❌ DEBUG: Directorio de backups no existe: {backup_dir}")
+            return jsonify({
+                'success': True,
+                'backups': []
+            })
+        
+        backups = []
+        files = os.listdir(backup_dir)
+        log_info(f"🔍 DEBUG: Archivos encontrados en directorio: {len(files)}")
+        
+        for filename in files:
+            log_info(f"🔍 DEBUG: Procesando archivo: {filename}")
+            if filename.endswith(('.json', '.gz', '.zip', '.csv')):
+                file_path = os.path.join(backup_dir, filename)
+                file_stat = os.stat(file_path)
+                
+                backup_info = {
+                    'filename': filename,
+                    'size': file_stat.st_size,
+                    'size_mb': round(file_stat.st_size / (1024 * 1024), 2),
+                    'created_at': datetime.fromtimestamp(file_stat.st_ctime).isoformat(),
+                    'modified_at': datetime.fromtimestamp(file_stat.st_mtime).isoformat(),
+                    'path': file_path
+                }
+                backups.append(backup_info)
+                log_info(f"✅ DEBUG: Backup válido agregado: {filename} ({backup_info['size_mb']} MB)")
+            else:
+                log_info(f"❌ DEBUG: Archivo no válido: {filename}")
+        
+        # Ordenar por fecha de modificación (más reciente primero)
+        backups.sort(key=lambda x: x['modified_at'], reverse=True)
+        
+        log_info(f"Listando backups locales: {len(backups)} archivos encontrados en {backup_dir}")
+        
+        return jsonify({
+            'success': True,
+            'backups': backups
+        })
+        
+    except Exception as e:
+        log_error(f"Error listando backups locales: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@maintenance_bp.route('/local-backups/upload-to-drive/<filename>', methods=['POST'])
+@admin_required
+def upload_local_backup_to_drive(filename):
+    """Sube un backup local a Google Drive."""
+    try:
+        backup_dir = '/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/branch_edf_catalogotablas/edf_catalogotablas/backups'
+        file_path = os.path.join(backup_dir, filename)
+        
+        if not os.path.exists(file_path):
+            log_error(f"Archivo no encontrado: {file_path}")
+            return jsonify({'success': False, 'error': 'Archivo no encontrado'}), 404
+        
+        # Verificar que el archivo sea un backup válido
+        if not filename.endswith(('.json', '.gz', '.zip', '.csv')):
+            return jsonify({'success': False, 'error': 'Tipo de archivo no válido'}), 400
+        
+        # Implementar subida real a Google Drive
+        try:
+            drive_manager = GoogleDriveManager()
+            
+            # Leer el archivo
+            with open(file_path, 'rb') as f:
+                file_content = f.read()
+            
+            # Subir a Google Drive
+            file_id = drive_manager.upload_file(filename, file_content)
+            
+            file_size = os.path.getsize(file_path)
+            log_info(f"Backup {filename} ({file_size} bytes) subido a Google Drive correctamente con ID: {file_id}")
+            
+        except Exception as drive_error:
+            log_error(f"Error en Google Drive: {str(drive_error)}")
+            return jsonify({'success': False, 'error': f'Error en Google Drive: {str(drive_error)}'}), 500
+        
+        return jsonify({
+            'success': True,
+            'message': f'Backup "{filename}" subido a Google Drive correctamente',
+            'filename': filename,
+            'size': file_size,
+            'size_mb': round(file_size / (1024 * 1024), 2)
+        })
+        
+    except Exception as e:
+        log_error(f"Error subiendo backup local a Google Drive: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@maintenance_bp.route('/local-backups/delete/<filename>', methods=['DELETE'])
+@admin_required
+def delete_local_backup(filename):
+    """Elimina un backup local."""
+    try:
+        backup_dir = '/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/branch_edf_catalogotablas/edf_catalogotablas/backups'
+        file_path = os.path.join(backup_dir, filename)
+        
+        if not os.path.exists(file_path):
+            log_error(f"Archivo no encontrado para eliminar: {file_path}")
+            return jsonify({'success': False, 'error': 'Archivo no encontrado'}), 404
+        
+        # Verificar que el archivo sea un backup válido
+        if not filename.endswith(('.json', '.gz', '.zip', '.csv')):
+            return jsonify({'success': False, 'error': 'Tipo de archivo no válido'}), 400
+        
+        # Eliminar el archivo
+        os.remove(file_path)
+        
+        log_info(f"Backup {filename} eliminado correctamente de {file_path}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Backup "{filename}" eliminado correctamente'
+        })
+        
+    except Exception as e:
+        log_error(f"Error eliminando backup local {filename}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================================================
 # REGISTRO DEL BLUEPRINT
