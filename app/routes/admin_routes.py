@@ -110,9 +110,6 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.route("/")
 @admin_required
 def dashboard_admin():
-    mensaje_monitoreo = None
-    if not current_app.config.get("MONITORING_ENABLED", False):
-        mensaje_monitoreo = "El sistema de monitoreo no está disponible actualmente. Contacte con el administrador."
     db = get_mongo_db()
     if db is None:
         flash(
@@ -219,7 +216,6 @@ def dashboard_admin():
             mis_registros=mis_registros,
             search=search,
             search_type=search_type,
-            mensaje_monitoreo=mensaje_monitoreo,
         )
     except Exception as e:
         print(f"[ERROR][ADMIN] Error en dashboard_admin: {e}")
@@ -476,6 +472,7 @@ def get_backup_files(backup_dir: str) -> List[Dict[str, Any]]:
                     ".zip",
                     ".tar",
                     ".gz",
+                    ".json.gz",  # Agregar extensión específica para backups comprimidos
                     ".sql",
                     ".dump",
                     ".old",
@@ -2664,8 +2661,9 @@ def get_db_ops():
 def get_backup_dir() -> str:
     """Obtiene el directorio de respaldos, asegurando que exista"""
     # Usar la ruta absoluta basada en el directorio raíz del proyecto
-    # en lugar de current_app.root_path que puede ser inconsistente
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    # El archivo está en app/routes/, necesitamos ir 2 niveles arriba para llegar a la raíz
+    # app/routes/ -> app/ -> edf_catalogotablas/
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     backup_dir = os.path.join(project_root, "backups")
     
     # Log para depuración
@@ -2908,34 +2906,19 @@ def db_backup():
                 )
                 return FileInfo(False, 0, None, None)
 
-        # Listar respaldos existentes
+        # Listar respaldos existentes usando get_backup_files
         backups = []
         try:
-            if os.path.exists(backup_dir):
-                current_app.logger.info(f"Listando backups en directorio: {backup_dir}")
-                all_files = os.listdir(backup_dir)
-                current_app.logger.info(f"Archivos encontrados: {all_files}")
-                
-                # Filtrar archivos de backup (tanto JSON como binarios)
-                backup_files = [
-                    f
-                    for f in all_files
-                    if (f.startswith("backup_") or f.startswith("mongodb_backup_")) and (f.endswith(".gz") or f.endswith(".json.gz"))
-                ]
-                current_app.logger.info(f"Archivos de backup JSON encontrados: {backup_files}")
-                
-                backups = sorted(backup_files, reverse=True)
-                current_app.logger.info(f"Backups filtrados y ordenados: {backups}")
-                current_app.logger.info(f"Número total de backups: {len(backups)}")
-            else:
-                current_app.logger.warning(f"Directorio de backups no existe: {backup_dir}")
-        except (OSError, IOError, PermissionError) as e:
+            backup_files_info = get_backup_files(backup_dir)
+            current_app.logger.info(f"Archivos de backup encontrados: {len(backup_files_info)}")
+            
+            # Extraer solo los nombres de archivo
+            backups = [file_info["name"] for file_info in backup_files_info]
+            current_app.logger.info(f"Nombres de archivos de backup: {backups}")
+            
+        except Exception as e:
             current_app.logger.error(f"Error al listar respaldos: {str(e)}")
             flash("Error al listar los respaldos existentes", "error")
-            # No vaciar la lista, intentar continuar
-        except Exception as e:
-            current_app.logger.error(f"Error inesperado al listar respaldos: {str(e)}")
-            flash(f"Error inesperado: {str(e)}", "error")
 
         # Obtener el conteo de respaldos en Google Drive
         drive_backups_count = 0
@@ -4563,14 +4546,15 @@ def test_database():
         ), 500
 
 
-@admin_bp.route("/tools")
-@admin_required
-def tools_dashboard():
-    """
-    Dashboard de herramientas y scripts del sistema.
-    Requiere login de administrador.
-    """
-    return render_template('admin/tools_dashboard.html')
+# Ruta movida a scripts_bp para evitar conflictos
+# @admin_bp.route("/tools")
+# @admin_required
+# def tools_dashboard():
+#     """
+#     Dashboard de herramientas y scripts del sistema.
+#     Requiere login de administrador.
+#     """
+#     return render_template('admin/tools_dashboard.html')
 
 @admin_bp.route("/tools-test")
 @admin_required
