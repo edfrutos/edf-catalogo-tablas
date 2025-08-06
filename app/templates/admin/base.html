@@ -418,7 +418,12 @@
         right: 32px;
         z-index: 1050;
         display: none;
+        width: 50px;
+        height: 50px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
       "
+      title="Volver arriba"
     >
       <i class="bi bi-arrow-up"></i>
     </button>
@@ -469,15 +474,40 @@
       // Mostrar botón Ir Arriba al hacer scroll
       window.addEventListener("scroll", function () {
         const btn = document.getElementById("goTopBtn");
-        if (window.scrollY > 200) {
-          btn.style.display = "block";
-        } else {
-          btn.style.display = "none";
+        if (btn) {
+          if (window.scrollY > 200) {
+            btn.style.display = "block";
+          } else {
+            btn.style.display = "none";
+          }
         }
       });
-      document.getElementById("goTopBtn").onclick = function () {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      };
+      
+      // Configurar el botón cuando el DOM esté listo
+      document.addEventListener("DOMContentLoaded", function() {
+        const btn = document.getElementById("goTopBtn");
+        if (btn) {
+          btn.onclick = function () {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          };
+          
+          // Mostrar botón si hay mucho contenido
+          const tableRows = document.querySelectorAll('tbody tr');
+          if (tableRows.length > 10) {
+            btn.style.display = "block";
+          }
+          
+          // Verificar periódicamente si debe mostrarse
+          setInterval(() => {
+            const currentTableRows = document.querySelectorAll('tbody tr');
+            if (currentTableRows.length > 10 || window.scrollY > 200) {
+              btn.style.display = "block";
+            } else if (window.scrollY <= 200) {
+              btn.style.display = "none";
+            }
+          }, 1000);
+        }
+      });
     </script>
   </body>
 </html>

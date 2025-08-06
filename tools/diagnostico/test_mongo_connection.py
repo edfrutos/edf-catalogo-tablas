@@ -20,7 +20,7 @@ MONGO_URI = os.getenv('MONGO_URI')
 if not MONGO_URI:
     raise RuntimeError('No se encontró la variable de entorno MONGO_URI')
 
-client = MongoClient(
+client: MongoClient = MongoClient(
     MONGO_URI,
     server_api=ServerApi('1'),
     tlsCAFile=certifi.where()

@@ -54,7 +54,13 @@ from app.routes.temp_files_utils import list_temp_files, delete_temp_files
 from app.decorators import admin_required as admin_required_logs
 
 
-def log_action(action: str, message: str, details: Optional[Dict[str, Any]] = None, user_id: Optional[str] = None, collection: Optional[str] = None) -> None:
+def log_action(
+    action: str,
+    message: str,
+    details: Optional[Dict[str, Any]] = None,
+    user_id: Optional[str] = None,
+    collection: Optional[str] = None,
+) -> None:
     """
     Registra una acción en el log de auditoría.
 
@@ -125,6 +131,7 @@ def dashboard_admin():
     if users_collection is None:
         # Intentar obtener desde g
         from flask import g
+
         users_collection = getattr(g, "users_collection", None)
         if users_collection is None:
             # Como último recurso, obtener directamente de la base de datos
@@ -201,9 +208,20 @@ def dashboard_admin():
         mis_registros = []
         if search:
             if search_type == "owner":
-                mis_registros = [r for r in registros if search.lower() in (r.get("owner", "") or r.get("created_by", "") or r.get("owner_name", "")).lower()]
+                mis_registros = [
+                    r
+                    for r in registros
+                    if search.lower()
+                    in (
+                        r.get("owner", "")
+                        or r.get("created_by", "")
+                        or r.get("owner_name", "")
+                    ).lower()
+                ]
             else:
-                mis_registros = [r for r in registros if search.lower() in r.get("name", "").lower()]
+                mis_registros = [
+                    r for r in registros if search.lower() in r.get("name", "").lower()
+                ]
         else:
             mis_registros = registros
         total_catalogos = len(mis_registros)
@@ -251,18 +269,27 @@ def system_status():
         backup_dir = os.path.abspath(os.path.join(os.getcwd(), "backups"))
         backup_files = get_backup_files(backup_dir)
         # Pasar cache_stats y temp_files como variables independientes para el template
-        cache_stats = data.get('cache_stats', {})
-        temp_files = data.get('temp_files', {'count': 0, 'total_size_mb': 0, 'files': []})
-        
+        cache_stats = data.get("cache_stats", {})
+        temp_files = data.get(
+            "temp_files", {"count": 0, "total_size_mb": 0, "files": []}
+        )
+
         # Asegurar que data.health.metrics tenga la estructura correcta
-        if 'health' not in data:
-            data['health'] = {'metrics': {}}
-        if 'metrics' not in data['health']:
-            data['health']['metrics'] = {}
-        if 'temp_files' not in data['health']['metrics']:
-            data['health']['metrics']['temp_files'] = temp_files
-            
-        return render_template('admin/system_status.html', data=data, log_files=log_files, backup_files=backup_files, cache_stats=cache_stats, temp_files=temp_files)
+        if "health" not in data:
+            data["health"] = {"metrics": {}}
+        if "metrics" not in data["health"]:
+            data["health"]["metrics"] = {}
+        if "temp_files" not in data["health"]["metrics"]:
+            data["health"]["metrics"]["temp_files"] = temp_files
+
+        return render_template(
+            "admin/system_status.html",
+            data=data,
+            log_files=log_files,
+            backup_files=backup_files,
+            cache_stats=cache_stats,
+            temp_files=temp_files,
+        )
     except Exception as e:
         logger.error(f"Error en system_status: {str(e)}", exc_info=True)
         flash("Error al obtener el estado del sistema", "danger")
@@ -766,13 +793,13 @@ def editar_usuario(user_id: str):
                 )
                 # Registrar en el log de auditoría
                 audit_log(
-                    "user_verified", 
-                    user_id=session.get('user_id'),
+                    "user_verified",
+                    user_id=session.get("user_id"),
                     details={
-                        "verified_user_email": user.get('email'), 
-                        "verified_by": session.get('username'),
-                        "verified_user_name": user.get('nombre', 'desconocido')
-                    }
+                        "verified_user_email": user.get("email"),
+                        "verified_by": session.get("username"),
+                        "verified_user_name": user.get("nombre", "desconocido"),
+                    },
                 )
                 return redirect(url_for("admin.verify_users"))
 
@@ -932,13 +959,13 @@ def backup_json():
             "success",
         )
         audit_log(
-            "backup_json_uploaded_to_drive", 
-            user_id=session.get('user_id'),
+            "backup_json_uploaded_to_drive",
+            user_id=session.get("user_id"),
             details={
-                "filename": filename, 
-                "username": session.get('username', 'desconocido'),
-                "drive_url": enlace_drive
-            }
+                "filename": filename,
+                "username": session.get("username", "desconocido"),
+                "drive_url": enlace_drive,
+            },
         )
     except (IOError, OSError, PermissionError, ValueError) as e:
         flash(
@@ -946,14 +973,14 @@ def backup_json():
             "danger",
         )
         audit_log(
-            "backup_json_upload_failed", 
-            user_id=session.get('user_id'),
+            "backup_json_upload_failed",
+            user_id=session.get("user_id"),
             details={
-                "filename": filename, 
-                "username": session.get('username', 'desconocido'),
-                "error": str(e)
+                "filename": filename,
+                "username": session.get("username", "desconocido"),
+                "error": str(e),
             },
-            success=False
+            success=False,
         )
     # Permitir descarga directa como antes
     return send_file(
@@ -1003,13 +1030,13 @@ def backup_csv():
             "success",
         )
         audit_log(
-            "backup_csv_uploaded_to_drive", 
-            user_id=session.get('user_id'),
+            "backup_csv_uploaded_to_drive",
+            user_id=session.get("user_id"),
             details={
-                "filename": filename, 
-                "username": session.get('username', 'desconocido'),
-                "drive_url": enlace_drive
-            }
+                "filename": filename,
+                "username": session.get("username", "desconocido"),
+                "drive_url": enlace_drive,
+            },
         )
     except (IOError, OSError, PermissionError, ValueError) as e:
         flash(
@@ -1017,14 +1044,14 @@ def backup_csv():
             "danger",
         )
         audit_log(
-            "backup_csv_upload_failed", 
-            user_id=session.get('user_id'),
+            "backup_csv_upload_failed",
+            user_id=session.get("user_id"),
             details={
-                "filename": filename, 
-                "username": session.get('username', 'desconocido'),
-                "error": str(e)
+                "filename": filename,
+                "username": session.get("username", "desconocido"),
+                "error": str(e),
             },
-            success=False
+            success=False,
         )
     # Permitir descarga directa como antes
     return send_file(
@@ -1079,14 +1106,14 @@ def cleanup_old_backups():
                 logger.error(f"Error al eliminar backup {f}: {e}")
     flash(f"Backups antiguos eliminados: {removed}", "info")
     audit_log(
-        "backup_cleanup", 
-        user_id=session.get('user_id'),
+        "backup_cleanup",
+        user_id=session.get("user_id"),
         details={
-            "username": session.get('username', 'desconocido'),
+            "username": session.get("username", "desconocido"),
             "days": days,
             "max_files": max_files,
-            "removed_count": removed
-        }
+            "removed_count": removed,
+        },
     )
     return redirect(url_for("maintenance.maintenance_dashboard"))
 
@@ -2353,13 +2380,13 @@ def db_scripts():
                             # Registrar en log de auditoría
                             audit_log(
                                 "db_script_execution",
-                                user_id=session.get('user_id'),
+                                user_id=session.get("user_id"),
                                 details={
                                     "script": selected_script,
                                     "args": args,
                                     "duration_seconds": duration,
-                                    "username": session.get('username', 'desconocido')
-                                }
+                                    "username": session.get("username", "desconocido"),
+                                },
                             )
 
                             # Añadir mensaje de éxito
@@ -2485,7 +2512,14 @@ def db_status():
                 "error": f"No se pudo obtener el estado del servidor: {str(e)}"
             }
 
-    except (ConnectionError, TimeoutError, AttributeError, KeyError, TypeError, ValueError) as e:
+    except (
+        ConnectionError,
+        TimeoutError,
+        AttributeError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as e:
         status["error"] = f"Error al conectar con MongoDB: {str(e)}"
         current_app.logger.error(
             f"Error en db_status: {str(e)}\n{traceback.format_exc()}"
@@ -2557,7 +2591,14 @@ def db_monitor():
             current_app.logger.error(f"Error al obtener operaciones lentas: {str(e)}")
             status["slow_ops"] = []
 
-    except (ConnectionError, TimeoutError, AttributeError, KeyError, TypeError, ValueError) as e:
+    except (
+        ConnectionError,
+        TimeoutError,
+        AttributeError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as e:
         status["error"] = f"Error al obtener estadísticas: {str(e)}"
         current_app.logger.error(
             f"Error en db_monitor: {str(e)}\n{traceback.format_exc()}"
@@ -2650,7 +2691,14 @@ def get_db_ops():
             }
         )
 
-    except (ConnectionError, TimeoutError, AttributeError, KeyError, TypeError, ValueError) as e:
+    except (
+        ConnectionError,
+        TimeoutError,
+        AttributeError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as e:
         current_app.logger.error(f"Error en get_db_ops: {str(e)}")
         current_app.logger.error(traceback.format_exc())
         return jsonify(
@@ -2663,12 +2711,14 @@ def get_backup_dir() -> str:
     # Usar la ruta absoluta basada en el directorio raíz del proyecto
     # El archivo está en app/routes/, necesitamos ir 3 niveles arriba para llegar a la raíz
     # app/routes/ -> app/ -> edf_catalogotablas/
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    project_root = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     backup_dir = os.path.join(project_root, "backups")
-    
+
     # Log para depuración
     current_app.logger.info(f"Directorio de backup configurado: {backup_dir}")
-    
+
     os.makedirs(backup_dir, exist_ok=True)
     return backup_dir
 
@@ -2697,26 +2747,28 @@ def db_backup():
                 # Intentar primero con mongodump (método tradicional)
                 backup_created = False
                 backup_file = None
-                
+
                 # Crear backup JSON directamente (método simplificado)
                 try:
                     # Generar nombre de archivo con timestamp
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    backup_file = os.path.join(backup_dir, f"backup_{timestamp}.json.gz")
-                    
+                    backup_file = os.path.join(
+                        backup_dir, f"backup_{timestamp}.json.gz"
+                    )
+
                     # Obtener datos de la base de datos
                     db = get_mongo_db()
-                    
+
                     # Crear estructura de backup
                     backup_data = {
                         "metadata": {
                             "created_at": datetime.now().isoformat(),
                             "version": "1.0",
-                            "type": "json_backup"
+                            "type": "json_backup",
                         },
-                        "collections": {}
+                        "collections": {},
                     }
-                    
+
                     # Función para convertir objetos datetime a string
                     def convert_datetime(obj):
                         if isinstance(obj, datetime):
@@ -2727,15 +2779,15 @@ def db_backup():
                             return [convert_datetime(item) for item in obj]
                         else:
                             return obj
-                    
+
                     # Obtener datos de las colecciones principales
                     collections_to_backup = ["catalogs", "users"]
-                    
+
                     for collection_name in collections_to_backup:
                         try:
                             collection = db[collection_name]
                             documents = list(collection.find({}))
-                            
+
                             # Convertir ObjectId y datetime para JSON serialization
                             converted_documents = []
                             for doc in documents:
@@ -2746,36 +2798,53 @@ def db_backup():
                                 # Convertir todos los campos datetime
                                 converted_doc = convert_datetime(converted_doc)
                                 converted_documents.append(converted_doc)
-                            
-                            backup_data["collections"][collection_name] = converted_documents
-                            current_app.logger.info(f"Colección {collection_name}: {len(documents)} documentos")
-                            
+
+                            backup_data["collections"][collection_name] = (
+                                converted_documents
+                            )
+                            current_app.logger.info(
+                                f"Colección {collection_name}: {len(documents)} documentos"
+                            )
+
                         except Exception as e:
-                            current_app.logger.warning(f"Error al respaldar colección {collection_name}: {str(e)}")
+                            current_app.logger.warning(
+                                f"Error al respaldar colección {collection_name}: {str(e)}"
+                            )
                             backup_data["collections"][collection_name] = []
-                    
+
                     # Comprimir y escribir el backup
                     import json
                     import gzip
-                    
+
                     json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
-                    compressed_data = gzip.compress(json_data.encode('utf-8'))
-                    
-                    with open(backup_file, 'wb') as f:
+                    compressed_data = gzip.compress(json_data.encode("utf-8"))
+
+                    with open(backup_file, "wb") as f:
                         f.write(compressed_data)
-                    
+
                     backup_created = True
-                    current_app.logger.info(f"Backup JSON creado exitosamente: {backup_file}")
-                    current_app.logger.info(f"Tamaño del archivo: {len(compressed_data)} bytes")
-                    
+                    current_app.logger.info(
+                        f"Backup JSON creado exitosamente: {backup_file}"
+                    )
+                    current_app.logger.info(
+                        f"Tamaño del archivo: {len(compressed_data)} bytes"
+                    )
+
                 except Exception as backup_error:
-                    current_app.logger.error(f"Error al crear backup JSON: {str(backup_error)}")
-                    raise Exception(f"No se pudo crear el backup JSON: {str(backup_error)}")
-                
+                    current_app.logger.error(
+                        f"Error al crear backup JSON: {str(backup_error)}"
+                    )
+                    raise Exception(
+                        f"No se pudo crear el backup JSON: {str(backup_error)}"
+                    )
+
                 if not backup_created or not backup_file:
                     raise Exception("No se pudo crear el archivo de backup")
 
-                audit_log("database_backup_created", details={"filename": os.path.basename(backup_file)})
+                audit_log(
+                    "database_backup_created",
+                    details={"filename": os.path.basename(backup_file)},
+                )
                 # Limpiar respaldos antiguos (mantener los 5 más recientes de cada tipo)
                 try:
                     # Separar archivos por tipo
@@ -2791,11 +2860,12 @@ def db_backup():
                         [
                             f
                             for f in os.listdir(backup_dir)
-                            if f.startswith("backup_") and (f.endswith(".gz") or f.endswith(".json.gz"))
+                            if f.startswith("backup_")
+                            and (f.endswith(".gz") or f.endswith(".json.gz"))
                         ],
                         reverse=True,
                     )
-                    
+
                     # Eliminar archivos binarios antiguos (mantener solo los 5 más recientes)
                     for old_backup in mongodb_backups[5:]:
                         try:
@@ -2807,7 +2877,7 @@ def db_backup():
                             current_app.logger.error(
                                 f"Error al eliminar respaldo binario {old_backup}: {str(e)}"
                             )
-                    
+
                     # Eliminar archivos JSON antiguos (mantener solo los 5 más recientes)
                     for old_backup in json_backups[5:]:
                         try:
@@ -2819,7 +2889,7 @@ def db_backup():
                             current_app.logger.error(
                                 f"Error al eliminar respaldo JSON {old_backup}: {str(e)}"
                             )
-                            
+
                 except (OSError, IOError, PermissionError) as e:
                     current_app.logger.error(
                         f"Error al limpiar respaldos antiguos: {str(e)}"
@@ -2848,7 +2918,9 @@ def db_backup():
         def get_file_info(filepath: str) -> Dict[str, Any]:
             from collections import namedtuple
 
-            FileInfo = namedtuple("FileInfo", ["exists", "size", "mtime", "timestamp_from_name"])
+            FileInfo = namedtuple(
+                "FileInfo", ["exists", "size", "mtime", "timestamp_from_name"]
+            )
 
             try:
                 current_app.logger.info(f"Obteniendo info de archivo: {filepath}")
@@ -2857,11 +2929,11 @@ def db_backup():
                     return FileInfo(False, 0, None, None)
 
                 stat = os.stat(filepath)
-                
+
                 # Extraer timestamp del nombre del archivo
                 filename = os.path.basename(filepath)
                 timestamp_from_name = None
-                
+
                 if filename.startswith("backup_") and "_" in filename:
                     try:
                         # backup_20250801_130738.json.gz -> 20250801_130738
@@ -2876,29 +2948,39 @@ def db_backup():
                                 if len(date_time_parts) == 2:
                                     date_part = date_time_parts[0]  # "20250801"
                                     time_part = date_time_parts[1]  # "130738"
-                                    
-                                    if len(date_part) == 8 and len(time_part) == 6:  # YYYYMMDD y HHMMSS
+
+                                    if (
+                                        len(date_part) == 8 and len(time_part) == 6
+                                    ):  # YYYYMMDD y HHMMSS
                                         year = int(date_part[:4])
                                         month = int(date_part[4:6])
                                         day = int(date_part[6:8])
                                         hour = int(time_part[:2])
                                         minute = int(time_part[2:4])
                                         second = int(time_part[4:6])
-                                        
+
                                         # Crear datetime usando la hora local (como se generó originalmente)
-                                        timestamp_from_name = datetime(year, month, day, hour, minute, second)
-                                        current_app.logger.info(f"Timestamp extraído del nombre: {timestamp_from_name}")
+                                        timestamp_from_name = datetime(
+                                            year, month, day, hour, minute, second
+                                        )
+                                        current_app.logger.info(
+                                            f"Timestamp extraído del nombre: {timestamp_from_name}"
+                                        )
                     except (ValueError, IndexError) as e:
-                        current_app.logger.warning(f"No se pudo extraer timestamp del nombre {filename}: {str(e)}")
+                        current_app.logger.warning(
+                            f"No se pudo extraer timestamp del nombre {filename}: {str(e)}"
+                        )
                         timestamp_from_name = None
-                
+
                 file_info = FileInfo(
                     exists=True,
                     size=stat.st_size,
                     mtime=datetime.fromtimestamp(stat.st_mtime),
-                    timestamp_from_name=timestamp_from_name
+                    timestamp_from_name=timestamp_from_name,
                 )
-                current_app.logger.info(f"Info de archivo obtenida: {filepath} - Tamaño: {file_info.size}, Modificado: {file_info.mtime}, Timestamp nombre: {file_info.timestamp_from_name}")
+                current_app.logger.info(
+                    f"Info de archivo obtenida: {filepath} - Tamaño: {file_info.size}, Modificado: {file_info.mtime}, Timestamp nombre: {file_info.timestamp_from_name}"
+                )
                 return file_info
             except (OSError, IOError, PermissionError) as e:
                 current_app.logger.error(
@@ -2910,35 +2992,22 @@ def db_backup():
         backups = []
         try:
             backup_files_info = get_backup_files(backup_dir)
-            current_app.logger.info(f"Archivos de backup encontrados: {len(backup_files_info)}")
-            
-            # Configuración de paginación
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', 10, type=int)
-            
-            # Validar parámetros
-            page = max(1, page)
-            per_page = max(1, min(50, per_page))  # Entre 1 y 50 elementos por página
-            
-            # Calcular paginación
+            current_app.logger.info(
+                f"Archivos de backup encontrados: {len(backup_files_info)}"
+            )
+
+            # Enviar todos los backups para que DataTables maneje la paginación
+            backups = backup_files_info
             total_backups = len(backup_files_info)
-            total_pages = (total_backups + per_page - 1) // per_page
-            start_idx = (page - 1) * per_page
-            end_idx = start_idx + per_page
-            
-            # Aplicar paginación
-            backups = backup_files_info[start_idx:end_idx]
-            
-            current_app.logger.info(f"Paginación: página {page}/{total_pages}, {per_page} elementos por página")
-            current_app.logger.info(f"Información de archivos de backup: {len(backups)} archivos mostrados de {total_backups} total")
-            
+
+            current_app.logger.info(
+                f"Enviando todos los {total_backups} archivos de backup para paginación del lado del cliente"
+            )
+
         except Exception as e:
             current_app.logger.error(f"Error al listar respaldos: {str(e)}")
             flash("Error al listar los respaldos existentes", "error")
-            page = 1
-            per_page = 10
             total_backups = 0
-            total_pages = 0
 
         # Obtener el conteo de respaldos en Google Drive
         drive_backups_count = 0
@@ -2956,35 +3025,47 @@ def db_backup():
         current_app.logger.info(f"Renderizando template con {len(backups)} backups")
         current_app.logger.info(f"Backup dir: {backup_dir}")
         current_app.logger.info(f"Drive backups count: {drive_backups_count}")
-        
+
         return render_template(
             "admin/db_backup.html",
             backups=backups,
             backup_dir=backup_dir,
             get_file_info=get_file_info,
             drive_backups_count=drive_backups_count,
-            # Parámetros de paginación
-            page=page,
-            per_page=per_page,
+            # Parámetros de paginación (ahora manejados por DataTables)
             total_backups=total_backups,
-            total_pages=total_pages,
         )
 
-    except (OSError, IOError, PermissionError, AttributeError, KeyError, TypeError, ValueError) as e:
+    except (
+        OSError,
+        IOError,
+        PermissionError,
+        AttributeError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as e:
         current_app.logger.error(
             f"Error en db_backup: {str(e)}\n{traceback.format_exc()}"
         )
         flash(f"Error en la operación de respaldo: {str(e)}", "error")
-        return render_template("admin/db_backup.html", 
+        return render_template(
+            "admin/db_backup.html",
             backups=[],
             backup_dir=get_backup_dir(),
-            get_file_info=lambda x: type('FileInfo', (), {'exists': False, 'size': 0, 'mtime': None, 'timestamp_from_name': None})(),
+            get_file_info=lambda x: type(
+                "FileInfo",
+                (),
+                {
+                    "exists": False,
+                    "size": 0,
+                    "mtime": None,
+                    "timestamp_from_name": None,
+                },
+            )(),
             drive_backups_count=0,
             # Parámetros de paginación por defecto
-            page=1,
-            per_page=10,
             total_backups=0,
-            total_pages=0,
         )
 
 
@@ -3077,7 +3158,14 @@ def db_performance():
                 "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
-        except (ConnectionError, TimeoutError, AttributeError, KeyError, TypeError, ValueError) as e:
+        except (
+            ConnectionError,
+            TimeoutError,
+            AttributeError,
+            KeyError,
+            TypeError,
+            ValueError,
+        ) as e:
             results = {
                 "status": "error",
                 "message": f"Error al ejecutar pruebas: {str(e)}",
@@ -3265,11 +3353,11 @@ def backups_list():
                     flash(f"Backup {filename} eliminado correctamente", "success")
                     audit_log(
                         "backup_file_deleted_manually",
-                        user_id=session.get('user_id'),
+                        user_id=session.get("user_id"),
                         details={
                             "filename": filename,
-                            "username": session.get('username', 'desconocido')
-                        }
+                            "username": session.get("username", "desconocido"),
+                        },
                     )
                 except (OSError, IOError, PermissionError) as e:
                     flash(f"Error al eliminar el backup: {str(e)}", "danger")
@@ -3293,9 +3381,12 @@ def download_backup(filename: str):
         flash("El archivo no existe", "warning")
         return redirect(url_for("admin.backups_list"))
     audit_log(
-        "backup_file_download", 
-        user_id=session.get('user_id'), 
-        details={"filename": filename, "username": session.get('username', 'desconocido')}
+        "backup_file_download",
+        user_id=session.get("user_id"),
+        details={
+            "filename": filename,
+            "username": session.get("username", "desconocido"),
+        },
     )
     return send_file(file_path, as_attachment=True, download_name=filename)
 
@@ -3307,19 +3398,26 @@ def download_backup_alt(filename: str):
     try:
         backup_dir = get_backup_dir()
         file_path = os.path.join(backup_dir, filename)
-        
+
         if not os.path.exists(file_path):
-            return jsonify({"status": "error", "message": "El archivo de respaldo no existe"}), 404
-        
+            return jsonify(
+                {"status": "error", "message": "El archivo de respaldo no existe"}
+            ), 404
+
         audit_log(
-            "backup_file_download", 
-            user_id=session.get('user_id'), 
-            details={"filename": filename, "username": session.get('username', 'desconocido')}
+            "backup_file_download",
+            user_id=session.get("user_id"),
+            details={
+                "filename": filename,
+                "username": session.get("username", "desconocido"),
+            },
         )
         return send_file(file_path, as_attachment=True, download_name=filename)
     except Exception as e:
         current_app.logger.error(f"Error al descargar backup {filename}: {str(e)}")
-        return jsonify({"status": "error", "message": f"Error al descargar el archivo: {str(e)}"}), 500
+        return jsonify(
+            {"status": "error", "message": f"Error al descargar el archivo: {str(e)}"}
+        ), 500
 
 
 @admin_bp.route("/restore-local-backup", methods=["POST"])
@@ -3328,428 +3426,544 @@ def restore_local_backup():
     """Restaura un backup local desde el directorio de backups"""
     try:
         data = request.get_json()
-        filename = data.get('filename')
-        
+        filename = data.get("filename")
+
         if not filename:
-            return jsonify({
-                'success': False,
-                'error': 'Falta el parámetro filename'
-            }), 400
-        
-        current_app.logger.info(f"Iniciando restauración desde backup local: {filename}")
-        
+            return jsonify(
+                {"success": False, "error": "Falta el parámetro filename"}
+            ), 400
+
+        current_app.logger.info(
+            f"Iniciando restauración desde backup local: {filename}"
+        )
+
         # Importar las utilidades necesarias
         import tempfile
         import gzip
         import json
         from bson import ObjectId
-        
+
         # Obtener la ruta del archivo de backup
         backup_dir = get_backup_dir()
         file_path = os.path.join(backup_dir, filename)
-        
+
         if not os.path.exists(file_path):
-            return jsonify({
-                'success': False,
-                'error': f'El archivo de backup {filename} no existe'
-            }), 404
-        
+            return jsonify(
+                {
+                    "success": False,
+                    "error": f"El archivo de backup {filename} no existe",
+                }
+            ), 404
+
         current_app.logger.info(f"Procesando archivo local: {file_path}")
-        
+
         # Verificar el tipo de archivo basándose en el nombre
-        if filename.startswith('mongodb_backup_'):
-            return jsonify({
-                'success': False,
-                'error': 'Este archivo es un backup binario de MongoDB (mongodump). Solo se pueden restaurar backups en formato JSON. Use el archivo backup_*.json.gz en su lugar.'
-            }), 400
-        
+        if filename.startswith("mongodb_backup_"):
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Este archivo es un backup binario de MongoDB (mongodump). Solo se pueden restaurar backups en formato JSON. Use el archivo backup_*.json.gz en su lugar.",
+                }
+            ), 400
+
         # Determinar el formato del archivo y procesarlo
         backup_data = None
-        
+
         # Verificar si el archivo es GZIP comprimido
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 # Leer los primeros bytes para detectar el formato
                 magic_bytes = f.read(2)
                 f.seek(0)  # Volver al inicio
-                
-                if magic_bytes.startswith(b'\x1f\x8b'):  # GZIP magic bytes
+
+                if magic_bytes.startswith(b"\x1f\x8b"):  # GZIP magic bytes
                     current_app.logger.info("Archivo detectado como GZIP comprimido")
                     try:
-                        with gzip.open(file_path, 'rb') as gz_file:
+                        with gzip.open(file_path, "rb") as gz_file:
                             compressed_content = gz_file.read()
-                            current_app.logger.info(f"Contenido GZIP descomprimido, longitud: {len(compressed_content)} bytes")
-                            
+                            current_app.logger.info(
+                                f"Contenido GZIP descomprimido, longitud: {len(compressed_content)} bytes"
+                            )
+
                             # Intentar decodificar como UTF-8
                             try:
-                                content = compressed_content.decode('utf-8')
-                                current_app.logger.info(f"Contenido decodificado como UTF-8, longitud: {len(content)} caracteres")
+                                content = compressed_content.decode("utf-8")
+                                current_app.logger.info(
+                                    f"Contenido decodificado como UTF-8, longitud: {len(content)} caracteres"
+                                )
                             except UnicodeDecodeError as decode_error:
-                                current_app.logger.error(f"Error decodificando UTF-8: {str(decode_error)}")
+                                current_app.logger.error(
+                                    f"Error decodificando UTF-8: {str(decode_error)}"
+                                )
                                 # Intentar con otras codificaciones
                                 try:
-                                    content = compressed_content.decode('latin-1')
-                                    current_app.logger.info(f"Contenido decodificado como latin-1, longitud: {len(content)} caracteres")
+                                    content = compressed_content.decode("latin-1")
+                                    current_app.logger.info(
+                                        f"Contenido decodificado como latin-1, longitud: {len(content)} caracteres"
+                                    )
                                 except UnicodeDecodeError:
-                                    return jsonify({
-                                        'success': False,
-                                        'error': 'No se pudo decodificar el contenido del archivo comprimido'
-                                    }), 400
-                            
+                                    return jsonify(
+                                        {
+                                            "success": False,
+                                            "error": "No se pudo decodificar el contenido del archivo comprimido",
+                                        }
+                                    ), 400
+
                             # Intentar parsear como JSON
                             try:
                                 backup_data = json.loads(content)
-                                current_app.logger.info(f"JSON parseado exitosamente, tipo: {type(backup_data)}")
+                                current_app.logger.info(
+                                    f"JSON parseado exitosamente, tipo: {type(backup_data)}"
+                                )
                             except json.JSONDecodeError as e:
-                                current_app.logger.error(f"Error parseando JSON: {str(e)}")
-                                current_app.logger.error(f"Primeros 200 caracteres del contenido: {content[:200]}")
-                                
+                                current_app.logger.error(
+                                    f"Error parseando JSON: {str(e)}"
+                                )
+                                current_app.logger.error(
+                                    f"Primeros 200 caracteres del contenido: {content[:200]}"
+                                )
+
                                 # Verificar si es un archivo de backup de MongoDB binario
-                                if (content.startswith('BSON') or 'mongodump' in content.lower() or 
-                                    'concurrent_collections' in content or 'server_version' in content):
-                                    return jsonify({
-                                        'success': False,
-                                        'error': 'Este archivo es un backup binario de MongoDB (mongodump). Solo se pueden restaurar backups en formato JSON. Use el archivo backup_*.json.gz en su lugar.'
-                                    }), 400
-                                
-                                return jsonify({
-                                    'success': False,
-                                    'error': f'El archivo de backup no contiene JSON válido. Error: {str(e)}'
-                                }), 400
-                                
+                                if (
+                                    content.startswith("BSON")
+                                    or "mongodump" in content.lower()
+                                    or "concurrent_collections" in content
+                                    or "server_version" in content
+                                ):
+                                    return jsonify(
+                                        {
+                                            "success": False,
+                                            "error": "Este archivo es un backup binario de MongoDB (mongodump). Solo se pueden restaurar backups en formato JSON. Use el archivo backup_*.json.gz en su lugar.",
+                                        }
+                                    ), 400
+
+                                return jsonify(
+                                    {
+                                        "success": False,
+                                        "error": f"El archivo de backup no contiene JSON válido. Error: {str(e)}",
+                                    }
+                                ), 400
+
                     except Exception as gzip_error:
-                        current_app.logger.error(f"Error procesando GZIP: {str(gzip_error)}")
-                        return jsonify({
-                            'success': False,
-                            'error': f'Error al descomprimir el archivo GZIP: {str(gzip_error)}'
-                        }), 400
+                        current_app.logger.error(
+                            f"Error procesando GZIP: {str(gzip_error)}"
+                        )
+                        return jsonify(
+                            {
+                                "success": False,
+                                "error": f"Error al descomprimir el archivo GZIP: {str(gzip_error)}",
+                            }
+                        ), 400
                 else:
                     current_app.logger.info("Archivo detectado como texto plano")
                     # Intentar como archivo de texto plano
                     try:
-                        with open(file_path, 'r', encoding='utf-8') as file:
+                        with open(file_path, "r", encoding="utf-8") as file:
                             content = file.read()
-                            current_app.logger.info(f"Contenido plano leído, longitud: {len(content)} caracteres")
+                            current_app.logger.info(
+                                f"Contenido plano leído, longitud: {len(content)} caracteres"
+                            )
                             backup_data = json.loads(content)
-                            current_app.logger.info(f"JSON plano parseado exitosamente, tipo: {type(backup_data)}")
+                            current_app.logger.info(
+                                f"JSON plano parseado exitosamente, tipo: {type(backup_data)}"
+                            )
                     except UnicodeDecodeError as decode_error:
-                        current_app.logger.error(f"Error decodificando UTF-8: {str(decode_error)}")
+                        current_app.logger.error(
+                            f"Error decodificando UTF-8: {str(decode_error)}"
+                        )
                         # Intentar con otras codificaciones
                         try:
-                            with open(file_path, 'r', encoding='latin-1') as file:
+                            with open(file_path, "r", encoding="latin-1") as file:
                                 content = file.read()
-                                current_app.logger.info(f"Contenido plano leído como latin-1, longitud: {len(content)} caracteres")
+                                current_app.logger.info(
+                                    f"Contenido plano leído como latin-1, longitud: {len(content)} caracteres"
+                                )
                                 backup_data = json.loads(content)
-                                current_app.logger.info(f"JSON plano parseado exitosamente, tipo: {type(backup_data)}")
+                                current_app.logger.info(
+                                    f"JSON plano parseado exitosamente, tipo: {type(backup_data)}"
+                                )
                         except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                            current_app.logger.error(f"Error procesando archivo plano: {str(e)}")
-                            return jsonify({
-                                'success': False,
-                                'error': f'Formato de archivo no válido: {str(e)}'
-                            }), 400
+                            current_app.logger.error(
+                                f"Error procesando archivo plano: {str(e)}"
+                            )
+                            return jsonify(
+                                {
+                                    "success": False,
+                                    "error": f"Formato de archivo no válido: {str(e)}",
+                                }
+                            ), 400
                     except json.JSONDecodeError as e:
-                        current_app.logger.error(f"Error parseando JSON plano: {str(e)}")
-                        current_app.logger.error(f"Primeros 200 caracteres del contenido: {content[:200]}")
-                        
+                        current_app.logger.error(
+                            f"Error parseando JSON plano: {str(e)}"
+                        )
+                        current_app.logger.error(
+                            f"Primeros 200 caracteres del contenido: {content[:200]}"
+                        )
+
                         # Verificar si es un archivo de backup de MongoDB binario
-                        if (content.startswith('BSON') or 'mongodump' in content.lower() or 
-                            'concurrent_collections' in content or 'server_version' in content):
-                            return jsonify({
-                                'success': False,
-                                'error': 'Este archivo es un backup binario de MongoDB (mongodump). Solo se pueden restaurar backups en formato JSON. Use el archivo backup_*.json.gz en su lugar.'
-                            }), 400
-                        
-                        return jsonify({
-                            'success': False,
-                            'error': f'Formato de archivo no válido. Error JSON: {str(e)}'
-                        }), 400
-                        
+                        if (
+                            content.startswith("BSON")
+                            or "mongodump" in content.lower()
+                            or "concurrent_collections" in content
+                            or "server_version" in content
+                        ):
+                            return jsonify(
+                                {
+                                    "success": False,
+                                    "error": "Este archivo es un backup binario de MongoDB (mongodump). Solo se pueden restaurar backups en formato JSON. Use el archivo backup_*.json.gz en su lugar.",
+                                }
+                            ), 400
+
+                        return jsonify(
+                            {
+                                "success": False,
+                                "error": f"Formato de archivo no válido. Error JSON: {str(e)}",
+                            }
+                        ), 400
+
         except Exception as e:
             current_app.logger.error(f"Error general procesando archivo: {str(e)}")
-            return jsonify({
-                'success': False,
-                'error': f'Error al procesar el archivo: {str(e)}'
-            }), 400
-        
+            return jsonify(
+                {"success": False, "error": f"Error al procesar el archivo: {str(e)}"}
+            ), 400
+
         if not backup_data:
             current_app.logger.error("No se pudo procesar el contenido del backup")
-            return jsonify({
-                'success': False,
-                'error': 'No se pudo procesar el contenido del backup'
-            }), 400
-        
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "No se pudo procesar el contenido del backup",
+                }
+            ), 400
+
         current_app.logger.info(f"Backup data procesado, tipo: {type(backup_data)}")
-        
+
         # Validar estructura del backup
         if isinstance(backup_data, dict):
             # Estructura nueva con metadata y collections
             current_app.logger.info("Backup detectado como estructura con metadata")
-            if 'collections' in backup_data and 'catalogs' in backup_data['collections']:
-                backup_data = backup_data['collections']['catalogs']
-                current_app.logger.info(f"Extraídos {len(backup_data)} documentos de la colección 'catalogs'")
+            if (
+                "collections" in backup_data
+                and "catalogs" in backup_data["collections"]
+            ):
+                backup_data = backup_data["collections"]["catalogs"]
+                current_app.logger.info(
+                    f"Extraídos {len(backup_data)} documentos de la colección 'catalogs'"
+                )
             else:
-                current_app.logger.error("Backup no contiene la estructura esperada (collections.catalogs)")
-                return jsonify({
-                    'success': False,
-                    'error': 'El backup no contiene la estructura esperada'
-                }), 400
+                current_app.logger.error(
+                    "Backup no contiene la estructura esperada (collections.catalogs)"
+                )
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": "El backup no contiene la estructura esperada",
+                    }
+                ), 400
         elif not isinstance(backup_data, list):
-            current_app.logger.error(f"Backup no es una lista ni un diccionario válido, es: {type(backup_data)}")
-            return jsonify({
-                'success': False,
-                'error': 'El backup debe contener una lista de documentos o una estructura válida'
-            }), 400
-        
+            current_app.logger.error(
+                f"Backup no es una lista ni un diccionario válido, es: {type(backup_data)}"
+            )
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "El backup debe contener una lista de documentos o una estructura válida",
+                }
+            ), 400
+
         current_app.logger.info(f"Backup contiene {len(backup_data)} documentos")
-        
+
         # Obtener la colección de catálogos
         catalog_collection = get_catalogs_collection()
         if catalog_collection is None:
-            return jsonify({
-                'success': False,
-                'error': 'No se pudo acceder a la base de datos'
-            }), 500
-        
+            return jsonify(
+                {"success": False, "error": "No se pudo acceder a la base de datos"}
+            ), 500
+
         # Procesar los documentos para restaurar ObjectIds
         processed_docs = []
         for doc in backup_data:
             if isinstance(doc, dict):
                 # Convertir _id string de vuelta a ObjectId si es necesario
-                if '_id' in doc and isinstance(doc['_id'], str):
+                if "_id" in doc and isinstance(doc["_id"], str):
                     try:
-                        doc['_id'] = ObjectId(doc['_id'])
+                        doc["_id"] = ObjectId(doc["_id"])
                     except Exception:
                         # Si no se puede convertir, generar nuevo ObjectId
-                        doc['_id'] = ObjectId()
+                        doc["_id"] = ObjectId()
                 processed_docs.append(doc)
-        
+
         if not processed_docs:
-            return jsonify({
-                'success': False,
-                'error': 'No se encontraron documentos válidos en el backup'
-            }), 400
-        
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "No se encontraron documentos válidos en el backup",
+                }
+            ), 400
+
         # Limpiar la colección actual (CUIDADO: esto elimina todos los datos)
-        current_app.logger.warning("Eliminando todos los documentos de la colección antes de restaurar")
+        current_app.logger.warning(
+            "Eliminando todos los documentos de la colección antes de restaurar"
+        )
         delete_result = catalog_collection.delete_many({})
         current_app.logger.info(f"Documentos eliminados: {delete_result.deleted_count}")
-        
+
         # Insertar los documentos restaurados
         insert_result = catalog_collection.insert_many(processed_docs)
         inserted_count = len(insert_result.inserted_ids)
-        
+
         # Registrar en auditoría
         audit_log(
             "database_restore_from_local",
-            user_id=session.get('user_id'),
+            user_id=session.get("user_id"),
             details={
                 "filename": filename,
                 "documents_restored": inserted_count,
                 "documents_deleted": delete_result.deleted_count,
-                "username": session.get('username', 'desconocido')
+                "username": session.get("username", "desconocido"),
+            },
+        )
+
+        current_app.logger.info(
+            f"Restauración completada: {inserted_count} documentos insertados"
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Backup restaurado exitosamente. {inserted_count} documentos restaurados.",
+                "documents_restored": inserted_count,
+                "documents_deleted": delete_result.deleted_count,
             }
         )
-        
-        current_app.logger.info(f"Restauración completada: {inserted_count} documentos insertados")
-        
-        return jsonify({
-            'success': True,
-            'message': f'Backup restaurado exitosamente. {inserted_count} documentos restaurados.',
-            'documents_restored': inserted_count,
-            'documents_deleted': delete_result.deleted_count
-        })
-        
+
     except Exception as e:
         current_app.logger.error(f"Error en restore_local_backup: {str(e)}")
         current_app.logger.error(traceback.format_exc())
-        return jsonify({
-            'success': False,
-            'error': f'Error interno del servidor: {str(e)}'
-        }), 500
+        return jsonify(
+            {"success": False, "error": f"Error interno del servidor: {str(e)}"}
+        ), 500
 
 
 @admin_bp.route("/restore-drive-backup", methods=["POST"])
 @admin_required
 def restore_drive_backup():
     try:
-        backup_id = request.form.get('backup_id')
-        download_url = request.form.get('download_url')
-        
+        backup_id = request.form.get("backup_id")
+        download_url = request.form.get("download_url")
+
         if not backup_id:
-            return jsonify({
-                'success': False,
-                'error': 'Falta el parámetro requerido (backup_id)'
-            }), 400
-        
-        current_app.logger.info(f"Iniciando restauración desde Google Drive: {backup_id}")
-        
+            return jsonify(
+                {"success": False, "error": "Falta el parámetro requerido (backup_id)"}
+            ), 400
+
+        current_app.logger.info(
+            f"Iniciando restauración desde Google Drive: {backup_id}"
+        )
+
         # Importar las utilidades necesarias
         import tempfile
         import gzip
         import json
         from bson import ObjectId
-        
+
         # Descargar el archivo desde Google Drive usando la API
         from tools.db_utils.google_drive_utils import download_file
-        
+
         # Obtener el file_id del backup_id (que es el mismo en este caso)
         file_id = backup_id
-        
+
         # Descargar el archivo usando la API de Google Drive
         file_content = download_file(file_id)
-        
+
         # Crear archivo temporal
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.gz') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".gz") as temp_file:
             temp_file.write(file_content)
             temp_path = temp_file.name
-        
+
         try:
             # Determinar el formato del archivo y procesarlo
             backup_data = None
-            
+
             current_app.logger.info(f"Procesando archivo temporal: {temp_path}")
-            
+
             # Intentar como archivo GZIP primero
             try:
-                with gzip.open(temp_path, 'rt', encoding='utf-8') as gz_file:
+                with gzip.open(temp_path, "rt", encoding="utf-8") as gz_file:
                     content = gz_file.read()
-                    current_app.logger.info(f"Contenido GZIP leído, longitud: {len(content)} caracteres")
+                    current_app.logger.info(
+                        f"Contenido GZIP leído, longitud: {len(content)} caracteres"
+                    )
                     # Intentar parsear como JSON
                     try:
                         backup_data = json.loads(content)
-                        current_app.logger.info(f"JSON parseado exitosamente, tipo: {type(backup_data)}")
+                        current_app.logger.info(
+                            f"JSON parseado exitosamente, tipo: {type(backup_data)}"
+                        )
                     except json.JSONDecodeError as e:
                         # Si no es JSON válido, asumir que es un dump de MongoDB
                         current_app.logger.error(f"Error parseando JSON: {str(e)}")
-                        current_app.logger.info("Archivo detectado como dump de MongoDB")
-                        return jsonify({
-                            'success': False,
-                            'error': 'Los dumps de MongoDB (.gz) no son compatibles con esta función. Use mongorestore manualmente.'
-                        }), 400
+                        current_app.logger.info(
+                            "Archivo detectado como dump de MongoDB"
+                        )
+                        return jsonify(
+                            {
+                                "success": False,
+                                "error": "Los dumps de MongoDB (.gz) no son compatibles con esta función. Use mongorestore manualmente.",
+                            }
+                        ), 400
             except (gzip.BadGzipFile, OSError) as e:
                 current_app.logger.error(f"Error leyendo GZIP: {str(e)}")
                 # Si no es GZIP, intentar como JSON plano
                 try:
-                    with open(temp_path, 'r', encoding='utf-8') as file:
+                    with open(temp_path, "r", encoding="utf-8") as file:
                         content = file.read()
-                        current_app.logger.info(f"Contenido plano leído, longitud: {len(content)} caracteres")
+                        current_app.logger.info(
+                            f"Contenido plano leído, longitud: {len(content)} caracteres"
+                        )
                         backup_data = json.load(file)
-                        current_app.logger.info(f"JSON plano parseado exitosamente, tipo: {type(backup_data)}")
+                        current_app.logger.info(
+                            f"JSON plano parseado exitosamente, tipo: {type(backup_data)}"
+                        )
                 except json.JSONDecodeError as e:
                     current_app.logger.error(f"Error parseando JSON plano: {str(e)}")
-                    return jsonify({
-                        'success': False,
-                        'error': f'Formato de archivo no válido: {str(e)}'
-                    }), 400
-            
+                    return jsonify(
+                        {
+                            "success": False,
+                            "error": f"Formato de archivo no válido: {str(e)}",
+                        }
+                    ), 400
+
             if not backup_data:
                 current_app.logger.error("No se pudo procesar el contenido del backup")
-                return jsonify({
-                    'success': False,
-                    'error': 'No se pudo procesar el contenido del backup'
-                }), 400
-            
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": "No se pudo procesar el contenido del backup",
+                    }
+                ), 400
+
             current_app.logger.info(f"Backup data procesado, tipo: {type(backup_data)}")
-            
+
             # Validar estructura del backup
             if isinstance(backup_data, dict):
                 # Estructura nueva con metadata y collections
                 current_app.logger.info("Backup detectado como estructura con metadata")
-                if 'collections' in backup_data and 'catalogs' in backup_data['collections']:
-                    backup_data = backup_data['collections']['catalogs']
-                    current_app.logger.info(f"Extraídos {len(backup_data)} documentos de la colección 'catalogs'")
+                if (
+                    "collections" in backup_data
+                    and "catalogs" in backup_data["collections"]
+                ):
+                    backup_data = backup_data["collections"]["catalogs"]
+                    current_app.logger.info(
+                        f"Extraídos {len(backup_data)} documentos de la colección 'catalogs'"
+                    )
                 else:
-                    current_app.logger.error("Backup no contiene la estructura esperada (collections.catalogs)")
-                    return jsonify({
-                        'success': False,
-                        'error': 'El backup no contiene la estructura esperada'
-                    }), 400
+                    current_app.logger.error(
+                        "Backup no contiene la estructura esperada (collections.catalogs)"
+                    )
+                    return jsonify(
+                        {
+                            "success": False,
+                            "error": "El backup no contiene la estructura esperada",
+                        }
+                    ), 400
             elif not isinstance(backup_data, list):
-                current_app.logger.error(f"Backup no es una lista ni un diccionario válido, es: {type(backup_data)}")
-                return jsonify({
-                    'success': False,
-                    'error': 'El backup debe contener una lista de documentos o una estructura válida'
-                }), 400
-            
+                current_app.logger.error(
+                    f"Backup no es una lista ni un diccionario válido, es: {type(backup_data)}"
+                )
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": "El backup debe contener una lista de documentos o una estructura válida",
+                    }
+                ), 400
+
             current_app.logger.info(f"Backup contiene {len(backup_data)} documentos")
-            
+
             # Obtener la colección de catálogos
             catalog_collection = get_catalogs_collection()
             if catalog_collection is None:
-                return jsonify({
-                    'success': False,
-                    'error': 'No se pudo acceder a la base de datos'
-                }), 500
-            
+                return jsonify(
+                    {"success": False, "error": "No se pudo acceder a la base de datos"}
+                ), 500
+
             # Procesar los documentos para restaurar ObjectIds
             processed_docs = []
             for doc in backup_data:
                 if isinstance(doc, dict):
                     # Convertir _id string de vuelta a ObjectId si es necesario
-                    if '_id' in doc and isinstance(doc['_id'], str):
+                    if "_id" in doc and isinstance(doc["_id"], str):
                         try:
-                            doc['_id'] = ObjectId(doc['_id'])
+                            doc["_id"] = ObjectId(doc["_id"])
                         except Exception:
                             # Si no se puede convertir, generar nuevo ObjectId
-                            doc['_id'] = ObjectId()
+                            doc["_id"] = ObjectId()
                     processed_docs.append(doc)
-            
+
             if not processed_docs:
-                return jsonify({
-                    'success': False,
-                    'error': 'No se encontraron documentos válidos en el backup'
-                }), 400
-            
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": "No se encontraron documentos válidos en el backup",
+                    }
+                ), 400
+
             # Limpiar la colección actual (CUIDADO: esto elimina todos los datos)
-            current_app.logger.warning("Eliminando todos los documentos de la colección antes de restaurar")
+            current_app.logger.warning(
+                "Eliminando todos los documentos de la colección antes de restaurar"
+            )
             delete_result = catalog_collection.delete_many({})
-            current_app.logger.info(f"Documentos eliminados: {delete_result.deleted_count}")
-            
+            current_app.logger.info(
+                f"Documentos eliminados: {delete_result.deleted_count}"
+            )
+
             # Insertar los documentos restaurados
             insert_result = catalog_collection.insert_many(processed_docs)
             inserted_count = len(insert_result.inserted_ids)
-            
+
             # Registrar en auditoría
             audit_log(
                 "database_restore_from_drive",
-                user_id=session.get('user_id'),
+                user_id=session.get("user_id"),
                 details={
                     "backup_id": backup_id,
                     "documents_restored": inserted_count,
                     "documents_deleted": delete_result.deleted_count,
-                    "username": session.get('username', 'desconocido')
+                    "username": session.get("username", "desconocido"),
+                },
+            )
+
+            current_app.logger.info(
+                f"Restauración completada: {inserted_count} documentos insertados"
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": f"Backup restaurado exitosamente. {inserted_count} documentos restaurados.",
+                    "documents_restored": inserted_count,
+                    "documents_deleted": delete_result.deleted_count,
                 }
             )
-            
-            current_app.logger.info(f"Restauración completada: {inserted_count} documentos insertados")
-            
-            return jsonify({
-                'success': True,
-                'message': f'Backup restaurado exitosamente. {inserted_count} documentos restaurados.',
-                'documents_restored': inserted_count,
-                'documents_deleted': delete_result.deleted_count
-            })
-            
+
         finally:
             # Limpiar archivo temporal
             try:
                 os.unlink(temp_path)
             except OSError:
                 pass
-    
+
     except requests.RequestException as e:
         current_app.logger.error(f"Error descargando desde Google Drive: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': f'Error descargando el archivo: {str(e)}'
-        }), 500
+        return jsonify(
+            {"success": False, "error": f"Error descargando el archivo: {str(e)}"}
+        ), 500
     except Exception as e:
         current_app.logger.error(f"Error en restore_drive_backup: {str(e)}")
         current_app.logger.error(traceback.format_exc())
-        return jsonify({
-            'success': False,
-            'error': f'Error interno del servidor: {str(e)}'
-        }), 500
+        return jsonify(
+            {"success": False, "error": f"Error interno del servidor: {str(e)}"}
+        ), 500
 
 
 @admin_bp.route("/reset_gdrive_token", methods=["POST"])
@@ -3813,7 +4027,13 @@ def gdrive_upload_test():
                     f"Archivo '{filename}' subido correctamente a Google Drive.",
                     "success",
                 )
-            except (ConnectionError, TimeoutError, OSError, ValueError, AttributeError) as e:
+            except (
+                ConnectionError,
+                TimeoutError,
+                OSError,
+                ValueError,
+                AttributeError,
+            ) as e:
                 flash(f"Error al subir '{filename}': {str(e)}", "danger")
             finally:
                 if os.path.exists(temp_path):
@@ -3829,24 +4049,24 @@ def create_and_upload_backup():
     """Crear backup y subirlo directamente a Google Drive"""
     try:
         backup_dir = get_backup_dir()
-        
+
         # Crear backup JSON
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = os.path.join(backup_dir, f"backup_{timestamp}.json.gz")
-        
+
         # Obtener datos de la base de datos
         db = get_mongo_db()
-        
+
         # Crear estructura de backup
         backup_data = {
             "metadata": {
                 "created_at": datetime.now().isoformat(),
                 "version": "1.0",
-                "type": "json_backup"
+                "type": "json_backup",
             },
-            "collections": {}
+            "collections": {},
         }
-        
+
         # Función para convertir objetos datetime a string
         def convert_datetime(obj):
             if isinstance(obj, datetime):
@@ -3857,15 +4077,15 @@ def create_and_upload_backup():
                 return [convert_datetime(item) for item in obj]
             else:
                 return obj
-        
+
         # Obtener datos de las colecciones principales
         collections_to_backup = ["catalogs", "users"]
-        
+
         for collection_name in collections_to_backup:
             try:
                 collection = db[collection_name]
                 documents = list(collection.find({}))
-                
+
                 # Convertir ObjectId y datetime para JSON serialization
                 converted_documents = []
                 for doc in documents:
@@ -3876,44 +4096,50 @@ def create_and_upload_backup():
                     # Convertir todos los campos datetime
                     converted_doc = convert_datetime(converted_doc)
                     converted_documents.append(converted_doc)
-                
+
                 backup_data["collections"][collection_name] = converted_documents
-                current_app.logger.info(f"Colección {collection_name}: {len(documents)} documentos")
-                
+                current_app.logger.info(
+                    f"Colección {collection_name}: {len(documents)} documentos"
+                )
+
             except Exception as e:
-                current_app.logger.warning(f"Error al respaldar colección {collection_name}: {str(e)}")
+                current_app.logger.warning(
+                    f"Error al respaldar colección {collection_name}: {str(e)}"
+                )
                 backup_data["collections"][collection_name] = []
-        
+
         # Comprimir y escribir el backup
         import json
         import gzip
-        
+
         json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
-        compressed_data = gzip.compress(json_data.encode('utf-8'))
-        
-        with open(backup_file, 'wb') as f:
+        compressed_data = gzip.compress(json_data.encode("utf-8"))
+
+        with open(backup_file, "wb") as f:
             f.write(compressed_data)
-        
+
         current_app.logger.info(f"Backup JSON creado: {backup_file}")
-        
+
         # Subir a Google Drive
         try:
             from tools.db_utils.google_drive_utils import upload_to_drive
-            
+
             # Subir archivo a Google Drive
             upload_result = upload_to_drive(backup_file, "Backups_CatalogoTablas")
-            
+
             if not upload_result.get("success"):
-                raise Exception(upload_result.get("error", "Error desconocido al subir"))
-            
+                raise Exception(
+                    upload_result.get("error", "Error desconocido al subir")
+                )
+
             file_info = {
                 "id": upload_result.get("file_id"),
-                "name": upload_result.get("file_name")
+                "name": upload_result.get("file_name"),
             }
-            
+
             # Guardar información en la base de datos
             backups_collection = db["backups"]
-            
+
             backup_record = {
                 "filename": f"backup_{timestamp}.json.gz",
                 "file_id": file_info.get("id"),
@@ -3921,39 +4147,46 @@ def create_and_upload_backup():
                 "uploaded_at": datetime.now(),
                 "uploaded_by": session.get("username", "admin"),
                 "description": "Backup directo a Google Drive",
-                "type": "json_backup"
+                "type": "json_backup",
             }
-            
+
             backups_collection.insert_one(backup_record)
-            
+
             # Eliminar archivo local temporal
             try:
                 os.remove(backup_file)
                 current_app.logger.info(f"Archivo temporal eliminado: {backup_file}")
             except Exception as e:
-                current_app.logger.warning(f"No se pudo eliminar archivo temporal: {str(e)}")
-            
-            return jsonify({
-                "success": True,
-                "message": "Backup creado y subido exitosamente",
-                "file_id": file_info.get("id"),
-                "filename": f"backup_{timestamp}.json.gz"
-            })
-            
+                current_app.logger.warning(
+                    f"No se pudo eliminar archivo temporal: {str(e)}"
+                )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Backup creado y subido exitosamente",
+                    "file_id": file_info.get("id"),
+                    "filename": f"backup_{timestamp}.json.gz",
+                }
+            )
+
         except Exception as drive_error:
-            current_app.logger.error(f"Error al subir a Google Drive: {str(drive_error)}")
+            current_app.logger.error(
+                f"Error al subir a Google Drive: {str(drive_error)}"
+            )
             # Si falla la subida, mantener el archivo local
-            return jsonify({
-                "success": False,
-                "error": f"Backup creado localmente pero falló la subida a Google Drive: {str(drive_error)}"
-            })
-            
+            return jsonify(
+                {
+                    "success": False,
+                    "error": f"Backup creado localmente pero falló la subida a Google Drive: {str(drive_error)}",
+                }
+            )
+
     except Exception as e:
         current_app.logger.error(f"Error al crear backup directo: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": f"Error al crear backup: {str(e)}"
-        }), 500
+        return jsonify(
+            {"success": False, "error": f"Error al crear backup: {str(e)}"}
+        ), 500
 
 
 @admin_bp.route("/backup/delete-local/<filename>", methods=["DELETE"])
@@ -3963,38 +4196,62 @@ def delete_local_backup_route(filename: str):
     try:
         backup_dir = get_backup_dir()
         backup_file = os.path.join(backup_dir, filename)
-        
+
         # Verificar que el archivo existe
         if not os.path.exists(backup_file):
             return jsonify({"success": False, "error": "Archivo no encontrado"}), 404
-        
+
         # Verificar que es un archivo de backup válido (usar la misma lógica que get_backup_files)
         valid_extensions = [
-            ".bak", ".backup", ".zip", ".tar", ".gz", ".json.gz",
-            ".sql", ".dump", ".old", ".back", ".tmp", ".swp",
-            "~", ".csv", ".json"
+            ".bak",
+            ".backup",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".json.gz",
+            ".sql",
+            ".dump",
+            ".old",
+            ".back",
+            ".tmp",
+            ".swp",
+            "~",
+            ".csv",
+            ".json",
         ]
-        
+
         # Verificar que el archivo tiene una extensión válida
         if not any(filename.endswith(ext) for ext in valid_extensions):
-            return jsonify({"success": False, "error": "Archivo no válido - extensión no permitida"}), 400
-        
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Archivo no válido - extensión no permitida",
+                }
+            ), 400
+
         # Verificar que no contiene caracteres peligrosos
         if ".." in filename or "/" in filename or "\\" in filename:
-            return jsonify({"success": False, "error": "Archivo no válido - nombre inseguro"}), 400
-        
+            return jsonify(
+                {"success": False, "error": "Archivo no válido - nombre inseguro"}
+            ), 400
+
         # Eliminar el archivo
         os.remove(backup_file)
         current_app.logger.info(f"Backup local eliminado: {filename}")
-        
+
         # Registrar en auditoría
         audit_log("database_backup_deleted", details={"filename": filename})
-        
-        return jsonify({"success": True, "message": f"Backup {filename} eliminado exitosamente"})
-        
+
+        return jsonify(
+            {"success": True, "message": f"Backup {filename} eliminado exitosamente"}
+        )
+
     except Exception as e:
         current_app.logger.error(f"Error al eliminar backup local {filename}: {str(e)}")
-        return jsonify({"success": False, "error": f"Error al eliminar backup: {str(e)}"}), 500
+        return jsonify(
+            {"success": False, "error": f"Error al eliminar backup: {str(e)}"}
+        ), 500
+
 
 @admin_bp.route("/backup/upload-to-drive/<filename>", methods=["POST"])
 @admin_required
@@ -4013,8 +4270,11 @@ def upload_backup_to_drive(filename: str):
     from werkzeug.utils import secure_filename
     import sys
     import os
+
     # Agregar la ruta de tools/db_utils al path
-    db_utils_path = os.path.join(os.path.dirname(__file__), '..', '..', 'tools', 'db_utils')
+    db_utils_path = os.path.join(
+        os.path.dirname(__file__), "..", "..", "tools", "db_utils"
+    )
     if db_utils_path not in sys.path:
         sys.path.insert(0, db_utils_path)
     from google_drive_utils import upload_to_drive
@@ -4210,7 +4470,15 @@ def upload_backup_to_drive(filename: str):
                 }
             ), 500
 
-    except (ConnectionError, TimeoutError, OSError, ValueError, AttributeError, KeyError, TypeError) as e:
+    except (
+        ConnectionError,
+        TimeoutError,
+        OSError,
+        ValueError,
+        AttributeError,
+        KeyError,
+        TypeError,
+    ) as e:
         error_msg = f"Error inesperado en upload_backup_to_drive: {str(e)}"
         current_app.logger.error(error_msg, exc_info=True)
 
@@ -4249,38 +4517,58 @@ def list_drive_backups():
     """
     try:
         # Verificar si existen las credenciales antes de intentar listar
-        credentials_path = os.path.join(os.path.dirname(__file__), '..', '..', 'tools', 'db_utils', 'credentials.json')
+        credentials_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "tools",
+            "db_utils",
+            "credentials.json",
+        )
         if not os.path.exists(credentials_path):
             # Si es una petición AJAX, devolver JSON informativo
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-                return jsonify({
-                    "status": "success",
-                    "backups": [{
-                        '_id': 'no-credentials',
-                        'filename': 'Google Drive no configurado',
-                        'file_size': 0,
-                        'uploaded_at': '',
-                        'uploaded_by_name': 'Sistema',
-                        'download_url': '',
-                        'web_view_url': '',
-                        'is_placeholder': True
-                    }],
-                    "message": "Las credenciales de Google Drive no están configuradas"
-                })
-        
+            if request.headers.get(
+                "X-Requested-With"
+            ) == "XMLHttpRequest" or "application/json" in request.headers.get(
+                "Accept", ""
+            ):
+                return jsonify(
+                    {
+                        "status": "success",
+                        "backups": [
+                            {
+                                "_id": "no-credentials",
+                                "filename": "Google Drive no configurado",
+                                "file_size": 0,
+                                "uploaded_at": "",
+                                "uploaded_by_name": "Sistema",
+                                "download_url": "",
+                                "web_view_url": "",
+                                "is_placeholder": True,
+                            }
+                        ],
+                        "message": "Las credenciales de Google Drive no están configuradas",
+                    }
+                )
+
         # Listar archivos reales en Google Drive
-        files = list_files_in_folder('Backups_CatalogoTablas')
-        
+        files = list_files_in_folder("Backups_CatalogoTablas")
+
         # ... existing code ...
         processed_backups = []
         for file_info in files:
             # Convertir la fecha de string a datetime si es necesario
-            uploaded_at = file_info.get('modified', '')
+            uploaded_at = file_info.get("modified", "")
             if uploaded_at and isinstance(uploaded_at, str):
                 try:
                     from datetime import datetime
+
                     # Intentar parsear la fecha en diferentes formatos
-                    for fmt in ['%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S']:
+                    for fmt in [
+                        "%Y-%m-%dT%H:%M:%S.%fZ",
+                        "%Y-%m-%dT%H:%M:%SZ",
+                        "%Y-%m-%d %H:%M:%S",
+                    ]:
                         try:
                             uploaded_at = datetime.strptime(uploaded_at, fmt)
                             break
@@ -4291,25 +4579,26 @@ def list_drive_backups():
                         uploaded_at = uploaded_at
                 except Exception:
                     uploaded_at = uploaded_at
-            
+
             backup = {
-                '_id': file_info['id'],
-                'filename': file_info['name'],
-                'file_size': file_info['size'],
-                'uploaded_at': uploaded_at,
-                'uploaded_by_name': 'Google Drive',
-                'download_url': file_info.get('download_url', ''),
-                'web_view_url': file_info.get('download_url', ''),
-                'is_placeholder': False
+                "_id": file_info["id"],
+                "filename": file_info["name"],
+                "file_size": file_info["size"],
+                "uploaded_at": uploaded_at,
+                "uploaded_by_name": "Google Drive",
+                "download_url": file_info.get("download_url", ""),
+                "web_view_url": file_info.get("download_url", ""),
+                "is_placeholder": False,
             }
             processed_backups.append(backup)
 
         # Si es una petición AJAX, devolver JSON
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-            return jsonify({
-                "status": "success",
-                "backups": processed_backups
-            })
+        if request.headers.get(
+            "X-Requested-With"
+        ) == "XMLHttpRequest" or "application/json" in request.headers.get(
+            "Accept", ""
+        ):
+            return jsonify({"status": "success", "backups": processed_backups})
 
         # ... existing code for HTML response ...
         # Si es una petición normal, devolver HTML
@@ -4323,25 +4612,33 @@ def list_drive_backups():
         current_app.logger.error(
             f"Error al listar respaldos de Google Drive: {str(e)}", exc_info=True
         )
-        
+
         # Si es una petición AJAX, devolver JSON de error más informativo
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-            return jsonify({
-                "status": "success",
-                "backups": [{
-                    '_id': 'error',
-                    'filename': 'Error de configuración',
-                    'file_size': 0,
-                    'uploaded_at': '',
-                    'uploaded_by_name': 'Sistema',
-                    'download_url': '',
-                    'web_view_url': '',
-                    'is_placeholder': True,
-                    'error_message': str(e)
-                }],
-                "message": "Error al acceder a Google Drive. Verifica la configuración."
-            })
-        
+        if request.headers.get(
+            "X-Requested-With"
+        ) == "XMLHttpRequest" or "application/json" in request.headers.get(
+            "Accept", ""
+        ):
+            return jsonify(
+                {
+                    "status": "success",
+                    "backups": [
+                        {
+                            "_id": "error",
+                            "filename": "Error de configuración",
+                            "file_size": 0,
+                            "uploaded_at": "",
+                            "uploaded_by_name": "Sistema",
+                            "download_url": "",
+                            "web_view_url": "",
+                            "is_placeholder": True,
+                            "error_message": str(e),
+                        }
+                    ],
+                    "message": "Error al acceder a Google Drive. Verifica la configuración.",
+                }
+            )
+
         flash("Error al cargar la lista de respaldos de Google Drive", "error")
         return redirect(url_for("main.dashboard_user"))
 
@@ -4447,7 +4744,14 @@ def api_system_status():
         current_app.logger.info(f"API system-status devolviendo: {response_data}")
         return jsonify({"status": "success", "data": response_data})
 
-    except (ConnectionError, TimeoutError, AttributeError, KeyError, TypeError, ValueError) as e:
+    except (
+        ConnectionError,
+        TimeoutError,
+        AttributeError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as e:
         logger.error(f"Error en api_system_status: {str(e)}", exc_info=True)
         return jsonify(
             {"status": "error", "message": "Error al obtener estado del sistema"}
@@ -4461,31 +4765,24 @@ def api_drive_backups():
     try:
         db = get_mongo_db()
         if db is None:
-            return jsonify({
-                "success": False,
-                "error": "No se pudo conectar a la base de datos"
-            }), 500
-        
+            return jsonify(
+                {"success": False, "error": "No se pudo conectar a la base de datos"}
+            ), 500
+
         # Obtener respaldos de la base de datos
-        backups = list(db.backups.find({}, {'_id': 0}).sort('uploaded_at', -1))
-        
+        backups = list(db.backups.find({}, {"_id": 0}).sort("uploaded_at", -1))
+
         # Convertir ObjectId a string si existe
         for backup in backups:
-            if 'uploaded_at' in backup:
-                backup['uploaded_at'] = backup['uploaded_at'].isoformat()
-        
-        return jsonify({
-            "success": True,
-            "backups": backups,
-            "count": len(backups)
-        })
-        
+            if "uploaded_at" in backup:
+                backup["uploaded_at"] = backup["uploaded_at"].isoformat()
+
+        return jsonify({"success": True, "backups": backups, "count": len(backups)})
+
     except Exception as e:
         current_app.logger.error(f"Error al obtener respaldos de Drive: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": f"Error interno: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Error interno: {str(e)}"}), 500
+
 
 @admin_bp.route("/api/cache-stats")
 @admin_required
@@ -4571,7 +4868,14 @@ def test_database():
             }
         )
 
-    except (ConnectionError, TimeoutError, AttributeError, KeyError, TypeError, ValueError) as e:
+    except (
+        ConnectionError,
+        TimeoutError,
+        AttributeError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as e:
         logger.error(f"Error en test_database: {str(e)}", exc_info=True)
         return jsonify(
             {
@@ -4597,13 +4901,14 @@ def test_database():
 #     """
 #     return render_template('admin/tools_dashboard.html')
 
+
 @admin_bp.route("/tools-test")
 @admin_required
 def tools_dashboard_test():
     """
     Dashboard de prueba para verificar que las pestañas funcionan.
     """
-    return render_template('admin/tools_dashboard_simple.html')
+    return render_template("admin/tools_dashboard_simple.html")
 
 
 app = None

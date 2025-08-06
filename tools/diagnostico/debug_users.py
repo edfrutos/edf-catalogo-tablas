@@ -14,7 +14,7 @@ MONGO_URI = os.getenv('MONGO_URI')
 if not MONGO_URI:
     raise RuntimeError('MONGO_URI no está definida en el entorno')
 
-client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+client: MongoClient = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
 
 print("=== Bases de datos disponibles ===")
 for db_name in client.list_database_names():

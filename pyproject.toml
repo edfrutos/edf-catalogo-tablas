@@ -79,7 +79,7 @@ words = [ "catalogodetablas", "catalogojoyero", "edefrutos", "descomentar", "Des
 language = "es, en"
 
 [tool.cspell.ignorePaths]
-ignorePaths = [ "**/extensiones*.txt", "**/requirements*.txt", "**/package-lock.json", "**/yarn.lock", "**/Pipfile.lock", ".pylintrc", "requirements.txt", "pyproject.toml", "setup.cfg",]
+ignorePaths = [ "**/extensiones*.txt", "**/requirements*.txt", "**/package-lock.json", "**/yarn.lock", "**/Pipfile.lock", ".pylintrc", "requirements.txt", "pyproject.toml", "setup.cfg", ".gitignore",]
 
 [tool.pylint."messages control"]
 disable = [ "no-member",]
