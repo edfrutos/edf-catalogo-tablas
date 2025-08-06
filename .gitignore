@@ -3,8 +3,13 @@
 # -------------------------------------------
 .venv/
 venv/
+.venv_clean/
 ENV/
 env/
+.venv310/
+venv310/
+setup.py
+run.py
 *.pyc
 __pycache__/
 *.pyo
@@ -27,6 +32,7 @@ __pycache__/
 # -------------------------------------------
 # IGNORAR ARCHIVOS DE CONFIGURACIÓN SENSIBLES
 # -------------------------------------------
+
 .env
 .env.*
 *.env
@@ -39,8 +45,11 @@ backups/*/.env*
 *apikey*
 *password*
 *token*
-dev_template/tests/legacy/config_debug.py
-config/mongodb_config.json
+/app/templates/dev_template/tests/legacy/config_debug.py
+logs/gunicorn_access.log
+logs/flask_debug.log
+logs/gunicorn_error.log
+sensitive_backup/
 
 # -------------------------------------------
 # IGNORAR ARCHIVOS Y CARPETAS TEMPORALESblackboxrules
@@ -285,3 +294,59 @@ coverage/
 generated-docs/
 *.drawio.bkp
 *.drawio~
+
+# -------------------------------------------
+# ARCHIVOS DE CONFIGURACIÓN DE PYTHON Y LINTING
+# -------------------------------------------
+.pylintrc.bak
+.pylintrc.backup
+pyrightconfig.json.bak
+pyrightconfig.json.backup
+mypy.ini
+pyproject.toml.bak
+setup.cfg.bak
+
+# -------------------------------------------
+# ARCHIVOS TEMPORALES DE DIAGNÓSTICO Y DEBUG
+# -------------------------------------------
+debug_*.py
+test_*.py
+*_debug.*
+*_test.*
+debug_*.html
+debug_*.js
+debug_*.json
+
+# -------------------------------------------
+# ARCHIVOS DE CONFIGURACIÓN DE VS CODE/CURSOR
+# -------------------------------------------
+.vscode/settings.json.bak
+.vscode/launch.json.bak
+.vscode/tasks.json.bak
+.vscode/extensions.json.bak
+
+# -------------------------------------------
+# ARCHIVOS DE CACHE Y TEMPORALES ADICIONALES
+# -------------------------------------------
+*.cache
+.cache/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# -------------------------------------------
+# ARCHIVOS DE LOGS Y MONITOREO ADICIONALES
+# -------------------------------------------
+*.log.*
+*.log.bak
+*.log.old
+logs/*.log
+logs/*.txt
+*.pid
+*.lock
