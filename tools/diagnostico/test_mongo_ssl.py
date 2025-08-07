@@ -17,7 +17,7 @@ MONGO_URI = os.getenv("MONGO_URI")
 print("Probando conexión a MongoDB Atlas con verificación SSL...")
 
 try:
-    client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+    client: MongoClient = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
     dbs = client.list_database_names()
     print("✅ Conexión exitosa. Bases de datos disponibles:")
     for db in dbs:
@@ -28,4 +28,4 @@ except Exception as e:
     print("\nSugerencias:")
     print("- Verifica que la URI es correcta y accesible.")
     print("- Asegúrate de tener certifi actualizado: pip install --upgrade certifi")
-    print("- Si usas Mac, ejecuta el instalador de certificados de Python.") 
+    print("- Si usas Mac, ejecuta el instalador de certificados de Python.")
