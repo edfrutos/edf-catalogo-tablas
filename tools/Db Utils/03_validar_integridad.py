@@ -9,18 +9,24 @@
 import os
 import certifi
 from pymongo import MongoClient
+from pymongo.database import Database
 from collections import Counter
+from dotenv import load_dotenv
+from datetime import datetime
 
-MONGO_URI = os.getenv('MONGO_URI')
-client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
-db = client.get_database()
+# Cargar variables de entorno desde .env
+load_dotenv()
 
-print('--- VALIDACIÓN DE INTEGRIDAD DE DATOS ---')
+MONGO_URI = os.getenv("MONGO_URI")
+client: MongoClient = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+db: Database = client.get_database()
+
+print("--- VALIDACIÓN DE INTEGRIDAD DE DATOS ---")
 
 # 1. Emails y usernames duplicados en users
-users = list(db['users'].find())
-emails = [u.get('email','').lower() for u in users if u.get('email')]
-usernames = [u.get('username','').lower() for u in users if u.get('username')]
+users = list(db["users"].find())
+emails = [u.get("email", "").lower() for u in users if u.get("email")]
+usernames = [u.get("username", "").lower() for u in users if u.get("username")]
 
 dup_emails = [item for item, count in Counter(emails).items() if count > 1]
 dup_usernames = [item for item, count in Counter(usernames).items() if count > 1]
@@ -39,12 +45,21 @@ else:
 user_emails = set(emails)
 user_usernames = set(usernames)
 
+
 def check_owners(collection, label):
     huérfanos = []
     for doc in db[collection].find():
-        owner = (doc.get('owner') or doc.get('created_by') or doc.get('owner_name') or '').lower()
+        owner = (
+            doc.get("owner") or doc.get("created_by") or doc.get("owner_name") or ""
+        ).lower()
         if owner and owner not in user_emails and owner not in user_usernames:
-            huérfanos.append({'_id': str(doc.get('_id')), 'owner': owner, 'name': doc.get('name', '')})
+            huérfanos.append(
+                {
+                    "_id": str(doc.get("_id")),
+                    "owner": owner,
+                    "name": doc.get("name", ""),
+                }
+            )
     if huérfanos:
         print(f"❌ {label} con owner/created_by huérfano:")
         for h in huérfanos:
@@ -52,7 +67,8 @@ def check_owners(collection, label):
     else:
         print(f"✔ Todos los {label} tienen owner válido.")
 
-check_owners('catalogs', 'catálogos')
-check_owners('spreadsheets', 'spreadsheets')
 
-print('--- FIN DE LA VALIDACIÓN ---') 
+check_owners("catalogs", "catálogos")
+check_owners("spreadsheets", "spreadsheets")
+
+print("--- FIN DE LA VALIDACIÓN ---")

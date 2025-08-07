@@ -1,41 +1,108 @@
 #!/usr/bin/env python3
 # Script: verify_app_catalogojoyero.py
-# Descripción: [Explica brevemente qué hace el script]
+# Descripción: Verifica la conexión y estado de la base de datos app_catalogojoyero_nueva
 # Uso: python3 verify_app_catalogojoyero.py [opciones]
-# Requiere: [librerías externas, si aplica]
-# Variables de entorno: [si aplica]
-# Autor: [Tu nombre o equipo] - 2025-05-28
+# Requiere: pymongo, certifi, python-dotenv
+# Variables de entorno: MONGO_URI
+# Autor: Sistema de Verificación - 2025-05-28
 
 from pymongo import MongoClient
+from pymongo.database import Database
 import certifi
 import os
 from dotenv import load_dotenv
+from typing import Optional
 
+
+# Colores para la salida
+class Colors:
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    PURPLE = "\033[95m"
+    CYAN = "\033[96m"
+    BOLD = "\033[1m"
+    END = "\033[0m"
+
+
+def print_header(title: str) -> None:
+    """Imprime un encabezado formateado"""
+    print(f"\n{Colors.BOLD}{Colors.CYAN}{'=' * 60}")
+    print(f"  {title}")
+    print(f"{'=' * 60}{Colors.END}")
+
+
+def print_success(message: str) -> None:
+    """Imprime un mensaje de éxito"""
+    print(f"{Colors.GREEN}✅ {message}{Colors.END}")
+
+
+def print_error(message: str) -> None:
+    """Imprime un mensaje de error"""
+    print(f"{Colors.RED}❌ {message}{Colors.END}")
+
+
+def print_warning(message: str) -> None:
+    """Imprime un mensaje de advertencia"""
+    print(f"{Colors.YELLOW}⚠️  {message}{Colors.END}")
+
+
+def print_info(message: str) -> None:
+    """Imprime un mensaje informativo"""
+    print(f"{Colors.BLUE}ℹ️  {message}{Colors.END}")
+
+
+# Cargar variables de entorno
 load_dotenv()
-MONGO_URI = os.getenv('MONGO_URI')
+MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:
-    raise RuntimeError('MONGO_URI no está definida en el entorno')
+    raise RuntimeError("MONGO_URI no está definida en el entorno")
 
-client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
-db = client['app_catalogojoyero_nueva']
+print_header("VERIFICACIÓN DE BASE DE DATOS")
+print_info("Conectando a MongoDB...")
 
-print("\n=== Verificando usuario 'edefrutos' ===")
-user = db['users'].find_one({'username': 'edefrutos'})
+try:
+    client: MongoClient = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+    db: Database = client["app_catalogojoyero_nueva"]
+    print_success("Conexión establecida correctamente")
+except Exception as e:
+    print_error(f"Error al conectar: {e}")
+    exit(1)
+
+print_header("VERIFICACIÓN DE USUARIO")
+user: Optional[dict] = db["users"].find_one({"username": "edefrutos"})
 if user:
-    print(f"Usuario: {user['username']}, Rol: {user.get('role')}, Email: {user.get('email')}")
+    print_success(f"Usuario encontrado: {Colors.BOLD}{user['username']}{Colors.END}")
+    print_info(f"  • Rol: {user.get('role', 'No definido')}")
+    print_info(f"  • Email: {user.get('email', 'No definido')}")
+    print_info(f"  • ID: {user.get('_id', 'No definido')}")
 else:
-    print("Usuario 'edefrutos' no encontrado en 'app_catalogojoyero_nueva.users'")
+    print_warning("Usuario 'edefrutos' no encontrado en la colección 'users'")
 
-print("\n=== Verificando colecciones ===")
-colecciones = ['users', 'catalogs', 'spreadsheets']
+print_header("VERIFICACIÓN DE COLECCIONES")
+colecciones = ["users", "catalogs", "spreadsheets"]
+total_docs = 0
+
 for col in colecciones:
     if col in db.list_collection_names():
         count = db[col].count_documents({})
-        print(f"Colección '{col}': OK ({count} documentos)")
+        total_docs += count
         if count > 0:
+            print_success(f"Colección '{col}': {count} documentos")
+            # Mostrar ejemplo del primer documento
             doc = db[col].find_one()
-            print(f"  Ejemplo de documento: {doc}")
+            if doc:
+                print_info(f"  • Ejemplo: {str(doc)[:100]}...")
         else:
-            print(f"  ⚠️ La colección '{col}' está vacía")
+            print_warning(f"Colección '{col}': Existe pero está vacía")
     else:
-        print(f"Colección '{col}': NO EXISTE") 
+        print_error(f"Colección '{col}': No existe")
+
+print_header("RESUMEN")
+print_info(f"Total de documentos en todas las colecciones: {total_docs}")
+print_info("Verificación completada exitosamente")
+
+print(f"\n{Colors.BOLD}{Colors.GREEN}{'=' * 60}")
+print(f"  VERIFICACIÓN FINALIZADA")
+print(f"{'=' * 60}{Colors.END}")
