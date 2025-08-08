@@ -25,6 +25,66 @@
     </div>
   </div>
 
+  <!-- Botones de documentación y herramientas -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary" href="https://docs.pytest.org/en/stable/" target="_blank">
+              <i class="bi bi-book"></i> Pytest Docs
+            </a>
+            <a class="btn btn-outline-success" href="https://pymongo.readthedocs.io/en/stable/examples/tls.html" target="_blank">
+              <i class="bi bi-database"></i> MongoDB Testing
+            </a>
+            <a class="btn btn-outline-secondary" href="/dev-template/readme">
+              <i class="bi bi-file-earmark-text"></i> Ver README
+            </a>
+            <button class="btn btn-outline-warning" id="update-tests-readme-btn">
+              <i class="bi bi-arrow-repeat"></i> Actualizar README de tests
+            </button>
+            <a class="btn btn-outline-info" href="/dev-template/report">
+              <i class="bi bi-download"></i> Descargar último reporte HTML
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generador de plantilla de test -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-magic me-2"></i>Generador de plantilla de test para modelo/endpoint
+          </h5>
+        </div>
+        <div class="card-body">
+          <form id="test-template-generator-form" class="row g-3">
+            <div class="col-md-8">
+              <label for="model-endpoint-name" class="form-label">Nombre del modelo o endpoint</label>
+              <input type="text" class="form-control" id="model-endpoint-name" placeholder="usuarios, productos, /api/mi_endpoint..." required>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-lightning"></i> Generar plantilla
+              </button>
+            </div>
+          </form>
+          <div id="generated-template-block" style="display:none;" class="mt-3">
+            <label class="form-label">Código sugerido:</label>
+            <pre><code id="generated-template-code" class="language-python"></code></pre>
+            <button class="btn btn-outline-success btn-sm mt-2" id="copy-template-btn">
+              <i class="bi bi-clipboard"></i> Copiar código
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Barra de búsqueda -->
   <div class="row mb-4">
     <div class="col-12">
@@ -547,5 +607,129 @@
       }
     }, 5000);
   }
+
+  // ========================================
+  // FUNCIONALIDADES DE LA INTERFAZ ORIGINAL
+  // ========================================
+
+  // Actualizar README de tests
+  document.getElementById("update-tests-readme-btn").addEventListener("click", async function() {
+    try {
+      const response = await fetch("/dev-template/api/update-tests-readme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        showNotification("Éxito", "README de tests actualizado correctamente", "success");
+      } else {
+        showNotification("Error", data.error || "Error al actualizar README", "error");
+      }
+    } catch (error) {
+      showNotification("Error", "Error de conexión al actualizar README", "error");
+    }
+  });
+
+  // Generador de plantilla de test
+  document.getElementById("test-template-generator-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById("model-endpoint-name").value.trim();
+    if (!name) {
+      showNotification("Error", "Por favor ingresa un nombre", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch("/dev-template/generate-test-template", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name })
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        document.getElementById("generated-template-code").textContent = data.code;
+        document.getElementById("generated-template-block").style.display = "block";
+        showNotification("Éxito", "Plantilla generada correctamente", "success");
+      } else {
+        showNotification("Error", data.error || "Error al generar plantilla", "error");
+      }
+    } catch (error) {
+      showNotification("Error", "Error de conexión al generar plantilla", "error");
+    }
+  });
+
+  // Copiar código generado
+  document.getElementById("copy-template-btn").addEventListener("click", function() {
+    const code = document.getElementById("generated-template-code").textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      showNotification("Éxito", "Código copiado al portapapeles", "success");
+    }).catch(() => {
+      showNotification("Error", "No se pudo copiar el código", "error");
+    });
+  });
+
+  // Modal para parámetros de test
+  let currentTestPath = "";
+  
+  function showParamsModal(testPath, testName) {
+    currentTestPath = testPath;
+    document.getElementById("paramsScriptName").textContent = testName;
+    document.getElementById("paramsInput").value = "";
+    document.getElementById("paramsHelpBlock").textContent = "Ingresa parámetros adicionales para el test (opcional)";
+    
+    const modal = new bootstrap.Modal(document.getElementById("paramsModal"));
+    modal.show();
+  }
+
+  // Ejecutar test con parámetros
+  document.getElementById("runWithParamsBtn").addEventListener("click", async function() {
+    const params = document.getElementById("paramsInput").value.trim();
+    
+    try {
+      const response = await fetch("/dev-template/run-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          test_file: currentTestPath,
+          params: params
+        })
+      });
+      const data = await response.json();
+      
+      // Cerrar modal
+      bootstrap.Modal.getInstance(document.getElementById("paramsModal")).hide();
+      
+      // Mostrar resultado
+      showNotification("Test ejecutado", "Revisa la consola para ver el resultado", "info");
+      console.log("Resultado del test:", data);
+      
+    } catch (error) {
+      showNotification("Error", "Error al ejecutar test con parámetros", "error");
+    }
+  });
 </script>
+
+<!-- Modal para parámetros -->
+<div class="modal fade" id="paramsModal" tabindex="-1" aria-labelledby="paramsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="paramsModalLabel">Ejecutar test con parámetros</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><strong id="paramsScriptName"></strong></div>
+        <div class="mb-2 text-secondary small" id="paramsHelpBlock"></div>
+        <input type="text" class="form-control" id="paramsInput" placeholder="Introduce parámetros, ej: --help" autocomplete="off">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="runWithParamsBtn">Ejecutar</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

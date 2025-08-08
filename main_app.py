@@ -278,11 +278,13 @@ def create_app():
     from app.routes.scripts_routes import (
         scripts_bp,
     )  # Blueprint para gestión de scripts
+
     # Importar función de registro de rutas de mantenimiento
     from app.routes.maintenance_routes import register_maintenance_routes
     from app.routes.dev_template import (
         bp_dev_template,
     )  # Blueprint para plantilla de desarrollo
+    from app.routes.testing_routes import testing_bp  # Blueprint para testing
 
     print("ANTES DE BLUEPRINTS", app.db)  # type: ignore
     app.register_blueprint(main_bp)
@@ -296,12 +298,13 @@ def create_app():
     app.register_blueprint(
         scripts_bp
     )  # Blueprint para gestión de scripts (/admin/tools)
-    
+
     # Registrar rutas de mantenimiento y API usando la función dedicada
     register_maintenance_routes(app)
     print("RUTAS DE MANTENIMIENTO Y API REGISTRADAS EXITOSAMENTE")
-    
+
     app.register_blueprint(bp_dev_template)  # Blueprint para plantilla de desarrollo
+    app.register_blueprint(testing_bp)  # Blueprint para testing (/dev-template/testing)
     app.register_blueprint(errors_bp)
     app.register_blueprint(emergency_bp)  # <-- REGISTRO DE EMERGENCIA
     print("DESPUÉS DE BLUEPRINTS", app.db)  # type: ignore

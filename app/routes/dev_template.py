@@ -297,52 +297,53 @@ def script_params_help():
         ayuda = f"(No se pudo obtener ayuda: {e})"
     return jsonify({"success": True, "help": ayuda or "(sin ayuda disponible)"})
 
+    # @bp_dev_template.route("/testing")
 
-@bp_dev_template.route("/testing")
-def testing():
-    import os
 
-    test_dirs = {}
-    base_dir = "/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas//dev_template/tests"
-    for root, dirs, files in os.walk(base_dir):
-        rel_dir = os.path.relpath(root, base_dir)
-        if rel_dir == ".":
-            rel_dir = "varios"
-        scripts_info = []
-        for f in files:
-            if f.endswith(".py") and not f.startswith("__"):
-                script_path = os.path.join(root, f)
-                desc = ""
-                try:
-                    with open(script_path, "r", encoding="utf-8") as sf:
-                        lines = []
-                        for _ in range(10):
-                            line = sf.readline()
-                            if not line:
-                                break
-                            lines.append(line.strip())
-                        desc = ""
-                        for l in lines:  # noqa: E741
-                            if not l or l.startswith("#!") or "coding" in l:
-                                continue  # Ignorar shebang, encoding y vacías
-                            if l.startswith('"""') or l.startswith("'''"):
-                                desc = l.strip("\"'")
-                                break
-                            if l.startswith("#"):
-                                desc = l.lstrip("#").strip()
-                                break
-                except Exception:
-                    desc = ""
-                scripts_info.append(
-                    {
-                        "name": f,
-                        "desc": desc,
-                        "path": (rel_dir + "/" + f) if rel_dir != "varios" else f,
-                    }
-                )
-        if scripts_info:
-            test_dirs[rel_dir] = scripts_info
-    return render_template("dev_template_testing.html", test_dirs=test_dirs)
+# def testing():
+#     import os
+#
+#     test_dirs = {}
+#     base_dir = "/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas//dev_template/tests"
+#     for root, dirs, files in os.walk(base_dir):
+#         rel_dir = os.path.relpath(root, base_dir)
+#         if rel_dir == ".":
+#             rel_dir = "varios"
+#         scripts_info = []
+#         for f in files:
+#             if f.endswith(".py") and not f.startswith("__"):
+#                 script_path = os.path.join(root, f)
+#                 desc = ""
+#                 try:
+#                     with open(script_path, "r", encoding="utf-8") as sf:
+#                         lines = []
+#                         for _ in range(10):
+#                             line = sf.readline()
+#                             if not line:
+#                                 break
+#                             lines.append(line.strip())
+#                         desc = ""
+#                         for l in lines:  # noqa: E741
+#                             if not l or l.startswith("#!") or "coding" in l:
+#                                 continue  # Ignorar shebang, encoding y vacías
+#                             if l.startswith('"""') or l.startswith("'''"):
+#                                 desc = l.strip("\"'")
+#                                 break
+#                             if l.startswith("#"):
+#                                 desc = l.lstrip("#").strip()
+#                                 break
+#                 except Exception:
+#                     desc = ""
+#                 scripts_info.append(
+#                     {
+#                         "name": f,
+#                         "desc": desc,
+#                         "path": (rel_dir + "/" + f) if rel_dir != "varios" else f,
+#                     }
+#                 )
+#         if scripts_info:
+#             test_dirs[rel_dir] = scripts_info
+#     return render_template("dev_template_testing.html", test_dirs=test_dirs)
 
 
 @bp_dev_template.route("/generate-test-template", methods=["POST"])

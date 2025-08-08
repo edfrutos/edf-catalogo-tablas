@@ -79,3 +79,8 @@ dev_template/
 ---
 
 **Incluye este README y la estructura de tests en tu plantilla de desarrollo para maximizar la calidad y mantenibilidad desde el inicio.**
+
+<!-- TESTS-AUTO-START -->
+| Ruta | Descripción |
+|------|-------------|
+<!-- TESTS-AUTO-END -->
