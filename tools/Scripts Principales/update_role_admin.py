@@ -10,16 +10,16 @@ from pymongo import MongoClient
 import certifi
 import os
 
-MONGO_URI = os.getenv('MONGO_URI')
+MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:
-    raise RuntimeError('MONGO_URI no está definida en el entorno')
+    raise RuntimeError("MONGO_URI no está definida en el entorno")
 
-client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+client: MongoClient = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
 db = client.get_database()
-users = db['users']
+users = db["users"]
 
-result = users.update_one({'username': 'edefrutos'}, {'$set': {'role': 'admin'}})
+result = users.update_one({"username": "edefrutos"}, {"$set": {"role": "admin"}})
 if result.modified_count == 1:
     print("✅ Rol actualizado a admin para 'edefrutos'")
 else:
-    print("⚠️ No se actualizó ningún usuario. ¿Ya era admin o no existe?") 
+    print("⚠️ No se actualizó ningún usuario. ¿Ya era admin o no existe?")

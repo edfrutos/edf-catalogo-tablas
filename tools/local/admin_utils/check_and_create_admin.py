@@ -29,7 +29,7 @@ if not MONGO_URI:
     sys.exit(1)
 
 
-def create_admin_user():
+def create_admin_user() -> bool:
     """Crea un usuario administrador si no existe."""
     try:
         # Conectar a MongoDB
@@ -91,7 +91,7 @@ def create_admin_user():
             client.close()
 
 
-def check_database_connection():
+def check_database_connection() -> bool:
     """Verifica la conexión a la base de datos."""
     try:
         client: MongoClient = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
@@ -116,7 +116,7 @@ def check_database_connection():
             client.close()
 
 
-def main():
+def main() -> None:
     """Función principal."""
     print("🔍 Verificando y configurando usuario administrador...")
     print("=" * 60)

@@ -316,9 +316,18 @@ def get_system_status_data(full: bool = False) -> Dict[str, Any]:
         # Obtener estadísticas de solicitudes
         request_stats = monitoring._app_metrics["request_stats"]
         # Calcular uptime
-        start_time = datetime.strptime(
-            monitoring._app_metrics["start_time"], "%Y-%m-%d %H:%M:%S"
-        )
+        start_time_str = monitoring._app_metrics["start_time"]
+        # Asegurar que start_time sea un string
+        if isinstance(start_time_str, (list, tuple)):
+            start_time_str = (
+                start_time_str[0]
+                if start_time_str
+                else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+        elif not isinstance(start_time_str, str):
+            start_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
         uptime = datetime.now() - start_time
         uptime_str = str(uptime).split(".")[0]  # Formato HH:MM:SS
         # Obtener métricas de memoria
@@ -661,7 +670,7 @@ def ver_catalogos_usuario(user_email: str):
                     collection = mongo.db[collection_name]
                 else:
                     continue
-                query = {"$or": []}
+                query: Dict[str, Any] = {"$or": []}
                 for val in posibles:
                     query["$or"].extend(
                         [
@@ -1927,7 +1936,7 @@ def ver_catalogos_usuario_por_id(user_id: str):
                     continue
                 collection = db[collection_name]
                 # Buscar por todos los campos posibles
-                query = {"$or": []}
+                query: Dict[str, Any] = {"$or": []}
                 for val in posibles:
                     query["$or"].extend(
                         [
@@ -2173,7 +2182,7 @@ def editar_catalogo_admin(collection_source: str, catalog_id: str):
             name = request.form.get("name")
             description = request.form.get("description", "")
             headers_raw = request.form.get("headers")
-            update_data = {
+            update_data: Dict[str, Any] = {
                 "name": name,
                 "description": description,
                 "updated_at": datetime.utcnow(),
@@ -2926,7 +2935,13 @@ def db_backup():
                 current_app.logger.info(f"Obteniendo info de archivo: {filepath}")
                 if not os.path.exists(filepath):
                     current_app.logger.warning(f"Archivo no existe: {filepath}")
-                    return FileInfo(False, 0, None, None)
+                    file_info = FileInfo(False, 0, None, None)
+                    return {
+                        "exists": file_info.exists,
+                        "size": file_info.size,
+                        "mtime": file_info.mtime,
+                        "timestamp_from_name": file_info.timestamp_from_name,
+                    }
 
                 stat = os.stat(filepath)
 
@@ -2981,12 +2996,23 @@ def db_backup():
                 current_app.logger.info(
                     f"Info de archivo obtenida: {filepath} - Tamaño: {file_info.size}, Modificado: {file_info.mtime}, Timestamp nombre: {file_info.timestamp_from_name}"
                 )
-                return file_info
+                return {
+                    "exists": file_info.exists,
+                    "size": file_info.size,
+                    "mtime": file_info.mtime,
+                    "timestamp_from_name": file_info.timestamp_from_name,
+                }
             except (OSError, IOError, PermissionError) as e:
                 current_app.logger.error(
                     f"Error al obtener info de archivo {filepath}: {str(e)}"
                 )
-                return FileInfo(False, 0, None, None)
+                file_info = FileInfo(False, 0, None, None)
+                return {
+                    "exists": file_info.exists,
+                    "size": file_info.size,
+                    "mtime": file_info.mtime,
+                    "timestamp_from_name": file_info.timestamp_from_name,
+                }
 
         # Listar respaldos existentes usando get_backup_files
         backups = []
@@ -4692,10 +4718,9 @@ def register_admin_blueprints(app: Any) -> None:
     try:
         # No es necesario registrar admin_logs_bp aquí ya que ya está registrado en __init__.py
         # con el prefijo correcto
-        return True
+        pass
     except (AttributeError, ValueError, TypeError) as e:
         app.logger.error(f"Error en register_admin_blueprints: {str(e)}")
-        return False
 
 
 @admin_bp.route("/api/system-status")
