@@ -51,7 +51,7 @@ def setup_logging():
 
 def clean_old_logs(logger, days=30):
     """Limpia los logs antiguos."""
-    from scripts.maintenance.clean_old_logs import LogCleaner
+    from clean_old_logs import LogCleaner
 
     logger.info(f"🔍 Iniciando limpieza de logs (retención: {days} días)")
     cleaner = LogCleaner(log_dir=str(LOG_DIR), retention_days=days, dry_run=False)
@@ -134,7 +134,7 @@ def main():
         if args.task in ["all", "logs"]:
             # Si se pasan start/end, usar rango
             if args.start_datetime and args.end_datetime:
-                from scripts.maintenance.clean_old_logs import LogCleaner
+                from clean_old_logs import LogCleaner
                 from datetime import datetime
 
                 dt_start = datetime.fromisoformat(args.start_datetime)
