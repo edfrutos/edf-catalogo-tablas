@@ -147,6 +147,12 @@ def dashboard_admin():
     try:
         search = request.args.get("search", "").strip()
         search_type = request.args.get("search_type", "name")
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 25, type=int)
+
+        # Limitar per_page a valores razonables
+        per_page = max(10, min(100, per_page))
+
         usuarios = list(users_collection.find())
         total_usuarios = len(usuarios)
         try:
@@ -204,6 +210,7 @@ def dashboard_admin():
         usuarios_con_catalogos = []
         for user_id, user_info in catalogos_por_usuario.items():
             usuarios_con_catalogos.append(user_info)
+
         # Filtrar registros por usuario si es necesario
         mis_registros = []
         if search:
@@ -224,16 +231,33 @@ def dashboard_admin():
                 ]
         else:
             mis_registros = registros
+
+        # Aplicar paginación
         total_catalogos = len(mis_registros)
+        total_pages = (total_catalogos + per_page - 1) // per_page
+        page = max(1, min(page, total_pages)) if total_pages > 0 else 1
+
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        mis_registros_paginados = mis_registros[start_idx:end_idx]
+
         porcentaje = (total_catalogos / total_usuarios * 100) if total_usuarios else 0
+
         return render_template(
             "admin/dashboard_admin.html",
             total_usuarios=total_usuarios,
             total_catalogos=total_catalogos,
             porcentaje=porcentaje,
-            mis_registros=mis_registros,
+            mis_registros=mis_registros_paginados,
             search=search,
             search_type=search_type,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+            has_prev=page > 1,
+            has_next=page < total_pages,
+            prev_page=page - 1,
+            next_page=page + 1,
         )
     except Exception as e:
         print(f"[ERROR][ADMIN] Error en dashboard_admin: {e}")
@@ -2269,6 +2293,100 @@ def eliminar_catalogo_admin(collection_source: str, catalog_id: str):
         logger.error(f"Error en eliminar_catalogo_admin: {str(e)}", exc_info=True)
         flash(f"Error al eliminar el catálogo: {str(e)}", "error")
         return redirect(url_for("admin.dashboard_admin"))
+
+
+@admin_bp.route("/catalogo/eliminar-multiple", methods=["POST"])
+@admin_required
+def eliminar_catalogos_multiple():
+    """Elimina múltiples catálogos seleccionados."""
+    try:
+        logger.info("[ADMIN] Entrando en eliminar_catalogos_multiple")
+
+        # Obtener los IDs de los catálogos a eliminar
+        catalogos_data = request.json.get("catalogos", [])
+
+        if not catalogos_data:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": "No se seleccionaron catálogos para eliminar",
+                }
+            ), 400
+
+        db = get_mongo_db()
+        if db is None:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": "Error: No se pudo acceder a la base de datos",
+                }
+            ), 500
+
+        eliminados = []
+        errores = []
+
+        for catalogo_data in catalogos_data:
+            try:
+                collection_source = catalogo_data.get("collection_source")
+                catalog_id = catalogo_data.get("catalog_id")
+
+                if not collection_source or not catalog_id:
+                    errores.append(f"ID o colección inválidos: {catalog_id}")
+                    continue
+
+                collection = db[collection_source]
+                catalog = collection.find_one({"_id": ObjectId(catalog_id)})
+
+                if not catalog:
+                    errores.append(f"Catálogo no encontrado: {catalog_id}")
+                    continue
+
+                # Eliminar el catálogo
+                result = collection.delete_one({"_id": ObjectId(catalog_id)})
+
+                if result.deleted_count > 0:
+                    eliminados.append(
+                        {
+                            "id": catalog_id,
+                            "name": catalog.get("name", "Sin nombre"),
+                            "collection": collection_source,
+                        }
+                    )
+                    logger.info(
+                        f"[ADMIN] Catálogo eliminado: {catalog_id} de {collection_source}"
+                    )
+                else:
+                    errores.append(f"No se pudo eliminar: {catalog_id}")
+
+            except Exception as e:
+                error_msg = f"Error eliminando {catalog_id}: {str(e)}"
+                errores.append(error_msg)
+                logger.error(f"[ADMIN] {error_msg}")
+
+        # Preparar respuesta
+        response_data = {
+            "success": True,
+            "eliminados": eliminados,
+            "total_eliminados": len(eliminados),
+            "errores": errores,
+            "total_errores": len(errores),
+        }
+
+        if eliminados:
+            flash(f"Se eliminaron {len(eliminados)} catálogos correctamente", "success")
+        if errores:
+            flash(
+                f"Errores en {len(errores)} catálogos: {', '.join(errores[:3])}",
+                "warning",
+            )
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        logger.error(
+            f"[ADMIN] Error en eliminar_catalogos_multiple: {str(e)}", exc_info=True
+        )
+        return jsonify({"success": False, "message": f"Error interno: {str(e)}"}), 500
 
 
 @admin_bp.route("/db-scripts", methods=["GET", "POST"])

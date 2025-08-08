@@ -32,9 +32,13 @@ import sys
 import os
 import pprint
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
 
 # Agregar el directorio raíz del proyecto al path de Python
-project_root = Path(__file__).parent.parent.parent
+project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from app.maintenance import normalize_users_in_db, backup_users_to_json

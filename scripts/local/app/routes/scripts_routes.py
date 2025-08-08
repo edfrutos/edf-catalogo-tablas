@@ -4,6 +4,7 @@
 import os
 import sys
 import subprocess
+import urllib.parse
 from datetime import datetime
 from functools import wraps
 from flask import (
@@ -63,7 +64,11 @@ def admin_required(f):
 
 
 # Definir el directorio raíz
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
+)
 
 # Definir el directorio de herramientas donde se encuentran las copias de los scripts
 tools_dir = os.path.join(ROOT_DIR, "tools")
@@ -86,7 +91,11 @@ def scripts_metadata():
             "tools/local/maintenance",
             "tools/local/system",
         ],
-        "User Management": ["tools/local/admin_utils", "tools/local/user_utils"],
+        "User Management": [
+            "tools/local/admin_utils",
+            "tools/local/user_utils",
+            "scripts/local/admin_utils",
+        ],
         "File Management": [
             "tools/local/utils",
             "tools/local/catalog_utils",
@@ -99,7 +108,11 @@ def scripts_metadata():
             "tests/local/performance",
             "tests/local/security",
         ],
-        "Development Tools": ["tools/local/app", "tools/local/src"],
+        "Development Tools": [
+            "tools/local/app",
+            "tools/local/src",
+            "scripts/local/app",
+        ],
         "Infrastructure": ["tools/local/aws_utils", "tools/local/session_utils"],
         "Root Tools": ["tools/local/utils"],
     }
@@ -426,9 +439,13 @@ def get_script_path(script_path):
         "monitoring",
         "security",
         "database",
+        "app",
     ]:
         possible_paths.append(os.path.join(ROOT_DIR, "tools", subdir, script_path))
         possible_paths.append(os.path.join(ROOT_DIR, "scripts", subdir, script_path))
+        possible_paths.append(
+            os.path.join(ROOT_DIR, "scripts", "local", subdir, script_path)
+        )
 
     # Verificar cada ruta posible
     for path in possible_paths:
@@ -447,8 +464,6 @@ def view_script_content_route(script_path):
     """Devuelve el contenido de un script específico como JSON."""
     try:
         # Decodificar la ruta URL
-        import urllib.parse
-
         decoded_path = urllib.parse.unquote(script_path)
 
         abs_path = get_script_path(decoded_path)
@@ -479,8 +494,6 @@ def tools_dashboard():
     return render_template("admin/tools_dashboard.html")
 
 
-@scripts_bp.route("/run/<path:script_path>", methods=["POST"])
-@admin_required
 @scripts_bp.route("/run/<path:script_path>", methods=["POST"])
 @admin_required
 def run_script(script_path):

@@ -79,9 +79,20 @@ def check_mongodb_connection(logger):
         # Intenta obtener MONGO_URI desde config.py o variables de entorno
         mongo_uri = None
         try:
-            from config import MONGO_URI  # type: ignore
+            try:
+                from .config import config  # type: ignore
 
-            mongo_uri = MONGO_URI
+                mongo_uri = config.MONGO_URI
+            except ImportError:
+                # Fallback para ejecución directa
+                import sys
+                from pathlib import Path
+
+                current_dir = Path(__file__).parent
+                sys.path.insert(0, str(current_dir))
+                from config import config
+
+                mongo_uri = config.MONGO_URI
         except ImportError:
             mongo_uri = os.environ.get("MONGO_URI")
             if not mongo_uri:
