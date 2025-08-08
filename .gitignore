@@ -1,4 +1,11 @@
 # -------------------------------------------
+# IGNORAR DIRECTORIOS ORIGINALES (BACKUP)
+# -------------------------------------------
+tools/original/
+scripts/original/
+tests/original/
+
+# -------------------------------------------
 # IGNORAR ENTORNOS VIRTUALES
 # -------------------------------------------
 .venv/

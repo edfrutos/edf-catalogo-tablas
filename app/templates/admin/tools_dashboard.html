@@ -32,49 +32,25 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
             <li class="nav-item" role="presentation">
               <button
                 class="nav-link active"
-                id="scripts-tab"
+                id="local-tab"
                 data-bs-toggle="tab"
-                data-bs-target="#scripts"
+                data-bs-target="#local"
                 type="button"
                 role="tab"
               >
-                <i class="fas fa-terminal me-2"></i>Scripts de Shell
+                <i class="fas fa-laptop me-2"></i>Scripts Locales
               </button>
             </li>
             <li class="nav-item" role="presentation">
               <button
                 class="nav-link"
-                id="system-tab"
+                id="production-tab"
                 data-bs-toggle="tab"
-                data-bs-target="#system"
+                data-bs-target="#production"
                 type="button"
                 role="tab"
               >
-                <i class="fas fa-cogs me-2"></i>Utilidades del Sistema
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="maintenance-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#maintenance"
-                type="button"
-                role="tab"
-              >
-                <i class="fas fa-wrench me-2"></i>Mantenimiento
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="data-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#data"
-                type="button"
-                role="tab"
-              >
-                <i class="fas fa-database me-2"></i>Gestión de Datos
+                <i class="fas fa-server me-2"></i>Scripts de Producción
               </button>
             </li>
           </ul>
@@ -85,8 +61,8 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
 
   <!-- Contenido de las pestañas -->
   <div class="tab-content" id="toolsTabContent">
-    <!-- Pestaña de Scripts de Shell -->
-    <div class="tab-pane fade show active" id="scripts" role="tabpanel">
+    <!-- Pestaña de Scripts Locales -->
+    <div class="tab-pane fade show active" id="local" role="tabpanel">
       <div class="row mb-4">
         <div class="col-12">
           <div class="card shadow-sm">
@@ -97,14 +73,14 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
                 ></span>
                 <input
                   type="text"
-                  id="searchInput"
+                  id="searchInputLocal"
                   class="form-control"
-                  placeholder="Buscar scripts por nombre o descripción..."
+                  placeholder="Buscar scripts locales por nombre o descripción..."
                 />
               </div>
               <div
                 class="btn-group mb-3 category-filter"
-                id="categoryFilterContainer"
+                id="categoryFilterContainerLocal"
               >
                 <button
                   class="btn btn-outline-primary active"
@@ -117,116 +93,57 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
           </div>
         </div>
       </div>
-      <div class="row" id="scriptAccordionContainer">
-        <!-- Los scripts se cargarán dinámicamente aquí -->
+      <div class="row" id="scriptAccordionContainerLocal">
+        <!-- Los scripts locales se cargarán dinámicamente aquí -->
       </div>
-      <div class="row" id="noScriptsAlert" style="display: none">
+      <div class="row" id="noScriptsAlertLocal" style="display: none">
         <div class="col-12">
           <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i> No se encontraron
-            scripts en el sistema.
+            <i class="fas fa-exclamation-triangle me-2"></i> No se encontraron scripts locales en el sistema.
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Pestaña de Utilidades del Sistema -->
-    <div class="tab-pane fade" id="system" role="tabpanel">
-      <div class="row">
+    <!-- Pestaña de Scripts de Producción -->
+    <div class="tab-pane fade" id="production" role="tabpanel">
+      <div class="row mb-4">
         <div class="col-12">
           <div class="card shadow-sm">
-            <div class="card-header bg-info text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-cogs me-2"></i>Utilidades del Sistema
-              </h5>
-            </div>
             <div class="card-body">
-              <div class="mb-3">
-                <div
-                  id="systemCategoryFilterContainer"
-                  class="btn-group"
-                  role="group"
-                >
-                  <button
-                    class="btn btn-outline-primary active"
-                    data-category="all"
-                  >
-                    Todos
-                  </button>
-                </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text"
+                  ><i class="fas fa-search"></i
+                ></span>
+                <input
+                  type="text"
+                  id="searchInputProduction"
+                  class="form-control"
+                  placeholder="Buscar scripts de producción por nombre o descripción..."
+                />
               </div>
-              <div id="systemScriptsContainer" class="row">
-                <!-- Los scripts se cargarán dinámicamente aquí -->
+              <div
+                class="btn-group mb-3 category-filter"
+                id="categoryFilterContainerProduction"
+              >
+                <button
+                  class="btn btn-outline-primary active"
+                  data-category="all"
+                >
+                  Todos
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Pestaña de Mantenimiento -->
-    <div class="tab-pane fade" id="maintenance" role="tabpanel">
-      <div class="row">
-        <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-header bg-warning text-dark">
-              <h5 class="mb-0">
-                <i class="fas fa-wrench me-2"></i>Herramientas de Mantenimiento
-              </h5>
-            </div>
-            <div class="card-body">
-              <div class="mb-3">
-                <div
-                  id="maintenanceCategoryFilterContainer"
-                  class="btn-group"
-                  role="group"
-                >
-                  <button
-                    class="btn btn-outline-primary active"
-                    data-category="all"
-                  >
-                    Todos
-                  </button>
-                </div>
-              </div>
-              <div id="maintenanceScriptsContainer" class="row">
-                <!-- Los scripts se cargarán dinámicamente aquí -->
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="row" id="scriptAccordionContainerProduction">
+        <!-- Los scripts de producción se cargarán dinámicamente aquí -->
       </div>
-    </div>
-
-    <!-- Pestaña de Gestión de Datos -->
-    <div class="tab-pane fade" id="data" role="tabpanel">
-      <div class="row">
+      <div class="row" id="noScriptsAlertProduction" style="display: none">
         <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-database me-2"></i>Gestión de Datos
-              </h5>
-            </div>
-            <div class="card-body">
-              <div class="mb-3">
-                <div
-                  id="dataCategoryFilterContainer"
-                  class="btn-group"
-                  role="group"
-                >
-                  <button
-                    class="btn btn-outline-primary active"
-                    data-category="all"
-                  >
-                    Todos
-                  </button>
-                </div>
-              </div>
-              <div id="dataScriptsContainer" class="row">
-                <!-- Los scripts se cargarán dinámicamente aquí -->
-              </div>
-            </div>
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i> No se encontraron scripts de producción en el sistema.
           </div>
         </div>
       </div>
@@ -324,132 +241,65 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
 {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const scriptAccordionContainer = document.getElementById(
-      "scriptAccordionContainer"
+    const scriptAccordionContainerLocal = document.getElementById(
+      "scriptAccordionContainerLocal"
     );
-    const searchInput = document.getElementById("searchInput");
+    const searchInputLocal = document.getElementById("searchInputLocal");
 
-    let scriptsData = [];
-    let filteredData = [];
+    const scriptAccordionContainerProduction = document.getElementById(
+      "scriptAccordionContainerProduction"
+    );
+    const searchInputProduction = document.getElementById("searchInputProduction");
+
+    let scriptsData = { local: [], produccion: [] };
+    let filteredDataLocal = [];
+    let filteredDataProduction = [];
 
     // Función para cargar los scripts desde la API
     function loadScripts() {
       fetch("/admin/tools/api/scripts_metadata")
         .then((response) => response.json())
         .then((data) => {
-          scriptsData = data || [];
-          filteredData = [...scriptsData];
+          scriptsData = data || { local: [], produccion: [] };
+          filteredDataLocal = [...scriptsData.local];
+          filteredDataProduction = [...scriptsData.produccion];
           renderScripts();
-          updateCategoryFilter();
+          updateCategoryFilters();
 
           // Inicializar todas las pestañas
           initializeAllTabs();
         })
         .catch((error) => {
           console.error("Error cargando scripts:", error);
-          document.getElementById("noScriptsAlert").style.display = "block";
+          document.getElementById("noScriptsAlertLocal").style.display = "block";
+          document.getElementById("noScriptsAlertProduction").style.display = "block";
         });
     }
 
     // Función para inicializar todas las pestañas
     function initializeAllTabs() {
-      // Pestaña de Scripts de Shell (ya está inicializada) - Todas las categorías
-
-      // Pestaña de Utilidades del Sistema - Solo categorías específicas
-      initializeTab("system", ["Development Tools", "Infrastructure"]);
-
-      // Pestaña de Mantenimiento - Solo categorías específicas
-      initializeTab("maintenance", [
-        "System Maintenance",
-        "User Management",
-        "File Management",
-      ]);
-
-      // Pestaña de Gestión de Datos - Solo categorías específicas
-      initializeTab("data", ["Database Utils", "Monitoring"]);
+      // Pestaña de Scripts Locales (ya está inicializada) - Todas las categorías
+      // Pestaña de Scripts de Producción - Todas las categorías
     }
 
-    // Función para inicializar una pestaña específica
-    function initializeTab(tabId, categories) {
-      const container = document.getElementById(`${tabId}ScriptsContainer`);
-      const filterContainer = document.getElementById(
-        `${tabId}CategoryFilterContainer`
-      );
-
-      if (!container || !filterContainer) return;
-
-      // Filtrar scripts por categorías
-      const tabScripts = scriptsData.filter((cat) =>
-        categories.includes(cat.categoria)
-      );
-
-      // Crear filtros de categoría
-      createCategoryFilters(filterContainer, tabScripts);
-
-      // Renderizar scripts
-      renderTabScripts(container, tabScripts);
-    }
-
-    // Función para crear filtros de categoría para una pestaña
-    function createCategoryFilters(container, scripts) {
-      const categories = scripts.map((cat) => cat.categoria);
-
-      // Limpiar el contenedor
-      container.innerHTML = "";
-
-      // Crear el botón "Todos" con event listener
-      const todosButton = document.createElement("button");
-      todosButton.className = "btn btn-outline-primary active";
-      todosButton.setAttribute("data-category", "all");
-      todosButton.textContent = "Todos";
-      todosButton.onclick = (event) =>
-        filterTabByCategory(container, scripts, "all", event);
-      container.appendChild(todosButton);
-
-      // Agregar botones para cada categoría
-      categories.forEach((category) => {
-        const button = document.createElement("button");
-        button.className = "btn btn-outline-secondary";
-        button.setAttribute("data-category", category);
-        button.textContent = category;
-        button.onclick = (event) =>
-          filterTabByCategory(container, scripts, category, event);
-        container.appendChild(button);
-      });
-    }
-
-    // Función para filtrar por categoría en una pestaña específica
-    function filterTabByCategory(container, allScripts, category, event) {
-      // Actualizar botones activos
-      container.querySelectorAll(".btn").forEach((btn) => {
-        btn.classList.remove("active");
-        btn.classList.remove("btn-primary");
-        btn.classList.add("btn-outline-secondary");
-      });
-
-      event.target.classList.add("active");
-      event.target.classList.remove("btn-outline-secondary");
-      event.target.classList.add("btn-primary");
-
-      let filteredScripts;
-      if (category === "all") {
-        // Para "Todos", mostrar todas las categorías disponibles en esta pestaña
-        filteredScripts = allScripts;
+    // Función para renderizar scripts
+    function renderScripts() {
+      // Renderizar scripts locales
+      if (filteredDataLocal.length === 0) {
+        document.getElementById("noScriptsAlertLocal").style.display = "block";
+        scriptAccordionContainerLocal.innerHTML = "";
       } else {
-        // Para una categoría específica, filtrar solo esa categoría
-        filteredScripts = allScripts.filter(
-          (cat) => cat.categoria === category
-        );
+        document.getElementById("noScriptsAlertLocal").style.display = "none";
+        renderTabScripts(scriptAccordionContainerLocal, filteredDataLocal);
       }
 
-      // Encontrar el contenedor de scripts correspondiente
-      const tabId = container.id.replace("CategoryFilterContainer", "");
-      const scriptsContainer = document.getElementById(
-        `${tabId}ScriptsContainer`
-      );
-
-      if (scriptsContainer) {
-        renderTabScripts(scriptsContainer, filteredScripts);
+      // Renderizar scripts de producción
+      if (filteredDataProduction.length === 0) {
+        document.getElementById("noScriptsAlertProduction").style.display = "block";
+        scriptAccordionContainerProduction.innerHTML = "";
+      } else {
+        document.getElementById("noScriptsAlertProduction").style.display = "none";
+        renderTabScripts(scriptAccordionContainerProduction, filteredDataProduction);
       }
     }
 
@@ -500,6 +350,7 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
                             <p><strong>Ruta:</strong> <code>${script.path}</code></p>
                             <p><strong>Tipo:</strong> <span class="badge bg-info">${script.tipo}</span></p>
                             <p><strong>Ejecutable:</strong> <span class="badge ${script.executable ? "bg-success" : "bg-warning"}">${script.executable ? "Sí" : "No"}</span></p>
+                            <p><strong>Entorno:</strong> <span class="badge bg-secondary">${script.entorno || "N/A"}</span></p>
                         </div>
                     </div>
                 </div>
@@ -513,74 +364,21 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
       container.innerHTML = html;
     }
 
-    // Función para renderizar los scripts
-    function renderScripts() {
-      if (filteredData.length === 0) {
-        document.getElementById("noScriptsAlert").style.display = "block";
-        scriptAccordionContainer.innerHTML = "";
-        return;
-      }
+    // Función para actualizar los filtros de categorías
+    function updateCategoryFilters() {
+      // Actualizar filtros para scripts locales
+      const categoriesLocal = scriptsData.local.map((category) => category.categoria);
+      const containerLocal = document.getElementById("categoryFilterContainerLocal");
+      createCategoryFilters(containerLocal, categoriesLocal, "local");
 
-      document.getElementById("noScriptsAlert").style.display = "none";
-
-      let accordionHtml = "";
-      let scriptIndex = 0;
-
-      // Procesar cada categoría
-      filteredData.forEach((category) => {
-        if (category.scripts && category.scripts.length > 0) {
-          // Agregar título de categoría
-          accordionHtml += `
-          <div class="col-12 mb-3">
-            <h5 class="text-primary"><i class="fas fa-folder me-2"></i>${category.categoria}</h5>
-          </div>
-        `;
-
-          // Agregar scripts de esta categoría
-          category.scripts.forEach((script) => {
-            accordionHtml += `
-            <div class="col-12 mb-3">
-                <div class="card">
-                    <div class="card-header" id="heading${scriptIndex}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <button class="btn btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${scriptIndex}">
-                                <i class="fas fa-file-code me-2"></i>
-                                <strong>${script.nombre}</strong>
-                            </button>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewScript('${script.path}')">
-                                    <i class="fas fa-eye"></i> Ver
-                                </button>
-                                <button class="btn btn-sm btn-outline-success" onclick="runScript('${script.path}')">
-                                    <i class="fas fa-play"></i> Ejecutar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="collapse${scriptIndex}" class="collapse" data-bs-parent="#scriptAccordionContainer">
-                        <div class="card-body">
-                            <p><strong>Descripción:</strong> ${script.descripcion || "Sin descripción disponible"}</p>
-                            <p><strong>Ruta:</strong> <code>${script.path}</code></p>
-                            <p><strong>Tipo:</strong> <span class="badge bg-info">${script.tipo}</span></p>
-                            <p><strong>Ejecutable:</strong> <span class="badge ${script.executable ? "bg-success" : "bg-warning"}">${script.executable ? "Sí" : "No"}</span></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-          `;
-            scriptIndex++;
-          });
-        }
-      });
-
-      scriptAccordionContainer.innerHTML = accordionHtml;
+      // Actualizar filtros para scripts de producción
+      const categoriesProduction = scriptsData.produccion.map((category) => category.categoria);
+      const containerProduction = document.getElementById("categoryFilterContainerProduction");
+      createCategoryFilters(containerProduction, categoriesProduction, "produccion");
     }
 
-    // Función para actualizar el filtro de categorías
-    function updateCategoryFilter() {
-      const categories = scriptsData.map((category) => category.categoria);
-      const container = document.getElementById("categoryFilterContainer");
-
+    // Función para crear filtros de categoría
+    function createCategoryFilters(container, categories, entorno) {
       // Limpiar el contenedor
       container.innerHTML = "";
 
@@ -589,7 +387,7 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
       todosButton.className = "btn btn-outline-primary active";
       todosButton.setAttribute("data-category", "all");
       todosButton.textContent = "Todos";
-      todosButton.onclick = (event) => filterByCategory("all", event);
+      todosButton.onclick = (event) => filterByCategory(entorno, "all", event);
       container.appendChild(todosButton);
 
       // Agregar botones para cada categoría
@@ -598,43 +396,48 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
         button.className = "btn btn-outline-secondary";
         button.setAttribute("data-category", category);
         button.textContent = category;
-        button.onclick = (event) => filterByCategory(category, event);
+        button.onclick = (event) => filterByCategory(entorno, category, event);
         container.appendChild(button);
       });
-
-      // Asegurar que se muestren todas las categorías al inicio
-      filteredData = [...scriptsData];
-      renderScripts();
     }
 
     // Función para filtrar por categoría
-    function filterByCategory(category, event) {
+    function filterByCategory(entorno, category, event) {
       // Actualizar botones activos
-      document
-        .querySelectorAll("#categoryFilterContainer .btn")
-        .forEach((btn) => {
-          btn.classList.remove("active");
-          btn.classList.remove("btn-primary");
-          btn.classList.add("btn-outline-secondary");
-        });
+      const containerId = entorno === "local" ? "categoryFilterContainerLocal" : "categoryFilterContainerProduction";
+      const container = document.getElementById(containerId);
+      
+      container.querySelectorAll(".btn").forEach((btn) => {
+        btn.classList.remove("active");
+        btn.classList.remove("btn-primary");
+        btn.classList.add("btn-outline-secondary");
+      });
 
       event.target.classList.add("active");
       event.target.classList.remove("btn-outline-secondary");
       event.target.classList.add("btn-primary");
 
-      if (category === "all") {
-        filteredData = [...scriptsData];
+      if (entorno === "local") {
+        if (category === "all") {
+          filteredDataLocal = [...scriptsData.local];
+        } else {
+          filteredDataLocal = scriptsData.local.filter((cat) => cat.categoria === category);
+        }
+        renderTabScripts(scriptAccordionContainerLocal, filteredDataLocal);
       } else {
-        filteredData = scriptsData.filter((cat) => cat.categoria === category);
+        if (category === "all") {
+          filteredDataProduction = [...scriptsData.produccion];
+        } else {
+          filteredDataProduction = scriptsData.produccion.filter((cat) => cat.categoria === category);
+        }
+        renderTabScripts(scriptAccordionContainerProduction, filteredDataProduction);
       }
-
-      renderScripts();
     }
 
-    // Función para buscar scripts
-    searchInput.addEventListener("input", function () {
+    // Función para buscar scripts locales
+    searchInputLocal.addEventListener("input", function () {
       const searchTerm = this.value.toLowerCase();
-      filteredData = scriptsData
+      filteredDataLocal = scriptsData.local
         .map((category) => ({
           ...category,
           scripts: category.scripts.filter(
@@ -645,7 +448,24 @@ Herramientas - Catálogo Tablas{% endblock %} {% block content %}
           ),
         }))
         .filter((category) => category.scripts.length > 0);
-      renderScripts();
+      renderTabScripts(scriptAccordionContainerLocal, filteredDataLocal);
+    });
+
+    // Función para buscar scripts de producción
+    searchInputProduction.addEventListener("input", function () {
+      const searchTerm = this.value.toLowerCase();
+      filteredDataProduction = scriptsData.produccion
+        .map((category) => ({
+          ...category,
+          scripts: category.scripts.filter(
+            (script) =>
+              script.nombre.toLowerCase().includes(searchTerm) ||
+              (script.descripcion &&
+                script.descripcion.toLowerCase().includes(searchTerm))
+          ),
+        }))
+        .filter((category) => category.scripts.length > 0);
+      renderTabScripts(scriptAccordionContainerProduction, filteredDataProduction);
     });
 
     // Cargar scripts al inicializar

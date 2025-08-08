@@ -76,7 +76,7 @@ El sistema de ejecución de scripts está **funcionando correctamente** con las 
 ### **3. Búsqueda de Scripts**
 El sistema busca scripts en múltiples ubicaciones:
 1. `/tools/Scripts Principales/`
-2. `/tools/Scripts Raíz/`
+
 3. `/tools/maintenance/`
 4. `/tools/producción/`
 5. `/scripts/maintenance/`

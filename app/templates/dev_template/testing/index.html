@@ -60,7 +60,25 @@
       <div class="card">
         <div class="card-header">
           <h5 class="mb-0">
-            <i class="bi bi-list me-2"></i>Categorías de Tests
+            <i class="bi bi-list me-2"></i>Entornos de Tests
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush" id="environment-menu">
+            <a href="#local-tests" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+              <i class="bi bi-laptop me-2"></i>Tests Locales
+            </a>
+            <a href="#production-tests" class="list-group-item list-group-item-action" data-bs-toggle="list">
+              <i class="bi bi-server me-2"></i>Tests de Producción
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-funnel me-2"></i>Categorías
           </h5>
         </div>
         <div class="card-body p-0">
@@ -74,7 +92,37 @@
     <!-- Contenido de tests -->
     <div class="col-md-9">
       <div id="tests-content">
-        <!-- Se llena dinámicamente -->
+        <!-- Pestaña de Tests Locales -->
+        <div class="tab-pane fade show active" id="local-tests">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="mb-0">
+                <i class="bi bi-laptop me-2"></i>Tests Locales
+              </h4>
+            </div>
+            <div class="card-body">
+              <div id="local-tests-content">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Pestaña de Tests de Producción -->
+        <div class="tab-pane fade" id="production-tests">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="mb-0">
+                <i class="bi bi-server me-2"></i>Tests de Producción
+              </h4>
+            </div>
+            <div class="card-body">
+              <div id="production-tests-content">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -172,7 +220,7 @@
 </div>
 {% endblock %} {% block scripts %}
 <script>
-  let testsData = [];
+  let testsData = { local: [], produccion: [] };
 
   // Cargar tests al iniciar
   document.addEventListener("DOMContentLoaded", function () {
@@ -201,72 +249,102 @@
   // Función para renderizar tests
   function renderTests() {
     const categoryMenu = document.getElementById("category-menu");
-    const testsContent = document.getElementById("tests-content");
+    const localTestsContent = document.getElementById("local-tests-content");
+    const productionTestsContent = document.getElementById("production-tests-content");
 
     // Limpiar contenido
     categoryMenu.innerHTML = "";
-    testsContent.innerHTML = "";
+    localTestsContent.innerHTML = "";
+    productionTestsContent.innerHTML = "";
+
+    // Obtener todas las categorías únicas
+    const allCategories = new Set();
+    testsData.local.forEach(cat => allCategories.add(cat.categoria));
+    testsData.produccion.forEach(cat => allCategories.add(cat.categoria));
 
     // Crear menú de categorías
-    testsData.forEach((category, index) => {
+    Array.from(allCategories).forEach((category, index) => {
       const menuItem = document.createElement("a");
       menuItem.href = `#cat-${index}`;
       menuItem.className = `list-group-item list-group-item-action ${index === 0 ? "active" : ""}`;
       menuItem.setAttribute("data-bs-toggle", "list");
       menuItem.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
-                <span>${category.categoria}</span>
-                <span class="badge bg-primary rounded-pill">${category.tests.length}</span>
+                <span>${category}</span>
+                <span class="badge bg-primary rounded-pill">${getTestCountForCategory(category)}</span>
             </div>
         `;
       categoryMenu.appendChild(menuItem);
+    });
 
-      // Crear contenido de categoría
-      const categoryContent = document.createElement("div");
-      categoryContent.className = `tab-pane fade ${index === 0 ? "show active" : ""}`;
-      categoryContent.id = `cat-${index}`;
+    // Renderizar tests locales
+    renderEnvironmentTests(localTestsContent, testsData.local, "local");
+    
+    // Renderizar tests de producción
+    renderEnvironmentTests(productionTestsContent, testsData.produccion, "produccion");
+  }
 
-      const categoryHeader = document.createElement("div");
-      categoryHeader.className = "card mb-4";
-      categoryHeader.innerHTML = `
-            <div class="card-header">
-                <h4 class="mb-0">
-                    <i class="bi bi-folder me-2"></i>${category.categoria}
-                </h4>
-            </div>
+  // Función para obtener el conteo de tests por categoría
+  function getTestCountForCategory(category) {
+    let count = 0;
+    testsData.local.forEach(cat => {
+      if (cat.categoria === category) count += cat.tests.length;
+    });
+    testsData.produccion.forEach(cat => {
+      if (cat.categoria === category) count += cat.tests.length;
+    });
+    return count;
+  }
+
+  // Función para renderizar tests de un entorno específico
+  function renderEnvironmentTests(container, tests, environment) {
+    if (tests.length === 0) {
+      container.innerHTML = '<div class="alert alert-info">No hay tests disponibles en este entorno.</div>';
+      return;
+    }
+
+    let html = "";
+    tests.forEach((category) => {
+      if (category.tests && category.tests.length > 0) {
+        html += `
+          <div class="mb-4">
+            <h5 class="text-primary">
+              <i class="bi bi-folder me-2"></i>${category.categoria}
+            </h5>
+            <div class="list-group">
         `;
 
-      const testsList = document.createElement("div");
-      testsList.className = "list-group list-group-flush";
-
-      category.tests.forEach((test) => {
-        const testItem = document.createElement("div");
-        testItem.className =
-          "list-group-item d-flex justify-content-between align-items-start";
-        testItem.innerHTML = `
-                <div class="ms-2 me-auto">
-                    <div class="fw-bold">
-                        <i class="bi bi-file-code me-2"></i>
-                        ${test.nombre}
-                    </div>
-                    <div class="text-muted small">${test.descripcion}</div>
-                    <div class="mt-1">
-                        <span class="badge bg-info me-1">${test.tipo}</span>
-                    </div>
+        category.tests.forEach((test) => {
+          html += `
+            <div class="list-group-item d-flex justify-content-between align-items-start">
+              <div class="ms-2 me-auto">
+                <div class="fw-bold">
+                  <i class="bi bi-file-code me-2"></i>
+                  ${test.nombre}
                 </div>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="executeTest('${test.path}')">
-                        <i class="bi bi-play"></i> Ejecutar
-                    </button>
+                <div class="text-muted small">${test.descripcion}</div>
+                <div class="mt-1">
+                  <span class="badge bg-info me-1">${test.tipo}</span>
+                  <span class="badge bg-secondary">${test.entorno}</span>
                 </div>
-            `;
-        testsList.appendChild(testItem);
-      });
+              </div>
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary btn-sm" onclick="executeTest('${test.path}')">
+                  <i class="bi bi-play"></i> Ejecutar
+                </button>
+              </div>
+            </div>
+          `;
+        });
 
-      categoryHeader.appendChild(testsList);
-      categoryContent.appendChild(categoryHeader);
-      testsContent.appendChild(categoryContent);
+        html += `
+            </div>
+          </div>
+        `;
+      }
     });
+
+    container.innerHTML = html;
   }
 
   // Función para ejecutar test individual
@@ -387,17 +465,33 @@
       const searchTerm = e.target.value.toLowerCase();
 
       // Filtrar categorías
-      testsData.forEach((category, categoryIndex) => {
+      const allCategories = new Set();
+      testsData.local.forEach(cat => allCategories.add(cat.categoria));
+      testsData.produccion.forEach(cat => allCategories.add(cat.categoria));
+
+      Array.from(allCategories).forEach((category, categoryIndex) => {
         const categoryContent = document.getElementById(`cat-${categoryIndex}`);
         const menuItem = document.querySelector(
           `[href="#cat-${categoryIndex}"]`
         );
 
-        const visibleTests = category.tests.filter(
-          (test) =>
-            test.nombre.toLowerCase().includes(searchTerm) ||
-            test.descripcion.toLowerCase().includes(searchTerm)
-        );
+        const visibleTests = [];
+        testsData.local.forEach(cat => {
+          if (cat.categoria === category) {
+            visibleTests.push(...cat.tests.filter(test =>
+              test.nombre.toLowerCase().includes(searchTerm) ||
+              test.descripcion.toLowerCase().includes(searchTerm)
+            ));
+          }
+        });
+        testsData.produccion.forEach(cat => {
+          if (cat.categoria === category) {
+            visibleTests.push(...cat.tests.filter(test =>
+              test.nombre.toLowerCase().includes(searchTerm) ||
+              test.descripcion.toLowerCase().includes(searchTerm)
+            ));
+          }
+        });
 
         if (visibleTests.length > 0) {
           categoryContent.style.display = "block";

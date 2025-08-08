@@ -1,53 +1,84 @@
-# app/error_handlers.py
-from flask import Blueprint, render_template, request, jsonify
+# Script: error_handlers.py
+# Descripción: Manejadores de errores personalizados para la aplicación
+# Uso: Importado automáticamente por Flask
+# Requiere: Flask
+# Variables de entorno: Ninguna
+# Autor: EDF Developer - 2025-01-27
+
+from flask import Blueprint, jsonify, request, current_app
 import logging
 
-errors_bp = Blueprint('errors', __name__)
-logger = logging.getLogger(__name__)
+errors_bp = Blueprint("errors", __name__)
 
-# Rutas que queremos ignorar (no registrar como errores 404)
-IGNORED_PATHS = [
-    '/.well-known/',
-    '/favicon.ico',
-    '/robots.txt',
-    '/apple-touch-icon.png',
-    '/sitemap.xml',
-    '/ads.txt'
-]
 
-# -------------------------------------------
-# Manejadores de errores personalizados
-# -------------------------------------------
+@errors_bp.errorhandler(400)
+def bad_request(error):
+    """Maneja errores 400 (Bad Request) incluyendo requests malformados."""
+    # Verificar si es un request malformado
+    if hasattr(error, "description") and "Bad request version" in str(
+        error.description
+    ):
+        current_app.logger.warning(f"Request malformado detectado: {error.description}")
+        return jsonify(
+            {
+                "error": "Request malformado",
+                "message": "El navegador envió un request que el servidor no pudo entender",
+                "status": "error",
+            }
+        ), 400
 
-def should_ignore_404():
-    """Determina si una ruta 404 debe ser ignorada."""
-    path = request.path
-    return any(ignored_path in path for ignored_path in IGNORED_PATHS)
+    # Para otros errores 400
+    return jsonify(
+        {
+            "error": "Bad Request",
+            "message": str(error.description)
+            if hasattr(error, "description")
+            else "Request inválido",
+            "status": "error",
+        }
+    ), 400
 
-@errors_bp.app_errorhandler(404)
-def not_found_error(error):
-    """Error 404: Página no encontrada"""
-    if should_ignore_404():
-        # Para rutas ignoradas, devolvemos una respuesta vacía con código 204 (No Content)
-        return '', 204
-        
-    # Para rutas de API, devolvemos un JSON
-    if request.path.startswith('/api/'):
-        return jsonify({
-            'status': 'error',
-            'message': 'Recurso no encontrado',
-            'code': 404
-        }), 404
-        
-    # Para rutas normales, mostramos la página de error 404
-    return render_template("not_found.html"), 404
 
-@errors_bp.app_errorhandler(500)
+@errors_bp.errorhandler(404)
+def not_found(error):
+    """Maneja errores 404 (Not Found)."""
+    return jsonify(
+        {
+            "error": "Not Found",
+            "message": "La página o recurso solicitado no fue encontrado",
+            "status": "error",
+        }
+    ), 404
+
+
+@errors_bp.errorhandler(500)
 def internal_error(error):
-    """Error 500: Error interno del servidor"""
-    return render_template("error.html", error=str(error)), 500
+    """Maneja errores 500 (Internal Server Error)."""
+    current_app.logger.error(f"Error interno del servidor: {error}")
+    return jsonify(
+        {
+            "error": "Internal Server Error",
+            "message": "Ocurrió un error interno en el servidor",
+            "status": "error",
+        }
+    ), 500
 
-@errors_bp.app_errorhandler(503)
-def service_unavailable_error(error):
-    """Error 503: Servicio no disponible"""
-    return render_template("errors/503.html"), 503
+
+@errors_bp.before_request
+def log_request_info():
+    """Registra información del request para debugging."""
+    if request and hasattr(request, "headers"):
+        current_app.logger.debug(f"Request: {request.method} {request.url}")
+        current_app.logger.debug(
+            f"Content-Type: {request.headers.get('Content-Type', 'No especificado')}"
+        )
+    else:
+        current_app.logger.warning("Request malformado detectado en before_request")
+
+
+@errors_bp.after_request
+def log_response_info(response):
+    """Registra información de la respuesta para debugging."""
+    if response.status_code >= 400:
+        current_app.logger.warning(f"Respuesta con error: {response.status_code}")
+    return response

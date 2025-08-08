@@ -22,7 +22,6 @@ ROUTES_FILE = os.path.join(ROOT_DIR, "app/routes/scripts_routes.py")
 # Rutas adicionales donde buscar scripts
 SCRIPT_LOCATIONS = [
     os.path.join(TOOLS_DIR, "Scripts Principales"),
-    os.path.join(TOOLS_DIR, "Scripts Raíz"),
     os.path.join(TOOLS_DIR, "maintenance"),
     os.path.join(TOOLS_DIR, "producción"),
     os.path.join(SCRIPTS_DIR, "maintenance"),

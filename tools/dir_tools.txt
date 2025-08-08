@@ -1,4 +1,4 @@
-/Users/edefrutos/_Repositorios/01.IDE_Cursor/edf_catalogotablas/branch_edf_catalogotablas/edf_catalogotablas/tools
+.
 ├── add_words_to_config.py
 ├── Admin Utils
 │   ├── 06_eliminar_duplicados_users.py
@@ -15,64 +15,45 @@
 │   └── diagnose_s3_permissions.py
 ├── check_tools_imports.sh -> Scripts Principales/check_tools_imports.sh
 ├── cleanup_tools_directory.py
-├── Db Utils
-│   ├── 03_validar_integridad.py
-│   ├── 08_backup_colecciones.py
-│   ├── google_drive_utils.py
-│   ├── google_drive_utils.py_back
-│   ├── settings.yaml
-│   └── setup_google_drive.py
 ├── db_utils
-│   ├── __pycache__
-│   │   └── google_drive_utils.cpython-310.pyc
 │   ├── 03_validar_integridad.py
 │   ├── 08_backup_colecciones.py
 │   ├── backups
-│   │   ├── catalogs_20250801_1426.csv
-│   │   ├── catalogs_20250801_1426.json
-│   │   ├── catalogs_20250801_1833.csv
-│   │   ├── catalogs_20250801_1833.json
-│   │   ├── catalogs_20250801_2042.csv
-│   │   ├── catalogs_20250801_2042.json
-│   │   ├── catalogs_20250803_1342.csv
-│   │   ├── catalogs_20250803_1342.json
-│   │   ├── spreadsheets_20250801_1426.csv
-│   │   ├── spreadsheets_20250801_1426.json
-│   │   ├── spreadsheets_20250801_1833.csv
-│   │   ├── spreadsheets_20250801_1833.json
-│   │   ├── spreadsheets_20250801_2042.csv
-│   │   ├── spreadsheets_20250801_2042.json
-│   │   ├── spreadsheets_20250803_1342.csv
-│   │   ├── spreadsheets_20250803_1342.json
-│   │   ├── users_20250801_1426.csv
-│   │   ├── users_20250801_1426.json
-│   │   ├── users_20250801_1833.csv
-│   │   ├── users_20250801_1833.json
-│   │   ├── users_20250801_2042.csv
-│   │   ├── users_20250801_2042.json
-│   │   ├── users_20250803_1342.csv
-│   │   └── users_20250803_1342.json
+│   │   ├── catalogs_20250805_2000.csv
+│   │   ├── catalogs_20250805_2000.json
+│   │   ├── spreadsheets_20250805_2000.csv
+│   │   ├── spreadsheets_20250805_2000.json
+│   │   ├── users_20250805_2000.csv
+│   │   └── users_20250805_2000.json
 │   ├── credentials.json
 │   ├── google_drive_utils.py
-│   ├── google_drive_utils.py_back
 │   ├── settings.yaml
 │   ├── setup_google_drive.py
+│   ├── test_date_conversion.py
+│   ├── test_date_format.py
+│   ├── test_delete_validation.py
 │   ├── token.json
 │   └── token.pickle
 ├── detect_merge_files.py
 ├── detect_unknown_words.py
 ├── diagnostico
 │   ├── 03_validar_integridad.py
+│   ├── 04_depurar_huérfanos.py
 │   ├── 04_limpieza_automatizada.py
+│   ├── check_python_intellicode.py
+│   ├── clear_python_cache.py
 │   ├── debug_users.py
 │   ├── diagnose_production.py
 │   ├── diagnose_script_execution.py
 │   ├── diagnose_script_paths.py
 │   ├── diagnose_scripts.py
+│   ├── SCRIPT_LOCATIONS.md
 │   ├── test_mongo_connection.py
 │   ├── test_mongo_ssl.py
-│   ├── test_script_execution.py
+│   ├── test_regex.py
+│   ├── verificar_configuracion.py
 │   └── verify_app_catalogojoyero.py
+├── dir_tools.txt
 ├── discarded_files_20250801_185111
 │   ├── _para colocar
 │   │   ├── check_mongodb_simple.py
@@ -82,13 +63,6 @@
 │   │   ├── test_simple.py
 │   │   └── test_upload_simple.py
 │   ├── _sincontenido
-│   │   ├── __init__.py
-│   │   ├── arreglar.py
-│   │   ├── daily_report.sh
-│   │   ├── detailed_users.py
-│   │   ├── final_cleanup.py
-│   │   ├── run_gunicorn.sh
-│   │   └── web_diagnose.py
 │   ├── exportados
 │   │   ├── articulos_oficina_20250529_114546.csv
 │   │   ├── articulos_oficina_20250529_114546.xlsx
@@ -115,19 +89,16 @@
 │       └── static
 │           └── default_profile.png
 ├── insertar_cabecera.py
-├── macDOS
+├── macOS
 │   └── COMAND.md
 ├── maintenance
 │   ├── 09_backup_restore_total.py
 │   ├── 10_backup_incremental.py
 │   ├── cleanup_tools_directory.py
-│   ├── insertar_cabecera.py
 │   ├── monitor_rendimiento.py
 │   ├── organize_files.sh
 │   ├── organize_root_directory.py
 │   ├── organize_root_scripts.py
-│   ├── plantilla_cabecera_script.py
-│   ├── script_runner.py
 │   ├── setup_cron_job.sh
 │   └── setup_scheduled_tasks.sh
 ├── migrate_discarded_files.py
@@ -189,14 +160,12 @@
 │   ├── fix_eslint_final.py
 │   ├── fix_mongodb_atlas.py
 │   ├── fix_mongodb_connection.py
-│   ├── fix_script_paths.py
 │   ├── fix_script_permissions.sh
 │   ├── generar_ejemplos_tablas.py
 │   ├── git_commit_reorganization.sh
 │   ├── init_admin.py
 │   ├── init_db.py
 │   ├── insert_admin_and_minimum_data.py
-│   ├── insertar_cabecera.py
 │   ├── list_buckets.py
 │   ├── log_utils.py
 │   ├── maintenance.sh
@@ -206,11 +175,9 @@
 │   ├── mongodb_checkup.py
 │   ├── monitor_mongodb.py
 │   ├── monitor_socket.sh
-│   ├── plantilla_cabecera_script.py
 │   ├── repair_admin.py
 │   ├── restart_gunicorn.sh
 │   ├── restart_server.sh
-│   ├── script_runner.py
 │   ├── session_config.py
 │   ├── session_fix.py
 │   ├── setup_monitoring_cron.sh
@@ -221,31 +188,12 @@
 │   ├── test_google_drive.py
 │   ├── test_mongo_connection.py
 │   ├── test_mongo_ssl.py
-│   ├── test_script_execution.py
 │   ├── test_simple.py
 │   ├── update_mongodb_whitelist.py
 │   ├── update_role_admin_catalogojoyero.py
 │   ├── update_role_admin.py
 │   ├── update.sh
 │   └── verify_app_catalogojoyero.py
-├── Scripts Raíz
-│   ├── 08_backup_colecciones copy 2.py
-│   ├── 08_backup_colecciones copy.py
-│   ├── 08_backup_colecciones.py
-│   ├── 09_backup_restore_total copy 2.py
-│   ├── 09_backup_restore_total copy.py
-│   ├── 09_backup_restore_total.py
-│   ├── 10_backup_incremental copy 2.py
-│   ├── 10_backup_incremental copy.py
-│   ├── 10_backup_incremental.py
-│   ├── advanced_monitor copy 2.py
-│   ├── advanced_monitor copy.py
-│   ├── advanced_monitor.py
-│   ├── backup_and_clean_tools copy 2.sh
-│   ├── backup_and_clean_tools copy.sh
-│   ├── backup_and_clean_tools.sh
-│   ├── fix_script_paths.py
-│   └── fix_script_permissions.sh
 ├── src
 │   └── logger.py
 ├── system
@@ -257,7 +205,7 @@
 │   ├── pruebas_rendimiento.py
 │   ├── test_script_execution.py
 │   └── test_simple.py
-├── test_script_execution.py
+├── test_script.sh
 ├── tools
 │   └── test_script.sh
 ├── Users Tools
@@ -273,13 +221,6 @@
 └── utils
     ├── fix_rows_data_force.py
     ├── fix_script_headers.py
-    ├── fix_script_paths.py
-    ├── google_drive_utils.py
-    ├── iniciar_app_directo.sh
-    ├── iniciar_app_local.sh
-    ├── iniciar_produccion.sh
-    ├── insertar_cabecera.py
-    ├── organize_root_directory.py
-    └── plantilla_cabecera_script.py
+    └── organize_root_directory.py
 
-30 directories, 253 files
+27 directories, 197 files

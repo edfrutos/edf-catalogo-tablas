@@ -17,11 +17,12 @@ from flask import (
     flash,
 )
 
+
 # === Utilidad para extraer la descripción de scripts ===
 def extract_description(script_path):
     """Extrae la descripción de un script desde sus comentarios."""
     try:
-        with open(script_path, 'r', encoding='utf-8') as f:
+        with open(script_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 # Para scripts Python con comentarios tipo '# Descripción:'
@@ -57,6 +58,7 @@ def admin_required(f):
             flash("No tiene permisos para acceder a esta página", "error")
             return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -73,56 +75,75 @@ scripts_bp = Blueprint("scripts", __name__, url_prefix="/admin/tools")
 @scripts_bp.route("/api/scripts_metadata")
 @admin_required
 def scripts_metadata():
-    """Devuelve un JSON con todos los scripts agrupados por categoría."""
+    """Devuelve un JSON con todos los scripts agrupados por entorno (local/producción) y categoría."""
     resultado = []
-    
-    # Definir categorías y sus directorios correspondientes
-    categorias = {
+
+    # Definir categorías y sus directorios correspondientes para LOCAL
+    categorias_local = {
+        "Database Utils": ["tools/local/db_utils", "scripts/local/maintenance"],
+        "System Maintenance": [
+            "scripts/local/maintenance",
+            "tools/local/maintenance",
+            "tools/local/system",
+        ],
+        "User Management": ["tools/local/admin_utils", "tools/local/user_utils"],
+        "File Management": [
+            "tools/local/utils",
+            "tools/local/catalog_utils",
+        ],
+        "Monitoring": ["tools/local/monitoring", "tools/local/diagnostico"],
+        "Testing": [
+            "tests/local/unit",
+            "tests/local/integration",
+            "tests/local/functional",
+            "tests/local/performance",
+            "tests/local/security",
+        ],
+        "Development Tools": ["tools/local/app", "tools/local/src"],
+        "Infrastructure": ["tools/local/aws_utils", "tools/local/session_utils"],
+        "Root Tools": ["tools/local/utils"],
+    }
+
+    # Definir categorías y sus directorios correspondientes para PRODUCCIÓN
+    categorias_produccion = {
         "Database Utils": [
-            "tools/db_utils",
-            "tools/Db Utils",
-            "scripts/maintenance"
+            "tools/production/db_utils",
+            "scripts/production/maintenance",
         ],
         "System Maintenance": [
-            "scripts/maintenance",
-            "tools/maintenance",
-            "tools/system"
+            "scripts/production/maintenance",
+            "tools/production/maintenance",
+            "tools/production/system",
         ],
         "User Management": [
-            "tools/Users Tools",
-            "tools/Admin Utils"
+            "tools/production/admin_utils",
+            "tools/production/user_utils",
         ],
         "File Management": [
-            "tools/utils",
-            "tools/Scripts Principales",
-            "tools/Scripts Raíz"
+            "tools/production/utils",
+            "tools/production/catalog_utils",
         ],
-        "Monitoring": [
-            "tools/monitoring",
-            "tools/diagnostico"
-        ],
+        "Monitoring": ["tools/production/monitoring", "tools/production/diagnostico"],
         "Testing": [
-            "tests",
-            "tests/integration",
-            "tests/app/routes",
-            "tools/Test Scripts"
+            "tests/production/unit",
+            "tests/production/integration",
+            "tests/production/functional",
+            "tests/production/performance",
+            "tests/production/security",
         ],
-        "Development Tools": [
-            "tools/app",
-            "tools/src"
-        ],
+        "Development Tools": ["tools/production/app", "tools/production/src"],
         "Infrastructure": [
-            "tools/aws_utils",
-            "tools/producción"
+            "tools/production/aws_utils",
+            "tools/production/session_utils",
         ],
-        "Root Tools": [
-            "tools"
-        ]
+        "Root Tools": ["tools/production/utils"],
     }
-    
-    for categoria, directorios in categorias.items():
+
+    # Procesar scripts LOCALES
+    scripts_locales = []
+    for categoria, directorios in categorias_local.items():
         scripts_categoria = []
-        
+
         for directorio in directorios:
             dir_path = os.path.join(ROOT_DIR, directorio)
             if os.path.isdir(dir_path):
@@ -130,34 +151,88 @@ def scripts_metadata():
                     for fname in os.listdir(dir_path):
                         fpath = os.path.join(dir_path, fname)
                         # Solo incluir archivos, no directorios
-                        if os.path.isfile(fpath) and (fname.endswith('.py') or fname.endswith('.sh')):
+                        if os.path.isfile(fpath) and (
+                            fname.endswith(".py") or fname.endswith(".sh")
+                        ):
                             descripcion = extract_description(fpath)
                             if not descripcion:
                                 descripcion = "Sin descripción"
-                            
+
                             # Determinar si es ejecutable
-                            executable = fname.endswith('.py') or os.access(fpath, os.X_OK)
-                            
-                            scripts_categoria.append({
-                                "nombre": fname,
-                                "descripcion": descripcion,
-                                "path": os.path.join(directorio, fname),
-                                "executable": executable,
-                                "tipo": "python" if fname.endswith('.py') else "bash"
-                            })
+                            executable = fname.endswith(".py") or os.access(
+                                fpath, os.X_OK
+                            )
+
+                            scripts_categoria.append(
+                                {
+                                    "nombre": fname,
+                                    "descripcion": descripcion,
+                                    "path": os.path.join(directorio, fname),
+                                    "executable": executable,
+                                    "tipo": "python"
+                                    if fname.endswith(".py")
+                                    else "bash",
+                                    "entorno": "local",
+                                }
+                            )
                 except (IOError, OSError) as e:
                     print(f"Error procesando {directorio}: {e}")
                     continue
-        
+
         if scripts_categoria:
-            resultado.append({
-                "categoria": categoria,
-                "scripts": scripts_categoria
-            })
-    
+            scripts_locales.append(
+                {"categoria": categoria, "scripts": scripts_categoria}
+            )
+
+    # Procesar scripts de PRODUCCIÓN
+    scripts_produccion = []
+    for categoria, directorios in categorias_produccion.items():
+        scripts_categoria = []
+
+        for directorio in directorios:
+            dir_path = os.path.join(ROOT_DIR, directorio)
+            if os.path.isdir(dir_path):
+                try:
+                    for fname in os.listdir(dir_path):
+                        fpath = os.path.join(dir_path, fname)
+                        # Solo incluir archivos, no directorios
+                        if os.path.isfile(fpath) and (
+                            fname.endswith(".py") or fname.endswith(".sh")
+                        ):
+                            descripcion = extract_description(fpath)
+                            if not descripcion:
+                                descripcion = "Sin descripción"
+
+                            # Determinar si es ejecutable
+                            executable = fname.endswith(".py") or os.access(
+                                fpath, os.X_OK
+                            )
+
+                            scripts_categoria.append(
+                                {
+                                    "nombre": fname,
+                                    "descripcion": descripcion,
+                                    "path": os.path.join(directorio, fname),
+                                    "executable": executable,
+                                    "tipo": "python"
+                                    if fname.endswith(".py")
+                                    else "bash",
+                                    "entorno": "produccion",
+                                }
+                            )
+                except (IOError, OSError) as e:
+                    print(f"Error procesando {directorio}: {e}")
+                    continue
+
+        if scripts_categoria:
+            scripts_produccion.append(
+                {"categoria": categoria, "scripts": scripts_categoria}
+            )
+
+    # Organizar resultado por entorno
+    resultado = {"local": scripts_locales, "produccion": scripts_produccion}
+
     return jsonify(resultado)
-
-
 
 
 # Ruta alternativa para ejecutar scripts sin path variables
@@ -167,14 +242,57 @@ def execute_script():
     """Ejecuta un script especificado por parámetro y devuelve su salida"""
     try:
         # Obtener la ruta del script desde los parámetros del formulario o JSON
-        if request.is_json:
-            data = request.get_json()
-            # Compatibilidad: aceptar 'rel_path' o 'script_path'
-            script_path = data.get("rel_path") or data.get("script_path") or ""
-        else:
-            script_path = (
-                request.form.get("rel_path") or request.form.get("script_path") or ""
-            )
+        script_path = ""
+
+        try:
+            # Verificar el Content-Type del request
+            content_type = request.headers.get("Content-Type", "")
+
+            if "application/json" in content_type:
+                # Intentar parsear JSON solo si el Content-Type es correcto
+                if request.is_json:
+                    data = request.get_json()
+                    if data and isinstance(data, dict):
+                        # Compatibilidad: aceptar 'rel_path' o 'script_path'
+                        script_path = (
+                            data.get("rel_path") or data.get("script_path") or ""
+                        )
+                else:
+                    print(
+                        f"Error: Content-Type indica JSON pero request no es JSON válido"
+                    )
+                    script_path = ""
+            elif (
+                "application/x-www-form-urlencoded" in content_type
+                or "multipart/form-data" in content_type
+            ):
+                # Form data
+                script_path = (
+                    request.form.get("rel_path")
+                    or request.form.get("script_path")
+                    or ""
+                )
+            else:
+                # Intentar ambos métodos como fallback
+                try:
+                    if request.is_json:
+                        data = request.get_json()
+                        if data and isinstance(data, dict):
+                            script_path = (
+                                data.get("rel_path") or data.get("script_path") or ""
+                            )
+                except:
+                    pass
+
+                if not script_path:
+                    script_path = (
+                        request.form.get("rel_path")
+                        or request.form.get("script_path")
+                        or ""
+                    )
+        except Exception as e:
+            print(f"Error parsing request data: {e}")
+            script_path = ""
 
         # Validación estricta: solo rutas relativas, sin '..' ni barra inicial
         if not script_path or ".." in script_path or script_path.startswith("/"):
@@ -270,61 +388,73 @@ def execute_script():
                 }
             ), 408
 
-    except (IOError, OSError, subprocess.SubprocessError,
-            FileNotFoundError, PermissionError) as e:
+    except Exception as e:
+        print(f"\n❌ ERROR GENERAL: {str(e)}")
         return jsonify(
             {
                 "error": f"Error al ejecutar script: {str(e)}",
-                "script": script_path,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
         ), 500
 
 
 def get_script_path(script_path):
-    """Resuelve la ruta completa de un script."""
-    # Si ya es una ruta absoluta y está dentro del directorio del proyecto
-    if os.path.isabs(script_path) and ROOT_DIR in script_path:
-        return script_path
-
-    # Si es una ruta absoluta pero fuera del proyecto, devolverla tal como está
-    if os.path.isabs(script_path):
-        return script_path
-
-    # Definir todos los directorios donde buscar (igual que en scripts_metadata)
+    """
+    Busca un script en los directorios reorganizados y devuelve la ruta absoluta.
+    """
+    # Directorios donde buscar scripts (nueva estructura)
     search_directories = [
-        "tools/db_utils",
-        "tools/Db Utils", 
-        "scripts/maintenance",
-        "tools/maintenance",
-        "tools/system",
-        "tools/Users Tools",
-        "tools/Admin Utils",
-        "tools/utils",
-        "tools/Scripts Principales",
-        "tools/Scripts Raíz",
-        "tools/monitoring",
-        "tools/diagnostico",
-        "tests",
-        "tests/integration",
-        "tests/app/routes",
-        "tools/Test Scripts",
-        "tools/app",
-        "tools/src",
-        "tools/aws_utils",
-        "tools/producción",
-        "tools"
+        "tools/local/db_utils",
+        "tools/local/maintenance",
+        "tools/local/system",
+        "tools/local/admin_utils",
+        "tools/local/user_utils",
+        "tools/local/utils",
+        "tools/local/catalog_utils",
+        "tools/local/monitoring",
+        "tools/local/diagnostico",
+        "tools/local/app",
+        "tools/local/src",
+        "tools/local/aws_utils",
+        "tools/local/session_utils",
+        "scripts/local/maintenance",
+        "tests/local/unit",
+        "tests/local/integration",
+        "tests/local/functional",
+        "tests/local/performance",
+        "tests/local/security",
+        # Directorios de producción
+        "tools/production/db_utils",
+        "tools/production/maintenance",
+        "tools/production/system",
+        "tools/production/admin_utils",
+        "tools/production/user_utils",
+        "tools/production/utils",
+        "tools/production/catalog_utils",
+        "tools/production/monitoring",
+        "tools/production/diagnostico",
+        "tools/production/app",
+        "tools/production/src",
+        "tools/production/aws_utils",
+        "tools/production/session_utils",
+        "scripts/production/maintenance",
+        "tests/production/unit",
+        "tests/production/integration",
+        "tests/production/functional",
+        "tests/production/performance",
+        "tests/production/security",
     ]
 
     # Buscar en todos los directorios posibles
     possible_paths = []
-    
+
     # 1. Ruta directa desde ROOT_DIR
     possible_paths.append(os.path.join(ROOT_DIR, script_path))
-    
+
     # 2. Buscar en todos los directorios definidos
     for directory in search_directories:
         possible_paths.append(os.path.join(ROOT_DIR, directory, script_path))
-    
+
     # 3. Buscar solo el nombre del archivo en todos los directorios
     script_name = os.path.basename(script_path)
     for directory in search_directories:
@@ -348,33 +478,28 @@ def view_script_content_route(script_path):
     try:
         # Decodificar la ruta URL
         import urllib.parse
+
         decoded_path = urllib.parse.unquote(script_path)
-        
+
         abs_path = get_script_path(decoded_path)
-        
+
         if not os.path.exists(abs_path):
-            return jsonify({
-                "error": f"Script no encontrado: {decoded_path}"
-            }), 404
-        
+            return jsonify({"error": f"Script no encontrado: {decoded_path}"}), 404
+
         # Verificar que está dentro del directorio del proyecto
         if not abs_path.startswith(ROOT_DIR):
-            return jsonify({
-                "error": f"Script fuera del directorio del proyecto: {abs_path}"
-            }), 403
-        
-        with open(abs_path, 'r', encoding='utf-8') as f:
+            return jsonify(
+                {"error": f"Script fuera del directorio del proyecto: {abs_path}"}
+            ), 403
+
+        with open(abs_path, "r", encoding="utf-8") as f:
             content = f.read()
-        
-        return jsonify({
-            "content": content,
-            "path": abs_path,
-            "name": os.path.basename(abs_path)
-        })
+
+        return jsonify(
+            {"content": content, "path": abs_path, "name": os.path.basename(abs_path)}
+        )
     except Exception as e:
-        return jsonify({
-            "error": f"Error al leer el script: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Error al leer el script: {str(e)}"}), 500
 
 
 @scripts_bp.route("/")
@@ -384,8 +509,6 @@ def tools_dashboard():
     return render_template("admin/tools_dashboard.html")
 
 
-
-
 @scripts_bp.route("/run/<path:script_path>", methods=["POST"])
 @admin_required
 def run_script(script_path):
@@ -393,16 +516,57 @@ def run_script(script_path):
     try:
         # Obtener el comando del request si existe
         command = ""
+
+        # Verificar que el request es válido antes de procesarlo
+        if not request or not hasattr(request, "headers"):
+            print("Error: Request inválido o malformado")
+            return jsonify(
+                {"error": "Request inválido", "script": script_path, "status": "error"}
+            ), 400
+
         try:
-            if request.is_json:
-                data = request.get_json()
-                command = data.get('command', '').strip()
-            elif request.form:
-                command = request.form.get('command', '').strip()
+            # Verificar el Content-Type del request
+            content_type = request.headers.get("Content-Type", "")
+
+            if "application/json" in content_type:
+                # Intentar parsear JSON solo si el Content-Type es correcto
+                if request.is_json:
+                    data = request.get_json()
+                    if data and isinstance(data, dict):
+                        command = data.get("command", "").strip()
+                else:
+                    print(
+                        "Error: Content-Type indica JSON pero request no es JSON válido"
+                    )
+                    command = ""
+            elif (
+                "application/x-www-form-urlencoded" in content_type
+                or "multipart/form-data" in content_type
+            ):
+                # Form data
+                command = request.form.get("command", "").strip()
+            else:
+                # Intentar ambos métodos como fallback
+                try:
+                    if request.is_json:
+                        data = request.get_json()
+                        if data and isinstance(data, dict):
+                            command = data.get("command", "").strip()
+                except Exception as json_error:
+                    print(f"Error parseando JSON: {json_error}")
+                    command = ""
+
+                if not command:
+                    try:
+                        command = request.form.get("command", "").strip()
+                    except Exception as form_error:
+                        print(f"Error obteniendo form data: {form_error}")
+                        command = ""
+
         except Exception as e:
             print(f"Error parsing request data: {e}")
             command = ""
-        
+
         abs_script_path = get_script_path(script_path)
 
         if not os.path.exists(abs_script_path):
@@ -425,23 +589,23 @@ def run_script(script_path):
         # Determinar el tipo de script y ejecutarlo
         script_name = os.path.basename(abs_script_path)
         script_ext = os.path.splitext(script_name)[1].lower()
-        
+
         # Configurar el entorno de ejecución
         env = os.environ.copy()
-        env['PYTHONPATH'] = ROOT_DIR
-        
-        if script_ext == '.py':
+        env["PYTHONPATH"] = ROOT_DIR
+
+        if script_ext == ".py":
             # Script Python
             if command:
                 cmd = [sys.executable, abs_script_path, command]
             else:
                 cmd = [sys.executable, abs_script_path]
-        elif script_ext == '.sh':
+        elif script_ext == ".sh":
             # Script Bash
             if command:
-                cmd = ['bash', abs_script_path, command]
+                cmd = ["bash", abs_script_path, command]
             else:
-                cmd = ['bash', abs_script_path]
+                cmd = ["bash", abs_script_path]
         else:
             return jsonify(
                 {
@@ -457,7 +621,7 @@ def run_script(script_path):
             text=True,
             cwd=ROOT_DIR,
             env=env,
-            timeout=300  # 5 minutos de timeout
+            timeout=300,  # 5 minutos de timeout
         )
 
         # Preparar la respuesta
@@ -467,7 +631,7 @@ def run_script(script_path):
             "stdout": result.stdout,
             "stderr": result.stderr,
             "execution_time": datetime.now().isoformat(),
-            "command_used": command if command else None
+            "command_used": command if command else None,
         }
 
         if result.returncode == 0:
@@ -475,7 +639,9 @@ def run_script(script_path):
             response["message"] = f"Script ejecutado exitosamente: {script_name}"
         else:
             response["status"] = "error"
-            response["message"] = f"Script falló con código {result.returncode}: {script_name}"
+            response["message"] = (
+                f"Script falló con código {result.returncode}: {script_name}"
+            )
 
         return jsonify(response)
 
@@ -484,14 +650,15 @@ def run_script(script_path):
             {
                 "error": f"Script excedió el tiempo límite de ejecución: {script_path}",
                 "script": script_path,
-                "status": "timeout"
+                "status": "timeout",
             }
         ), 408
     except Exception as e:
+        print(f"Error general en run_script: {str(e)}")
         return jsonify(
             {
                 "error": f"Error al ejecutar script: {str(e)}",
                 "script": script_path,
-                "status": "error"
+                "status": "error",
             }
         ), 500
