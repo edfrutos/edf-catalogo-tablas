@@ -8,7 +8,6 @@ a = Analysis(
     binaries=[],
     datas=[
         ('app', 'app'),
-        ('tools/db_utils', 'tools/db_utils'),
         ('requirements_python310.txt', '.'),
         ('config.py', '.'),
         ('main_app.py', '.'),
@@ -17,9 +16,7 @@ a = Analysis(
         ('gunicorn.conf.py', '.'),
         ('pyproject.toml', '.'),
         ('setup.cfg', '.'),
-        ('pyrightconfig.json', '.'),
         ('cspell.json', '.'),
-        ('.env', '.'),
         ('app_data', 'app_data'),
     ],
     hiddenimports=[
