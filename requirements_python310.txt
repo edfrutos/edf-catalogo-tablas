@@ -1,0 +1,107 @@
+# Requirements para Python 3.10 - EDF CatálogoDeTablas macOS App
+# Versión: 1.0.0
+# Fecha: 13 de Agosto, 2025
+
+# Flask y extensiones
+Flask==3.1.1
+Flask-Login==0.6.3
+Flask-Mail==0.9.1
+Flask-PyMongo==2.3.0
+Flask-Session==0.8.0
+Flask-WTF==1.2.2
+Werkzeug==3.1.3
+Jinja2==3.1.6
+MarkupSafe==3.0.2
+itsdangerous==2.2.0
+click==8.1.8
+
+# Base de datos
+pymongo==4.10.1
+python-dotenv==1.0.1
+
+# Autenticación y seguridad
+bcrypt==4.1.2
+cryptography==43.0.3
+passlib==1.7.4
+pyotp==2.9.0
+WTForms==3.2.1
+
+# AWS S3
+boto3==1.34.34
+botocore==1.34.34
+s3transfer==0.10.4
+
+# Google Drive API
+google-api-python-client==2.171.0
+google-auth==2.40.3
+google-auth-oauthlib==1.2.2
+google-auth-httplib2==0.2.0
+PyDrive2==1.21.3
+
+# Utilidades de sistema
+psutil==7.0.0
+watchdog==6.0.0
+python-dateutil==2.9.0.post0
+pytz==2025.2
+tzlocal==5.3.1
+
+# Procesamiento de datos
+pandas==2.0.3
+numpy==1.24.4
+openpyxl==3.1.2
+Pillow==10.4.0
+
+# PyWebView para aplicación macOS
+pywebview==5.4
+
+# PyInstaller para empaquetado
+pyinstaller==6.15.0
+pyinstaller-hooks-contrib==2025.8
+
+# Utilidades adicionales
+requests==2.32.4
+urllib3==2.0.7
+certifi==2024.2.2
+charset-normalizer==3.4.1
+idna==3.10
+
+# Validación y configuración
+pydantic==2.11.7
+pydantic-settings==2.10.0
+pydantic_core==2.33.2
+
+# Utilidades de desarrollo (opcionales)
+black==24.8.0
+pylint==3.3.7
+pytest==8.2.0
+
+# Dependencias específicas de macOS
+pyobjc-core==11.1
+pyobjc-framework-Cocoa==11.1
+pyobjc-framework-Quartz==11.1
+pyobjc-framework-Security==11.1
+pyobjc-framework-WebKit==11.1
+
+# Utilidades de logging y monitoreo
+rich==13.9.4
+tqdm==4.67.1
+
+# Utilidades de archivos y directorios
+pathspec==0.12.1
+platformdirs==4.3.6
+appdirs==1.4.4
+
+# Utilidades de red y HTTP
+httpx==0.28.1
+httpcore==1.0.9
+h11==0.16.0
+sniffio==1.3.1
+
+# Utilidades de tiempo y fechas
+DateTime==5.5
+tzdata==2025.2
+
+# Utilidades de empaquetado
+packaging==24.2
+setuptools>=65.0.0
+wheel>=0.38.0
