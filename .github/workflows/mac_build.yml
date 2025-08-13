@@ -63,17 +63,29 @@ jobs:
           EOF
           echo "✅ Archivos de ejemplo creados"
 
-      - name: Clean previous builds
-        run: |
-          echo "🧹 Limpiando builds anteriores..."
-          rm -rf dist/ build/ || true
-          echo "✅ Limpieza completada"
+                  - name: Clean previous builds
+              run: |
+                echo "🧹 Limpiando builds anteriores..."
+                rm -rf dist/ build/ || true
+                find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+                find . -name "*.pyc" -delete 2>/dev/null || true
+                find . -name ".mypy_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+                find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+                echo "✅ Limpieza completa de cachés completada"
 
-      - name: Verify spec file
-        run: |
-          echo "🔍 Verificando archivo .spec..."
-          cat EDF_CatalogoDeTablas.spec
-          echo "✅ Verificación completada"
+                  - name: Verify spec file
+              run: |
+                echo "🔍 Verificando archivo .spec..."
+                cat EDF_CatalogoDeTablas.spec
+                echo "✅ Verificación completada"
+                
+            - name: Verify requirements file
+              run: |
+                echo "🔍 Verificando archivo requirements..."
+                ls -la requirements_python310.txt
+                echo "📄 Contenido del archivo:"
+                head -10 requirements_python310.txt
+                echo "✅ Verificación de requirements completada"
 
       - name: Build App
         run: |
