@@ -17,7 +17,6 @@ a = Analysis(
         ('gunicorn.conf.py', '.'),
         ('pyproject.toml', '.'),
         ('setup.cfg', '.'),
-        ('mypy.ini', '.'),
         ('pyrightconfig.json', '.'),
         ('cspell.json', '.'),
         ('.env', '.'),
