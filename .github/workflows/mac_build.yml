@@ -63,6 +63,18 @@ jobs:
           EOF
           echo "✅ Archivos de ejemplo creados"
 
+      - name: Clean previous builds
+        run: |
+          echo "🧹 Limpiando builds anteriores..."
+          rm -rf dist/ build/ || true
+          echo "✅ Limpieza completada"
+
+      - name: Verify spec file
+        run: |
+          echo "🔍 Verificando archivo .spec..."
+          cat EDF_CatalogoDeTablas.spec
+          echo "✅ Verificación completada"
+
       - name: Build App
         run: |
           echo "Iniciando construcción de la aplicación..."
