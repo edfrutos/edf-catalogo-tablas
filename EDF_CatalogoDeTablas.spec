@@ -9,7 +9,7 @@ a = Analysis(
     datas=[
         ('app', 'app'),
         ('tools/db_utils', 'tools/db_utils'),
-        ('requirements_python38.txt', '.'),
+        ('requirements_python310.txt', '.'),
         ('config.py', '.'),
         ('main_app.py', '.'),
         ('wsgi.py', '.'),
