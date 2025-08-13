@@ -9,6 +9,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('app', 'app'),
+        ('requirements_python310.txt', 'requirements.txt'),
         ('config.py', '.'),
         ('main_app.py', '.'),
         ('wsgi.py', '.'),
