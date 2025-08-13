@@ -1,4 +1,4 @@
-name: Build macOS App
+name: Build macOS App v2.0
 
 on:
   push:
@@ -13,6 +13,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Verify workflow version
+        run: |
+          echo "🔍 Verificando versión del workflow..."
+          echo "Workflow: Build macOS App v2.0"
+          echo "Fecha: $(date)"
+          echo "Commit: ${{ github.sha }}"
+          echo "✅ Verificación completada"
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
