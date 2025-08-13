@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
-# Updated for Python 3.10 - GitHub Actions Build
+# EDF_CatalogoDeTablas.spec - Configuración para PyInstaller
+# Versión: 1.0.0 - Python 3.10 - macOS
 
 block_cipher = None
 
