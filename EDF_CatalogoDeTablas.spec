@@ -18,7 +18,6 @@ a = Analysis(
         ('gunicorn.conf.py', '.'),
         ('pyproject.toml', '.'),
         ('setup.cfg', '.'),
-        ('cspell.json', '.'),
         ('app_data', 'app_data'),
     ],
     hiddenimports=[
