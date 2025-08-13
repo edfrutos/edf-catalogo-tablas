@@ -1,0 +1,38 @@
+# Configuración para Cursor IDE
+
+# Entorno virtual y configuración de Python
+
+## Entorno Virtual
+
+- El entorno virtual está en `.venv/`
+- Usar Python 3.8 del entorno virtual
+- Ruta del intérprete: `./.venv/bin/python`
+
+## Configuración del Proyecto
+
+- Directorio raíz: `/var/www/vhosts/edefrutos2025.xyz/httpdocs`
+- Servidor Flask con Gunicorn
+- Base de datos MongoDB
+- Scripts de mantenimiento y utilidades
+
+## Estructura de Directorios
+
+- `app/` - Aplicación Flask principal
+- `tools/` - Scripts de utilidades
+- `scripts/` - Scripts de mantenimiento
+- `tests/` - Pruebas unitarias
+- `.venv/` - Entorno virtual
+
+## Comandos Importantes
+
+- Ejecutar servidor: `systemctl restart edefrutos2025`
+- Ejecutar scripts: `python3 tools/script_runner.py <script>`
+- Activar entorno: `source .venv/bin/activate`
+
+## Configuración de Python
+
+- Usar Python 3.8
+- Entorno virtual: `.venv`
+- Linting: flake8
+- Formateo: black
+- Testing: pytest

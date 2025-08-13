@@ -1,0 +1,18 @@
+[0;1;31m●[0m edefrutos2025.service - Gunicorn instance to serve edefrutos2025
+     Loaded: loaded (/etc/systemd/system/edefrutos2025.service; enabled; vendor preset: enabled)
+    Drop-In: /etc/systemd/system/edefrutos2025.service.d
+             └─limits.conf, memory-limits.conf, override.conf
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Mon 2025-08-11 18:01:40 CEST; 15s ago
+    Process: 1270829 ExecStart=/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/bin/gunicorn --config gunicorn_config.py wsgi:app [0;1;31m(code=exited, status=1/FAILURE)[0m
+   Main PID: 1270829 (code=exited, status=1/FAILURE)
+
+Aug 11 18:01:39 edf-familiaonline.208-76-221-20.plesk.page gunicorn[1270829]: DEBUG: create_app ejecutado
+Aug 11 18:01:39 edf-familiaonline.208-76-221-20.plesk.page gunicorn[1270829]: ANTES DE BLUEPRINTS Database(MongoClient(host=['cluster0-shard-00-00.pmokh.mongodb.net:27017', 'cluster0-shard-00-01.pmokh.mongodb.net:27017', 'cluster0-shard-00-02.pmokh.mongodb.net:27017'], document_class=dict, tz_aware=False, connect=True, retrywrites=True, w='majority', authsource='admin', replicaset='atlas-xw8tdi-shard-0', tls=True, serverselectiontimeoutms=5000, connecttimeoutms=5000, sockettimeoutms=30000, retryreads=True, maxpoolsize=10, minpoolsize=1, maxidletimems=30000, waitqueuetimeoutms=5000, appname='edefrutos2025_app', tlscafile='/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/certifi/cacert.pem'), 'app_catalogojoyero')
+Aug 11 18:01:39 edf-familiaonline.208-76-221-20.plesk.page gunicorn[1270829]: RUTAS DE MANTENIMIENTO Y API REGISTRADAS EXITOSAMENTE
+Aug 11 18:01:39 edf-familiaonline.208-76-221-20.plesk.page gunicorn[1270829]: DESPUÉS DE BLUEPRINTS Database(MongoClient(host=['cluster0-shard-00-00.pmokh.mongodb.net:27017', 'cluster0-shard-00-01.pmokh.mongodb.net:27017', 'cluster0-shard-00-02.pmokh.mongodb.net:27017'], document_class=dict, tz_aware=False, connect=True, retrywrites=True, w='majority', authsource='admin', replicaset='atlas-xw8tdi-shard-0', tls=True, serverselectiontimeoutms=5000, connecttimeoutms=5000, sockettimeoutms=30000, retryreads=True, maxpoolsize=10, minpoolsize=1, maxidletimems=30000, waitqueuetimeoutms=5000, appname='edefrutos2025_app', tlscafile='/var/www/vhosts/edefrutos2025.xyz/httpdocs/.venv/lib/python3.8/site-packages/certifi/cacert.pem'), 'app_catalogojoyero')
+Aug 11 18:01:40 edf-familiaonline.208-76-221-20.plesk.page systemd[1]: [0;1;39m[0;1;31m[0;1;39medefrutos2025.service: Main process exited, code=exited, status=1/FAILURE[0m
+Aug 11 18:01:40 edf-familiaonline.208-76-221-20.plesk.page systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185medefrutos2025.service: Failed with result 'exit-code'.[0m
+Aug 11 18:01:40 edf-familiaonline.208-76-221-20.plesk.page systemd[1]: Stopped Gunicorn instance to serve edefrutos2025.
+Aug 11 18:01:40 edf-familiaonline.208-76-221-20.plesk.page systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185medefrutos2025.service: Start request repeated too quickly.[0m
+Aug 11 18:01:40 edf-familiaonline.208-76-221-20.plesk.page systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185medefrutos2025.service: Failed with result 'exit-code'.[0m
+Aug 11 18:01:40 edf-familiaonline.208-76-221-20.plesk.page systemd[1]: [0;1;31m[0;1;39m[0;1;31mFailed to start Gunicorn instance to serve edefrutos2025.[0m

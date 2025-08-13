@@ -220,6 +220,32 @@ app/static/uploads/
 app/static/imagenes_subidas/
 tools/image_utils/app/static/uploads/
 
+# Archivos de testeo y debug
+test_*.py
+debug_*.py
+*_test.*
+*_debug.*
+test_*.js
+test_*.html
+test_*.json
+modal_test.html
+tests_blueprint.py
+
+# Archivos de credenciales y tokens adicionales
+tools/db_utils/credentials.json
+tools/db_utils/token.pickle
+tools/maintenance/mi_config.json
+tools/production/db_utils/credentials.json
+tools/production/db_utils/token.json
+tools/production/db_utils/token.pickle
+cookies.txt
+credentials_all_users.txt
+
+# Archivos de distribución grandes
+*.dmg
+dist/
+build/
+
 # Logs adicionales
 scripts/logs/
 scripts/maintenance/logs/
