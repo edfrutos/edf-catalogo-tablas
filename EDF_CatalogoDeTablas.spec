@@ -1,4 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
+# Updated for Python 3.10 - GitHub Actions Build
 
 block_cipher = None
 
@@ -8,7 +9,6 @@ a = Analysis(
     binaries=[],
     datas=[
         ('app', 'app'),
-        ('requirements_python310.txt', '.'),
         ('config.py', '.'),
         ('main_app.py', '.'),
         ('wsgi.py', '.'),
