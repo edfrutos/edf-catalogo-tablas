@@ -25,7 +25,7 @@
         {% set imgs = row["images"] if row is mapping and "images" in row else None %}
         {% if imgs %}
           {% for img in imgs %}
-            <img src="{{ url_for('static', filename='uploads/' ~ img) }}" alt="img" class="catalog-img img-thumbnail" style="height:60px;margin-right:4px;cursor:pointer;">
+            <img src="/imagenes_subidas/{{ img }}" alt="img" class="catalog-img img-thumbnail" style="height:60px;margin-right:4px;cursor:pointer;">
           {% endfor %}
         {% else %}-{% endif %}
       </td>

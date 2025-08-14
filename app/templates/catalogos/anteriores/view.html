@@ -42,7 +42,7 @@
   <div class="row">
     {% for imagen in catalog.imagenes %}
       <div class="col-md-3 mb-3">
-        <img src="{{ url_for('static', filename='uploads/' ~ imagen) }}" class="img-fluid" alt="Imagen {{ loop.index }}">
+        <img src="/imagenes_subidas/{{ imagen }}" class="img-fluid" alt="Imagen {{ loop.index }}">
       </div>
     {% endfor %}
   </div>

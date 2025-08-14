@@ -18,7 +18,7 @@
     <div class="d-flex flex-wrap gap-3 align-items-center">
       {% for img in row.images %}
         <div class="position-relative">
-          <img src="{{ url_for('static', filename='uploads/' ~ img) }}" alt="img" class="img-thumbnail" style="height:100px;">
+          <img src="/imagenes_subidas/{{ img }}" alt="img" class="img-thumbnail" style="height:100px;">
           <input type="checkbox" name="delete_images" value="{{ img }}" class="position-absolute top-0 end-0 m-1" style="transform: scale(1.5);">
           <label class="d-block text-center small mt-1">Eliminar</label>
         </div>

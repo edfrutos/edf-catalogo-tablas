@@ -89,7 +89,7 @@
 
                       {% else %}
                       <img
-                        src="{{ url_for('static', filename='uploads/' ~ img) }}"
+                        src="/imagenes_subidas/{{ img }}"
                         alt="Imagen {{ loop.index }}"
                         class="catalog-img img-thumbnail"
                         style="
@@ -126,7 +126,7 @@
 
                       {% else %}
                       <img
-                        src="{{ url_for('static', filename='uploads/' ~ img) }}"
+                        src="/imagenes_subidas/{{ img }}"
                         alt="Imagen {{ loop.index }}"
                         class="catalog-img img-thumbnail"
                         style="

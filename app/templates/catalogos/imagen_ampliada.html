@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Vista Ampliada</h2>
 <div class="text-center">
-  <img src="{{ url_for('static', filename='uploads/' + nombre_archivo) }}"
+  <img src="/imagenes_subidas/{{ nombre_archivo }}"
        class="img-fluid" alt="{{ nombre_archivo }}">
 </div>
 <a href="{{ request.referrer or url_for('catalogos.listar') }}" class="btn btn-secondary mt-3">Volver</a>

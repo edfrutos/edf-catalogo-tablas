@@ -7,7 +7,7 @@
   {% for imagen in imagenes %}
     <div class="col-md-4 mb-4 text-center">
       <a href="{{ url_for('catalogos.imagen_ampliada', nombre_archivo=imagen.nombre) }}" target="_blank">
-        <img src="{{ url_for('static', filename='uploads/' + imagen.nombre) }}"
+        <img src="/imagenes_subidas/{{ imagen.nombre }}"
              alt="{{ imagen.nombre }}"
              class="img-thumbnail" style="max-height: 150px;">
       </a>

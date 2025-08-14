@@ -8,10 +8,14 @@ from logging.handlers import RotatingFileHandler
 
 from flask import Flask, g, current_app
 from flask_login import LoginManager
-from flask_mail import Mail  # noqa: F401  # Usado condicionalmente en diferentes entornos
+from flask_mail import (
+    Mail,
+)  # noqa: F401  # Usado condicionalmente en diferentes entornos
 from dotenv import load_dotenv
 from pymongo import MongoClient  # noqa: F401  # Usado en algunos entornos específicos
-from werkzeug.exceptions import HTTPException  # noqa: F401  # Para manejo de errores en producción
+from werkzeug.exceptions import (
+    HTTPException,
+)  # noqa: F401  # Para manejo de errores en producción
 
 from config import Config  # noqa: F401  # Usado condicionalmente según entorno
 from app.logging_config import setup_logging  # noqa: F401  # Usado en otros módulos
@@ -20,6 +24,7 @@ from app.logging_config import setup_logging  # noqa: F401  # Usado en otros mó
 from .routes.main_routes import main_bp
 from .routes.admin_routes import admin_bp, admin_logs_bp
 from .routes.auth_routes import auth_bp
+
 # maintenance_bp se registra a través de register_maintenance_routes
 from .routes.catalogs_routes import catalogs_bp
 from .routes.catalog_images_routes import image_bp
@@ -67,6 +72,9 @@ def create_app(testing=False):
         static_folder=os.path.join(os.path.dirname(__file__), "static"),
         static_url_path="/static",
     )
+
+    # Ruta obsoleta eliminada - ahora usamos /imagenes_subidas/ con fallback S3 -> Local
+
     if testing:
         app.config["TESTING"] = True
         app.config["WTF_CSRF_ENABLED"] = False  # Si usas Flask-WTF
@@ -76,7 +84,7 @@ def create_app(testing=False):
 
     # Cargar configuración unificada desde config.py
     app.config.from_object("config.Config")
-    
+
     # Asegurar que el directorio de sesiones existe
     session_dir = app.config.get("SESSION_FILE_DIR")
     if session_dir:
@@ -156,7 +164,13 @@ def create_app(testing=False):
 
     # Configurar logging unificado
     from app.logging_unified import setup_unified_logging
+
     setup_unified_logging(app)
+
+    # Inicializar middleware de seguridad
+    from app.security_middleware import security_middleware
+
+    security_middleware.init_app(app)
 
     # Registrar blueprints principales primero
     blueprints = [
@@ -168,13 +182,22 @@ def create_app(testing=False):
         (errors_bp, ""),
     ]
 
+    # Registrar blueprint de API
+    try:
+        from app.routes.api_routes import api_bp
+
+        app.register_blueprint(api_bp)
+        app.logger.info("Blueprint de API registrado correctamente")
+    except Exception as e:
+        app.logger.error(f"Error registrando blueprint de API: {str(e)}")
+
     # Registrar blueprints de administración después
     # Registro de blueprints de administración (sin duplicados)
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(admin_logs_bp, url_prefix="/admin")
     app.register_blueprint(scripts_bp)
     app.register_blueprint(scripts_tools_bp)  # Usa su url_prefix propio
-    
+
     # Registrar blueprints principales
     for bp, prefix in blueprints:
         try:
@@ -183,10 +206,11 @@ def create_app(testing=False):
             app.logger.error(f"Error registrando blueprint {bp.name}: {str(e)}")
     # Registrar blueprint de plantilla de desarrollo SIEMPRE
     app.register_blueprint(bp_dev_template)
-    
+
     # Registrar blueprint de testing DESPUÉS de bp_dev_template
     try:
         from app.routes.testing_routes import testing_bp
+
         app.register_blueprint(testing_bp)
         app.logger.info("Blueprint de testing registrado correctamente")
     except Exception as e:
@@ -238,6 +262,7 @@ def create_app(testing=False):
     # Registrar blueprints de mantenimiento usando la función especializada
     try:
         from app.routes.maintenance_routes import register_maintenance_routes
+
         register_maintenance_routes(app)
         app.logger.info("Blueprints de mantenimiento y API registrados correctamente")
     except Exception as e:
@@ -277,14 +302,16 @@ def create_app(testing=False):
         from app import monitoring
 
         # Usar configuración de app en lugar de atributos directos
-        app.config['MONITORING_THREAD'] = monitoring.init_app(app, client)
-        app.config['MONITORING_ENABLED'] = True
+        app.config["MONITORING_THREAD"] = monitoring.init_app(app, client)
+        app.config["MONITORING_ENABLED"] = True
         app.logger.info("Sistema de monitoreo inicializado correctamente")
     except Exception as e:
         # Forzar habilitación del monitoreo incluso si hay errores
-        app.config['MONITORING_ENABLED'] = True
+        app.config["MONITORING_ENABLED"] = True
         app.logger.warning(f"Error al inicializar el sistema de monitoreo: {str(e)}")
-        app.logger.info("Monitoreo habilitado manualmente para permitir funcionalidad básica")
+        app.logger.info(
+            "Monitoreo habilitado manualmente para permitir funcionalidad básica"
+        )
 
     # Ruta de test de sesión
     @app.route("/test_session")

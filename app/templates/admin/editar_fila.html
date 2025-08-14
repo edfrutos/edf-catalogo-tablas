@@ -29,7 +29,7 @@
                                 {% for img in row.get('images', []) %}
                                 <div class="col-md-4 mb-3">
                                     <div class="card">
-                                        <img src="{{ url_for('static', filename='uploads/' + img) }}" class="card-img-top" alt="Imagen del producto">
+                                        <img src="/imagenes_subidas/{{ img }}" class="card-img-top" alt="Imagen del producto">
                                         <div class="card-body text-center">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="delete_images" value="{{ img }}" id="delete_{{ loop.index }}">

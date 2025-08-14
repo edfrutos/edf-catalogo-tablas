@@ -26,8 +26,8 @@
                         <img src="{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'">
                     </a>
                     {% else %}
-                    <a href="#" onclick="mostrarImagenModal('{{ url_for('static', filename='uploads/' ~ img) }}'); return false;">
-                        <img src="{{ url_for('static', filename='uploads/' ~ img) }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'">
+                    <a href="#" onclick="mostrarImagenModal('/imagenes_subidas/{{ img }}'); return false;">
+                        <img src="/imagenes_subidas/{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'">
                     </a>
                     {% endif %}
                     <div class="mt-1 text-center">
@@ -108,7 +108,7 @@ function confirmarEliminarImagen(imagen, indice) {
   if (imagen.startsWith('http')) {
     rutaImagen = imagen;
   } else {
-    rutaImagen = "{{ url_for('static', filename='uploads/') }}" + imagen;
+    rutaImagen = "/imagenes_subidas/" + imagen;
   }
   document.getElementById('imagenAEliminar').src = rutaImagen;
   
