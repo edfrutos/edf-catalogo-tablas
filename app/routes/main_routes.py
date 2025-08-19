@@ -205,10 +205,20 @@ def dashboard_user():
                 or ""
             )
             t["name"] = t.get("name", "")
-            # 🖼️ Miniatura: buscar primera imagen disponible en cualquier fila
+            # 🖼️ Miniatura: priorizar miniatura personalizada, luego buscar automáticamente
             current_app.logger.info(
                 f"[DEBUG_MINIATURA] Procesando tabla: {t.get('name', 'Sin nombre')}"
             )
+
+            # 1. Verificar si tiene miniatura personalizada configurada
+            if t.get("miniatura") and t["miniatura"].strip():
+                current_app.logger.info(
+                    f"[MINIATURA_CUSTOM] Usando miniatura personalizada: {t['miniatura']}"
+                )
+                # Ya está configurada, no hacer nada más
+                continue
+
+            # 2. Si no tiene miniatura personalizada, buscar automáticamente
             t["miniatura"] = ""
 
             # Buscar en todas las filas hasta encontrar una imagen
@@ -1698,9 +1708,17 @@ def editar_tabla(id):
             return redirect(url_for("main.dashboard_user"))
 
         if request.method == "POST":
+            current_app.logger.info("🔥🔥🔥 [EDITAR_TABLA] POST recibido")
+            current_app.logger.info(f"[EDITAR_TABLA] Form data: {dict(request.form)}")
+
             # Obtener los datos del formulario
             new_name = request.form.get("name", "").strip()
             headers_str = request.form.get("headers", "").strip()
+            nueva_miniatura = request.form.get("miniatura", "").strip()
+
+            current_app.logger.info(
+                f"[EDITAR_TABLA] Datos procesados: name='{new_name}', headers='{headers_str}', miniatura='{nueva_miniatura}'"
+            )
 
             # Validar los datos
             if not new_name:
@@ -1719,6 +1737,33 @@ def editar_tabla(id):
 
             # Actualizar la tabla en la base de datos
             update_data = {"name": new_name, "headers": new_headers}
+
+            # Procesar la miniatura personalizada
+            if nueva_miniatura:
+                update_data["miniatura"] = nueva_miniatura
+                current_app.logger.info(
+                    f"[MINIATURA_CUSTOM] Configurada miniatura personalizada: {nueva_miniatura}"
+                )
+            else:
+                # Si se envía vacío, eliminar el campo de miniatura personalizada
+                # (se usará la automática en dashboard_user)
+                update_data["miniatura"] = ""
+                current_app.logger.info(
+                    "[MINIATURA_CUSTOM] Miniatura personalizada eliminada, se usará automática"
+                )
+
+            # 🔥 PRIMERO: Siempre actualizar nombre, headers y miniatura
+            basic_update = {
+                "name": new_name,
+                "headers": new_headers,
+                "miniatura": nueva_miniatura if nueva_miniatura else "",
+            }
+            g.spreadsheets_collection.update_one(
+                {"_id": ObjectId(id)}, {"$set": basic_update}
+            )
+            current_app.logger.info(
+                f"[UPDATE_BASIC] Actualizados: name={new_name}, headers={new_headers}, miniatura={nueva_miniatura}"
+            )
 
             # Si los encabezados cambiaron, actualizar los datos
             if set(old_headers) != set(new_headers):
@@ -1821,8 +1866,13 @@ def editar_tabla(id):
                     {"_id": ObjectId(id)}, {"$set": update_data}
                 )
 
-                flash("Tabla actualizada correctamente.", "success")
-                return redirect(url_for("main.ver_tabla", table_id=id))
+                # Los headers cambiaron, se actualizó todo
+                pass
+
+            # 🎯 SIEMPRE redirigir después de actualizar (con o sin cambio de headers)
+            flash("Tabla actualizada correctamente.", "success")
+            current_app.logger.info(f"[EDITAR_TABLA] ✅ Redirigiendo a dashboard_user")
+            return redirect(url_for("main.dashboard_user"))
 
         # GET: Mostrar formulario de edición
         return render_template("editar_tabla.html", table=table)
