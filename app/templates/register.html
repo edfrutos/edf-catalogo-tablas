@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>Crear Cuenta</h2>
-<form method="POST" action="{{ url_for('auth.register') }}">
+<form method="POST" action="/register">
   <div class="mb-3">
     <label for="username" class="form-label">Usuario</label>
     <input type="text" class="form-control" name="nombre" required>

@@ -45,7 +45,7 @@
                             <td>
                                 <a href="{{ url_for('main.ver_tabla', table_id=reg._id) }}" class="btn btn-primary btn-sm">Ver</a>
                                 {% if session.get('role') == 'admin' or reg.owner == session.get('username') %}
-                                    <a href="{{ url_for('main.editar', id=reg._id) }}" class="btn btn-warning btn-sm">Editar</a>
+                                    <a href="{{ url_for('main.editar_tabla', id=reg._id) }}" class="btn btn-warning btn-sm">Editar</a>
                                     <form action="{{ url_for('main.delete_table', table_id=reg._id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas eliminar este elemento?');">
                                         <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
                                     </form>

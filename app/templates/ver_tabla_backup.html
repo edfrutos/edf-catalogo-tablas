@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+{% block title %}Ver Tabla{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .image-container {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        overflow: hidden;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+    
+    .catalog-image {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .modal-image-container {
+        position: relative;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #imagenModalSrc {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        max-width: 100%;
+        max-height: 70vh;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+    
+    .modal-xl {
+        max-width: 95vw;
+    }
+    
+    .modal-image-container {
+        max-height: 75vh;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Tabla: {{ table.name }}</h2>
+  <a href="{{ url_for('main.dashboard_user') }}" class="btn btn-secondary mb-3">&larr; Volver al panel</a>
+  <table class="table table-bordered mb-4">
+    <tr><th>Nombre</th><td>{{ table.name }}</td></tr>
+    <tr><th>Fecha de creación</th><td>{% if table.created_at %}{% if table.created_at is string %}{{ table.created_at }}{% else %}{{ table.created_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}{% else %}—{% endif %}</td></tr>
+    <tr><th>Propietario</th><td>{{ table.owner if table.owner else (table.owner_name if table.owner_name else (table.created_by if table.created_by else 'Usuario desconocido')) }}</td></tr>
+    <tr><th>Encabezados</th><td>{{ table.headers|join(', ') if table.headers else '—' }}</td></tr>
+    <tr><th>Número de filas</th><td>{{ table.data|length if table.data else 0 }}</td></tr>
+  </table>
+  {% if session.username == table.owner %}
+    <a href="{{ url_for('main.editar_tabla', id=table._id) }}" class="btn btn-success mb-3"><i class="bi bi-pencil"></i> Editar tabla</a>
+  {% endif %}
+  {% if session.role == 'admin' or session.username == table.owner %}
+    <a href="{{ url_for('main.agregar_fila', tabla_id=table._id|string) }}" class="btn btn-success mb-3">
+      <i class="bi bi-plus"></i> Agregar Fila
+    </a>
+  {% endif %}
+  <h4>Filas de la tabla</h4>
+  {% if table.data and table.headers %}
+    <div class="mb-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm" id="tablaFilas">
+        <thead>
+          <tr>
+            {% for header in table.headers %}
+              <th class="sortable" style="cursor: pointer; user-select: none;" data-column="{{ loop.index0 }}" title="Haz clic para ordenar">
+                {{ header }} 
+                <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5;"></i>
+              </th>
+            {% endfor %}
+            <th>Imágenes</th>
+            {% if session.role == 'admin' or session.username == table.owner %}
+              <th>Acciones</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in table.data %}
+            <tr>
+              {% for header in table.headers %}
+                <td>{{ row[header] if row[header] is defined and row[header] is not none else '' }}</td>
+              {% endfor %}
+              <td>
+                {% if row.imagen_urls and row.imagen_urls|length > 0 %}
+                  <div class="d-flex flex-wrap gap-2">
+                    {% for img_url in row.imagen_urls %}
+                      <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;" class="position-relative">
+                        <div class="image-container" data-img-url="{{ img_url }}">
+                          <div class="spinner-border text-primary spinner-border-sm position-absolute top-50 start-50 translate-middle" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                          </div>
+                          <img src="{{ img_url }}" alt="Imagen" class="img-thumbnail catalog-image" 
+                               style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
+                               onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                               onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                               loading="lazy">
+                        </div>
+                      </a>
+                    {% endfor %}
+                    <small class="text-muted align-self-center ms-2">({{ row.imagen_urls|length }} imágenes)</small>
+                  </div>
+                {% else %}
+                  <span class="text-muted">Sin imágenes</span>
+                {% endif %}
+              </td>
+              {% if session.role == 'admin' or session.username == table.owner %}
+                <td>
+                  <a href="{{ url_for('main.editar_fila', tabla_id=table._id, fila_index=loop.index0) }}" class="btn btn-sm btn-warning me-1">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                  <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=table._id, row_index=loop.index0) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                    <button type="submit" class="btn btn-sm btn-danger">
+                      <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                  </form>
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav>
+      <ul class="pagination justify-content-center" id="paginacionTabla"></ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-info">Esta tabla no tiene filas aún.</div>
+  {% endif %}
+</div>
+
+<!-- Modal para visualizar imágenes -->
+<div class="modal fade" id="imagenModal" tabindex="-1" aria-labelledby="imagenModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl image-modal modal-dialog-centered">
+    <div class="modal-content image-modal-content">
+      <div class="modal-header image-modal-header">
+        <h5 class="modal-title" id="imagenModalLabel">
+          <i class="bi bi-image"></i> Visualizar Imagen
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body image-modal-body text-center">
+        <div class="modal-image-container">
+          <div class="spinner-border text-primary image-loading-spinner" role="status">
+            <span class="visually-hidden">Cargando imagen...</span>
+          </div>
+          <img id="imagenModalSrc" src="" alt="Imagen del catálogo" class="image-loading"
+               onload="this.classList.remove('image-loading'); this.classList.add('image-loaded'); this.previousElementSibling.style.display='none';"
+               onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'; this.classList.remove('image-loading'); this.classList.add('image-loaded'); this.previousElementSibling.style.display='none';">
+        </div>
+      </div>
+      <div class="modal-footer image-modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" onclick="downloadImage()">
+          <i class="bi bi-download"></i> Descargar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOMContentLoaded - Iniciando script de ver_tabla.html');
+    
+    const filas = Array.from(document.querySelectorAll('#tablaFilas tbody tr'));
+    console.log(`📊 Filas encontradas: ${filas.length}`);
+    
+    const filasPorPagina = 10;
+    let paginaActual = 1;
+    let ordenActual = { columna: -1, ascendente: true };
+
+function mostrarImagenModal(imagenUrl) {
+  // Restablecer el spinner y la opacidad antes de cargar la nueva imagen
+  const spinner = document.querySelector('#imagenModal .image-loading-spinner');
+  const modalImg = document.getElementById('imagenModalSrc');
+  
+  if (spinner) spinner.style.display = 'block';
+  if (modalImg) {
+    modalImg.classList.remove('image-loaded');
+    modalImg.classList.add('image-loading');
+    modalImg.src = imagenUrl;
+  }
+  
+  // Mostrar el modal
+  const modal = new bootstrap.Modal(document.getElementById('imagenModal'));
+  modal.show();
+}
+
+function downloadImage() {
+  const modalImg = document.getElementById('imagenModalSrc');
+  if (modalImg && modalImg.src) {
+    const link = document.createElement('a');
+    link.href = modalImg.src;
+    link.download = 'imagen_catalogo.jpg';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
+function mostrarPagina(pagina) {
+  const inicio = (pagina - 1) * filasPorPagina;
+  const fin = inicio + filasPorPagina;
+  filas.forEach((fila, i) => {
+    fila.style.display = (i >= inicio && i < fin) ? '' : 'none';
+  });
+  renderizarPaginacion(pagina);
+}
+
+function renderizarPaginacion(pagina) {
+  // Contar todas las filas, no solo las visibles después del filtro
+  const totalFilas = filas.length;
+  const totalPaginas = Math.ceil(totalFilas / filasPorPagina);
+  const paginacion = document.getElementById('paginacionTabla');
+  paginacion.innerHTML = '';
+  
+  console.log(`Renderizando paginación: ${totalFilas} filas totales, ${totalPaginas} páginas`);
+  
+  if (totalPaginas <= 1) {
+    console.log('Solo una página, ocultando paginación');
+    return;
+  }
+  
+  for (let i = 1; i <= totalPaginas; i++) {
+    const li = document.createElement('li');
+    li.className = 'page-item' + (i === pagina ? ' active' : '');
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.textContent = i;
+    a.href = '#';
+    a.onclick = function(e) { e.preventDefault(); paginaActual = i; mostrarPagina(i); };
+    li.appendChild(a);
+    paginacion.appendChild(li);
+  }
+}
+
+function filtrarFilas() {
+  const valor = document.getElementById('searchInput').value.toLowerCase();
+  console.log(`Filtrando por: "${valor}"`);
+  
+  if (!valor.trim()) {
+    // Si no hay filtro, mostrar todas las filas con paginación normal
+    console.log('Sin filtro, mostrando paginación normal');
+    paginaActual = 1;
+    mostrarPagina(1);
+    return;
+  }
+  
+  // Filtrar y mostrar solo las filas que coinciden
+  let filasVisibles = 0;
+  filas.forEach(fila => {
+    const texto = fila.textContent.toLowerCase();
+    const coincide = texto.includes(valor);
+    fila.style.display = coincide ? '' : 'none';
+    if (coincide) filasVisibles++;
+  });
+  
+  console.log(`${filasVisibles} filas coinciden con el filtro`);
+  
+  // Ocultar paginación cuando hay filtro activo
+  const paginacion = document.getElementById('paginacionTabla');
+  paginacion.innerHTML = '';
+}
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', filtrarFilas);
+
+    // Agregar event listeners a los headers para ordenamiento
+    const headers = document.querySelectorAll('.sortable');
+    console.log(`🎯 Headers encontrados para ordenamiento: ${headers.length}`);
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const columna = parseInt(this.dataset.column);
+            ordenarTabla(columna);
+        });
+    });
+    
+    // Verificar si hay mensaje de éxito de fila agregada
+    const alertSuccess = document.querySelector('.alert-success');
+    if (alertSuccess && alertSuccess.textContent.includes('Fila agregada correctamente')) {
+        // Ir a la última página para mostrar la fila recién agregada
+        const totalFilas = filas.length;
+        const ultimaPagina = Math.ceil(totalFilas / filasPorPagina);
+        paginaActual = ultimaPagina;
+        mostrarPagina(ultimaPagina);
+        console.log(`Fila agregada - Mostrando página ${ultimaPagina} de ${ultimaPagina} (${totalFilas} filas totales)`);
+        
+        // Resaltar temporalmente la última fila (la nueva)
+        setTimeout(() => {
+            const ultimaFila = filas[filas.length - 1];
+            if (ultimaFila) {
+                ultimaFila.style.backgroundColor = '#d4edda';
+                ultimaFila.style.transition = 'background-color 0.5s ease';
+                
+                // Quitar el resaltado después de 3 segundos
+                setTimeout(() => {
+                    ultimaFila.style.backgroundColor = '';
+                }, 3000);
+            }
+        }, 500);
+    } else {
+        console.log('💡 No hay mensaje de fila agregada, mostrando página 1');
+        mostrarPagina(1);
+    }
+
+// Función para ordenar la tabla
+function ordenarTabla(columna) {
+  console.log(`Ordenando por columna ${columna}`);
+  
+  // Si es la misma columna, cambiar dirección; si no, ascendente
+  if (ordenActual.columna === columna) {
+    ordenActual.ascendente = !ordenActual.ascendente;
+  } else {
+    ordenActual.columna = columna;
+    ordenActual.ascendente = true;
+  }
+  
+  // Obtener todas las filas
+  const filasArray = Array.from(filas);
+  
+  // Ordenar las filas
+  filasArray.sort((a, b) => {
+    const celdaA = a.cells[columna]?.textContent?.trim() || '';
+    const celdaB = b.cells[columna]?.textContent?.trim() || '';
+    
+    // Intentar comparar como números primero
+    const numA = parseFloat(celdaA);
+    const numB = parseFloat(celdaB);
+    
+    let resultado;
+    if (!isNaN(numA) && !isNaN(numB)) {
+      resultado = numA - numB;
+    } else {
+      resultado = celdaA.localeCompare(celdaB, 'es', { sensitivity: 'base' });
+    }
+    
+    return ordenActual.ascendente ? resultado : -resultado;
+  });
+  
+  // Reemplazar las filas en el DOM
+  const tbody = document.querySelector('#tablaFilas tbody');
+  filasArray.forEach(fila => tbody.appendChild(fila));
+  
+  // Actualizar las filas globales
+  filas.splice(0, filas.length, ...filasArray);
+  
+  // Actualizar iconos de ordenamiento
+  actualizarIconosOrdenamiento();
+  
+  // Mostrar la primera página
+  paginaActual = 1;
+  mostrarPagina(1);
+}
+
+// Función para actualizar los iconos de ordenamiento
+function actualizarIconosOrdenamiento() {
+  const headers = document.querySelectorAll('.sortable');
+  headers.forEach((header, index) => {
+    const icon = header.querySelector('.sort-icon');
+    if (index === ordenActual.columna) {
+      icon.className = ordenActual.ascendente ? 'bi bi-chevron-up sort-icon' : 'bi bi-chevron-down sort-icon';
+      icon.style.opacity = '1';
+    } else {
+      icon.className = 'bi bi-chevron-expand sort-icon';
+      icon.style.opacity = '0.5';
+    }
+  });
+}
+
+// Agregar event listeners a los headers
+document.addEventListener('DOMContentLoaded', function() {
+  const headers = document.querySelectorAll('.sortable');
+  headers.forEach(header => {
+    header.addEventListener('click', function() {
+      const columna = parseInt(this.dataset.column);
+      ordenarTabla(columna);
+    });
+  });
+});
+
+// Verificar si hay un mensaje de éxito de fila agregada y ir a la última página
+document.addEventListener('DOMContentLoaded', function() {
+    const alertSuccess = document.querySelector('.alert-success');
+    if (alertSuccess && alertSuccess.textContent.includes('Fila agregada correctamente')) {
+        // Ir a la última página para mostrar la fila recién agregada
+        const totalFilas = filas.length;
+        const ultimaPagina = Math.ceil(totalFilas / filasPorPagina);
+        paginaActual = ultimaPagina;
+        mostrarPagina(ultimaPagina);
+        console.log(`Fila agregada - Mostrando página ${ultimaPagina} de ${ultimaPagina} (${totalFilas} filas totales)`);
+        
+        // Resaltar temporalmente la última fila (la nueva)
+        setTimeout(() => {
+            const ultimaFila = filas[filas.length - 1];
+            if (ultimaFila) {
+                ultimaFila.style.backgroundColor = '#d4edda';
+                ultimaFila.style.transition = 'background-color 0.5s ease';
+                
+                // Quitar el resaltado después de 3 segundos
+                setTimeout(() => {
+                    ultimaFila.style.backgroundColor = '';
+                }, 3000);
+            }
+        }, 500);
+    } else {
+        console.log('💡 No hay mensaje de fila agregada, mostrando página 1');
+        mostrarPagina(1);
+    }
+});
+
+// Inicialización alternativa por si DOMContentLoaded ya pasó
+if (document.readyState === 'loading') {
+    console.log('📄 Documento cargando, esperando DOMContentLoaded');
+} else {
+    console.log('📄 Documento ya cargado, inicializando directamente');
+    // Si el documento ya está cargado, ejecutar inmediatamente
+    const headers = document.querySelectorAll('.sortable');
+    console.log(`🎯 Headers encontrados para ordenamiento: ${headers.length}`);
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const columna = parseInt(this.dataset.column);
+            ordenarTabla(columna);
+        });
+    });
+    
+    // Ejecutar renderizado inicial
+    console.log('🔄 Ejecutando renderizado inicial');
+    mostrarPagina(1);
+}
+
+// Función para manejar errores de carga de imágenes
+document.addEventListener('DOMContentLoaded', function() {
+    // Crear una imagen de error por defecto si no existe
+    const errorImgPath = '{{ url_for('static', filename='img/image-error.svg') }}';
+    fetch(errorImgPath)
+        .catch(() => {
+            // Si la imagen de error no existe, crear un canvas con un icono de error
+            const canvas = document.createElement('canvas');
+            canvas.width = 80;
+            canvas.height = 80;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#f8d7da';
+            ctx.fillRect(0, 0, 80, 80);
+            ctx.font = '40px Arial';
+            ctx.fillStyle = '#721c24';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('!', 40, 40);
+            
+            // Convertir el canvas a una imagen base64
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            // Reemplazar todas las referencias a la imagen de error
+            document.querySelectorAll('img[onerror]').forEach(img => {
+                img.onerror = function() {
+                    this.src = dataUrl;
+                    this.style.opacity = '1';
+                    const spinner = this.previousElementSibling;
+                    if (spinner) spinner.style.display = 'none';
+                };
+            });
+        });
+});
+</script>
+{% endblock %}

@@ -3,18 +3,18 @@
 import os
 import logging
 import secrets  # noqa: F401  # Puede ser usado en producción para claves
-from datetime import timedelta
+from datetime import timedelta  # noqa: F401
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask, g, current_app
+from flask import Flask, g, current_app  # noqa: F401
 from flask_login import LoginManager
 from flask_mail import (
-    Mail,
+    Mail,  # noqa: F401
 )  # noqa: F401  # Usado condicionalmente en diferentes entornos
 from dotenv import load_dotenv
 from pymongo import MongoClient  # noqa: F401  # Usado en algunos entornos específicos
 from werkzeug.exceptions import (
-    HTTPException,
+    HTTPException,  # noqa: F401
 )  # noqa: F401  # Para manejo de errores en producción
 
 from config import Config  # noqa: F401  # Usado condicionalmente según entorno
@@ -137,7 +137,7 @@ def create_app(testing=False):
     from app.models.user import User
 
     @login_manager.user_loader
-    def load_user(user_id: str | None):
+    def load_user(user_id: str):
         if user_id is None or user_id == "":
             return None
         # Usar g para la colección de usuarios
@@ -277,16 +277,15 @@ def create_app(testing=False):
     except Exception as e:
         app.logger.error(f"Error registrando blueprint de emergencia: {str(e)}")
 
-    # Registrar blueprints adicionales si existen
+    # Registrar blueprints adicionales si existen - TEMPORALMENTE DESHABILITADO
     try:
-        from app.routes.admin_routes import register_admin_blueprints
-
-        if not register_admin_blueprints(app):
-            app.logger.warning(
-                "No se pudieron registrar los blueprints de administración adicionales"
-            )
-    except ImportError as e:
-        app.logger.error(f"Error importando register_admin_blueprints: {str(e)}")
+        # from app.routes.admin_routes import register_admin_blueprints
+        # if not register_admin_blueprints(app):
+        app.logger.warning(
+            "Blueprints de administración adicionales deshabilitados temporalmente"
+        )
+    except Exception as e:
+        app.logger.error(f"Error con blueprints adicionales: {str(e)}")
 
     # Registrar blueprint de imágenes subidas para /imagenes_subidas/<filename>
     try:
@@ -336,8 +335,13 @@ def create_app(testing=False):
 
     print(f"MONGO_URI usado: {app.config.get('MONGO_URI')}")
 
-    # Crear directorio de logs si no existe
-    logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
+    # Crear directorio de logs si no existe - usar LOG_DIR si está configurado
+    if os.environ.get("LOG_DIR"):
+        logs_dir = os.environ["LOG_DIR"]
+    else:
+        logs_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "logs"
+        )
     os.makedirs(logs_dir, exist_ok=True)
     log_path = os.path.join(logs_dir, "flask_debug.log")
 
@@ -351,5 +355,14 @@ def create_app(testing=False):
     )
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
+
+    # TEMPORAL: Blueprint de debug para usuarios
+    try:
+        from app.routes.debug_user_access import debug_bp
+
+        app.register_blueprint(debug_bp)
+        app.logger.info("Blueprint de debug de usuario registrado (TEMPORAL)")
+    except Exception as e:
+        app.logger.error(f"Error registrando blueprint de debug: {str(e)}")
 
     return app

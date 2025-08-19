@@ -13,7 +13,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h1>Editar Registro #{{ registro["Número"] }}</h1>
             {% if session.usuario %}
-            <button onclick="window.location.href='/logout'" class="btn-secondary">
+            <button onclick="window.location.href='{{ url_for('auth.logout') }}'" class="btn-secondary">
                 Cerrar Sesión ({{ session.usuario }})
             </button>
             {% endif %}

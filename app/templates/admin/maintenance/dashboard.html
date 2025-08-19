@@ -574,13 +574,58 @@ Cargando registros...</pre
   charset="utf8"
   src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"
 ></script>
+<!-- Modal para opciones de backup -->
+<div class="modal fade" id="backupOptionsModal" tabindex="-1" aria-labelledby="backupOptionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="backupOptionsModalLabel">
+          <i class="bi bi-cloud-arrow-up"></i> Opciones de Backup
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card h-100 backup-option-card" style="cursor: pointer;" data-backup-type="local">
+              <div class="card-body text-center">
+                <i class="bi bi-folder2 text-success" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Backup Local</h5>
+                <p class="card-text">Crear una copia de seguridad en el servidor local.</p>
+                <button class="btn btn-success" id="createBackupLocalBtn">
+                  <i class="bi bi-folder-plus"></i> Crear Backup Local
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100 backup-option-card" style="cursor: pointer;" data-backup-type="drive">
+              <div class="card-body text-center">
+                <i class="bi bi-google text-primary" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Google Drive</h5>
+                <p class="card-text">Crear una copia de seguridad y subirla a Google Drive.</p>
+                <button class="btn btn-primary" id="createBackupDriveBtn">
+                  <i class="bi bi-cloud-upload"></i> Crear Backup en Drive
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script
   type="text/javascript"
   charset="utf8"
   src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"
 ></script>
 
-<script src="{{ url_for('static', filename='js/dashboard.js') }}?v=20250804_GOOGLE_DRIVE_FIX_{{ range(1000, 9999) | random }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}?v=GOOGLE_DRIVE_DETAILED_{{ range(10000, 99999) | random }}_INFO"></script>
 <script>
   // Cargar estado del sistema al inicializar la página
   $(document).ready(function () {
@@ -600,7 +645,63 @@ Cargando registros...</pre
     // Marcar como inicializado
     window.maintenanceDashboardInitialized = true;
     console.log("✅ Dashboard de mantenimiento inicializado");
+    
+    // Inicializar eventos del modal de backup DESPUÉS de un delay
+    setTimeout(function() {
+      if (typeof window.initializeBackupModalEvents === 'function') {
+        window.initializeBackupModalEvents();
+      } else {
+        console.log("🔧 initializeBackupModalEvents no disponible, usando función local");
+        initializeBackupModalEvents();
+      }
+    }, 1000); // Esperar 1 segundo para que todo se cargue
   });
+  
+  function initializeBackupModalEvents() {
+    console.log("🔧 [FINAL] Inicializando eventos del modal de backup...");
+    
+    // EVENTO PRINCIPAL: Botón "Realizar Backup" - FORZAR REEMPLAZO
+    $("#backupBtn").off("click").on("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log("✅ [FINAL] Click detectado en botón backup - abriendo modal de opciones");
+      console.log("🔍 Modal element exists:", $('#backupOptionsModal').length);
+      console.log("🔍 Bootstrap modal available:", typeof $.fn.modal);
+      
+      if ($('#backupOptionsModal').length === 0) {
+        console.error("❌ Modal #backupOptionsModal no encontrado en el DOM");
+        alert("Error: Modal de opciones no encontrado. Refrescar la página.");
+        return;
+      }
+      
+      try {
+        $('#backupOptionsModal').modal('show');
+        console.log("✅ Modal show() ejecutado");
+      } catch (error) {
+        console.error("❌ Error al mostrar modal:", error);
+        alert("Error al abrir modal: " + error.message);
+      }
+    });
+    
+    // Manejadores para los botones del modal de backup
+    $(document).on("click", "#createBackupLocalBtn", function () {
+      console.log("✅ Backup Local seleccionado");
+      $('#backupOptionsModal').modal('hide');
+      // Aquí iría la lógica para backup local
+      alert("Funcionalidad de Backup Local - En desarrollo");
+    });
+    
+    $(document).on("click", "#createBackupDriveBtn", function () {
+      console.log("✅ Backup Google Drive seleccionado");
+      $('#backupOptionsModal').modal('hide');
+      // Aquí iría la lógica para backup en Google Drive
+      alert("Funcionalidad de Backup Google Drive - En desarrollo");
+    });
+    
+    console.log("✅ [FINAL] Eventos del modal de backup inicializados");
+    console.log("🔍 Verificación final - Eventos del botón:", $._data($("#backupBtn")[0], "events"));
+  }
 
   function loadSystemStatus() {
     $.ajax({

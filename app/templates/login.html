@@ -2,7 +2,19 @@
 {% block content %}
 <h2>Iniciar Sesión</h2>
 
-<form method="POST" action="{{ url_for('auth.login') }}">
+<!-- Advertencia de actualización de seguridad -->
+<div class="alert alert-warning" role="alert">
+  <i class="bi bi-exclamation-triangle"></i> <strong>Actualización de Seguridad</strong><br>
+  <strong>Importante:</strong> Hemos actualizado el sistema de autenticación. Si tienes problemas para acceder, usa tu <strong>contraseña temporal</strong> con el formato: <code>tu_usuario123</code>
+</div>
+
+<!-- Información adicional para usuarios con contraseñas temporales -->
+<div class="alert alert-info" role="alert">
+  <i class="bi bi-info-circle"></i> <strong>¿Primera vez después de la actualización?</strong><br>
+  Después de iniciar sesión con tu contraseña temporal, serás redirigido automáticamente para crear una nueva contraseña personalizada y segura.
+</div>
+
+<form method="POST" action="/login">
   <div class="mb-3">
     <label for="email" class="form-label">Correo o Usuario</label>
     <input type="text" class="form-control" id="email" name="email" required>
@@ -16,7 +28,7 @@
   </div>
   <button type="submit" class="btn btn-success">Entrar</button>
   <div class="mt-2">
-    <a href="{{ url_for('auth.forgot_password') }}">¿Olvidaste tu contraseña?</a>
+    <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
   </div>
 </form>
 {% endblock %}

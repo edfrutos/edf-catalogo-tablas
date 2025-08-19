@@ -113,8 +113,8 @@ class BaseConfig:
     LOG_BACKUP_COUNT = 3  # Número de copias de logs a mantener
 
     # Sesión optimizada
-    SESSION_TYPE = "filesystem"  # Eliminado para forzar sesiones solo en cookie
-    SESSION_PERMANENT = False
+    SESSION_TYPE = "filesystem"  # Usar sesiones de archivos para mayor estabilidad
+    SESSION_PERMANENT = False  # Mantener False para evitar problemas de persistencia
     USE_S3 = os.getenv("USE_S3", "false").lower() in ["true", "1"]
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     UPLOAD_FOLDER = os.getenv(

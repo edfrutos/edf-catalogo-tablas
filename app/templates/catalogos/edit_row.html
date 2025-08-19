@@ -40,14 +40,28 @@
 
 <!-- Modal for image preview -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="imageModalLabel">Vista Previa de Imagen</h5>
+  <div class="modal-dialog modal-dialog-centered modal-lg image-modal">
+    <div class="modal-content image-modal-content">
+      <div class="modal-header image-modal-header">
+        <h5 class="modal-title" id="imageModalLabel">
+          <i class="bi bi-image"></i> Vista Previa de Imagen
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-0">
-        <img src="" id="modalImage" class="img-fluid w-100" alt="imagen">
+      <div class="modal-body image-modal-body">
+        <div class="modal-image-container">
+          <div class="spinner-border text-primary image-loading-spinner" role="status" style="display: none;">
+            <span class="visually-hidden">Cargando imagen...</span>
+          </div>
+          <img src="" id="modalImage" class="modal-image" alt="imagen del catálogo"
+               onload="this.classList.add('image-loaded'); this.previousElementSibling.style.display='none';"
+               onerror="this.src='/static/img/image-error.svg';">
+        </div>
+      </div>
+      <div class="modal-footer image-modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> Cerrar
+        </button>
       </div>
     </div>
   </div>
@@ -60,11 +74,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalImage = document.getElementById('modalImage');
     
     document.querySelectorAll('.img-thumbnail').forEach(img => {
-        img.style.cursor = 'pointer';
+        img.classList.add('clickable'); // Añadir clase para estilo hover
         img.addEventListener('click', function(e) {
             // No abrir el modal si se hizo clic en el checkbox
             if (e.target.tagName === 'INPUT') return;
+            
+            const spinner = document.querySelector('#imageModal .image-loading-spinner');
+            
+            // Mostrar spinner
+            if (spinner) spinner.style.display = 'block';
+            
+            // Limpiar imagen anterior
+            modalImage.classList.remove('image-loaded');
+            modalImage.classList.add('image-loading');
             modalImage.src = this.src;
+            
             modal.show();
         });
     });

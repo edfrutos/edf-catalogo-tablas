@@ -37,10 +37,38 @@ def health_check():
         # Verificar configuración de Google Drive
         drive_enabled = False
         try:
-            credentials_path = os.path.join(
-                current_app.root_path, "..", "tools", "db_utils", "credentials.json"
-            )
-            drive_enabled = os.path.exists(credentials_path)
+            # Para aplicaciones empaquetadas, buscar en múltiples ubicaciones
+            if getattr(sys, "frozen", False):
+                # Aplicación empaquetada - buscar en el bundle
+                app_dir = os.path.dirname(sys.executable)
+                credentials_paths = [
+                    os.path.join(
+                        app_dir,
+                        "..",
+                        "Frameworks",
+                        "tools",
+                        "db_utils",
+                        "credentials.json",
+                    ),
+                    os.path.join(app_dir, "tools", "db_utils", "credentials.json"),
+                ]
+            else:
+                # Aplicación normal
+                credentials_paths = [
+                    os.path.join(
+                        current_app.root_path,
+                        "..",
+                        "tools",
+                        "db_utils",
+                        "credentials.json",
+                    )
+                ]
+
+            # Verificar si existe en alguna de las ubicaciones
+            for credentials_path in credentials_paths:
+                if os.path.exists(credentials_path):
+                    drive_enabled = True
+                    break
         except Exception:
             pass
 

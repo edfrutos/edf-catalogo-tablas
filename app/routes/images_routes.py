@@ -14,13 +14,42 @@ from flask import current_app
 images_bp = Blueprint("uploaded_images", __name__)
 
 
+def serve_default_image():
+    """Sirve una imagen por defecto cuando no se encuentra el archivo solicitado"""
+    import os
+
+    current_app.logger.info("serve_default_image: Función llamada")
+
+    # Primero intentar imagen específica para 'no encontrado'
+    default_image_path = os.path.join(
+        current_app.config.get("UPLOAD_FOLDER", ""), "default_not_found.png"
+    )
+
+    # Si no existe, usar la imagen de perfil por defecto
+    if not os.path.exists(default_image_path):
+        default_image_path = os.path.join(
+            current_app.root_path, "static", "default_profile.png"
+        )
+
+    if os.path.exists(default_image_path):
+        return send_from_directory(
+            os.path.dirname(default_image_path), os.path.basename(default_image_path)
+        )
+
+    # Si no hay imagen por defecto disponible, devolver 404
+    current_app.logger.error(
+        "serve_default_image: No se encontró ninguna imagen por defecto"
+    )
+    return "❌ Imagen no encontrada", 404
+
+
 @images_bp.route("/imagenes_subidas/<filename>")
 def uploaded_images(filename):
     """
     Ruta inteligente para servir imágenes con fallback S3 -> Local
     """
     import os
-    from flask import abort
+    from flask import abort  # noqa: F401
 
     current_app.logger.info(f"Ruta /imagenes_subidas/ llamada para archivo: {filename}")
 
@@ -44,6 +73,15 @@ def uploaded_images(filename):
                         current_app.config["UPLOAD_FOLDER"], filename
                     )
                 else:
+                    # Servir imagen por defecto directamente
+                    default_path = os.path.join(
+                        current_app.root_path, "static", "default_profile.png"
+                    )
+                    if os.path.exists(default_path):
+                        return send_from_directory(
+                            os.path.join(current_app.root_path, "static"),
+                            "default_profile.png",
+                        )
                     return "❌ Archivo no encontrado en S3 ni local", 404
         except Exception as e:
             current_app.logger.error(f"Error accediendo a S3 para {filename}: {e}")
@@ -54,6 +92,15 @@ def uploaded_images(filename):
                     current_app.config["UPLOAD_FOLDER"], filename
                 )
             else:
+                # Servir imagen por defecto directamente
+                default_path = os.path.join(
+                    current_app.root_path, "static", "default_profile.png"
+                )
+                if os.path.exists(default_path):
+                    return send_from_directory(
+                        os.path.join(current_app.root_path, "static"),
+                        "default_profile.png",
+                    )
                 return "❌ Error de S3 y archivo no encontrado localmente", 404
 
     # Comportamiento por defecto: intentar S3 primero, luego local
@@ -77,5 +124,21 @@ def uploaded_images(filename):
     else:
         current_app.logger.warning(f"Archivo NO encontrado localmente: {local_path}")
 
-    # Si no se encuentra en ningún lado
-    return "❌ Archivo no encontrado", 404
+    # Si no se encuentra en ningún lado, usar imagen por defecto
+    current_app.logger.info(f"Usando imagen por defecto para: {filename}")
+
+    # Directamente servir imagen por defecto
+    default_image_path = os.path.join(
+        current_app.root_path, "static", "default_profile.png"
+    )
+    current_app.logger.info(f"Sirviendo imagen por defecto desde: {default_image_path}")
+
+    if os.path.exists(default_image_path):
+        return send_from_directory(
+            os.path.join(current_app.root_path, "static"), "default_profile.png"
+        )
+    else:
+        current_app.logger.error(
+            f"Imagen por defecto no encontrada en: {default_image_path}"
+        )
+        return "❌ Archivo no encontrado", 404

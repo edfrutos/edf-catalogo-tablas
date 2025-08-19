@@ -38,6 +38,7 @@ import sys
 logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
 
+
 def get_users_collection_safe():
     """
     Obtiene la colección 'users' desde el contexto g de forma segura.
@@ -45,11 +46,19 @@ def get_users_collection_safe():
     """
     users_collection = getattr(g, "users_collection", None)
     if users_collection is None:
-        if hasattr(g, "mongo") and g.mongo is not None and hasattr(g.mongo, "db") and hasattr(g.mongo.db, "users"):
+        if (
+            hasattr(g, "mongo")
+            and g.mongo is not None
+            and hasattr(g.mongo, "db")
+            and hasattr(g.mongo.db, "users")
+        ):
             users_collection = g.mongo.db.users
         else:
-            raise RuntimeError("La colección 'users' no está inicializada en el contexto g")
+            raise RuntimeError(
+                "La colección 'users' no está inicializada en el contexto g"
+            )
     return users_collection
+
 
 def verify_password(password, stored_password, password_type=None):
     """Verifica una contraseña contra su hash almacenado."""
@@ -238,13 +247,17 @@ def login():
         logger.info(f"Buscando usuario con identificador: {email}")
         usuario = find_user_by_email_or_name(email)
         if usuario:
-            logger.info(f"Usuario encontrado: {usuario.get('email', usuario.get('username', ''))}")
+            logger.info(
+                f"Usuario encontrado: {usuario.get('email', usuario.get('username', ''))}"
+            )
         else:
             # Loguear todos los usernames almacenados para depuración
             try:
                 users_collection = get_users_collection_safe()
                 usernames = users_collection.distinct("username")
-                logger.warning(f"Usernames almacenados en la base de datos: {usernames}")
+                logger.warning(
+                    f"Usernames almacenados en la base de datos: {usernames}"
+                )
             except Exception as e:
                 logger.error(f"Error obteniendo usernames para depuración: {e}")
             logger.warning(f"Usuario no encontrado: {email}")
@@ -264,7 +277,37 @@ def login():
             password_result = True
 
         if password_result:
+            # =========================================================================
+            # VERIFICAR SI NECESITA CAMBIO DE CONTRASEÑA (CONTRASEÑA TEMPORAL)
+            # ANTES DE AUTENTICAR COMPLETAMENTE
+            # =========================================================================
+            needs_password_change = (
+                usuario.get("must_change_password", False)
+                or usuario.get("temp_password", False)
+                or usuario.get("password_reset_required", False)
+            )
+
+            if needs_password_change:
+                logger.info(
+                    f"Usuario {email} tiene contraseña temporal - redirigiendo sin autenticar"
+                )
+                # NO autenticar - solo guardar datos mínimos para el proceso de cambio
+                session.clear()
+                session["temp_reset_user_id"] = str(usuario.get("_id"))
+                session["temp_reset_email"] = usuario.get("email", "")
+                session["temp_reset_username"] = usuario.get("username", "")
+
+                flash(
+                    "Tu cuenta usa una contraseña temporal. Te guiaremos para crear una nueva contraseña personalizada.",
+                    "info",
+                )
+                return redirect(url_for("auth.temp_password_reset"))
+
+            # =========================================================================
+            # AUTENTICACIÓN COMPLETA (solo si NO necesita cambio de contraseña)
+            # =========================================================================
             from flask_login import login_user
+
             # Limpiar intentos fallidos
             users_collection.update_one(
                 {"_id": usuario["_id"]},
@@ -411,11 +454,11 @@ def forgot_password():
         # TEMPORAL: Deshabilitar envío de correos hasta que se configure correctamente
         logger.warning("Envío de correos temporalmente deshabilitado")
         flash(
-            "El envío de correos está temporalmente deshabilitado. Para recuperar tu contraseña, contacta directamente con el administrador.", 
-            "warning"
+            "El envío de correos está temporalmente deshabilitado. Para recuperar tu contraseña, contacta directamente con el administrador.",
+            "warning",
         )
         return redirect(url_for("auth.forgot_password"))
-      
+
         # CÓDIGO ORIGINAL COMENTADO TEMPORALMENTE
         """
         try:
@@ -462,6 +505,108 @@ def forgot_password():
         """
 
     return render_template("forgot_password.html")
+
+
+@auth_bp.route("/temp-password-reset", methods=["GET", "POST"])
+def temp_password_reset():
+    """
+    Página especial para resetear contraseñas temporales sin autenticación previa.
+    Similar a forgot password pero para usuarios con contraseñas temporales.
+    """
+    try:
+        # Verificar que el usuario llegó desde el proceso de login con contraseña temporal
+        if "temp_reset_user_id" not in session:
+            flash("Acceso no autorizado. Inicia sesión normalmente.", "warning")
+            return redirect(url_for("auth.login"))
+
+        # Obtener datos del usuario desde la sesión temporal
+        user_id = session.get("temp_reset_user_id")
+        user_email = session.get("temp_reset_email", "")
+        username = session.get("temp_reset_username", "")
+
+        if request.method == "GET":
+            logger.debug("Mostrando formulario de reseteo de contraseña temporal")
+            return render_template(
+                "temp_password_reset.html", user_email=user_email, username=username
+            )
+
+        # Procesar el formulario POST
+        new_password = request.form.get("new_password", "").strip()
+        confirm_password = request.form.get("confirm_password", "").strip()
+
+        # Validaciones
+        if not new_password or not confirm_password:
+            flash("Debes completar ambos campos de contraseña.", "danger")
+            return render_template(
+                "temp_password_reset.html", user_email=user_email, username=username
+            )
+
+        if new_password != confirm_password:
+            flash("Las contraseñas no coinciden.", "danger")
+            return render_template(
+                "temp_password_reset.html", user_email=user_email, username=username
+            )
+
+        # Validación de seguridad de contraseña
+        if (
+            len(new_password) < 8
+            or not any(c.isupper() for c in new_password)
+            or not any(c.islower() for c in new_password)
+            or not any(c.isdigit() for c in new_password)
+        ):
+            flash(
+                "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.",
+                "danger",
+            )
+            return render_template(
+                "temp_password_reset.html", user_email=user_email, username=username
+            )
+
+        # Actualizar la contraseña en la base de datos
+        from bson import ObjectId
+
+        users_collection = get_users_collection_safe()
+        result = users_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    "password": generate_password_hash(
+                        new_password, method="pbkdf2:sha256"
+                    ),
+                    "must_change_password": False,
+                    "temp_password": False,
+                    "password_reset_required": False,
+                    "password_updated_at": datetime.utcnow().isoformat(),
+                    "temp_password_reset_completed": True,
+                }
+            },
+        )
+
+        if result.modified_count > 0:
+            # Limpiar la sesión temporal
+            session.pop("temp_reset_user_id", None)
+            session.pop("temp_reset_email", None)
+            session.pop("temp_reset_username", None)
+
+            logger.info(
+                f"Contraseña temporal actualizada exitosamente para {user_email}"
+            )
+            flash(
+                "¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión con tu nueva contraseña.",
+                "success",
+            )
+            return redirect(url_for("auth.login"))
+        else:
+            logger.error(f"Error actualizando contraseña temporal para {user_email}")
+            flash("Error interno. Por favor intenta nuevamente.", "error")
+            return render_template(
+                "temp_password_reset.html", user_email=user_email, username=username
+            )
+
+    except Exception as e:
+        logger.error(f"Error en temp_password_reset: {str(e)}", exc_info=True)
+        flash("Error interno del servidor. Por favor intenta nuevamente.", "error")
+        return redirect(url_for("auth.login"))
 
 
 @auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
@@ -523,26 +668,45 @@ def reset_password(token):
 @auth_bp.route("/logout")
 def logout():
     usuario = session.get("usuario")
-    logger.info("Usuario cerró sesión: %s", usuario)
+    user_role = session.get("role")
+    logger.info("Usuario cerró sesión: %s (role: %s)", usuario, user_role)
 
-    # Limpiar la sesión
+    # Usar Flask-Login logout si está disponible
+    try:
+        from flask_login import logout_user
+
+        logout_user()
+    except ImportError:
+        pass
+
+    # Limpiar completamente la sesión
     session.clear()
 
-    # Configurar la respuesta para eliminar las cookies
-    response = redirect(url_for("auth.login"))
+    # Configurar la respuesta para redirigir a welcome - SIEMPRE
+    try:
+        response = redirect(url_for("main.welcome"))
+    except Exception as e:
+        logger.error(f"Error generando URL welcome: {e}")
+        response = redirect("/welcome")  # Fallback directo
 
-    # Eliminar explícitamente la cookie de sesión
+    # Eliminar TODAS las cookies relacionadas con autenticación
     response.delete_cookie(current_app.config.get("SESSION_COOKIE_NAME", "session"))
-
-    # Eliminar otras cookies que puedan estar relacionadas con la autenticación
     response.delete_cookie("remember_token")
+    response.delete_cookie("user_id")
+    response.delete_cookie("logged_in")
+    response.delete_cookie("username")
+    response.delete_cookie("role")
 
-    # Establecer Cache-Control para evitar que el navegador almacene en caché la página
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    # Establecer headers agresivos de limpieza de cache
+    response.headers["Cache-Control"] = (
+        "no-cache, no-store, must-revalidate, private, max-age=0"
+    )
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
+    response.headers["Clear-Site-Data"] = '"cache", "cookies", "storage"'
 
-    flash("Has cerrado sesión correctamente", "info")
+    flash("Has cerrado sesión correctamente. ¡Hasta pronto!", "success")
+    logger.info("Logout completado correctamente para role: %s", user_role)
     return response
 
 

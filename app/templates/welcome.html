@@ -45,6 +45,7 @@
         justify-content: center;
         margin-right: 10px;
     }
+
 </style>
 {% endblock %}
 
@@ -55,7 +56,7 @@
         <h1 class="display-4">¡Bienvenido a Catálogo Tablas!</h1>
         <p class="lead">La plataforma integral para gestionar tus catálogos y tablas de manera sencilla, eficiente y segura.</p>
         <div class="mt-4">
-            <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg me-2">Iniciar sesión</a>
+            <a href="/login" class="btn btn-custom-login btn-lg me-2">Iniciar sesión</a>
             <a href="#conoce-mas" class="btn btn-outline-light btn-lg">Conoce más</a>
         </div>
     </div>
@@ -224,7 +225,7 @@
             <div class="p-5 bg-light rounded">
                 <h2>¿Listo para comenzar?</h2>
                 <p class="lead mb-4">Únete a nuestra plataforma y comienza a gestionar tus catálogos de manera eficiente.</p>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">Iniciar sesión</a>
+                <a href="/login" class="btn btn-primary btn-lg">Iniciar sesión</a>
             </div>
         </div>
     </div>
@@ -242,13 +243,13 @@
                 <h5>Enlaces Rápidos</h5>
                 <ul class="list-unstyled">
                     <li><a href="#conoce-mas" class="text-white">Características</a></li>
-                    <li><a href="{{ url_for('auth.login') }}" class="text-white">Iniciar Sesión</a></li>
+                    <li><a href="/login" class="text-white">Iniciar Sesión</a></li>
                 </ul>
             </div>
             <div class="col-md-3">
                 <h5>Soporte</h5>
                 <ul class="list-unstyled">
-                    <li><a href="#" class="text-white">Contacto</a></li>
+                    <li><a href="{{ url_for('main.contacto') }}" class="text-white">Contacto</a></li>
                     <li><a href="#" class="text-white">Ayuda</a></li>
                 </ul>
             </div>

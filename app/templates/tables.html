@@ -14,7 +14,7 @@
       {% if session.get('username') or session.get('email') %}
       <div class="top-right">
       <h1>Mis Tablas de Catálogo</h1>
-        <button type="button" class="btn btn-danger" onclick="window.location.href='/logout'">
+        <button type="button" class="btn btn-danger" onclick="window.location.href='{{ url_for('auth.logout') }}'">
           Cerrar Sesión ({{ session.get('username', session.get('email', 'Usuario')) }})
         </button>
       </div>
@@ -66,7 +66,7 @@
       {% endif %}
 
       <br />
-      <a href="/auth/logout" class="btn btn-danger">Cerrar Sesión</a>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Cerrar Sesión</a>
 {% endblock %}
 
 {% block scripts %}

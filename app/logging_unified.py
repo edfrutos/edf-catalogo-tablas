@@ -40,6 +40,9 @@ class UnifiedLogger:
         # Determinar directorio de logs
         if log_dir:
             self.log_dir = Path(log_dir)
+        elif os.environ.get("LOG_DIR"):
+            # Priorizar LOG_DIR de variables de entorno (para aplicaciones empaquetadas)
+            self.log_dir = Path(os.environ["LOG_DIR"])
         elif app and hasattr(app, "config") and app.config.get("LOG_DIR"):
             self.log_dir = Path(app.config["LOG_DIR"])
         else:

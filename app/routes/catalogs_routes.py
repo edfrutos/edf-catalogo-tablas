@@ -9,8 +9,8 @@ from flask import (
     session,
     request,
     current_app,
-    jsonify,
-    g,
+    jsonify,  # noqa: F401
+    g,  # noqa: F401
 )
 from bson.objectid import ObjectId
 from functools import wraps
@@ -689,7 +689,9 @@ def delete_row(catalog_id, row_index, catalog):
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     try:
         # Refuerzo: recargar el catálogo desde la base de datos para evitar inconsistencias
-        db_catalog = get_mongo_db()["spreadsheets"].find_one({"_id": ObjectId(catalog_id)})
+        db_catalog = get_mongo_db()["spreadsheets"].find_one(
+            {"_id": ObjectId(catalog_id)}
+        )
         if not db_catalog:
             flash("Catálogo no encontrado.", "danger")
             current_app.logger.error(
@@ -760,10 +762,14 @@ def delete_catalog(catalog_id, catalog):
         # Intentar eliminar de la colección correcta
         if collection_source == "spreadsheets":
             # Si el catálogo está en la colección spreadsheets
-            result = get_mongo_db().spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
+            result = get_mongo_db().spreadsheets.delete_one(
+                {"_id": ObjectId(catalog_id)}
+            )
         else:
             # Por defecto, intentar eliminar de la colección spreadsheets
-            result = get_mongo_db().spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
+            result = get_mongo_db().spreadsheets.delete_one(
+                {"_id": ObjectId(catalog_id)}
+            )
 
         current_app.logger.info(
             f"Resultado de eliminación de {collection_source}: {result.deleted_count} documento(s) eliminado(s)"
@@ -789,9 +795,13 @@ def delete_catalog(catalog_id, catalog):
         else:
             # Si no se eliminó nada, intentar en la otra colección
             if collection_source == "spreadsheets":
-                result = get_mongo_db().spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
+                result = get_mongo_db().spreadsheets.delete_one(
+                    {"_id": ObjectId(catalog_id)}
+                )
             else:
-                result = get_mongo_db().spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
+                result = get_mongo_db().spreadsheets.delete_one(
+                    {"_id": ObjectId(catalog_id)}
+                )
 
             current_app.logger.info(
                 f"Segundo intento de eliminación: {result.deleted_count} documento(s) eliminado(s)"
@@ -834,9 +844,9 @@ def create():
     if request.method == "POST":
         try:
             # Obtener datos del formulario
-            catalog_name = (
-                request.form.get("name", "").strip()
-            )  # Cambiado de 'catalog_name' a 'name' para coincidir con el formulario
+            catalog_name = request.form.get(
+                "name", ""
+            ).strip()  # Cambiado de 'catalog_name' a 'name' para coincidir con el formulario
             headers_str = request.form.get("headers", "").strip()
 
             if not catalog_name:

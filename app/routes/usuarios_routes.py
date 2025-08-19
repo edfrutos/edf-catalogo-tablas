@@ -64,13 +64,7 @@ def register():
     return render_template("auth/register.html")
 
 
-@usuarios_bp.route("/logout")
-def logout():
-    print("[DEBUG][LOGOUT] session before clear:", dict(session))
-    session.clear()
-    print("[DEBUG][LOGOUT] session after clear:", dict(session))
-    flash("Sesión cerrada correctamente.", "info")
-    return redirect(url_for("auth.login"))
+# Ruta de logout movida a auth_routes.py para evitar duplicados
 
 
 @usuarios_bp.route("/forgot", methods=["GET", "POST"])

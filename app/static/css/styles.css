@@ -5,6 +5,147 @@ body {
     padding: 0;
 }
 
+/* ========================================
+   MODALES DE IMÁGENES - ESTILOS UNIFICADOS
+   ======================================== */
+
+/* Modal de imagen responsivo */
+.modal-image-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    max-height: 85vh;
+    overflow: hidden;
+    background-color: #f8f9fa;
+}
+
+/* Imagen principal del modal */
+#imagenModalSrc,
+#modalImage,
+.modal-image {
+    max-width: 100%;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transition: opacity 0.3s ease;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Modal extra grande para imágenes */
+.modal-xl.image-modal {
+    max-width: 95vw;
+}
+
+/* Modal grande para imágenes */
+.modal-lg.image-modal {
+    max-width: 85vw;
+}
+
+/* Modal medio para imágenes */
+.modal-image-md {
+    max-width: 70vw;
+}
+
+/* Contenedor del modal para imágenes */
+.modal-content.image-modal-content {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Header del modal de imagen */
+.modal-header.image-modal-header {
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+/* Body del modal sin padding para imágenes */
+.modal-body.image-modal-body {
+    padding: 0;
+    background-color: #ffffff;
+}
+
+/* Footer del modal de imagen */
+.modal-footer.image-modal-footer {
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+/* Spinner de carga */
+.image-loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+/* Estados de la imagen */
+.image-loading {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-loaded {
+    opacity: 1;
+}
+
+/* Miniaturas clicables */
+.img-thumbnail.clickable,
+.catalog-img.clickable,
+.catalog-image.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.img-thumbnail.clickable:hover,
+.catalog-img.clickable:hover,
+.catalog-image.clickable:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal-xl.image-modal,
+    .modal-lg.image-modal {
+        max-width: 98vw;
+        margin: 0.5rem;
+    }
+    
+    #imagenModalSrc,
+    #modalImage,
+    .modal-image {
+        max-height: 70vh;
+    }
+    
+    .modal-image-container {
+        max-height: 75vh;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-xl.image-modal,
+    .modal-lg.image-modal {
+        max-width: 100vw;
+        margin: 0;
+    }
+    
+    #imagenModalSrc,
+    #modalImage,
+    .modal-image {
+        max-height: 60vh;
+    }
+    
+    .modal-image-container {
+        max-height: 65vh;
+    }
+}
+
 .navbar {
     background-color: #004080;
     padding: 1rem;
@@ -58,4 +199,38 @@ h1 {
 
 .button:hover {
     background-color: #0066cc;
+}
+
+/* ========================================
+   BOTÓN PERSONALIZADO DE LOGIN
+   ======================================== */
+
+/* Botón personalizado para login */
+.btn-custom-login {
+    background-color: #ffffff !important;
+    border: 2px solid #ffffff !important;
+    color: #0d6efd !important;
+    font-weight: 700 !important;
+    padding: 15px 35px !important;
+    font-size: 1.2rem !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2) !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+}
+
+.btn-custom-login:hover {
+    background-color: #f8f9fa !important;
+    border-color: #f8f9fa !important;
+    color: #0856d6 !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25) !important;
+}
+
+.btn-custom-login:focus {
+    background-color: #ffffff !important;
+    border-color: #ffffff !important;
+    color: #0d6efd !important;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2), 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
 }

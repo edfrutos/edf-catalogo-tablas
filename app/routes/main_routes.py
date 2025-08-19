@@ -25,6 +25,7 @@ import csv
 import uuid
 from app.database import get_mongo_db
 from app import notifications
+from app.utils.image_utils import get_images_for_template, get_raw_images_for_edit
 
 main_bp = Blueprint("main", __name__)
 logger = logging.getLogger(__name__)
@@ -43,8 +44,38 @@ def welcome():
     return render_template("welcome.html")
 
 
+@main_bp.route("/contacto", methods=["GET", "POST"])
+def contacto():
+    if request.method == "POST":
+        # Obtener datos del formulario
+        nombre = request.form.get("nombre", "").strip()
+        email = request.form.get("email", "").strip()
+        asunto = request.form.get("asunto", "").strip()
+        mensaje = request.form.get("mensaje", "").strip()
+
+        # Validación básica
+        if not all([nombre, email, asunto, mensaje]):
+            flash("Todos los campos son obligatorios.", "error")
+            return render_template("contacto.html")
+
+        # Aquí podrías enviar el email o guardar en base de datos
+        # Por ahora solo mostramos un mensaje de éxito
+        flash(
+            f"¡Gracias {nombre}! Tu mensaje ha sido enviado correctamente. Te contactaremos pronto.",
+            "success",
+        )
+        logger.info(
+            f"Formulario de contacto enviado - Nombre: {nombre}, Email: {email}, Asunto: {asunto}"
+        )
+
+        # Redirigir para evitar reenvío del formulario
+        return redirect(url_for("main.contacto"))
+
+    # GET request - mostrar formulario
+    return render_template("contacto.html")
+
+
 @main_bp.route("/dashboard_user")
-@main_bp.route("/admin/maintenance/dashboard_user")
 def dashboard_user():
     # Protección: requerir login
     if not session.get("username") and not session.get("user_id"):
@@ -53,6 +84,42 @@ def dashboard_user():
     if session.get("role") == "admin":
         flash("Eres administrador. Redirigido a tu panel de administración.", "info")
         return redirect(url_for("admin.dashboard_admin"))
+
+    # =========================================================================
+    # VERIFICACIÓN CRÍTICA: DETECTAR CONTRASEÑA TEMPORAL
+    # =========================================================================
+    user_id = session.get("user_id")
+    if user_id:
+        try:
+            from bson import ObjectId
+            from app.models.database import get_users_collection
+
+            users_collection = get_users_collection()
+            user = users_collection.find_one({"_id": ObjectId(user_id)})
+
+            if user:
+                # Verificar si tiene contraseña temporal
+                has_temp_password = (
+                    user.get("temp_password", False)
+                    or user.get("must_change_password", False)
+                    or user.get("password_reset_required", False)
+                )
+
+                if has_temp_password:
+                    # Usuario con contraseña temporal - redirigir INMEDIATAMENTE
+                    session["temp_reset_user_id"] = str(user.get("_id"))
+                    session["temp_reset_email"] = user.get("email", "")
+                    session["temp_reset_username"] = user.get("username", "")
+
+                    flash(
+                        "ATENCIÓN: Tu cuenta usa una contraseña temporal. Debes crear una nueva contraseña para usar el sistema completo.",
+                        "error",
+                    )
+                    return redirect(url_for("auth.temp_password_reset"))
+
+        except Exception as e:
+            print(f"[ERROR] Error verificando contraseña temporal: {e}")
+            # Continuar normal si hay error, no bloquear el acceso
     # Acceso solo a datos propios
     username = session.get("username")
     email = session.get("email")
@@ -109,7 +176,13 @@ def dashboard_user():
                 return val.strftime("%Y-%m-%d %H:%M:%S")
             return str(val) if val is not None else ""
 
+        current_app.logger.info(
+            f"[DEBUG_TABLAS] Procesando {len(tablas)} tablas encontradas"
+        )
         for t in tablas:
+            current_app.logger.info(
+                f"[DEBUG_TABLA_INDIVIDUAL] Procesando tabla: {t.get('name', 'Sin nombre')}"
+            )
             t["tipo"] = "spreadsheet"
             # Unificación: sincronizar 'rows' y 'data'
             if "rows" in t and t["rows"] is not None:
@@ -132,46 +205,71 @@ def dashboard_user():
                 or ""
             )
             t["name"] = t.get("name", "")
-            # Miniatura: primera imagen de la primera fila
+            # 🖼️ Miniatura: buscar primera imagen disponible en cualquier fila
+            current_app.logger.info(
+                f"[DEBUG_MINIATURA] Procesando tabla: {t.get('name', 'Sin nombre')}"
+            )
             t["miniatura"] = ""
-            if t["data"] and isinstance(t["data"][0], dict):
-                row = t["data"][0]
-                imagenes = []
-                if "imagenes" in row and row["imagenes"]:
-                    imagenes = (
-                        row["imagenes"]
-                        if isinstance(row["imagenes"], list)
-                        else [row["imagenes"]]
+
+            # Buscar en todas las filas hasta encontrar una imagen
+            for row in t.get("data", []):
+                if not isinstance(row, dict):
+                    continue
+
+                imagen_encontrada = None
+
+                # 1. Verificar campo "Imagen" (URLs externas como Unsplash)
+                if row.get("Imagen") and row["Imagen"].startswith("http"):
+                    imagen_encontrada = row["Imagen"]
+
+                # 2. Si no hay imagen externa, buscar en campos de imágenes locales
+                if not imagen_encontrada:
+                    # Verificar campos de imágenes locales
+                    for campo in ["imagenes", "images", "imagen_data"]:
+                        if campo in row and row[campo]:
+                            imgs = (
+                                row[campo]
+                                if isinstance(row[campo], list)
+                                else [row[campo]]
+                            )
+                            for img in imgs:
+                                if img and img != "N/A" and not img.startswith("http"):
+                                    # Verificar si S3 está habilitado
+                                    use_s3 = (
+                                        os.environ.get("USE_S3", "false").lower()
+                                        == "true"
+                                    )
+                                    if use_s3:
+                                        from app.utils.s3_utils import get_s3_url
+
+                                        s3_url = get_s3_url(img)
+                                        if s3_url:
+                                            imagen_encontrada = s3_url
+                                        else:
+                                            imagen_encontrada = url_for(
+                                                "static", filename=f"uploads/{img}"
+                                            )
+                                    else:
+                                        imagen_encontrada = url_for(
+                                            "static", filename=f"uploads/{img}"
+                                        )
+                                    break
+                        if imagen_encontrada:
+                            break
+
+                # Si encontramos una imagen, salir del bucle
+                if imagen_encontrada:
+                    t["miniatura"] = imagen_encontrada
+                    current_app.logger.info(
+                        f"[MINIATURA] Encontrada para tabla {t.get('name', 'Sin nombre')}: {imagen_encontrada}"
                     )
-                elif "images" in row and row["images"]:
-                    imagenes = (
-                        row["images"]
-                        if isinstance(row["images"], list)
-                        else [row["images"]]
-                    )
-                elif "imagen" in row and row["imagen"]:
-                    imagenes = (
-                        row["imagen"]
-                        if isinstance(row["imagen"], list)
-                        else [row["imagen"]]
-                    )
-                if imagenes:
-                    img = imagenes[0]
-                    if img.startswith("http"):
-                        t["miniatura"] = img
-                    else:
-                        # Verificar si S3 está habilitado
-                        use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
-                        if use_s3:
-                            from app.utils.s3_utils import get_s3_url
-                            s3_url = get_s3_url(img)
-                            if s3_url:
-                                t['miniatura'] = s3_url
-                            else:
-                                t['miniatura'] = url_for('static', filename=f'uploads/{img}')
-                        else:
-                            # Usar URL local directamente
-                            t['miniatura'] = url_for('static', filename=f'uploads/{img}')
+                    break
+
+            # Si no se encontró ninguna imagen, dejar vacío (se mostrará "—")
+            if not t["miniatura"]:
+                current_app.logger.info(
+                    f"[MINIATURA] No se encontró imagen para tabla {t.get('name', 'Sin nombre')}"
+                )
         for c in catalogos:
             c["tipo"] = "catalog"
             # Unificación: sincronizar 'rows' y 'data'
@@ -224,18 +322,31 @@ def dashboard_user():
                         c["miniatura"] = img
                     else:
                         # Verificar si S3 está habilitado
-                        use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
+                        use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
                         if use_s3:
                             from app.utils.s3_utils import get_s3_url
+
                             s3_url = get_s3_url(img)
                             if s3_url:
-                                c['miniatura'] = s3_url
+                                c["miniatura"] = s3_url
                             else:
-                                c['miniatura'] = url_for('static', filename=f'uploads/{img}')
+                                c["miniatura"] = url_for(
+                                    "static", filename=f"uploads/{img}"
+                                )
                         else:
                             # Usar URL local directamente
-                            c['miniatura'] = url_for('static', filename=f'uploads/{img}')
+                            c["miniatura"] = url_for(
+                                "static", filename=f"uploads/{img}"
+                            )
         registros = tablas + catalogos
+        current_app.logger.info(
+            f"[DEBUG_REGISTROS] Total registros a enviar al template: {len(registros)}"
+        )
+        for i, reg in enumerate(registros):
+            current_app.logger.info(
+                f"[DEBUG_REG_{i}] Nombre: {reg.get('name')}, Tipo: {reg.get('tipo')}, Miniatura: {reg.get('miniatura', 'NO_SET')}"
+            )
+
         if not registros:
             flash("No tienes catálogos ni tablas asociados a tu usuario.", "info")
             return render_template("dashboard_unificado.html", registros=[])
@@ -388,71 +499,19 @@ def ver_tabla(table_id):
             return redirect(url_for("main.tables"))
 
         # Si llegamos aquí, el usuario tiene permisos para ver la tabla
-        # Obtener las URLs de las imágenes
-        from app.utils.s3_utils import get_s3_url
-
-        # Procesar las imágenes en cada fila
+        # Procesar las imágenes en cada fila usando función unificada
         for i, row in enumerate(table.get("data", [])):
             if not isinstance(row, dict):
                 current_app.logger.warning(
                     f"[VISIONADO] Fila {i} ignorada por no ser un dict: {row}"
                 )
                 continue
+
             current_app.logger.info(f"[DEBUG][VISIONADO] Procesando fila {i}: {row}")
 
-            # Normalizar campo imagenes
-            if "imagenes" not in row or row["imagenes"] is None:
-                row["imagenes"] = []
-            elif isinstance(row["imagenes"], str):
-                row["imagenes"] = [row["imagenes"]]
-            elif isinstance(row["imagenes"], int):
-                # Si es un entero, buscar en imagen_data
-                if "imagen_data" in row and isinstance(row["imagen_data"], list):
-                    row["imagenes"] = row["imagen_data"]
-                else:
-                    row["imagenes"] = []
-            elif not isinstance(row["imagenes"], list):
-                row["imagenes"] = list(row["imagenes"])
-            # Compatibilidad: añadir images o imagen
-            if "images" in row and row["images"]:
-                if isinstance(row["images"], str):
-                    row["imagenes"].append(row["images"])
-                elif isinstance(row["images"], list):
-                    row["imagenes"].extend(row["images"])
-            if "imagen" in row and row["imagen"]:
-                if isinstance(row["imagen"], str):
-                    row["imagenes"].append(row["imagen"])
-                elif isinstance(row["imagen"], list):
-                    row["imagenes"].extend(row["imagen"])
-            # Eliminar duplicados y vacíos
-            row["imagenes"] = [
-                img
-                for img in set(row["imagenes"])
-                if img and isinstance(img, str) and len(img) > 5
-            ]
-            # Construir imagen_urls
-            row["imagen_urls"] = []
-            for img in row["imagenes"]:
-                if img.startswith("http"):
-                    row["imagen_urls"].append(img)
-                else:
-                    # Verificar si S3 está habilitado
-                    use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
-                    if use_s3:
-                        # Intentar S3 solo si está habilitado
-                        s3_url = get_s3_url(img)
-                        if s3_url:
-                            row['imagen_urls'].append(s3_url)
-                        else:
-                            local_url = url_for('static', filename=f'uploads/{img}')
-                            row['imagen_urls'].append(local_url)
-                    else:
-                        # Usar URL local directamente
-                        local_url = url_for('static', filename=f'uploads/{img}')
-                        row['imagen_urls'].append(local_url)
-            # Si no hay imágenes, asegurar lista vacía
-            if not row["imagen_urls"]:
-                row["imagen_urls"] = []
+            # Usar función unificada para obtener URLs de imágenes
+            image_data = get_images_for_template(row)
+            row.update(image_data)  # Añade imagen_urls, num_imagenes, tiene_imagenes
 
             current_app.logger.info(
                 f"[DEBUG][VISIONADO] URLs de imágenes para fila {i}: {row.get('imagen_urls', [])}"
@@ -559,12 +618,17 @@ def perfil():
         if not user_data:
             flash("Usuario no encontrado", "error")
             return redirect(url_for("main.dashboard_user"))
-        
+
         # Crear objeto User para tener acceso a foto_perfil_url
         from app.models.user import User
+
         user = User(user_data)
 
         # Asegurar que existe la imagen de perfil predeterminada
+        if current_app.static_folder is None:
+            flash("Error de configuración del servidor", "error")
+            return redirect(url_for("main.dashboard_user"))
+
         default_profile_path = os.path.join(
             current_app.static_folder, "default_profile.png"
         )
@@ -576,7 +640,9 @@ def perfil():
                 crear_imagen_perfil_default()
                 logger.info("Imagen de perfil predeterminada creada correctamente")
             except Exception as e:
-                logger.error(f"Error al crear imagen predeterminada: {str(e)}", exc_info=True)
+                logger.error(
+                    f"Error al crear imagen predeterminada: {str(e)}", exc_info=True
+                )
 
         return render_template("perfil.html", user=user)
     except Exception as e:
@@ -605,9 +671,10 @@ def editar_perfil():
         if not user_data:
             flash("Usuario no encontrado", "error")
             return redirect(url_for("main.dashboard_user"))
-        
+
         # Crear objeto User para tener acceso a foto_perfil_url
         from app.models.user import User
+
         user = User(user_data)
     except Exception as e:
         logger.error(f"Error al obtener datos del usuario: {str(e)}", exc_info=True)
@@ -654,8 +721,12 @@ def editar_perfil():
             update_data["password"] = generate_password_hash(password_nuevo)
 
         # Asegurarse de que existe la carpeta de uploads
-        uploads_folder = os.path.join(current_app.static_folder, 'uploads')
-        
+        if current_app.static_folder is None:
+            flash("Error de configuración del servidor", "error")
+            return redirect(url_for("main.dashboard_user"))
+
+        uploads_folder = os.path.join(current_app.static_folder, "uploads")
+
         # Crear la carpeta si no existe
         os.makedirs(uploads_folder, exist_ok=True)
         # Asegurar que existe la imagen de perfil predeterminada
@@ -680,26 +751,38 @@ def editar_perfil():
             if profile_image and profile_image.filename != "":
                 try:
                     # Guardar la imagen
-                    filename = secure_filename(f"{uuid.uuid4().hex}_{profile_image.filename}")
+                    filename = secure_filename(
+                        f"{uuid.uuid4().hex}_{profile_image.filename}"
+                    )
                     filepath = os.path.join(uploads_folder, filename)
                     profile_image.save(filepath)
-                    
+
                     # Subir a S3 si está habilitado
-                    use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
+                    use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
                     if use_s3:
                         try:
                             from app.utils.s3_utils import upload_file_to_s3
+
                             logger.info(f"Subiendo foto de perfil a S3: {filename}")
                             result = upload_file_to_s3(filepath, filename)
-                            if result['success']:
-                                logger.info(f"Foto de perfil subida a S3: {result['url']}")
+                            if result["success"]:
+                                logger.info(
+                                    f"Foto de perfil subida a S3: {result['url']}"
+                                )
                                 # Eliminar el archivo local después de subirlo a S3
                                 os.remove(filepath)
-                                logger.info(f"Foto de perfil eliminada del servidor local después de subirla a S3: {filename}")
+                                logger.info(
+                                    f"Foto de perfil eliminada del servidor local después de subirla a S3: {filename}"
+                                )
                             else:
-                                logger.error(f"Error al subir foto de perfil a S3: {result.get('error')}")
+                                logger.error(
+                                    f"Error al subir foto de perfil a S3: {result.get('error')}"
+                                )
                         except Exception as e:
-                            logger.error(f"Error al procesar subida de foto de perfil a S3: {str(e)}", exc_info=True)
+                            logger.error(
+                                f"Error al procesar subida de foto de perfil a S3: {str(e)}",
+                                exc_info=True,
+                            )
                     # Actualizar el campo foto_perfil en el usuario
                     update_data["foto_perfil"] = filename
                     logger.info(f"Imagen de perfil guardada: {filename}")
@@ -731,36 +814,76 @@ def editar_perfil():
         else:
             flash("Perfil actualizado correctamente.", "success")
             # Actualizar la sesión para reflejar los cambios
-            if 'email' in update_data:
-                session['email'] = update_data['email']
-            if 'nombre' in update_data and update_data['nombre']:
-                session['username'] = update_data['nombre']
-            return redirect(url_for('main.perfil'))
+            if "email" in update_data:
+                session["email"] = update_data["email"]
+            if "nombre" in update_data and update_data["nombre"]:
+                session["username"] = update_data["nombre"]
+            return redirect(url_for("main.perfil"))
 
     # Para peticiones GET, mostrar el formulario con los datos actuales
-    return render_template('editar_perfil.html', user=user)
+    return render_template("editar_perfil.html", user=user)
 
 
 @main_bp.route("/editar_fila/<tabla_id>/<int:fila_index>", methods=["GET", "POST"])
-# # @login_required
+@login_required
 def editar_fila(tabla_id, fila_index):
+    print(f"🔥🔥🔥 EDITAR_FILA EJECUTADO: tabla_id={tabla_id}, fila_index={fila_index}")
+    current_app.logger.error(
+        f"🔥🔥🔥 EDITAR_FILA EJECUTADO: tabla_id={tabla_id}, fila_index={fila_index}"
+    )
     current_app.logger.info(
         f"[DEBUG] Valores recibidos: tabla_id={tabla_id}, fila_index={fila_index}"
     )
-    # Obtener info de la tabla
+
+    # 🔥 OBTENER INFO FRESCA USANDO LA MISMA LÓGICA QUE VER_TABLA 🔥
+    current_app.logger.info(
+        f"[DEBUG_EDIT] Recargando datos frescos desde MongoDB para tabla {tabla_id}"
+    )
+
+    # USAR EXACTAMENTE LA MISMA LÓGICA QUE VER_TABLA
     table_info = g.spreadsheets_collection.find_one({"_id": ObjectId(tabla_id)})
     if not table_info:
         flash("Tabla no encontrada.", "error")
         return redirect(url_for("main.tables"))
-    # Refuerzo: sincronizar 'rows' y 'data' y calcular número de filas
-    if "rows" in table_info and table_info["rows"] is not None:
+
+    # Asegurarse de que el propietario esté disponible (igual que ver_tabla)
+    if "owner" not in table_info and "owner_name" in table_info:
+        table_info["owner"] = table_info["owner_name"]
+    elif "owner" not in table_info and "created_by" in table_info:
+        table_info["owner"] = table_info["created_by"]
+    elif "owner" not in table_info:
+        table_info["owner"] = "Usuario desconocido"
+
+    # Asegurarse de que los datos estén disponibles (igual que ver_tabla)
+    if "data" not in table_info and "rows" in table_info:
         table_info["data"] = table_info["rows"]
-    elif "data" in table_info and table_info["data"] is not None:
+        current_app.logger.info(
+            f"[DEBUG_EDIT] Usando 'rows' como 'data', filas: {len(table_info['data'])}"
+        )
+    elif "data" not in table_info:
+        table_info["data"] = []
+        current_app.logger.info("[DEBUG_EDIT] No se encontraron datos en la tabla")
+
+    # 🚨 NO SOBRESCRIBIR DATA CON ROWS - data tiene las imágenes actualizadas
+    current_app.logger.info(
+        f"[DEBUG_EDIT] ANTES sincronización - data tiene {len(table_info.get('data', []))} filas, rows tiene {len(table_info.get('rows', []))} filas"
+    )
+
+    # Solo sincronizar si data está vacío pero rows tiene datos
+    if (
+        not table_info.get("data") or len(table_info.get("data", [])) == 0
+    ) and table_info.get("rows"):
+        current_app.logger.info("[DEBUG_EDIT] Copiando rows → data (data estaba vacío)")
+        table_info["data"] = table_info["rows"]
+    elif table_info.get("data") and (
+        not table_info.get("rows") or len(table_info.get("rows", [])) == 0
+    ):
+        current_app.logger.info("[DEBUG_EDIT] Copiando data → rows (rows estaba vacío)")
         table_info["rows"] = table_info["data"]
     else:
-        table_info["data"] = []
-        table_info["rows"] = []
-    table_info["row_count"] = len(table_info["rows"])
+        current_app.logger.info("[DEBUG_EDIT] PRESERVANDO data original con imágenes")
+
+    table_info["row_count"] = len(table_info.get("data", []))
 
     # Verificar permisos: solo el propietario o admin puede editar filas
     username = session.get("username")
@@ -785,11 +908,101 @@ def editar_fila(tabla_id, fila_index):
         return redirect(url_for("main.ver_tabla", table_id=tabla_id))
 
     # Obtener la fila específica del array de datos
-    if not table_info.get("data") or fila_index >= len(table_info.get("data", [])):
+    data_length = len(table_info.get("data", []))
+    current_app.logger.info(
+        f"[DEBUG] fila_index={fila_index}, data_length={data_length}, num_rows={table_info.get('num_rows', 'N/A')}"
+    )
+    current_app.logger.info(f"[DEBUG] table_info.keys(): {list(table_info.keys())}")
+
+    if not table_info.get("data") or fila_index >= data_length:
+        current_app.logger.error(
+            f"[DEBUG] Fila no encontrada: índice {fila_index} >= longitud {data_length}"
+        )
         flash("Fila no encontrada.", "error")
         return redirect(url_for("main.ver_tabla", table_id=tabla_id))
 
+    # Obtener la fila específica - usar "data" que tiene imágenes completas
     fila = table_info["data"][fila_index]
+    current_app.logger.info(
+        f"[DEBUG_EDIT] Datos completos de fila {fila_index}: {fila}"
+    )
+
+    # 🔥 DEBUG ADICIONAL: Verificar qué contiene cada campo de imagen 🔥
+    current_app.logger.info(
+        f"[DEBUG_EDIT] fila.get('images'): {fila.get('images')} (tipo: {type(fila.get('images'))})"
+    )
+    current_app.logger.info(
+        f"[DEBUG_EDIT] fila.get('imagenes'): {fila.get('imagenes')} (tipo: {type(fila.get('imagenes'))})"
+    )
+    current_app.logger.info(
+        f"[DEBUG_EDIT] fila.get('imagen_data'): {fila.get('imagen_data')} (tipo: {type(fila.get('imagen_data'))})"
+    )
+    current_app.logger.info(
+        f"[DEBUG_EDIT] Campos de imagen disponibles: imagenes={fila.get('imagenes')}, imagen_data={fila.get('imagen_data')}, images={fila.get('images')}"
+    )
+
+    # 🔥🔥🔥 PROCESAMIENTO MANUAL DE IMÁGENES UNIFICADAS 🔥🔥🔥
+    imagenes_unificadas = []
+
+    # Recopilar de fila.images
+    if fila.get("images") and isinstance(fila["images"], list):
+        for img in fila["images"]:
+            if (
+                img
+                and img != "N/A"
+                and not img.startswith("http")
+                and img not in imagenes_unificadas
+            ):
+                imagenes_unificadas.append(img)
+
+    # Recopilar de fila.imagenes
+    if fila.get("imagenes") and isinstance(fila["imagenes"], list):
+        for img in fila["imagenes"]:
+            if (
+                img
+                and img != "N/A"
+                and not img.startswith("http")
+                and img not in imagenes_unificadas
+            ):
+                imagenes_unificadas.append(img)
+
+    # Recopilar de fila.imagen_data
+    if fila.get("imagen_data") and isinstance(fila["imagen_data"], list):
+        for img in fila["imagen_data"]:
+            if (
+                img
+                and img != "N/A"
+                and not img.startswith("http")
+                and img not in imagenes_unificadas
+            ):
+                imagenes_unificadas.append(img)
+
+    # 🆕 RECOPILAR DE FILA.IMAGEN (CAMPO STRING) - PARA IMÁGENES UNSPLASH
+    imagen_individual = fila.get("Imagen", "")
+    if (
+        imagen_individual
+        and imagen_individual != "N/A"
+        and imagen_individual.startswith("http")
+    ):
+        current_app.logger.info(
+            f"[DEBUG_EDIT] Imagen externa encontrada: {imagen_individual}"
+        )
+        # Las imágenes externas (Unsplash) no se pueden eliminar, pero necesitamos mostrarlas
+        # Para eso, creamos un campo especial para mostrar sin opción de eliminar
+
+    # Preparar contexto para el template con imágenes unificadas
+    fila["_imagenes_unificadas"] = imagenes_unificadas
+    fila["_imagen_externa"] = (
+        imagen_individual
+        if imagen_individual and imagen_individual.startswith("http")
+        else None
+    )
+    current_app.logger.error(
+        f"[DEBUG_EDIT] IMÁGENES UNIFICADAS: {len(imagenes_unificadas)} → {imagenes_unificadas}"
+    )
+    current_app.logger.error(
+        f"[DEBUG_EDIT] TEMPLATE CONTEXT: Todos los keys de fila = {list(fila.keys())}"
+    )
     headers = table_info.get("headers", [])
 
     if request.method == "POST":
@@ -807,6 +1020,16 @@ def editar_fila(tabla_id, fila_index):
 
                 # Ahora agregamos el campo al diccionario
                 update_data[data_key][header] = campo_valor
+
+        # 🆕 PROCESAR ESPECÍFICAMENTE EL CAMPO 'Imagen' (URL EXTERNA)
+        imagen_url = request.form.get("Imagen", "").strip()
+        data_key = f"data.{fila_index}"
+        if data_key not in update_data:
+            update_data[data_key] = {}
+        update_data[data_key]["Imagen"] = imagen_url
+        current_app.logger.info(
+            f"[DEBUG_EDIT] Actualizando campo Imagen: '{imagen_url}'"
+        )
 
         # Procesar imágenes a eliminar
         imagenes_a_eliminar = request.form.get("imagenes_a_eliminar", "")
@@ -846,6 +1069,12 @@ def editar_fila(tabla_id, fila_index):
 
                 if isinstance(imagenes_a_eliminar, list):
                     # Eliminar las imágenes del servidor y de S3
+                    if current_app.static_folder is None:
+                        logger.error(
+                            "Error de configuración del servidor: static_folder es None"
+                        )
+                        flash("Error de configuración del servidor", "error")
+                        return redirect(url_for("main.tables"))
                     ruta_uploads = os.path.join(current_app.static_folder, "uploads")
                     use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
 
@@ -921,6 +1150,11 @@ def editar_fila(tabla_id, fila_index):
                         continue
 
                     # Guardar la imagen en la carpeta de uploads
+                    if current_app.static_folder is None:
+                        logger.error(
+                            "Error de configuración del servidor: static_folder es None"
+                        )
+                        continue
                     ruta_uploads = os.path.join(current_app.static_folder, "uploads")
                     if not os.path.exists(ruta_uploads):
                         os.makedirs(ruta_uploads)
@@ -1046,7 +1280,24 @@ def editar_fila(tabla_id, fila_index):
         )
 
         flash("Fila actualizada correctamente.", "success")
-        return redirect(url_for("main.ver_tabla", table_id=tabla_id))
+
+        # Calcular la página donde está la fila editada
+        filas_por_pagina = 10
+        pagina_fila = (fila_index // filas_por_pagina) + 1
+
+        current_app.logger.info(f"[REDIRECT] Fila {fila_index} → Página {pagina_fila}")
+
+        # Construir URL con parámetros de forma más robusta
+        from urllib.parse import urlencode
+
+        base_url = url_for("main.ver_tabla", table_id=tabla_id)
+        params = {"page": pagina_fila}
+        fragment = f"fila-{fila_index + 1}"  # Mostrar número de fila desde 1
+        redirect_url = f"{base_url}?{urlencode(params)}#{fragment}"
+
+        current_app.logger.info(f"[REDIRECT] URL final: {redirect_url}")
+
+        return redirect(redirect_url)
 
     return render_template(
         "editar_fila.html",
@@ -1060,8 +1311,12 @@ def editar_fila(tabla_id, fila_index):
 
 @main_bp.route("/agregar_fila/<tabla_id>", methods=["GET", "POST"])
 def agregar_fila(tabla_id):
+    current_app.logger.info(
+        f"[AGREGAR_FILA] Iniciando agregar_fila para tabla_id: {tabla_id}, método: {request.method}"
+    )
+
     # Verificar sesión
-    if "username" not in session:
+    if not session.get("logged_in") or "username" not in session:
         flash("Debe iniciar sesión para agregar filas", "warning")
         return redirect(url_for("auth.login"))
 
@@ -1120,6 +1375,11 @@ def agregar_fila(tabla_id):
                             continue
 
                         # Guardar la imagen en la carpeta de uploads
+                        if current_app.static_folder is None:
+                            logger.error(
+                                "Error de configuración del servidor: static_folder es None"
+                            )
+                            continue
                         ruta_uploads = os.path.join(
                             current_app.static_folder, "uploads"
                         )
@@ -1170,13 +1430,29 @@ def agregar_fila(tabla_id):
                 # Agregar contador de imágenes para compatibilidad con vistas antiguas
                 nueva_fila["num_imagenes"] = len(imagenes)
 
-            # Agregar la fila a la tabla
-            g.spreadsheets_collection.update_one(
+            # Agregar la fila a la tabla (actualizar tanto data como rows para compatibilidad)
+            result = g.spreadsheets_collection.update_one(
                 {"_id": ObjectId(tabla_id)},
-                {"$push": {"data": nueva_fila}, "$inc": {"num_rows": 1}},
+                {
+                    "$push": {"data": nueva_fila, "rows": nueva_fila},
+                    "$inc": {"num_rows": 1},
+                    "$set": {"updated_at": datetime.utcnow()},
+                },
             )
 
-            flash("Fila agregada correctamente", "success")
+            current_app.logger.info(
+                f"[AGREGAR_FILA] Resultado de la actualización: matched_count={result.matched_count}, modified_count={result.modified_count}"
+            )
+
+            if result.modified_count > 0:
+                flash("Fila agregada correctamente", "success")
+                current_app.logger.info(
+                    f"[AGREGAR_FILA] Fila agregada exitosamente, redirigiendo a ver_tabla"
+                )
+            else:
+                flash("Error al agregar la fila", "error")
+                current_app.logger.error(f"[AGREGAR_FILA] No se pudo agregar la fila")
+
             return redirect(url_for("main.ver_tabla", table_id=tabla_id))
 
         # Para peticiones GET, mostrar el formulario
@@ -1212,21 +1488,21 @@ def ver_tabla_redirect(table_id):
     # Redirigir a la vista de catálogo
     return redirect(url_for("catalogs.view", catalog_id=table_id))
 
-
-@main_bp.route("/editar_fila/<tabla_id>/<int:fila_index>", methods=["GET", "POST"])
-def editar_fila_redirect(tabla_id, fila_index):
-    """Redirige las solicitudes de la antigua ruta /editar_fila a la nueva ruta /catalogs/edit_row.
-    Esta función mantiene la compatibilidad con enlaces antiguos.
-    """
-    current_app.logger.info(
-        f"Redirigiendo desde /editar_fila/{tabla_id}/{fila_index} a /catalogs/edit_row/{tabla_id}/{fila_index}"
-    )
-    flash("La edición de filas ahora se realiza en Catálogos", "info")
-
-    # Redirigir a la edición de fila en catálogos
-    return redirect(
-        url_for("catalogs.edit_row", catalog_id=tabla_id, row_index=fila_index)
-    )
+    # COMENTADO: Conflicto con la función editar_fila principal
+    # @main_bp.route("/editar_fila/<tabla_id>/<int:fila_index>", methods=["GET", "POST"])
+    # def editar_fila_redirect(tabla_id, fila_index):
+    #     """Redirige las solicitudes de la antigua ruta /editar_fila a la nueva ruta /catalogs/edit_row.
+    #     Esta función mantiene la compatibilidad con enlaces antiguos.
+    #     """
+    #     current_app.logger.info(
+    #         f"Redirigiendo desde /editar_fila/{tabla_id}/{fila_index} a /catalogs/edit_row/{tabla_id}/{fila_index}"
+    #     )
+    #     flash("La edición de filas ahora se realiza en Catálogos", "info")
+    #
+    #     # Redirigir a la edición de fila en catálogos
+    #     return redirect(
+    #         url_for("catalogs.edit_row", catalog_id=tabla_id, row_index=fila_index)
+    #     )
 
     # Método POST: Crear nueva tabla
     try:
@@ -1555,6 +1831,90 @@ def editar_tabla(id):
         logger.error(f"Error en editar_tabla: {str(e)}", exc_info=True)
         flash(f"Error al editar la tabla: {str(e)}", "error")
         return redirect(url_for("main.dashboard_user"))
+
+
+@main_bp.route("/delete_row/<tabla_id>/<int:fila_index>", methods=["POST"])
+def delete_row(tabla_id, fila_index):
+    """Eliminar una fila específica de una tabla"""
+    current_app.logger.info(
+        f"[DELETE_ROW] Eliminando fila {fila_index} de tabla {tabla_id}"
+    )
+
+    # Verificar sesión
+    if "username" not in session:
+        flash("Debe iniciar sesión para realizar esta acción", "warning")
+        return redirect(url_for("auth.login"))
+
+    # Obtener info de la tabla
+    table_info = g.spreadsheets_collection.find_one({"_id": ObjectId(tabla_id)})
+    if not table_info:
+        flash("Tabla no encontrada.", "error")
+        return redirect(url_for("main.tables"))
+
+    # Verificar permisos: solo el propietario o admin puede eliminar filas
+    username = session.get("username")
+    role = session.get("role", "user")
+    owner = (
+        table_info.get("owner")
+        or table_info.get("created_by")
+        or table_info.get("owner_name")
+    )
+
+    if role != "admin" and owner != username:
+        flash("No tienes permisos para eliminar filas de esta tabla.", "warning")
+        return redirect(url_for("main.ver_tabla", table_id=tabla_id))
+
+    # Sincronizar 'rows' y 'data'
+    if "rows" in table_info and table_info["rows"] is not None:
+        table_info["data"] = table_info["rows"]
+    elif "data" in table_info and table_info["data"] is not None:
+        table_info["rows"] = table_info["data"]
+    else:
+        table_info["data"] = []
+        table_info["rows"] = []
+
+    current_rows = table_info.get("data", [])
+    current_app.logger.info(f"[DELETE_ROW] Filas actuales: {len(current_rows)}")
+
+    # Verificar que el índice sea válido
+    if fila_index < 0 or fila_index >= len(current_rows):
+        flash(f"Índice de fila inválido: {fila_index}.", "danger")
+        current_app.logger.error(
+            f"[DELETE_ROW] Índice inválido: {fila_index} >= {len(current_rows)}"
+        )
+        return redirect(url_for("main.ver_tabla", table_id=tabla_id))
+
+    try:
+        # Eliminar la fila
+        deleted_row = current_rows.pop(fila_index)
+        current_app.logger.info(f"[DELETE_ROW] Fila eliminada: {deleted_row}")
+
+        # Actualizar en base de datos
+        result = g.spreadsheets_collection.update_one(
+            {"_id": ObjectId(tabla_id)},
+            {
+                "$set": {
+                    "data": current_rows,
+                    "rows": current_rows,
+                    "num_rows": len(current_rows),
+                    "updated_at": datetime.utcnow(),
+                }
+            },
+        )
+
+        if result.matched_count > 0 and result.modified_count > 0:
+            flash("Fila eliminada correctamente", "success")
+            current_app.logger.info(
+                f"[DELETE_ROW] Fila eliminada exitosamente. Filas restantes: {len(current_rows)}"
+            )
+        else:
+            flash("No se pudo eliminar la fila.", "warning")
+
+    except Exception as e:
+        current_app.logger.error(f"[DELETE_ROW] Error: {str(e)}")
+        flash(f"Error al eliminar fila: {str(e)}", "danger")
+
+    return redirect(url_for("main.ver_tabla", table_id=tabla_id))
 
 
 @main_bp.route("/delete_table/<table_id>", methods=["POST"])

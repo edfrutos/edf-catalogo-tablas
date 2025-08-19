@@ -5,42 +5,76 @@
     <h1>Editar Fila de "{{ catalog.name }}"</h1>
     <form method="post" enctype="multipart/form-data">
         {% for header in headers %}
+        {% if header != 'Imagen' %}
         <div class="mb-3">
             <label for="{{ header }}" class="form-label">{{ header }}</label>
             <input type="text" class="form-control" id="{{ header }}" name="{{ header }}" value="{{ fila[header] }}">
         </div>
+        {% endif %}
         {% endfor %}
+        
+        <!-- 🆕 CAMPO ESPECIAL PARA URL DE IMAGEN EXTERNA -->
+        <!-- DEBUG_SIMPLE: _imagen_externa = {{ fila._imagen_externa }} -->
+        {% if fila._imagen_externa %}
+        <div class="mb-3">
+            <label for="Imagen" class="form-label">URL de Imagen Externa</label>
+            <input type="url" class="form-control" id="Imagen" name="Imagen" value="{{ fila._imagen_externa }}" 
+                   placeholder="https://images.unsplash.com/...">
+            <div class="form-text">
+                <i class="bi bi-info-circle"></i> Esta es una imagen externa (ej: Unsplash). 
+                Puedes cambiar la URL o eliminarla borrando el campo.
+            </div>
+        </div>
+        {% else %}
+        <!-- DEBUG_SIMPLE: NO hay imagen externa, _imagen_externa = {{ fila._imagen_externa }} -->
+        {% endif %}
         <div class="mb-3">
             <label for="imagenes" class="form-label">Imágenes (opcional)</label>
             <input type="file" class="form-control" id="imagenes" name="imagenes" multiple accept="image/*">
             <div class="form-text">Puede seleccionar múltiples imágenes. Las nuevas imágenes se añadirán a las existentes.</div>
         </div>
-        {% if fila.imagenes and fila.imagenes|length > 0 %}
+        <!-- 🔥🔥🔥 USAR IMÁGENES PROCESADAS POR EL BACKEND 🔥🔥🔥 -->
+        {% set imagenes_procesadas = fila._imagenes_unificadas if fila._imagenes_unificadas else [] %}
+        {% set imagen_externa = fila._imagen_externa if fila._imagen_externa else None %}
+        
+        <!-- DEBUG - VERSIÓN SEGURA CONTRA ERRORES DE GENERADOR -->
+        {% set num_imagenes = imagenes_procesadas|list|length if imagenes_procesadas else 0 %}
+        <!-- IMÁGENES PROCESADAS: {{ num_imagenes }} → {{ imagenes_procesadas|list }} -->
+        <!-- IMAGEN EXTERNA: {{ imagen_externa }} -->
+        
+        {% if (imagenes_procesadas and imagenes_procesadas|length > 0) or imagen_externa %}
         <div class="mb-3">
             <label class="form-label">Imágenes actuales</label>
             <div class="d-flex flex-wrap gap-3">
-                {% for img in fila.imagenes %}
+                {% for img in imagenes_procesadas %}
                 <div class="position-relative">
-                    {% if img.startswith('http') %}
-                    <a href="#" onclick="mostrarImagenModal('{{ img }}'); return false;">
-                        <img src="{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'">
+                    <!-- Usar fallback S3 → Local → Error -->
+                    <a href="#" onclick="mostrarImagenModal('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/{{ img }}'); return false;">
+                        <img src="https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.src='/static/uploads/{{ img }}'; this.onerror=function(){this.src='/static/img/image-error.svg'};">
                     </a>
-                    {% else %}
-                    <a href="#" onclick="mostrarImagenModal('/imagenes_subidas/{{ img }}'); return false;">
-                        <img src="/imagenes_subidas/{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/image-placeholder.png') }}'">
-                    </a>
-                    {% endif %}
                     <div class="mt-1 text-center">
                         <button type="button" class="btn btn-sm btn-danger" onclick="confirmarEliminarImagen('{{ img|e }}', {{ loop.index0 }})">Eliminar</button>
                     </div>
                 </div>
                 {% endfor %}
+                
+                <!-- 🆕 MOSTRAR IMAGEN EXTERNA (UNSPLASH) SIN OPCIÓN DE ELIMINAR -->
+                {% if imagen_externa %}
+                <div class="position-relative">
+                    <img src="{{ imagen_externa }}" alt="Imagen externa" 
+                         style="width:100px; height:100px; object-fit:cover; border-radius:8px;"
+                         onclick="mostrarImagenModal('{{ imagen_externa }}')">
+                    <div class="position-absolute bottom-0 start-0 bg-warning text-dark px-2 py-1 small rounded-top-end">
+                        <i class="bi bi-cloud"></i> Externa
+                    </div>
+                </div>
+                {% endif %}
             </div>
             <input type="hidden" id="imagenes_a_eliminar" name="imagenes_a_eliminar" value="">
         </div>
         {% endif %}
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-        <a href="{{ url_for('catalogs.view', catalog_id=catalog._id|string) }}" class="btn btn-secondary">Cancelar</a>
+        <a href="{{ url_for('main.ver_tabla', table_id=catalog._id|string) }}?page={{ ((fila_index // 10) + 1) }}" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
 
@@ -94,9 +128,81 @@ let imagenActual = '';
 let indiceActual = -1;
 
 function mostrarImagenModal(imagenUrl) {
-  document.getElementById('imagenModalSrc').src = imagenUrl;
-  const modal = new bootstrap.Modal(document.getElementById('imagenModal'));
-  modal.show();
+    console.log('🖼️ Mostrando imagen en editar:', imagenUrl);
+    
+    const modalElement = document.getElementById('imagenModal');
+    const modalImg = document.getElementById('imagenModalSrc');
+    
+    if (!modalElement || !modalImg) {
+        console.error('❌ Elementos del modal no encontrados en editar');
+        window.open(imagenUrl, '_blank');
+        return;
+    }
+    
+    // Verificar si Bootstrap está disponible
+    if (typeof bootstrap === 'undefined') {
+        console.error('❌ Bootstrap no está disponible en editar');
+        window.open(imagenUrl, '_blank');
+        return;
+    }
+    
+    // Intentar cargar la imagen original
+    const img = new Image();
+    
+    img.onload = function() {
+        console.log('✅ Imagen cargada exitosamente en editar');
+        modalImg.src = imagenUrl;
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    };
+    
+    img.onerror = function() {
+        console.log('❌ Error cargando imagen original en editar, intentando alternativas...');
+        verificarImagenAlternativaEdit(imagenUrl, modalImg, modalElement);
+    };
+    
+    img.src = imagenUrl;
+}
+
+function verificarImagenAlternativaEdit(imagenUrlOriginal, modalImg, modalElement) {
+    let nombreArchivo = imagenUrlOriginal.split('/').pop();
+    
+    if (imagenUrlOriginal.includes('amazonaws.com')) {
+        console.log('🔄 Intentando versión local en editar...');
+        const urlLocal = `/static/uploads/${nombreArchivo}`;
+        probarImagenEdit(urlLocal, modalImg, modalElement);
+    } else if (imagenUrlOriginal.includes('/static/uploads/')) {
+        console.log('🔄 Intentando versión S3 en editar...');
+        const urlS3 = `https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/${nombreArchivo}`;
+        probarImagenEdit(urlS3, modalImg, modalElement);
+    } else {
+        mostrarImagenErrorEdit(modalImg, modalElement);
+    }
+}
+
+function probarImagenEdit(url, modalImg, modalElement) {
+    const img = new Image();
+    
+    img.onload = function() {
+        console.log('✅ Imagen alternativa cargada en editar:', url);
+        modalImg.src = url;
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    };
+    
+    img.onerror = function() {
+        console.log('❌ Imagen alternativa también falló en editar:', url);
+        mostrarImagenErrorEdit(modalImg, modalElement);
+    };
+    
+    img.src = url;
+}
+
+function mostrarImagenErrorEdit(modalImg, modalElement) {
+    console.log('❌ Mostrando imagen de error en editar');
+    modalImg.src = '/static/img/image-error.svg';
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
 }
 
 function confirmarEliminarImagen(imagen, indice) {

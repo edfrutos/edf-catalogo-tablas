@@ -4,52 +4,12 @@
 {% block head %}
 {{ super() }}
 <style>
-    .image-container {
-        position: relative;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 4px;
-        overflow: hidden;
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+    .sortable:hover {
         background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-    }
-    
-    .catalog-image {
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .modal-image-container {
-        position: relative;
-        min-height: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    #imagenModalSrc {
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        max-width: 100%;
-        max-height: 70vh;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-    }
-    
-    .modal-xl {
-        max-width: 95vw;
-    }
-    
-    .modal-image-container {
-        max-height: 75vh;
-        overflow: hidden;
     }
 </style>
 {% endblock %}
@@ -57,22 +17,23 @@
 {% block content %}
 <div class="container mt-4">
   <h2>Tabla: {{ table.name }}</h2>
-  <a href="{{ url_for('main.dashboard_user') }}" class="btn btn-secondary mb-3">&larr; Volver al panel</a>
+  <a href="/dashboard_user" class="btn btn-secondary mb-3">← Volver al panel</a>
   <table class="table table-bordered mb-4">
+    <tbody>
     <tr><th>Nombre</th><td>{{ table.name }}</td></tr>
-    <tr><th>Fecha de creación</th><td>{% if table.created_at %}{% if table.created_at is string %}{{ table.created_at }}{% else %}{{ table.created_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}{% else %}—{% endif %}</td></tr>
-    <tr><th>Propietario</th><td>{{ table.owner if table.owner else (table.owner_name if table.owner_name else (table.created_by if table.created_by else 'Usuario desconocido')) }}</td></tr>
-    <tr><th>Encabezados</th><td>{{ table.headers|join(', ') if table.headers else '—' }}</td></tr>
-    <tr><th>Número de filas</th><td>{{ table.data|length if table.data else 0 }}</td></tr>
+    <tr><th>Fecha de creación</th><td>{{ table.created_at }}</td></tr>
+    <tr><th>Propietario</th><td>{{ table.owner }}</td></tr>
+    <tr><th>Encabezados</th><td>{{ table.headers|join(', ') }}</td></tr>
+    <tr><th>Número de filas</th><td>{{ table.data|length }}</td></tr>
+    </tbody>
   </table>
-  {% if session.username == table.owner %}
-    <a href="{{ url_for('main.editar_tabla', id=table._id) }}" class="btn btn-success mb-3"><i class="bi bi-pencil"></i> Editar tabla</a>
-  {% endif %}
+  
   {% if session.role == 'admin' or session.username == table.owner %}
     <a href="{{ url_for('main.agregar_fila', tabla_id=table._id|string) }}" class="btn btn-success mb-3">
       <i class="bi bi-plus"></i> Agregar Fila
     </a>
   {% endif %}
+  
   <h4>Filas de la tabla</h4>
   {% if table.data and table.headers %}
     <div class="mb-3">
@@ -82,8 +43,12 @@
       <table class="table table-striped table-sm" id="tablaFilas">
         <thead>
           <tr>
+            <th style="width: 60px; text-align: center;">#</th>
             {% for header in table.headers %}
-              <th>{{ header }}</th>
+              <th class="sortable" data-column="{{ loop.index }}" title="Haz clic para ordenar" style="cursor: pointer; user-select: none;">
+                {{ header }} 
+                <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+              </th>
             {% endfor %}
             <th>Imágenes</th>
             {% if session.role == 'admin' or session.username == table.owner %}
@@ -93,7 +58,8 @@
         </thead>
         <tbody>
           {% for row in table.data %}
-            <tr>
+            <tr data-row-index="{{ loop.index0 }}">
+              <td style="text-align: center; font-weight: bold; color: #6c757d;">{{ loop.index }}</td>
               {% for header in table.headers %}
                 <td>{{ row[header] if row[header] is defined and row[header] is not none else '' }}</td>
               {% endfor %}
@@ -101,20 +67,11 @@
                 {% if row.imagen_urls and row.imagen_urls|length > 0 %}
                   <div class="d-flex flex-wrap gap-2">
                     {% for img_url in row.imagen_urls %}
-                      <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;" class="position-relative">
-                        <div class="image-container" data-img-url="{{ img_url }}">
-                          <div class="spinner-border text-primary spinner-border-sm position-absolute top-50 start-50 translate-middle" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                          </div>
-                          <img src="{{ img_url }}" alt="Imagen" class="img-thumbnail catalog-image" 
-                               style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
-                               onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                               onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'; this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                               loading="lazy">
-                        </div>
+                      <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;">
+                        <img src="{{ img_url }}" alt="Imagen" style="width:40px; height:40px; object-fit:cover;">
                       </a>
                     {% endfor %}
-                    <small class="text-muted align-self-center ms-2">({{ row.imagen_urls|length }} imágenes)</small>
+                    <small class="text-muted">({{ row.imagen_urls|length }} imágenes)</small>
                   </div>
                 {% else %}
                   <span class="text-muted">Sin imágenes</span>
@@ -122,11 +79,11 @@
               </td>
               {% if session.role == 'admin' or session.username == table.owner %}
                 <td>
-                  <a href="{{ url_for('main.editar_fila', tabla_id=table._id, fila_index=loop.index0) }}" class="btn btn-sm btn-warning me-1">
+                  <a href="{{ url_for('main.editar_fila', tabla_id=table._id|string, fila_index=loop.index0) }}" class="btn btn-sm btn-warning me-1">
                     <i class="bi bi-pencil"></i> Editar
                   </a>
-                  <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=table._id, row_index=loop.index0) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
-                    <button type="submit" class="btn btn-sm btn-danger">
+                  <form method="POST" action="{{ url_for('main.delete_row', tabla_id=table._id|string, fila_index=loop.index0) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que quieres eliminar esta fila?');">
                       <i class="bi bi-trash"></i> Eliminar
                     </button>
                   </form>
@@ -143,127 +100,516 @@
   {% else %}
     <div class="alert alert-info">Esta tabla no tiene filas aún.</div>
   {% endif %}
-</div>
 
-<!-- Modal para visualizar imágenes -->
-<div class="modal fade" id="imagenModal" tabindex="-1" aria-labelledby="imagenModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
+<!-- Modal para visualizar imágenes - VERSIÓN ACTUALIZADA -->
+<div class="modal fade" id="imagenModalVerTabla" tabindex="-1" aria-labelledby="imagenModalVerTablaLabel" aria-hidden="true" data-version="2024-08-19">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="imagenModalLabel">Visualizar Imagen</h5>
+        <h5 class="modal-title" id="imagenModalVerTablaLabel">
+          <i class="bi bi-image"></i> Visualizar Imagen
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <div class="modal-image-container">
-          <div class="spinner-border text-primary position-absolute" role="status">
-            <span class="visually-hidden">Cargando...</span>
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+          <div class="spinner-border text-primary" id="imagenVerTablaSpinner" role="status">
+            <span class="visually-hidden">Cargando imagen...</span>
           </div>
-          <img id="imagenModalSrc" src="" alt="Imagen" 
-               onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-               onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'; this.style.opacity='1'; this.previousElementSibling.style.display='none';">
+          <img id="imagenModalVerTablaSrc" src="" alt="Imagen del catálogo" style="max-width: 100%; max-height: 70vh; display: none;">
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" onclick="downloadImage()">
+          <i class="bi bi-download"></i> Descargar
+        </button>
       </div>
     </div>
   </div>
 </div>
-
 {% endblock %}
+
 {% block scripts %}
 <script>
+    console.log('🚀 Iniciando JavaScript simplificado - VERSIÓN ACTUALIZADA 2024-08-19-12:00');
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM cargado');
+    
 const filas = Array.from(document.querySelectorAll('#tablaFilas tbody tr'));
+    console.log(`📊 Filas encontradas: ${filas.length}`);
+    
 const filasPorPagina = 10;
 let paginaActual = 1;
+    let ordenActual = { columna: -1, ascendente: true };
 
-function mostrarImagenModal(imagenUrl) {
-  // Restablecer el spinner y la opacidad antes de cargar la nueva imagen
-  const spinner = document.querySelector('#imagenModal .spinner-border');
-  const modalImg = document.getElementById('imagenModalSrc');
-  if (spinner) spinner.style.display = 'block';
-  if (modalImg) {
-    modalImg.style.opacity = '0';
-    modalImg.src = imagenUrl;
-  }
-  
-  // Mostrar el modal
-  const modal = new bootstrap.Modal(document.getElementById('imagenModal'));
-  modal.show();
-}
+         function mostrarPagina(pagina) {
+         console.log(`📄 Mostrando página ${pagina}`);
+         const inicio = (pagina - 1) * filasPorPagina;
+         const fin = inicio + filasPorPagina;
+         
+         filas.forEach((fila, i) => {
+             fila.style.display = (i >= inicio && i < fin) ? '' : 'none';
+         });
+                 
+        renderizarPaginacion(pagina);
+        
+        // Asegurar que los enlaces se actualicen después de mostrar la página
+        setTimeout(() => {
+            actualizarEnlacesEdicion();
+        }, 100);
+        
+        console.log(`✅ Página ${pagina} mostrada con enlaces actualizados`);
+     }
 
-function mostrarPagina(pagina) {
-  const inicio = (pagina - 1) * filasPorPagina;
-  const fin = inicio + filasPorPagina;
-  filas.forEach((fila, i) => {
-    fila.style.display = (i >= inicio && i < fin) ? '' : 'none';
-  });
-  renderizarPaginacion(pagina);
+     function actualizarEnlacesEdicion() {
+         console.log('🔧 Actualizando enlaces de edición y eliminación...');
+         // Actualizar enlaces de edición con el índice real de la fila
+         const filasVisibles = document.querySelectorAll('#tablaFilas tbody tr[style=""], #tablaFilas tbody tr:not([style*="none"])');
+         console.log(`🔍 Filas visibles encontradas: ${filasVisibles.length}`);
+         
+         filasVisibles.forEach((fila, index) => {
+             const indiceReal = fila.getAttribute('data-row-index');
+             const nombreFila = fila.querySelector('td:first-child')?.textContent?.trim();
+             console.log(`🎯 Fila ${index}: "${nombreFila}" data-row-index=${indiceReal}`);
+             
+             // Verificar que el índice es válido
+             if (!indiceReal) {
+                 console.error(`❌ Fila ${index} ("${nombreFila}") no tiene data-row-index`);
+                 return;
+             }
+             
+             // Actualizar enlace de editar
+             const enlaceEditar = fila.querySelector('a[href*="editar_fila"]');
+             if (enlaceEditar) {
+                 const tabla_id = enlaceEditar.href.match(/editar_fila\/([^\/]+)\//)?.[1];
+                 if (tabla_id) {
+                     const nuevaURL = `/editar_fila/${tabla_id}/${indiceReal}`;
+                     enlaceEditar.href = nuevaURL;
+                     console.log(`✅ "${nombreFila}" - Enlace editar: ${nuevaURL}`);
+                 }
+             }
+             
+             // Actualizar formulario de eliminar - buscar por diferentes patrones
+             let formEliminar = fila.querySelector('form[action*="delete_row"]') || 
+                               fila.querySelector('form[action*="delete-row"]') ||
+                               fila.querySelector('form[action*="catalogs"]');
+             
+             if (formEliminar) {
+                 console.log(`🗑️ "${nombreFila}" - Formulario original: ${formEliminar.action}`);
+                 // Extraer tabla_id del action actual
+                 let tabla_id = formEliminar.action.match(/([a-f0-9]{24})/)?.[1];
+                 if (tabla_id) {
+                     const nuevaAction = `/delete_row/${tabla_id}/${indiceReal}`;
+                     formEliminar.action = nuevaAction;
+                     console.log(`✅ "${nombreFila}" - Formulario eliminar: ${nuevaAction}`);
+                 } else {
+                     console.error(`❌ "${nombreFila}" - No se pudo extraer tabla_id de: ${formEliminar.action}`);
+                 }
+             } else {
+                 console.error(`❌ "${nombreFila}" - No se encontró formulario eliminar`);
+             }
+         });
 }
 
 function renderizarPaginacion(pagina) {
-  const totalPaginas = Math.ceil(filas.filter(f => f.style.display !== 'none' || f.style.display === '').length / filasPorPagina);
+        const totalFilas = filas.length;
+        const totalPaginas = Math.ceil(totalFilas / filasPorPagina);
   const paginacion = document.getElementById('paginacionTabla');
+        
+        if (!paginacion) {
+            console.error('❌ No se encontró el elemento paginacionTabla');
+            return;
+        }
+        
   paginacion.innerHTML = '';
-  if (totalPaginas <= 1) return;
+        
+        console.log(`🔢 Renderizando paginación: ${totalFilas} filas, ${totalPaginas} páginas`);
+        
+        if (totalPaginas <= 1) {
+            console.log('📄 Solo una página, no mostrando paginación');
+            return;
+        }
+        
   for (let i = 1; i <= totalPaginas; i++) {
     const li = document.createElement('li');
     li.className = 'page-item' + (i === pagina ? ' active' : '');
+            
     const a = document.createElement('a');
     a.className = 'page-link';
     a.textContent = i;
     a.href = '#';
-    a.onclick = function(e) { e.preventDefault(); paginaActual = i; mostrarPagina(i); };
+            a.onclick = function(e) { 
+                e.preventDefault(); 
+                paginaActual = i; 
+                mostrarPagina(i); 
+            };
+            
     li.appendChild(a);
     paginacion.appendChild(li);
   }
+        
+        console.log(`✅ Paginación creada con ${totalPaginas} páginas`);
 }
 
 function filtrarFilas() {
   const valor = document.getElementById('searchInput').value.toLowerCase();
+        console.log(`🔍 Filtrando por: "${valor}"`);
+        
+        if (!valor.trim()) {
+            paginaActual = 1;
+            mostrarPagina(1);
+            return;
+        }
+        
+        let filasVisibles = 0;
   filas.forEach(fila => {
     const texto = fila.textContent.toLowerCase();
-    fila.style.display = texto.includes(valor) ? '' : 'none';
-  });
+            const coincide = texto.includes(valor);
+            fila.style.display = coincide ? '' : 'none';
+            if (coincide) filasVisibles++;
+        });
+        
+        console.log(`📊 ${filasVisibles} filas coinciden con el filtro`);
+        document.getElementById('paginacionTabla').innerHTML = '';
+    }
+
+         function ordenarTabla(columna) {
+         console.log(`🔄 Ordenando por columna ${columna}`);
+         
+         // Si es la misma columna, cambiar dirección; si no, ascendente
+         if (ordenActual.columna === columna) {
+             ordenActual.ascendente = !ordenActual.ascendente;
+         } else {
+             ordenActual.columna = columna;
+             ordenActual.ascendente = true;
+         }
+         
+         // Obtener todas las filas como array
+         const filasArray = Array.from(filas);
+         
+         // Ordenar las filas (ajustar índice porque la primera columna es el número de fila)
+         filasArray.sort((a, b) => {
+             const celdaA = a.cells[columna]?.textContent?.trim() || '';
+             const celdaB = b.cells[columna]?.textContent?.trim() || '';
+             
+             // Intentar comparar como números primero
+             const numA = parseFloat(celdaA);
+             const numB = parseFloat(celdaB);
+             
+             let resultado;
+             if (!isNaN(numA) && !isNaN(numB)) {
+                 resultado = numA - numB;
+             } else {
+                 resultado = celdaA.localeCompare(celdaB, 'es', { sensitivity: 'base' });
+             }
+             
+             return ordenActual.ascendente ? resultado : -resultado;
+         });
+         
+         // Reemplazar las filas en el DOM
+         const tbody = document.querySelector('#tablaFilas tbody');
+         filasArray.forEach(fila => tbody.appendChild(fila));
+         
+         // Actualizar el array global de filas
+         filas.splice(0, filas.length, ...filasArray);
+         
+         // Actualizar iconos de ordenamiento
+         actualizarIconosOrdenamiento();
+         
+         // Mostrar la primera página
   paginaActual = 1;
   mostrarPagina(1);
 }
 
-document.getElementById('searchInput').addEventListener('input', filtrarFilas);
-mostrarPagina(1);
+     function actualizarIconosOrdenamiento() {
+         const headers = document.querySelectorAll('.sortable');
+         headers.forEach((header, index) => {
+             const icon = header.querySelector('.sort-icon');
+             if (icon) {
+                 if (index === ordenActual.columna) {
+                     icon.className = ordenActual.ascendente ? 
+                         'bi bi-chevron-up sort-icon' : 
+                         'bi bi-chevron-down sort-icon';
+                     icon.style.opacity = '1';
+                 } else {
+                     icon.className = 'bi bi-chevron-expand sort-icon';
+                     icon.style.opacity = '0.5';
+                 }
+             }
+         });
+     }
 
-// Función para manejar errores de carga de imágenes
-document.addEventListener('DOMContentLoaded', function() {
-    // Crear una imagen de error por defecto si no existe
-    const errorImgPath = '{{ url_for('static', filename='img/image-error.svg') }}';
-    fetch(errorImgPath)
-        .catch(() => {
-            // Si la imagen de error no existe, crear un canvas con un icono de error
-            const canvas = document.createElement('canvas');
-            canvas.width = 80;
-            canvas.height = 80;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#f8d7da';
-            ctx.fillRect(0, 0, 80, 80);
-            ctx.font = '40px Arial';
-            ctx.fillStyle = '#721c24';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('!', 40, 40);
-            
-            // Convertir el canvas a una imagen base64
-            const dataUrl = canvas.toDataURL('image/png');
-            
-            // Reemplazar todas las referencias a la imagen de error
-            document.querySelectorAll('img[onerror]').forEach(img => {
-                img.onerror = function() {
-                    this.src = dataUrl;
-                    this.style.opacity = '1';
-                    const spinner = this.previousElementSibling;
-                    if (spinner) spinner.style.display = 'none';
-                };
-            });
-        });
+     // Event listeners
+     const searchInput = document.getElementById('searchInput');
+     if (searchInput) {
+         searchInput.addEventListener('input', filtrarFilas);
+         console.log('🔍 Event listener de búsqueda agregado');
+     }
+
+     // Event listeners para ordenamiento
+     const headers = document.querySelectorAll('.sortable');
+     console.log(`🎯 Headers encontrados para ordenamiento: ${headers.length}`);
+     console.log('🔍 Todos los elementos con clase sortable:', headers);
+     
+     headers.forEach((header, index) => {
+         console.log(`Header ${index}: "${header.textContent.trim()}", data-column: ${header.dataset.column}`);
+         header.addEventListener('click', function(e) {
+             e.preventDefault();
+             const columna = parseInt(this.dataset.column);
+             console.log(`📋 Click en header ${index}, columna: ${columna}`);
+             ordenarTabla(columna);
+         });
+         // Agregar estilo visual al hover
+         header.style.cursor = 'pointer';
+     });
+     
+     if (headers.length === 0) {
+         console.error('❌ No se encontraron headers con clase .sortable');
+     }
+
+     // Inicializar - verificar si hay parámetro de página en la URL
+     const urlParams = new URLSearchParams(window.location.search);
+     const paginaInicial = parseInt(urlParams.get('page')) || 1;
+     const fragmento = window.location.hash;
+     
+     console.log(`🔗 URL: página=${paginaInicial}, fragmento=${fragmento}`);
+     
+     mostrarPagina(paginaInicial);
+     
+     // Si hay un fragmento para destacar una fila específica
+     if (fragmento && fragmento.startsWith('#fila-')) {
+         const filaNumero = parseInt(fragmento.replace('#fila-', ''));
+         const filaIndex = filaNumero - 1; // Convertir de número visible (1-based) a índice interno (0-based)
+         console.log(`✨ Destacando fila número ${filaNumero} (índice ${filaIndex})`);
+         
+         setTimeout(() => {
+             const fila = document.querySelector(`tr[data-row-index="${filaIndex}"]`);
+             if (fila) {
+                 fila.style.backgroundColor = '#d4edda';
+                 fila.style.border = '2px solid #28a745';
+                 fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                 
+                 // Quitar el destacado después de 3 segundos
+                 setTimeout(() => {
+                     fila.style.backgroundColor = '';
+                     fila.style.border = '';
+                 }, 3000);
+             }
+         }, 500);
+     }
+     
+     console.log('✅ Inicialización completa');
+    
+    // 🔧 DEFINIR DOWNLOAD COMO FUNCIÓN GLOBAL
+    window.downloadImage = downloadImage;
+    console.log('🌍 downloadImage definida globalmente:', typeof window.downloadImage);
 });
+
+// Funciones globales para el modal
+function mostrarImagenModal(imagenUrl) {
+    console.log('🖼️ Mostrando imagen:', imagenUrl);
+    
+    // Asegurar que el DOM esté completamente cargado
+    if (document.readyState !== 'complete') {
+        console.log('🔄 DOM no completamente cargado, esperando...');
+        setTimeout(() => mostrarImagenModal(imagenUrl), 100);
+        return;
+    }
+    
+    const modalElement = document.getElementById('imagenModalVerTabla');
+    const modalImg = document.getElementById('imagenModalVerTablaSrc');
+    const spinner = document.getElementById('imagenVerTablaSpinner');
+    
+    // 🔄 CACHE-BUSTER: VERSIÓN 2024-08-19-12:00 🔄
+    console.log('🔍 DEBUG PROFUNDO DEL MODAL (NUEVA VERSIÓN):');
+    console.log('- imagenModalVerTabla:', document.getElementById('imagenModalVerTabla'));
+    console.log('- imagenModalVerTablaSrc:', document.getElementById('imagenModalVerTablaSrc'));
+    console.log('- imagenVerTablaSpinner:', document.getElementById('imagenVerTablaSpinner'));
+    console.log('- Total de modals en DOM:', document.querySelectorAll('.modal').length);
+    console.log('- Modals con id que contiene "imagen":', document.querySelectorAll('[id*="imagen"]').length);
+    console.log('🔄 SI VES ESTE MENSAJE, EL CACHE SE ACTUALIZÓ CORRECTAMENTE');
+    
+    console.log('🔍 Elementos del modal:', {
+        modalElement: modalElement ? 'encontrado' : 'NO ENCONTRADO',
+        modalImg: modalImg ? 'encontrado' : 'NO ENCONTRADO', 
+        spinner: spinner ? 'encontrado' : 'NO ENCONTRADO',
+        documentReady: document.readyState
+    });
+    
+    if (!modalElement) {
+        console.error('❌ Modal element no encontrado');
+        console.log('🔍 Intentando abrir imagen en nueva ventana como fallback');
+        window.open(imagenUrl, '_blank');
+        return;
+    }
+    
+    if (!modalImg || !spinner) {
+        console.error('❌ Elementos internos del modal no encontrados');
+        alert('Error: Elementos del modal no disponibles'); // Fallback temporal
+        return;
+    }
+    
+    // Verificar si Bootstrap está disponible
+    if (typeof bootstrap === 'undefined') {
+        console.error('❌ Bootstrap no está disponible');
+        // Fallback: mostrar en nueva ventana
+        window.open(imagenUrl, '_blank');
+        return;
+    }
+    
+    console.log('✅ Creando modal de Bootstrap...');
+    const modal = new bootstrap.Modal(modalElement);
+    
+    // Mostrar modal y spinner, ocultar imagen
+    console.log('📱 Mostrando modal...');
+    modal.show();
+    spinner.style.display = 'block';
+    modalImg.style.display = 'none';
+    modalImg.src = '';
+    
+    // Intentar cargar la imagen original
+    const img = new Image();
+    
+    img.onload = function() {
+        console.log('✅ Imagen cargada exitosamente');
+        modalImg.src = imagenUrl;
+        modalImg.style.display = 'block';
+        spinner.style.display = 'none';
+    };
+    
+                img.onerror = function() {
+        console.log('❌ Error cargando imagen original, intentando alternativas...');
+        // Si la imagen original falla, intentar alternativas
+        verificarImagenAlternativa(imagenUrl, modalImg, spinner);
+    };
+    
+    img.src = imagenUrl;
+}
+
+function verificarImagenAlternativa(imagenUrlOriginal, modalImg, spinner) {
+    // Extraer el nombre del archivo de la URL
+    let nombreArchivo = imagenUrlOriginal.split('/').pop();
+    
+    // Si la URL original es de S3, intentar local
+    if (imagenUrlOriginal.includes('amazonaws.com')) {
+        console.log('🔄 Intentando versión local...');
+        const urlLocal = `/static/uploads/${nombreArchivo}`;
+        probarImagen(urlLocal, modalImg, spinner, () => {
+            // Si local también falla, mostrar imagen de error
+            mostrarImagenError(modalImg, spinner);
+        });
+    } 
+    // Si la URL original es local, intentar S3
+    else if (imagenUrlOriginal.includes('/static/uploads/')) {
+        console.log('🔄 Intentando versión S3...');
+        const urlS3 = `https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/${nombreArchivo}`;
+        probarImagen(urlS3, modalImg, spinner, () => {
+            // Si S3 también falla, mostrar imagen de error
+            mostrarImagenError(modalImg, spinner);
+        });
+    }
+    // Si no es ni local ni S3, mostrar error directamente
+    else {
+        mostrarImagenError(modalImg, spinner);
+    }
+}
+
+function probarImagen(url, modalImg, spinner, onError) {
+    const img = new Image();
+    
+    img.onload = function() {
+        console.log('✅ Imagen alternativa cargada:', url);
+        modalImg.src = url;
+        modalImg.style.display = 'block';
+        spinner.style.display = 'none';
+    };
+    
+    img.onerror = function() {
+        console.log('❌ Imagen alternativa también falló:', url);
+        onError();
+    };
+    
+    img.src = url;
+}
+
+function mostrarImagenError(modalImg, spinner) {
+    console.log('❌ Mostrando imagen de error');
+    // Crear una imagen de error simple
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 200;
+    const ctx = canvas.getContext('2d');
+    
+    // Fondo gris claro
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, 300, 200);
+    
+    // Borde
+    ctx.strokeStyle = '#dee2e6';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, 0, 300, 200);
+    
+    // Icono de error (X)
+    ctx.strokeStyle = '#dc3545';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(100, 60);
+    ctx.lineTo(200, 140);
+    ctx.moveTo(200, 60);
+    ctx.lineTo(100, 140);
+    ctx.stroke();
+    
+    // Texto
+    ctx.fillStyle = '#6c757d';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Imagen no disponible', 150, 170);
+    
+    modalImg.src = canvas.toDataURL();
+    modalImg.style.display = 'block';
+    spinner.style.display = 'none';
+}
+
+// 🌍 FUNCIÓN GLOBAL PARA DESCARGA DE IMÁGENES
+function downloadImage() {
+    console.log('🔽 🔽 🔽 FUNCIÓN DOWNLOADIMAGE EJECUTADA 🔽 🔽 🔽');
+    console.log('🔍 Buscando elemento con ID: imagenModalVerTablaSrc');
+    const modalImg = document.getElementById('imagenModalVerTablaSrc');
+    console.log('🖼️ Elemento encontrado:', modalImg);
+    
+    if (!modalImg) {
+        console.error('❌ No se encontró el elemento de imagen del modal');
+        alert('Error: No se puede descargar la imagen');
+        return;
+    }
+    
+    if (!modalImg.src || modalImg.src.startsWith('data:')) {
+        console.error('❌ Imagen no válida para descarga:', modalImg.src);
+        alert('Error: La imagen no se puede descargar');
+        return;
+    }
+    
+    console.log('📥 Descargando imagen:', modalImg.src);
+    
+    const link = document.createElement('a');
+    link.href = modalImg.src;
+    
+    // Extraer nombre del archivo de la URL o usar nombre por defecto
+    const urlParts = modalImg.src.split('/');
+    const fileName = urlParts[urlParts.length - 1] || 'imagen_catalogo.jpg';
+    link.download = fileName;
+    
+    // Ejecutar descarga
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('✅ Descarga iniciada:', fileName);
+}
 </script>
 {% endblock %}

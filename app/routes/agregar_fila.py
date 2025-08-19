@@ -14,7 +14,8 @@ from flask import (
     flash,
     current_app,
     session,
-)  # noqa: F401
+)
+from datetime import datetime  # noqa: F401
 from bson.objectid import ObjectId
 import logging
 from typing import Any
@@ -52,10 +53,14 @@ def agregar_fila_route(main_bp):
                 for header in tabla.get("headers", []):
                     nueva_fila[header] = request.form.get(header, "")
 
-                # Agregar la fila a la tabla
+                # Agregar la fila a la tabla (actualizar tanto data como rows para compatibilidad)
                 current_app.spreadsheets_collection.update_one(  # type: ignore
                     {"_id": ObjectId(tabla_id)},
-                    {"$push": {"data": nueva_fila}, "$inc": {"num_rows": 1}},
+                    {
+                        "$push": {"data": nueva_fila, "rows": nueva_fila},
+                        "$inc": {"num_rows": 1},
+                        "$set": {"updated_at": datetime.utcnow()},
+                    },
                 )
 
                 flash("Fila agregada correctamente", "success")

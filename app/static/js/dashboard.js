@@ -243,15 +243,242 @@ $(function () {
     $("#backupBtn")
       .off("click")
       .on("click", function () {
-        console.log("✅ Click detectado en botón backup");
-        const btn = $(this);
-        const originalText = btn.html();
+        console.log("✅ Click detectado en botón backup - abriendo modal de opciones");
+        console.log("🔍 Modal element exists:", $('#backupOptionsModal').length);
+        console.log("🔍 Bootstrap modal available:", typeof $.fn.modal);
+        
+        if ($('#backupOptionsModal').length === 0) {
+          console.error("❌ Modal #backupOptionsModal no encontrado en el DOM");
+          alert("Error: Modal de opciones no encontrado. Refrescar la página.");
+          return;
+        }
+        
+        try {
+          $('#backupOptionsModal').modal('show');
+          console.log("✅ Modal show() ejecutado");
+        } catch (error) {
+          console.error("❌ Error al mostrar modal:", error);
+          alert("Error al abrir modal: " + error.message);
+        }
+      });
+  }
 
-        btn
-          .prop("disabled", true)
-          .html(
-            "<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span> Generando backup..."
-          );
+  // Función para inicializar eventos de backup options modal
+  window.initializeBackupModalEvents = function() {
+    console.log("✅ Inicializando eventos del modal de opciones de backup...");
+    
+    // Manejadores para los botones del modal de backup
+    $(document).on("click", "#createBackupLocalBtn", function () {
+      console.log("✅ Backup Local seleccionado");
+      $('#backupOptionsModal').modal('hide');
+      executeLocalBackup();
+    });
+    
+    $(document).on("click", "#createBackupDriveBtn", function () {
+      console.log("✅ Backup Google Drive seleccionado");
+      $('#backupOptionsModal').modal('hide');
+      executeGoogleDriveBackup();
+    });
+  }
+
+  // ============================================
+  // FUNCIONES DE BACKUP
+  // ============================================
+  
+  function executeLocalBackup() {
+    console.log("🗂️ Iniciando backup local...");
+    
+    // Mostrar estado de carga
+    $("#backupResult").html(`
+      <div class="alert alert-info">
+        <i class="bi bi-folder-plus"></i> Creando backup local de la base de datos...
+        <div class="spinner-border spinner-border-sm ms-2" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    `);
+
+    $.ajax({
+      url: "/admin/maintenance/backup-local",
+      method: "POST",
+      xhrFields: { withCredentials: true },
+      timeout: 120000, // 2 minutos
+      success: function (response) {
+        console.log("✅ Backup local completado:", response);
+        
+        if (response.status === "success") {
+          const successMsg = `
+            <div class="alert alert-success">
+              <i class="bi bi-check-circle"></i>
+              <strong>Backup local creado exitosamente</strong><br>
+              <small>
+                • Archivo: ${response.filename}<br>
+                • Ubicación: ${response.file_path}<br>
+                • Tamaño: ${(response.size / 1024).toFixed(2)} KB<br>
+                • Documentos: ${response.total_documents}<br>
+                • Colecciones: ${response.total_collections}<br>
+                • Fecha: ${new Date().toLocaleString()}<br>
+                <button class="btn btn-sm btn-outline-success mt-2" onclick="downloadBackup('${response.filename}')">
+                  <i class="bi bi-download"></i> Descargar Backup
+                </button>
+              </small>
+            </div>
+          `;
+          $("#backupResult").html(successMsg);
+          showAlert("Backup local creado correctamente", "success");
+          
+          // Actualizar lista de backups locales si está visible
+          if (typeof window.loadLocalBackups === "function") {
+            setTimeout(() => window.loadLocalBackups(), 2000);
+          }
+        } else {
+          throw new Error(response.error || "Error desconocido");
+        }
+      },
+      error: function (xhr, status, error) {
+        console.error("❌ Error en backup local:", xhr.status, xhr.statusText, error);
+        const errorMsg = xhr.responseJSON?.error || xhr.statusText || "Error de conexión";
+        $("#backupResult").html(`
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Error al crear backup local</strong><br>
+            <small>${errorMsg}</small>
+          </div>
+        `);
+        showAlert("Error al crear backup local: " + errorMsg, "danger");
+      },
+      complete: function () {
+        // Auto-cerrar el resultado después de 15 segundos
+        setTimeout(() => {
+          $("#backupResult").fadeOut(500, function () {
+            $(this).empty();
+          });
+        }, 15000);
+      }
+    });
+  }
+
+  function executeGoogleDriveBackup() {
+    console.log("☁️ Iniciando backup en Google Drive...");
+    
+    // Mostrar estado de carga
+    $("#backupResult").html(`
+      <div class="alert alert-info">
+        <i class="bi bi-google"></i> Creando backup y subiendo a Google Drive...
+        <div class="spinner-border spinner-border-sm ms-2" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    `);
+
+    $.ajax({
+      url: "/admin/maintenance/backup",
+      method: "POST",
+      xhrFields: { withCredentials: true },
+      timeout: 180000, // 3 minutos para Google Drive
+      success: function (response) {
+        console.log("✅ Backup Google Drive completado:", response);
+        
+        if (response.status === "success" && response.uploaded_to_drive) {
+          const successMsg = `
+            <div class="alert alert-success">
+              <i class="bi bi-check-circle"></i>
+              <strong>Backup subido a Google Drive exitosamente</strong><br>
+              <small>
+                • <strong>Archivo:</strong> ${response.filename}<br>
+                • <strong>Ubicación:</strong> Google Drive / ${response.drive_info.folder_name}<br>
+                • <strong>Tamaño:</strong> ${(response.size / 1024).toFixed(2)} KB<br>
+                • <strong>Documentos:</strong> ${response.total_documents}<br>
+                • <strong>Colecciones:</strong> ${response.total_collections}<br>
+                • <strong>Fecha:</strong> ${new Date().toLocaleString()}<br>
+                • <strong>ID Drive:</strong> ${response.drive_info.file_id}<br>
+                <div class="mt-3">
+                  <a href="${response.drive_info.web_view_url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-google"></i> Ver en Google Drive
+                  </a>
+                  <button class="btn btn-sm btn-outline-success ms-2" onclick="downloadBackup('${response.filename}')">
+                    <i class="bi bi-download"></i> Descargar Copia Local
+                  </button>
+                </div>
+              </small>
+            </div>
+          `;
+          $("#backupResult").html(successMsg);
+          showAlert("Backup subido a Google Drive correctamente", "success");
+          
+          // Actualizar listas de backups
+          if (typeof window.loadDriveBackups === "function") {
+            setTimeout(() => window.loadDriveBackups(), 2000);
+          }
+          if (typeof window.loadLocalBackups === "function") {
+            setTimeout(() => window.loadLocalBackups(), 2000);
+          }
+          
+        } else if (response.status === "warning" && !response.uploaded_to_drive) {
+          const warningMsg = `
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle"></i>
+              <strong>Backup creado pero no subido a Google Drive</strong><br>
+              <small>
+                • <strong>Motivo:</strong> ${response.message}<br>
+                • <strong>Archivo:</strong> ${response.filename}<br>
+                • <strong>Ubicación:</strong> Servidor local (/backups/)<br>
+                • <strong>Tamaño:</strong> ${(response.size / 1024).toFixed(2)} KB<br>
+                • <strong>Documentos:</strong> ${response.total_documents}<br>
+                • <strong>Colecciones:</strong> ${response.total_collections}<br>
+                • <strong>Fecha:</strong> ${new Date().toLocaleString()}<br>
+                <div class="mt-3">
+                  <button class="btn btn-sm btn-outline-success" onclick="downloadBackup('${response.filename}')">
+                    <i class="bi bi-download"></i> Descargar Backup Local
+                  </button>
+                </div>
+              </small>
+            </div>
+          `;
+          $("#backupResult").html(warningMsg);
+          showAlert("Backup creado localmente, pero no se pudo subir a Google Drive", "warning");
+          
+        } else {
+          throw new Error(response.error || "Error desconocido");
+        }
+      },
+      error: function (xhr, status, error) {
+        console.error("❌ Error en backup Google Drive:", xhr.status, xhr.statusText, error);
+        const errorMsg = xhr.responseJSON?.error || xhr.statusText || "Error de conexión";
+        $("#backupResult").html(`
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Error al crear backup en Google Drive</strong><br>
+            <small>${errorMsg}</small>
+          </div>
+        `);
+        showAlert("Error al crear backup en Google Drive: " + errorMsg, "danger");
+      },
+      complete: function () {
+        // Auto-cerrar el resultado después de 15 segundos
+        setTimeout(() => {
+          $("#backupResult").fadeOut(500, function () {
+            $(this).empty();
+          });
+        }, 15000);
+      }
+    });
+  }
+
+  // Función para descargar backup
+  window.downloadBackup = function(filename) {
+    console.log("📥 Descargando backup:", filename);
+    window.open(`/admin/maintenance/download-backup/${encodeURIComponent(filename)}`, '_blank');
+  }
+
+  // Función legacy (mantener por compatibilidad pero no usar)
+  function initializeBackupEventsLegacy() {
+    console.log("⚠️ Función legacy - no debería ejecutarse");
+    
+    $("#backupBtn")
+      .off("click")
+      .on("click", function () {
+        console.log("❌ LEGACY: Este código no debería ejecutarse");
 
         $("#backupResult").html(`
           <div class="alert alert-info">

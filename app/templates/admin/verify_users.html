@@ -74,7 +74,12 @@
                     <td>{{ user.email }}</td>
                     <td>
                       {% if user.created_at %}
-                        {{ user.created_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% set created_str = user.created_at|string %}
+                        {% if created_str|length > 19 %}
+                          {{ created_str[:19] }}
+                        {% else %}
+                          {{ created_str }}
+                        {% endif %}
                       {% else %}
                         Desconocida
                       {% endif %}

@@ -11,8 +11,17 @@
   <div class="row mb-4">
     <div class="col-md-8 mx-auto">
       <div class="d-flex justify-content-between mb-3">
-        <a href="{{ url_for('catalogs.list') }}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo Catálogo</a>
-        <a href="{{ url_for('catalogs.import_catalog') }}" class="btn btn-primary"><i class="bi bi-upload"></i> Importar Excel</a>
+        <a href="/catalogs" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo Catálogo</a>
+        <a href="/catalogs" class="btn btn-primary"><i class="bi bi-book"></i> Ver Catálogos</a>
+      </div>
+      <!-- Enlaces adicionales de navegación -->
+      <div class="alert alert-info">
+        <h6><i class="bi bi-info-circle"></i> Navegación rápida:</h6>
+        <div class="btn-group w-100" role="group">
+          <a href="/" class="btn btn-outline-primary">🏠 Inicio</a>
+          <a href="/catalogs" class="btn btn-outline-success">📚 Catálogos</a>
+          <a href="/welcome" class="btn btn-outline-info">👋 Bienvenida</a>
+        </div>
       </div>
       <div class="card shadow border-0 mb-3">
         <div class="card-header bg-primary text-white">
@@ -35,9 +44,9 @@
                   <td><i class="bi bi-table"></i> {{ table.name }}</td>
                   <td>{{ table.created_at if table.created_at else '—' }}</td>
                   <td>
-                    <a href="{{ url_for('main.ver_tabla', table_id=table._id) }}" class="btn btn-sm btn-outline-primary" title="Ver"><i class="bi bi-eye"></i></a>
-                    <a href="{{ url_for('main.editar', id=table._id) }}" class="btn btn-sm btn-outline-success" title="Editar"><i class="bi bi-pencil"></i></a>
-                    <form action="{{ url_for('main.delete_table', table_id=table._id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas eliminar esta tabla?');">
+                    <a href="/ver_tabla/{{ table._id }}" class="btn btn-sm btn-outline-primary" title="Ver"><i class="bi bi-eye"></i></a>
+                    <a href="/editar/{{ table._id }}" class="btn btn-sm btn-outline-success" title="Editar"><i class="bi bi-pencil"></i></a>
+                    <form action="/delete_table/{{ table._id }}" method="post" style="display:inline;" onsubmit="return confirm('¿Seguro que deseas eliminar esta tabla?');">
                       <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
                     </form>
                   </td>
@@ -47,7 +56,18 @@
             </table>
           </div>
           {% else %}
-          <div class="alert alert-info">No tienes tablas creadas aún. ¡Crea una nueva o importa un Excel!</div>
+          <div class="alert alert-warning">
+            <h6><i class="bi bi-exclamation-triangle"></i> No tienes tablas creadas aún</h6>
+            <p class="mb-2">Para comenzar, puedes:</p>
+            <div class="d-grid gap-2">
+              <a href="/catalogs" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Crear mi primer catálogo
+              </a>
+              <a href="/welcome" class="btn btn-outline-primary">
+                <i class="bi bi-house"></i> Ir a la página principal
+              </a>
+            </div>
+          </div>
           {% endif %}
         </div>
       </div>

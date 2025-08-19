@@ -9,7 +9,7 @@ from app.routes.error_routes import errors_bp
 from app.routes.emergency_access import emergency_bp
 
 # Importar los blueprints de diagnóstico directamente
-from app.routes.debug_routes import debug_bp
+# from app.routes.debug_routes import debug_bp  # Archivo no existe
 from app.routes.admin_diagnostic import admin_diagnostic_bp
 from app.routes.diagnostico import diagnostico_bp
 
@@ -26,7 +26,7 @@ __all__ = [
     "admin_bp",
     "errors_bp",
     "emergency_bp",
-    "debug_bp",
+    # "debug_bp",  # Archivo no existe
     "admin_diagnostic_bp",
     "diagnostico_bp",
     "bp_dev_template",

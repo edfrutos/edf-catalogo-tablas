@@ -1,137 +1,162 @@
-# Script: image_utils.py
-# Descripción: [Explica brevemente qué hace el script]
-# Uso: python3 image_utils.py [opciones]
-# Requiere: [librerías externas, si aplica]
-# Variables de entorno: [si aplica]
-# Autor: EDF Developer - 2025-05-28
+"""
+Utilidades unificadas para manejo de imágenes
+"""
 
 import os
-import logging
-import uuid
-from flask import url_for, current_app
-from werkzeug.utils import secure_filename
+from typing import List, Dict, Any
+from flask import current_app
 
-logger = logging.getLogger(__name__)
 
-def get_image_path(image_filename):
+def get_unified_image_urls(row_data: Dict[str, Any]) -> List[str]:
     """
-    Obtiene la ruta absoluta de una imagen en el sistema de archivos
-    
+    Función unificada para obtener todas las URLs de imágenes de una fila.
+
+    Busca en todos los campos posibles: images, imagenes, imagen_data, Imagen
+    Implementa fallback: S3 → Local → Error image
+
     Args:
-        image_filename (str): Nombre del archivo de imagen
-        
-    Returns:
-        str: Ruta absoluta de la imagen
-    """
-    try:
-        upload_folder = os.path.join(current_app.static_folder, 'uploads')
-        return os.path.join(upload_folder, image_filename)
-    except Exception as e:
-        logger.error(f"Error al obtener ruta de imagen: {str(e)}")
-        return None
+        row_data: Diccionario con los datos de la fila
 
-def save_image(uploaded_file, directory='uploads'):
-    """
-    Guarda una imagen subida por el usuario
-    
-    Args:
-        uploaded_file: Objeto de archivo subido (request.files)
-        directory (str): Directorio donde guardar la imagen (relativo a static)
-        
     Returns:
-        str: Nombre del archivo guardado o None si hay error
+        Lista de URLs válidas para mostrar las imágenes
     """
-    try:
-        if not uploaded_file:
-            logger.error("No se proporcionó ningún archivo")
-            return None
-            
-        # Generar un nombre de archivo seguro y único
-        filename = secure_filename(uploaded_file.filename)
-        unique_filename = f"{uuid.uuid4().hex}_{filename}"
-        
-        # Asegurar que el directorio existe
-        upload_folder = os.path.join(current_app.static_folder, directory)
-        os.makedirs(upload_folder, exist_ok=True)
-        
-        # Guardar el archivo
-        file_path = os.path.join(upload_folder, unique_filename)
-        uploaded_file.save(file_path)
-        
-        use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
-        if use_s3:
-            try:
-                # Si S3 está habilitado, subir también a S3
-                from app.utils.s3_utils import upload_file_to_s3
-                s3_result = upload_file_to_s3(file_path, unique_filename)
-                if not s3_result['success']:
-                    logger.warning(f"No se pudo subir la imagen a S3: {unique_filename} - {s3_result.get('error', 'Error desconocido')}")
-            except ImportError:
-                logger.warning("No se pudo importar s3_utils, la imagen solo se guardará localmente")
-        
-        return unique_filename
-    except Exception as e:
-        logger.error(f"Error al guardar imagen: {str(e)}")
-        return None
+    image_urls = []
 
-def delete_image(image_filename):
-    """
-    Elimina una imagen del sistema de archivos y de S3 si está habilitado
-    
-    Args:
-        image_filename (str): Nombre del archivo de imagen a eliminar
-        
-    Returns:
-        bool: True si se eliminó correctamente, False en caso contrario
-    """
-    try:
-        if not image_filename:
-            return False
-            
-        # Eliminar del sistema de archivos local
-        file_path = get_image_path(image_filename)
-        if file_path and os.path.exists(file_path):
-            os.remove(file_path)
-        
-        # Eliminar de S3 si está habilitado
-        use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
-        if use_s3:
-            try:
-                from app.utils.s3_utils import delete_file_from_s3
-                s3_success = delete_file_from_s3(image_filename)
-                if not s3_success:
-                    logger.warning(f"No se pudo eliminar la imagen de S3: {image_filename}")
-            except ImportError:
-                logger.warning("No se pudo importar s3_utils, la imagen solo se eliminará localmente")
-        
-        return True
-    except Exception as e:
-        logger.error(f"Error al eliminar imagen: {str(e)}")
-        return False
+    # Recopilar todas las imágenes de todos los campos
+    all_images = []
 
-def get_image_url(image_filename):
+    # 1. Campo 'images' (principal)
+    images = row_data.get("images")
+    if isinstance(images, list):
+        all_images.extend(images)
+    elif isinstance(images, str) and images and images != "N/A":
+        all_images.append(images)
+
+    # 2. Campo 'imagenes' (secundario)
+    imagenes = row_data.get("imagenes")
+    if isinstance(imagenes, list):
+        all_images.extend(imagenes)
+    elif isinstance(imagenes, str) and imagenes and imagenes != "N/A":
+        all_images.append(imagenes)
+
+    # 3. Campo 'imagen_data' (terciario)
+    imagen_data = row_data.get("imagen_data")
+    if isinstance(imagen_data, list):
+        all_images.extend(imagen_data)
+    elif isinstance(imagen_data, str) and imagen_data and imagen_data != "N/A":
+        all_images.append(imagen_data)
+
+    # 4. Campo 'Imagen' (URL externa)
+    imagen_url = row_data.get("Imagen")
+    if isinstance(imagen_url, str) and imagen_url and imagen_url.startswith("http"):
+        all_images.append(imagen_url)
+
+    # Eliminar duplicados manteniendo orden
+    unique_images = list(dict.fromkeys(all_images))
+
+    # Procesar cada imagen con fallback
+    for img in unique_images:
+        if not img or img == "N/A":
+            continue
+
+        if img.startswith("http"):
+            # URL externa - usar directamente
+            image_urls.append(img)
+        else:
+            # Archivo local - implementar fallback S3 → Local → Error
+            processed_url = get_image_fallback_url(img)
+            image_urls.append(processed_url)
+
+    return image_urls
+
+
+def get_image_fallback_url(filename: str) -> str:
     """
-    Obtiene la URL de una imagen, ya sea desde el servidor local o desde AWS S3
-    
+    Implementa fallback para archivos de imagen: S3 → Local → Error
+
     Args:
-        image_filename (str): Nombre del archivo de imagen
-        
+        filename: Nombre del archivo de imagen
+
     Returns:
-        str: URL de la imagen
+        URL válida para mostrar la imagen
     """
+    if not filename or filename == "N/A":
+        return "/static/img/image-error.svg"
+
+    # 1. Intentar S3 primero
+    s3_url = f"https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/{filename}"
+
+    # 2. Fallback local
+    local_url = f"/static/uploads/{filename}"
+
+    # 3. Error image
+    error_url = "/static/img/image-error.svg"
+
+    # Verificar si existe localmente (para decidir el fallback)
     try:
-        use_s3 = os.environ.get('USE_S3', 'false').lower() == 'true'
-        
-        if use_s3:
-            # Si está habilitado S3, devolver la URL de S3
-            from app.utils.s3_utils import get_s3_url
-            s3_url = get_s3_url(image_filename)
-            if s3_url:
-                return s3_url
-        
-        # Si no está habilitado S3 o no se pudo obtener la URL de S3, devolver la URL local
-        return url_for('static', filename=f'uploads/{image_filename}')
+        local_path = os.path.join(current_app.root_path, "static", "uploads", filename)
+        if os.path.exists(local_path):
+            current_app.logger.debug(f"[IMAGE] Archivo local encontrado: {filename}")
+            return local_url
+        else:
+            current_app.logger.debug(
+                f"[IMAGE] Archivo local no encontrado, probando S3: {filename}"
+            )
+            return s3_url
     except Exception as e:
-        logger.error(f"Error al obtener URL de imagen: {str(e)}")
-        # En caso de error, devolver la URL local
-        return url_for('static', filename=f'uploads/{image_filename}')
+        current_app.logger.error(
+            f"[IMAGE] Error verificando archivo local {filename}: {e}"
+        )
+        return s3_url
+
+
+def get_images_for_template(row_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Prepara los datos de imagen para usar en templates.
+
+    Args:
+        row_data: Datos de la fila
+
+    Returns:
+        Diccionario con URLs y metadatos de imágenes
+    """
+    image_urls = get_unified_image_urls(row_data)
+
+    return {
+        "imagen_urls": image_urls,
+        "num_imagenes": len(image_urls),
+        "tiene_imagenes": len(image_urls) > 0,
+    }
+
+
+def get_raw_images_for_edit(row_data: Dict[str, Any]) -> List[str]:
+    """
+    Obtiene lista de nombres de archivos de imagen para formulario de edición.
+    No incluye URLs externas, solo archivos locales/S3.
+
+    Args:
+        row_data: Datos de la fila
+
+    Returns:
+        Lista de nombres de archivos de imagen
+    """
+    raw_images = []
+
+    # Recopilar solo archivos (no URLs externas)
+    for field in ["images", "imagenes", "imagen_data"]:
+        value = row_data.get(field)
+
+        if isinstance(value, list):
+            for img in value:
+                if img and img != "N/A" and not img.startswith("http"):
+                    raw_images.append(img)
+        elif (
+            isinstance(value, str)
+            and value
+            and value != "N/A"
+            and not value.startswith("http")
+        ):
+            raw_images.append(value)
+
+    # Eliminar duplicados manteniendo orden
+    return list(dict.fromkeys(raw_images))

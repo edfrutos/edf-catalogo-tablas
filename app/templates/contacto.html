@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Contacto - Catálogo Tablas{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .contact-hero {
+        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+    }
+    .contact-form {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+    .contact-info {
+        background-color: #f8f9fa;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    .contact-info h5 {
+        color: #0d6efd;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="contact-hero">
+    <div class="container text-center">
+        <h1 class="display-4">Contacto</h1>
+        <p class="lead">¿Tienes alguna pregunta o sugerencia? ¡Nos encantaría escucharte!</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Formulario de contacto -->
+        <div class="col-lg-8">
+            <div class="contact-form">
+                <h3 class="mb-4">Envíanos un mensaje</h3>
+                
+                <!-- Mostrar mensajes flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('main.contacto') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="asunto" class="form-label">Asunto *</label>
+                        <input type="text" class="form-control" id="asunto" name="asunto" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mensaje" class="form-label">Mensaje *</label>
+                        <textarea class="form-control" id="mensaje" name="mensaje" rows="6" required placeholder="Cuéntanos en qué podemos ayudarte..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-paper-plane me-2"></i>Enviar mensaje
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Información de contacto -->
+        <div class="col-lg-4">
+            <div class="contact-info">
+                <h5><i class="fas fa-info-circle me-2"></i>Información</h5>
+                <p class="mb-3">Estamos aquí para ayudarte con cualquier consulta sobre Catálogo Tablas.</p>
+                
+                <h5><i class="fas fa-clock me-2"></i>Tiempo de respuesta</h5>
+                <p class="mb-3">Normalmente respondemos en menos de 24 horas.</p>
+                
+                <h5><i class="fas fa-envelope me-2"></i>Email directo</h5>
+                <p class="mb-3">
+                    <a href="mailto:soporte@catalogotablas.com" class="text-decoration-none">
+                        soporte@catalogotablas.com
+                    </a>
+                </p>
+                
+                <h5><i class="fas fa-question-circle me-2"></i>Preguntas frecuentes</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2">• ¿Cómo crear un catálogo?</li>
+                    <li class="mb-2">• ¿Cómo importar datos?</li>
+                    <li class="mb-2">• ¿Cómo gestionar usuarios?</li>
+                    <li class="mb-2">• ¿Problemas técnicos?</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botón para volver -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('main.welcome') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver al inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

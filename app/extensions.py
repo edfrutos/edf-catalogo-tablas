@@ -24,15 +24,34 @@ logger = logging.getLogger("extensions")
 def init_extensions(app):
     global s3_client
     global catalog_collection
-    
+
     logger.info("Inicializando extensiones...")
-    
+
     # Configurar Flask-Session primero
-    app.config["SESSION_TYPE"] = "filesystem"
-    app.config["SESSION_PERMANENT"] = True
+    app.config["SESSION_TYPE"] = "filesystem"  # Intentar filesystem primero
+    app.config["SESSION_PERMANENT"] = False
     app.config["SESSION_USE_SIGNER"] = True
     app.config["SESSION_KEY_PREFIX"] = "edf_catalogo:"
-    
+
+    # Si estamos en una aplicación empaquetada, usar cookies en lugar de archivos
+    if getattr(sys, "frozen", False):
+        app.config["SESSION_TYPE"] = (
+            "filesystem"  # Mantener filesystem pero con configuración especial
+        )
+        app.config["SESSION_FILE_DIR"] = os.path.join(
+            os.path.dirname(sys.executable), "flask_session"
+        )
+        # Configuración adicional para aplicaciones empaquetadas
+        app.config["SESSION_COOKIE_SECURE"] = False  # Permitir HTTP en local
+        app.config["SESSION_COOKIE_HTTPONLY"] = True
+        app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+        # Configuración específica para PyInstaller
+        app.config["SESSION_FILE_THRESHOLD"] = 0  # Forzar uso de archivos
+        app.config["SESSION_FILE_MODE"] = 0o600  # Permisos de archivo
+        # Configuración adicional para PyWebView
+        app.config["SESSION_COOKIE_DOMAIN"] = "127.0.0.1"
+        app.config["SESSION_COOKIE_PATH"] = "/"
+
     # Asegurarse de que el directorio de sesiones existe
     if getattr(sys, "frozen", False):
         session_dir = os.path.join(os.path.dirname(sys.executable), "flask_session")
@@ -40,24 +59,24 @@ def init_extensions(app):
         session_dir = os.path.join(
             app.config.get("BASE_DIR", os.getcwd()), "flask_session"
         )
-    
+
     if not os.path.exists(session_dir):
         os.makedirs(session_dir)
-    
+
     app.config["SESSION_FILE_DIR"] = session_dir
     logger.info(f"Directorio de sesiones: {session_dir}")
-    
+
     # Inicializar Flask-Session
     session_handler.init_app(app)
     logger.info("Flask-Session inicializado")
-    
+
     # Inicializar Flask-Login
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"  # type: ignore
     login_manager.login_message = "Por favor inicia sesión para acceder a esta página."
     login_manager.login_message_category = "warning"
     logger.info("Flask-Login inicializado")
-    
+
     # Definir la función de carga de usuario para Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
@@ -75,7 +94,7 @@ def init_extensions(app):
             # Forzar el uso de certifi para los certificados
             mongo.init_app(app, tlsCAFile=certifi.where())
             catalog_collection = mongo.db.get_collection("catalogo_tablas")  # type: ignore
-            
+
         except Exception as e:
             app.logger.error(f"Error al inicializar MongoDB: {e}")
             app.logger.warning(
@@ -83,7 +102,7 @@ def init_extensions(app):
             )
     else:
         app.logger.warning("MONGO_URI no configurado - continuando sin MongoDB")
-    
+
     mail.init_app(app)
     logger.info("Flask-Mail inicializado")
 
