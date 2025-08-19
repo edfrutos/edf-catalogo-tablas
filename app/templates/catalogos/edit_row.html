@@ -12,20 +12,52 @@
     <label class="form-label">Imágenes (máx. 3)</label>
     <input type="file" class="form-control" name="images" accept="image/*" multiple>
   </div>
-  {% if row.images %}
+  <!-- Mostrar imagen URL externa si existe -->
+  {% if row.get('Imagen') and row.Imagen.startswith('http') %}
+    <div class="mb-3">
+      <label class="form-label">Imagen URL (Externa)</label>
+      <input type="url" class="form-control" name="imagen_url" value="{{ row.Imagen }}" placeholder="https://ejemplo.com/imagen.jpg">
+      <div class="mt-2">
+        <img src="{{ row.Imagen }}" alt="Imagen externa" class="img-thumbnail" style="height:100px; cursor: pointer;"
+             onclick="showImageModal('{{ row.Imagen }}', 'Imagen externa')">
+      </div>
+    </div>
+  {% endif %}
+  
+  <!-- Usar imágenes procesadas por el backend -->
+  {% if row.get('_imagenes') and row._imagenes %}
   <div class="mb-3">
-    <label class="form-label d-block">Imágenes actuales</label>
+    <label class="form-label d-block">Imágenes actuales ({{ row._imagenes|length }})</label>
     <div class="d-flex flex-wrap gap-3 align-items-center">
-      {% for img in row.images %}
+      {% for img_url in row._imagenes %}
+        {% set img_filename = img_url.split('/')[-1] %}
         <div class="position-relative">
-          <img src="/imagenes_subidas/{{ img }}" alt="img" class="img-thumbnail" style="height:100px;">
-          <input type="checkbox" name="delete_images" value="{{ img }}" class="position-absolute top-0 end-0 m-1" style="transform: scale(1.5);">
-          <label class="d-block text-center small mt-1">Eliminar</label>
+          <img src="{{ img_url }}" 
+               alt="Imagen {{ loop.index }}" 
+               class="img-thumbnail" 
+               style="height:100px; cursor: pointer;"
+               onclick="showImageModal('{{ img_url }}', 'Imagen {{ loop.index }}')">
+          {% if not img_url.startswith('http') or 'amazonaws' in img_url %}
+            <input type="checkbox" name="delete_images" value="{{ img_filename }}" class="position-absolute top-0 end-0 m-1" style="transform: scale(1.5);">
+            <label class="d-block text-center small mt-1">Eliminar</label>
+          {% else %}
+            <small class="d-block text-center text-muted mt-1">Externa</small>
+          {% endif %}
         </div>
       {% endfor %}
     </div>
     <div class="form-text text-muted mt-2">
-      Marca las casillas para eliminar las imágenes seleccionadas
+      {% if row._imagenes|selectattr('startswith', 'not') or row._imagenes|select('match', '.*amazonaws.*') %}
+        Marca las casillas para eliminar las imágenes locales seleccionadas
+      {% else %}
+        Las imágenes externas no se pueden eliminar desde aquí
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="mb-3">
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> Esta fila no tiene imágenes actuales.
     </div>
   </div>
   {% endif %}
@@ -68,6 +100,17 @@
 </div>
 
 <script>
+// Función para mostrar modal de imagen
+function showImageModal(imageSrc, imageTitle) {
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('imageModalLabel');
+    
+    modalImage.src = imageSrc;
+    modalTitle.innerHTML = `<i class="bi bi-image"></i> ${imageTitle}`;
+    modal.show();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     // Preview modal
     const modal = new bootstrap.Modal(document.getElementById('imageModal'));

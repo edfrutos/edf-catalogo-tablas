@@ -46,6 +46,13 @@
             {% for catalog in catalogs %}
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
+                        {% if catalog.miniatura %}
+                            <img src="{{ catalog.miniatura }}" class="card-img-top" alt="Miniatura de {{ catalog.name }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                                <i class="fas fa-table fa-3x text-muted"></i>
+                            </div>
+                        {% endif %}
                         <div class="card-header">
                             <h5 class="card-title mb-0">{{ catalog.name }}</h5>
                         </div>

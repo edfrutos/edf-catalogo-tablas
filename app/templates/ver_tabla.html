@@ -50,9 +50,9 @@
                 <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
               </th>
             {% endfor %}
-            <th>Imágenes</th>
+            <th style="width: 150px; min-width: 150px;">Imágenes</th>
             {% if session.role == 'admin' or session.username == table.owner %}
-              <th>Acciones</th>
+              <th style="width: 200px; min-width: 200px;">Acciones</th>
             {% endif %}
           </tr>
         </thead>
@@ -63,30 +63,32 @@
               {% for header in table.headers %}
                 <td>{{ row[header] if row[header] is defined and row[header] is not none else '' }}</td>
               {% endfor %}
-              <td>
+              <td style="width: 150px; min-width: 150px;">
                 {% if row.imagen_urls and row.imagen_urls|length > 0 %}
-                  <div class="d-flex flex-wrap gap-2">
+                  <div class="d-flex flex-wrap gap-1">
                     {% for img_url in row.imagen_urls %}
                       <a href="#" onclick="mostrarImagenModal('{{ img_url }}'); return false;">
-                        <img src="{{ img_url }}" alt="Imagen" style="width:40px; height:40px; object-fit:cover;">
+                        <img src="{{ img_url }}" alt="Imagen" style="width:35px; height:35px; object-fit:cover; border-radius: 3px;">
                       </a>
                     {% endfor %}
-                    <small class="text-muted">({{ row.imagen_urls|length }} imágenes)</small>
+                    <small class="text-muted w-100">({{ row.imagen_urls|length }} imágenes)</small>
                   </div>
                 {% else %}
                   <span class="text-muted">Sin imágenes</span>
                 {% endif %}
               </td>
               {% if session.role == 'admin' or session.username == table.owner %}
-                <td>
-                  <a href="{{ url_for('main.editar_fila', tabla_id=table._id|string, fila_index=loop.index0) }}" class="btn btn-sm btn-warning me-1">
-                    <i class="bi bi-pencil"></i> Editar
-                  </a>
-                  <form method="POST" action="{{ url_for('main.delete_row', tabla_id=table._id|string, fila_index=loop.index0) }}" style="display:inline;">
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que quieres eliminar esta fila?');">
-                      <i class="bi bi-trash"></i> Eliminar
-                    </button>
-                  </form>
+                <td style="white-space: nowrap; width: 200px; min-width: 200px;">
+                  <div class="d-flex gap-1">
+                    <a href="{{ url_for('main.editar_fila', tabla_id=table._id|string, fila_index=loop.index0) }}" class="btn btn-sm btn-warning">
+                      <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <form method="POST" action="{{ url_for('main.delete_row', tabla_id=table._id|string, fila_index=loop.index0) }}" style="display:inline;">
+                      <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                        <i class="bi bi-trash"></i> Eliminar
+                      </button>
+                    </form>
+                  </div>
                 </td>
               {% endif %}
             </tr>

@@ -20,7 +20,8 @@ import datetime
 import pandas as pd
 from werkzeug.utils import secure_filename
 from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
-from app.decorators import is_datetime, is_list, is_string
+
+# from app.decorators import is_datetime, is_list, is_string  # No utilizados
 import logging
 from app.database import get_mongo_db
 
@@ -39,15 +40,6 @@ def is_admin():
 # El campo created_by se compara con el username de sesión
 
 
-def is_valid_object_id(id_str):
-    """Verifica si una cadena es un ObjectId válido"""
-    try:
-        ObjectId(id_str)
-        return True
-    except Exception:
-        return False
-
-
 def check_catalog_permission(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -59,6 +51,14 @@ def check_catalog_permission(f):
         if not catalog_id:
             current_app.logger.error("ID de catálogo no proporcionado")
             flash("Error: ID de catálogo no proporcionado", "danger")
+            return redirect(url_for("catalogs.list"))
+
+        # Validar que catalog_id sea una cadena
+        if not isinstance(catalog_id, str):
+            current_app.logger.error(
+                f"ID de catálogo debe ser una cadena, recibido: {type(catalog_id)} = {catalog_id}"
+            )
+            flash("El ID del catálogo tiene un formato incorrecto", "warning")
             return redirect(url_for("catalogs.list"))
 
         current_app.logger.info(f"Verificando permisos para catálogo ID: {catalog_id}")
@@ -82,9 +82,13 @@ def check_catalog_permission(f):
             ]  # Solo spreadsheets como colección de catálogos
 
             # Buscar el catálogo en las colecciones principales
+            db = get_mongo_db()
+            if db is None:
+                raise Exception("No se pudo conectar a la base de datos")
+
             for collection_name in collections_to_check:
                 try:
-                    collection = get_mongo_db()[collection_name]
+                    collection = db[collection_name]
                     # Buscar por ObjectId
                     catalog = collection.find_one({"_id": object_id})
                     if catalog:
@@ -101,7 +105,7 @@ def check_catalog_permission(f):
             if not catalog:
                 try:
                     # Obtener todas las colecciones disponibles
-                    all_collections = get_mongo_db().list_collection_names()
+                    all_collections = db.list_collection_names()
                     # Filtrar colecciones que podrían contener catálogos
                     potential_collections = [
                         c
@@ -114,7 +118,7 @@ def check_catalog_permission(f):
                     # Buscar en las colecciones potenciales
                     for collection_name in potential_collections:
                         try:
-                            collection = get_mongo_db()[collection_name]
+                            collection = db[collection_name]
                             catalog = collection.find_one({"_id": object_id})
                             if catalog:
                                 current_app.logger.info(
@@ -133,7 +137,7 @@ def check_catalog_permission(f):
                 try:
                     # Buscar por nombre en las colecciones principales
                     for collection_name in collections_to_check:
-                        collection = get_mongo_db()[collection_name]
+                        collection = db[collection_name]
                         catalog = collection.find_one({"name": catalog_id})
                         if catalog:
                             current_app.logger.info(
@@ -149,12 +153,14 @@ def check_catalog_permission(f):
                     # Buscar catálogos similares para ayudar en la depuración
                     similar_catalogs = []
                     for collection_name in collections_to_check:
-                        collection = get_mongo_db()[collection_name]
-                        sample_catalogs = list(
-                            collection.find(
-                                {}, {"_id": 1, "name": 1, "created_by": 1, "owner": 1}
-                            ).limit(5)
-                        )
+                        collection = db[collection_name]
+                        # Buscar algunos catálogos de muestra para depuración
+                        try:
+                            sample_catalogs = []
+                            for doc in collection.find().limit(5):
+                                sample_catalogs.append(doc)
+                        except Exception:
+                            sample_catalogs = []
                         for cat in sample_catalogs:
                             similar_catalogs.append(
                                 {
@@ -201,7 +207,7 @@ def check_catalog_permission(f):
                 # Intentar actualizar el documento en la base de datos
                 try:
                     for collection_name in collections_to_check:
-                        collection = get_mongo_db()[collection_name]
+                        collection = db[collection_name]
                         result = collection.update_one(
                             {"_id": object_id}, {"$set": {"created_by": owner}}
                         )
@@ -266,7 +272,8 @@ ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 def get_upload_dir():
     # Absolute path to static/uploads irrespective of where the app package is located
-    folder = os.path.join(current_app.static_folder, "uploads")
+    static_folder = current_app.static_folder or "static"
+    folder = os.path.join(static_folder, "uploads")
     os.makedirs(folder, exist_ok=True)
     return folder
 
@@ -323,7 +330,10 @@ def list_catalogs():
         # Buscar en todas las colecciones relevantes
         for collection_name in collections_to_check:
             try:
-                collection = get_mongo_db()[collection_name]
+                db = get_mongo_db()
+                if db is None:
+                    continue
+                collection = db[collection_name]
                 current_app.logger.info(
                     f"Buscando catálogos en la colección {collection_name}"
                 )
@@ -431,6 +441,81 @@ def list_catalogs():
                 current_app.logger.error(f"Error al procesar catálogo: {str(e)}")
                 continue
 
+        # 🖼️ AÑADIR LÓGICA DE MINIATURA (igual que dashboard_user)
+        for catalog in catalogs_list:
+            current_app.logger.info(
+                f"[DEBUG_CATALOGS_MINIATURA] Procesando catálogo: {catalog.get('name', 'Sin nombre')}"
+            )
+
+            # 1. Verificar si tiene miniatura personalizada configurada
+            if catalog.get("miniatura") and catalog["miniatura"].strip():
+                current_app.logger.info(
+                    f"[MINIATURA_CATALOGS] Usando miniatura personalizada: {catalog['miniatura']}"
+                )
+                continue
+
+            # 2. Si no tiene miniatura personalizada, buscar automáticamente
+            catalog["miniatura"] = ""
+
+            # Buscar en todas las filas hasta encontrar una imagen
+            for row in catalog.get("data", []):
+                if not isinstance(row, dict):
+                    continue
+
+                imagen_encontrada = None
+
+                # 1. Verificar campo "Imagen" (URLs externas como Unsplash)
+                if row.get("Imagen") and row["Imagen"].startswith("http"):
+                    imagen_encontrada = row["Imagen"]
+
+                # 2. Si no hay imagen externa, buscar en campos de imágenes locales
+                if not imagen_encontrada:
+                    for campo in ["imagenes", "images", "imagen_data"]:
+                        if campo in row and row[campo]:
+                            imgs = (
+                                row[campo]
+                                if hasattr(row[campo], "__iter__")
+                                and not isinstance(row[campo], str)
+                                else [row[campo]]
+                            )
+                            for img in imgs:
+                                if img and img != "N/A" and not img.startswith("http"):
+                                    use_s3 = (
+                                        os.environ.get("USE_S3", "false").lower()
+                                        == "true"
+                                    )
+                                    if use_s3:
+                                        from app.utils.s3_utils import get_s3_url
+
+                                        s3_url = get_s3_url(img)
+                                        if s3_url:
+                                            imagen_encontrada = s3_url
+                                        else:
+                                            imagen_encontrada = url_for(
+                                                "static", filename=f"uploads/{img}"
+                                            )
+                                    else:
+                                        imagen_encontrada = url_for(
+                                            "static", filename=f"uploads/{img}"
+                                        )
+                                    break
+                        if imagen_encontrada:
+                            break
+
+                # Si encontramos una imagen, salir del bucle
+                if imagen_encontrada:
+                    catalog["miniatura"] = imagen_encontrada
+                    current_app.logger.info(
+                        f"[MINIATURA_CATALOGS] Encontrada para catálogo {catalog.get('name', 'Sin nombre')}: {imagen_encontrada}"
+                    )
+                    break
+
+            # Si no se encontró ninguna imagen, dejar vacío
+            if not catalog["miniatura"]:
+                current_app.logger.info(
+                    f"[MINIATURA_CATALOGS] No se encontró imagen para catálogo {catalog.get('name', 'Sin nombre')}"
+                )
+
         # Registrar los IDs de los catálogos para depuración
         current_app.logger.info(f"IDs de catálogos listados: {catalog_ids}")
         current_app.logger.info(f"Total de catálogos encontrados: {len(catalogs_list)}")
@@ -462,18 +547,21 @@ def view(catalog_id, catalog):
         current_app.logger.info(f"Visualizando catálogo {catalog_id}")
         if "headers" not in catalog or catalog["headers"] is None:
             catalog["headers"] = []
-        if "rows" in catalog and catalog["rows"] is not None:
+        # Asegurar que tenemos tanto rows como data disponibles
+        # IMPORTANTE: NO sobrescribir data con rows (rows puede estar desactualizado)
+        if "data" in catalog and catalog["data"] is not None:
+            # data es la fuente de verdad, sincronizar rows desde data
+            # NO hacer esto al revés porque data tiene las imágenes reales
+            if not catalog.get("rows"):
+                catalog["rows"] = catalog["data"]
+        elif "rows" in catalog and catalog["rows"] is not None:
+            # Solo usar rows si no hay data
             catalog["data"] = catalog["rows"]
-            catalog["rows"] = catalog["data"]
-        elif "data" in catalog and catalog["data"] is not None:
-            catalog["rows"] = catalog["data"]
         else:
             catalog["data"] = []
             catalog["rows"] = []
         catalog["_id_str"] = str(catalog["_id"])
         if "updated_at" in catalog and catalog["updated_at"]:
-            from datetime import datetime
-
             if hasattr(catalog["updated_at"], "strftime"):
                 catalog["updated_at"] = catalog["updated_at"].strftime(
                     "%Y-%m-%d %H:%M:%S"
@@ -482,6 +570,104 @@ def view(catalog_id, catalog):
                 catalog["updated_at"] = str(catalog["updated_at"])
         else:
             catalog["updated_at"] = "No disponible"
+
+        # 🖼️ PROCESAR IMÁGENES IGUAL QUE EN VER_TABLA
+        current_app.logger.info(
+            f"[DEBUG_CATALOGS_VIEW] Procesando imágenes para catálogo {catalog_id}"
+        )
+
+        # Importar utilidades de imágenes si están disponibles
+        try:
+            from app.utils.image_utils import get_images_for_template
+
+            # Procesar cada fila para obtener URLs de imágenes
+            # IMPORTANTE: Usar data que contiene las imágenes reales (campo 'imagenes')
+            # rows tiene datos desactualizados sin imágenes
+            filas_a_procesar = catalog.get("data", [])
+            for i, fila in enumerate(filas_a_procesar):
+                if isinstance(fila, dict):
+                    # Debugging detallado para entender el problema
+                    current_app.logger.info(
+                        f"[DEBUG_RAW_DATA] Fila {i} datos brutos: {fila}"
+                    )
+
+                    imagenes_result = get_images_for_template(fila)
+                    current_app.logger.info(
+                        f"[DEBUG_IMAGENES_RESULT] Fila {i} resultado: {imagenes_result}"
+                    )
+
+                    # get_images_for_template retorna un diccionario con imagen_urls
+                    if isinstance(imagenes_result, dict):
+                        fila["_imagenes"] = imagenes_result.get("imagen_urls", [])
+                    else:
+                        fila["_imagenes"] = []
+                    current_app.logger.info(
+                        f"[DEBUG_CATALOGS_VIEW] Fila {i} ({fila.get('Nombre', 'Sin nombre')}): {len(fila['_imagenes'])} imágenes → {fila['_imagenes']}"
+                    )
+
+            # Asegurar que ambos arrays están sincronizados
+            # El template usa 'rows', así que sincronizamos desde 'data' procesado
+            catalog["rows"] = filas_a_procesar
+            catalog["data"] = filas_a_procesar
+        except ImportError:
+            current_app.logger.warning(
+                "[DEBUG_CATALOGS_VIEW] No se pudo importar get_images_for_template, procesando manualmente"
+            )
+            # Procesar manualmente si no está disponible la utilidad
+            for i, fila in enumerate(catalog.get("data", [])):
+                if isinstance(fila, dict):
+                    imagenes_urls = []
+
+                    # 1. URLs externas (campo Imagen)
+                    if fila.get("Imagen") and fila["Imagen"].startswith("http"):
+                        imagenes_urls.append(fila["Imagen"])
+
+                    # 2. Imágenes locales de S3/uploads
+                    for campo in ["imagenes", "images", "imagen_data"]:
+                        if campo in fila and fila[campo]:
+                            imgs = (
+                                fila[campo]
+                                if hasattr(fila[campo], "__iter__")
+                                and not isinstance(fila[campo], str)
+                                else [fila[campo]]
+                            )
+                            for img in imgs:
+                                if img and img != "N/A" and not img.startswith("http"):
+                                    # Usar S3 si está configurado
+                                    use_s3 = (
+                                        os.environ.get("USE_S3", "false").lower()
+                                        == "true"
+                                    )
+                                    if use_s3:
+                                        try:
+                                            from app.utils.s3_utils import get_s3_url
+
+                                            s3_url = get_s3_url(img)
+                                            if s3_url:
+                                                imagenes_urls.append(s3_url)
+                                            else:
+                                                imagenes_urls.append(
+                                                    url_for(
+                                                        "static",
+                                                        filename=f"uploads/{img}",
+                                                    )
+                                                )
+                                        except:
+                                            imagenes_urls.append(
+                                                url_for(
+                                                    "static", filename=f"uploads/{img}"
+                                                )
+                                            )
+                                    else:
+                                        imagenes_urls.append(
+                                            url_for("static", filename=f"uploads/{img}")
+                                        )
+
+                    fila["_imagenes"] = imagenes_urls
+                    current_app.logger.info(
+                        f"[DEBUG_CATALOGS_VIEW] Fila {i} ({fila.get('Nombre', 'Sin nombre')}): {len(imagenes_urls)} imágenes → {imagenes_urls}"
+                    )
+
         return render_template("catalogos/view.html", catalog=catalog, session=session)
     except Exception as e:
         current_app.logger.error(
@@ -502,6 +688,7 @@ def edit(catalog_id, catalog):
             # Obtener los datos del formulario
             new_name = request.form.get("name", "").strip()
             headers_str = request.form.get("headers", "").strip()
+            nueva_miniatura = request.form.get("miniatura", "").strip()  # noqa: F841
 
             # Validar los datos
             if not new_name:
@@ -530,13 +717,17 @@ def edit(catalog_id, catalog):
 
             for collection_name in collections_to_check:
                 try:
-                    collection = get_mongo_db()[collection_name]
+                    db = get_mongo_db()
+                    if db is None:
+                        continue
+                    collection = db[collection_name]
                     result = collection.update_one(
                         {"_id": ObjectId(catalog_id)},
                         {
                             "$set": {
                                 "name": new_name,
                                 "headers": new_headers,
+                                "miniatura": nueva_miniatura if nueva_miniatura else "",
                                 "updated_at": datetime.datetime.utcnow(),
                             }
                         },
@@ -581,9 +772,10 @@ def edit_row(catalog_id, row_index, catalog):
         flash("Error de conexión a la base de datos.", "danger")
         current_app.logger.error("[edit_row] Error de conexión a la base de datos.")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
-    row_data = (
-        catalog["rows"][row_index] if 0 <= row_index < len(catalog["rows"]) else None
-    )
+    # Obtener datos de la fila desde 'data' que contiene las imágenes reales
+    # NO usar 'rows' porque puede estar desactualizado
+    catalog_data = catalog.get("data", catalog.get("rows", []))
+    row_data = catalog_data[row_index] if 0 <= row_index < len(catalog_data) else None
     if not row_data:
         flash("Fila no encontrada.", "danger")
         current_app.logger.error(f"[edit_row] Fila no encontrada en índice {row_index}")
@@ -616,7 +808,10 @@ def edit_row(catalog_id, row_index, catalog):
         # Guardar cambios en ambas claves
         for coll_name in ["spreadsheets"]:
             try:
-                result = get_mongo_db()[coll_name].update_one(
+                db = get_mongo_db()
+                if db is None:
+                    continue
+                result = db[coll_name].update_one(
                     {"_id": catalog["_id"]},
                     {
                         "$set": {
@@ -634,6 +829,72 @@ def edit_row(catalog_id, row_index, catalog):
                 )
                 flash(f"Error al actualizar fila: {str(e)}", "danger")
         return redirect(url_for("catalogs.view", catalog_id=str(catalog["_id"])))
+
+    # 🖼️ PROCESAR IMÁGENES DE LA FILA PARA EL TEMPLATE
+
+    # Procesar imágenes de la fila actual
+    try:
+        from app.utils.image_utils import get_images_for_template
+
+        imagenes_result = get_images_for_template(row_data)
+        # get_images_for_template retorna un diccionario con imagen_urls
+        if isinstance(imagenes_result, dict):
+            row_data["_imagenes"] = imagenes_result.get("imagen_urls", [])
+        else:
+            row_data["_imagenes"] = []
+        # Log solo si hay imágenes
+        if len(row_data["_imagenes"]) > 0:
+            current_app.logger.info(
+                f"[EDIT_ROW] {row_data.get('Nombre', 'Sin nombre')}: {len(row_data['_imagenes'])} imágenes cargadas"
+            )
+    except ImportError:
+        current_app.logger.warning(
+            "[DEBUG_EDIT_ROW] No se pudo importar get_images_for_template, procesando manualmente"
+        )
+        imagenes_urls = []
+
+        # 1. URLs externas (campo Imagen)
+        if row_data.get("Imagen") and row_data["Imagen"].startswith("http"):
+            imagenes_urls.append(row_data["Imagen"])
+
+        # 2. Imágenes locales de S3/uploads
+        for campo in ["imagenes", "images", "imagen_data"]:
+            if campo in row_data and row_data[campo]:
+                imgs = (
+                    row_data[campo]
+                    if hasattr(row_data[campo], "__iter__")
+                    and not isinstance(row_data[campo], str)
+                    else [row_data[campo]]
+                )
+                for img in imgs:
+                    if img and img != "N/A" and not img.startswith("http"):
+                        # Usar S3 si está configurado
+                        use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
+                        if use_s3:
+                            try:
+                                from app.utils.s3_utils import get_s3_url
+
+                                s3_url = get_s3_url(img)
+                                if s3_url:
+                                    imagenes_urls.append(s3_url)
+                                else:
+                                    imagenes_urls.append(
+                                        url_for("static", filename=f"uploads/{img}")
+                                    )
+                            except:
+                                imagenes_urls.append(
+                                    url_for("static", filename=f"uploads/{img}")
+                                )
+                        else:
+                            imagenes_urls.append(
+                                url_for("static", filename=f"uploads/{img}")
+                            )
+
+        row_data["_imagenes"] = imagenes_urls
+        current_app.logger.info(
+            f"[DEBUG_EDIT_ROW] Fila {row_index} ({row_data.get('Nombre', 'Sin nombre')}): {len(imagenes_urls)} imágenes → {imagenes_urls}"
+        )
+
     return render_template(
         "catalogos/edit_row.html", catalog=catalog, row=row_data, row_index=row_index
     )
@@ -652,6 +913,10 @@ def add_row(catalog_id, catalog):
         if "images" in request.files:
             files = request.files.getlist("images")
             upload_dir = get_upload_dir()
+            from typing import cast, Any, Dict
+
+            # Usar cast para indicar que sabemos que row acepta listas
+            row = cast(Dict[str, Any], row)
             row["images"] = []
             for file in files:
                 if file and file.filename and allowed_image(file.filename):
@@ -662,7 +927,10 @@ def add_row(catalog_id, catalog):
         # Agregar la fila a ambas claves
         for collection_name in ["spreadsheets"]:
             try:
-                collection = get_mongo_db()[collection_name]
+                db = get_mongo_db()
+                if db is None:
+                    continue
+                collection = db[collection_name]
                 result = collection.update_one(
                     {"_id": ObjectId(catalog_id)},
                     {
@@ -689,9 +957,11 @@ def delete_row(catalog_id, row_index, catalog):
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     try:
         # Refuerzo: recargar el catálogo desde la base de datos para evitar inconsistencias
-        db_catalog = get_mongo_db()["spreadsheets"].find_one(
-            {"_id": ObjectId(catalog_id)}
-        )
+        db = get_mongo_db()
+        if db is None:
+            flash("Error de conexión a la base de datos.", "danger")
+            return redirect(url_for("catalogs.view", catalog_id=catalog_id))
+        db_catalog = db["spreadsheets"].find_one({"_id": ObjectId(catalog_id)})
         if not db_catalog:
             flash("Catálogo no encontrado.", "danger")
             current_app.logger.error(
@@ -709,7 +979,7 @@ def delete_row(catalog_id, row_index, catalog):
             )
             return redirect(url_for("catalogs.view", catalog_id=catalog_id))
         current_rows.pop(row_index)
-        result = get_mongo_db()["spreadsheets"].update_one(
+        result = db["spreadsheets"].update_one(
             {"_id": ObjectId(catalog_id)},
             {"$set": {"rows": current_rows, "data": current_rows}},
         )
@@ -752,7 +1022,6 @@ def delete_catalog(catalog_id, catalog):
     try:
         # Guardar información del catálogo antes de eliminarlo para mostrar mensaje personalizado
         catalog_name = catalog.get("name", "Sin nombre")
-        owner = catalog.get("owner", session.get("username", "usuario"))
         collection_source = catalog.get("collection_source", "spreadsheets")
 
         current_app.logger.info(
@@ -760,16 +1029,17 @@ def delete_catalog(catalog_id, catalog):
         )
 
         # Intentar eliminar de la colección correcta
+        db = get_mongo_db()
+        if db is None:
+            flash("Error de conexión a la base de datos.", "danger")
+            return redirect(url_for("catalogs.list"))
+
         if collection_source == "spreadsheets":
             # Si el catálogo está en la colección spreadsheets
-            result = get_mongo_db().spreadsheets.delete_one(
-                {"_id": ObjectId(catalog_id)}
-            )
+            result = db.spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
         else:
             # Por defecto, intentar eliminar de la colección spreadsheets
-            result = get_mongo_db().spreadsheets.delete_one(
-                {"_id": ObjectId(catalog_id)}
-            )
+            result = db.spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
 
         current_app.logger.info(
             f"Resultado de eliminación de {collection_source}: {result.deleted_count} documento(s) eliminado(s)"
@@ -795,13 +1065,9 @@ def delete_catalog(catalog_id, catalog):
         else:
             # Si no se eliminó nada, intentar en la otra colección
             if collection_source == "spreadsheets":
-                result = get_mongo_db().spreadsheets.delete_one(
-                    {"_id": ObjectId(catalog_id)}
-                )
+                result = db.spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
             else:
-                result = get_mongo_db().spreadsheets.delete_one(
-                    {"_id": ObjectId(catalog_id)}
-                )
+                result = db.spreadsheets.delete_one({"_id": ObjectId(catalog_id)})
 
             current_app.logger.info(
                 f"Segundo intento de eliminación: {result.deleted_count} documento(s) eliminado(s)"
@@ -813,7 +1079,7 @@ def delete_catalog(catalog_id, catalog):
                 )
                 flash(f"Catálogo '{catalog_name}' eliminado correctamente.", "success")
                 current_app.logger.warning(
-                    f"[FLASH] Ejecutado flash success para catálogo eliminado"
+                    f"[FLASH] Ejecutado flash success para catálogo eliminado"  # noqa: F541
                 )
             else:
                 current_app.logger.warning(
@@ -821,7 +1087,7 @@ def delete_catalog(catalog_id, catalog):
                 )
                 flash("Catálogo no se pudo eliminar o ya fue eliminado.", "warning")
                 current_app.logger.warning(
-                    f"[FLASH] Ejecutado flash warning para catálogo no eliminado"
+                    f"[FLASH] Ejecutado flash warning para catálogo no eliminado"  # noqa: F541
                 )
     except Exception as e:
         current_app.logger.error(
@@ -883,7 +1149,12 @@ def create():
                 "updated_at": datetime.datetime.utcnow(),
             }
 
-            result = get_mongo_db().spreadsheets.insert_one(catalog)
+            db = get_mongo_db()
+            if db is None:
+                flash("Error de conexión a la base de datos.", "danger")
+                return redirect(request.url)
+
+            result = db.spreadsheets.insert_one(catalog)
             catalog_id = str(result.inserted_id)
 
             current_app.logger.info(
@@ -892,7 +1163,7 @@ def create():
             flash(f'Catálogo "{catalog_name}" creado correctamente', "success")
 
             # Actualizar el catálogo con el ID como string para facilitar su uso en plantillas
-            get_mongo_db().spreadsheets.update_one(
+            db.spreadsheets.update_one(
                 {"_id": result.inserted_id}, {"$set": {"_id_str": catalog_id}}
             )
 
@@ -945,7 +1216,7 @@ def import_catalog():
             return redirect(request.url)
 
         # Verificar el formato del archivo
-        if not file.filename.endswith((".csv", ".xls", ".xlsx")):
+        if not file.filename or not file.filename.endswith((".csv", ".xls", ".xlsx")):
             flash("Formato de archivo no soportado. Use CSV o Excel.", "danger")
             return redirect(request.url)
 
@@ -956,7 +1227,8 @@ def import_catalog():
             # Si no se proporciona un nombre, usar el nombre del archivo sin extensión
             if not catalog_name:
                 # Extraer el nombre del archivo sin extensión
-                catalog_name = os.path.splitext(file.filename)[0]
+                filename = file.filename or "catalogo"
+                catalog_name = os.path.splitext(filename)[0]
                 current_app.logger.info(
                     f"Usando el nombre del archivo como nombre del catálogo: {catalog_name}"
                 )
@@ -971,12 +1243,12 @@ def import_catalog():
             )
 
             # Procesar el archivo según su formato
-            if file.filename.endswith(".csv"):
-                # Procesar CSV
-                df = pd.read_csv(file, encoding="utf-8")
+            if file.filename and file.filename.endswith(".csv"):
+                # Procesar CSV - usar el stream del archivo
+                df = pd.read_csv(file.stream, encoding="utf-8")
             else:
-                # Procesar Excel
-                df = pd.read_excel(file)
+                # Procesar Excel - usar el stream del archivo
+                df = pd.read_excel(file.stream)
 
             # Verificar que el archivo tiene datos
             if df.empty:
@@ -1000,11 +1272,16 @@ def import_catalog():
                 "updated_at": datetime.datetime.utcnow(),
             }
 
-            result = get_mongo_db().spreadsheets.insert_one(catalog)
+            db = get_mongo_db()
+            if db is None:
+                flash("Error de conexión a la base de datos.", "danger")
+                return redirect(request.url)
+
+            result = db.spreadsheets.insert_one(catalog)
             catalog_id = str(result.inserted_id)
 
             # Refuerzo: actualizar el campo owner si por alguna razón no se guardó
-            get_mongo_db().spreadsheets.update_one(
+            db.spreadsheets.update_one(
                 {"_id": result.inserted_id}, {"$set": {"owner": username}}
             )
             current_app.logger.info(

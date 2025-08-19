@@ -59,7 +59,7 @@ def sync_data_rows():
                 )
                 if result.modified_count > 0:
                     actualizado = True
-                    print(f"   ✅ 'rows' actualizado desde 'data'")
+                    print(f"   ✅ 'rows' actualizado desde 'data'")  # noqa: F541
 
             # Caso 2: rows existe pero data no existe o está vacío
             elif rows and not data:
