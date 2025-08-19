@@ -11,6 +11,36 @@
     .sortable:hover {
         background-color: #f8f9fa;
     }
+    
+    /* Estilos globales para columnas de acciones e imágenes - aplicados a contenido dinámico */
+    #tablaFilas td:nth-last-child(1) {
+        white-space: nowrap !important;
+        width: 200px !important;
+        min-width: 200px !important;
+    }
+    
+    #tablaFilas td:nth-last-child(2) {
+        width: 150px !important;
+        min-width: 150px !important;
+    }
+    
+    /* Forzar botones en línea horizontal */
+    #tablaFilas td:nth-last-child(1) .btn {
+        display: inline-block !important;
+        margin-right: 5px !important;
+    }
+    
+    #tablaFilas td:nth-last-child(1) form {
+        display: inline-block !important;
+    }
+    
+    /* Asegurar que las acciones permanezcan en línea */
+    #tablaFilas td:last-child {
+        display: flex !important;
+        gap: 5px !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+    }
 </style>
 {% endblock %}
 
