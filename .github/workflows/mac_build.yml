@@ -244,16 +244,31 @@ jobs:
           find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
           echo "✅ Limpieza completa de cachés completada"
 
-      - name: Verify spec file
+      - name: Verify and create spec file
         run: |
-          echo "🔍 Verificando archivo .spec..."
-          if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
-            echo "❌ ERROR: EDF_CatalogoDeTablas.spec no encontrado"
-            echo "📋 Archivos .spec disponibles:"
-            ls -la *.spec || echo "No hay archivos .spec"
-            exit 1
+          echo "🔍 Verificando y creando archivo .spec..."
+          echo "📋 Archivos en el directorio actual:"
+          ls -la
+          echo "📋 Archivos .spec en el directorio:"
+          ls -la *.spec || echo "No hay archivos .spec"
+          
+          # Ejecutar script de verificación de spec
+          if [ -f "verify_spec.sh" ]; then
+            echo "🔧 Ejecutando script de verificación de spec..."
+            chmod +x verify_spec.sh
+            ./verify_spec.sh
+          else
+            echo "⚠️  Script verify_spec.sh no encontrado, usando método manual..."
+            
+            if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
+              echo "❌ ERROR: EDF_CatalogoDeTablas.spec no encontrado"
+              echo "📋 Archivos .spec disponibles:"
+              ls -la *.spec || echo "No hay archivos .spec"
+              exit 1
+            fi
           fi
-          echo "✅ EDF_CatalogoDeTablas.spec encontrado"
+          
+          echo "✅ EDF_CatalogoDeTablas.spec verificado/creado"
           echo "📏 Tamaño del archivo: $(wc -l < EDF_CatalogoDeTablas.spec) líneas"
           echo "📋 Primeras 10 líneas:"
           head -10 EDF_CatalogoDeTablas.spec

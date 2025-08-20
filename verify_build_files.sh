@@ -16,6 +16,12 @@ CRITICAL_FILES=(
     "app/routes/catalogs_routes.py"
 )
 
+# Lista de archivos de backup para .spec
+SPEC_BACKUP_FILES=(
+    "EDF_CatalogoDeTablas_Native.spec"
+    "EDF_CatalogoDeTablas_Web.spec"
+)
+
 # Lista de directorios críticos
 CRITICAL_DIRS=(
     "app"
@@ -34,7 +40,27 @@ for file in "${CRITICAL_FILES[@]}"; do
         echo "✅ $file - EXISTE"
     else
         echo "❌ $file - NO EXISTE"
-        ERRORS=$((ERRORS + 1))
+        
+        # Intentar crear archivo .spec si no existe
+        if [ "$file" = "EDF_CatalogoDeTablas.spec" ]; then
+            echo "🔧 Intentando crear $file desde archivos de backup..."
+            created=false
+            for backup_file in "${SPEC_BACKUP_FILES[@]}"; do
+                if [ -f "$backup_file" ]; then
+                    echo "📋 Copiando $backup_file a $file..."
+                    cp "$backup_file" "$file"
+                    echo "✅ $file creado desde $backup_file"
+                    created=true
+                    break
+                fi
+            done
+            if [ "$created" = false ]; then
+                echo "❌ No se pudo crear $file - no hay archivos de backup"
+                ERRORS=$((ERRORS + 1))
+            fi
+        else
+            ERRORS=$((ERRORS + 1))
+        fi
     fi
 done
 
