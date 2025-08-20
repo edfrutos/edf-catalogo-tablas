@@ -7,32 +7,41 @@ Este proyecto incluye un sistema completo de verificaciones previas al push para
 ## 🚀 Comandos Disponibles
 
 ### 1. **Verificación Manual**
+
 ```bash
 ./verify_build_files.sh
 ```
+
 Ejecuta todas las verificaciones de archivos críticos, sintaxis y conectividad básica.
 
 ### 2. **Diagnóstico de Conectividad**
+
 ```bash
 ./verify_connectivity.sh
 ```
+
 Diagnóstico completo de conectividad de red y servicios críticos.
 
 ### 3. **Push Seguro (Recomendado)**
+
 ```bash
 ./safe_push.sh
 ```
+
 Ejecuta verificaciones automáticas y hace push de forma segura.
 
 ### 4. **Push Normal (Con Hook Automático)**
+
 ```bash
 git push origin main
 ```
+
 El hook de pre-push se ejecuta automáticamente y verifica todo antes del push.
 
 ## 🔍 Verificaciones Incluidas
 
 ### **Archivos Críticos**
+
 - ✅ `EDF_CatalogoDeTablas.spec`
 - ✅ `requirements_python310.txt`
 - ✅ `run_server.py`
@@ -41,6 +50,7 @@ El hook de pre-push se ejecuta automáticamente y verifica todo antes del push.
 - ✅ `app/routes/catalogs_routes.py`
 
 ### **Directorios Críticos**
+
 - ✅ `app/`
 - ✅ `app/routes/`
 - ✅ `app/templates/`
@@ -48,18 +58,21 @@ El hook de pre-push se ejecuta automáticamente y verifica todo antes del push.
 - ✅ `tools/`
 
 ### **Archivos de Configuración**
+
 - ✅ `.github/workflows/mac_build.yml`
 - ✅ `pyproject.toml`
 - ✅ `pyrightconfig.json`
 - ✅ `cspell.json`
 
 ### **Verificaciones de Sintaxis**
+
 - ✅ Sintaxis de `requirements_python310.txt`
 - ✅ Sintaxis de archivos Python (muestra de 10 archivos)
 - ✅ Detección de archivos sensibles
 - ✅ Verificación de mensajes de commit
 
 ### **Verificaciones de Conectividad**
+
 - ✅ Conectividad básica con PyPI y GitHub
 - ✅ Resolución DNS de servicios críticos
 - ✅ Accesibilidad de puertos HTTPS/SSH
@@ -68,25 +81,30 @@ El hook de pre-push se ejecuta automáticamente y verifica todo antes del push.
 ## 🛡️ Protecciones de Seguridad
 
 ### **Hook de Pre-Push**
+
 - Se ejecuta automáticamente antes de cada `git push`
 - Verifica archivos críticos
 - Detecta archivos sensibles
 - Valida mensajes de commit
 
 ### **Detección de Archivos Sensibles**
+
 El sistema detecta y bloquea archivos con extensiones sensibles:
+
 - `.log`, `.key`, `.pem`, `.p12`, `.pfx`
 - `.env`, `.secret`, `.password`, `.credential`
 
 ## 📊 Flujo de Trabajo Recomendado
 
 ### **Para Desarrollo Diario:**
+
 1. Hacer cambios en el código
 2. Ejecutar `./verify_build_files.sh` para verificar
 3. Hacer commit con mensaje descriptivo
 4. Ejecutar `./safe_push.sh` para push seguro
 
 ### **Para Cambios Críticos:**
+
 1. Hacer cambios
 2. Ejecutar verificaciones manuales
 3. Probar localmente
@@ -94,6 +112,7 @@ El sistema detecta y bloquea archivos con extensiones sensibles:
 5. Usar `./safe_push.sh`
 
 ### **Para Problemas de Conectividad:**
+
 1. Ejecutar `./verify_connectivity.sh` para diagnóstico completo
 2. Verificar configuración de red y firewall
 3. Esperar unos minutos si hay problemas temporales
@@ -102,35 +121,45 @@ El sistema detecta y bloquea archivos con extensiones sensibles:
 ## ⚠️ Casos de Error
 
 ### **Si las Verificaciones Fallan:**
-```
+
+```sh
 ❌ Verificaciones fallaron
 🚫 Push cancelado
 ```
+
 **Solución:** Corregir los errores antes de hacer push.
 
 ### **Si se Detectan Archivos Sensibles:**
-```
+
+```sh
 ❌ ARCHIVOS SENSIBLES DETECTADOS
 🚫 Push cancelado
 ```
+
 **Solución:** Remover archivos sensibles del commit.
 
 ### **Si el Mensaje de Commit es Muy Corto:**
-```
+
+```ini
 ⚠️ Mensaje de commit muy corto
 💡 Considera usar un mensaje más descriptivo
 ```
+
 **Solución:** Usar mensajes descriptivos como:
+
 - `🔧 FIX: Corregir error en login`
 - `✨ FEAT: Añadir nueva funcionalidad`
 - `📝 DOC: Actualizar documentación`
 
 ### **Si hay Problemas de Conectividad:**
-```
+
+```sh
 ❌ PyPI - NO ACCESIBLE
 ❌ GitHub - NO ACCESIBLE
 ```
-**Solución:** 
+
+**Solución:**
+
 1. Ejecutar `./verify_connectivity.sh` para diagnóstico completo
 2. Verificar conexión a internet
 3. Comprobar firewall/proxy
@@ -139,6 +168,7 @@ El sistema detecta y bloquea archivos con extensiones sensibles:
 ## 🔧 Configuración
 
 ### **Habilitar/Deshabilitar Hook de Pre-Push:**
+
 ```bash
 # Habilitar
 chmod +x .git/hooks/pre-push
@@ -148,6 +178,7 @@ chmod -x .git/hooks/pre-push
 ```
 
 ### **Personalizar Verificaciones:**
+
 Editar `verify_build_files.sh` para añadir o quitar verificaciones.
 
 ## 📈 Beneficios
@@ -161,6 +192,7 @@ Editar `verify_build_files.sh` para añadir o quitar verificaciones.
 ## 🆘 Solución de Problemas
 
 ### **Error: "Script de verificación no encontrado"**
+
 ```bash
 # Asegurar que el script existe y es ejecutable
 ls -la verify_build_files.sh
@@ -168,6 +200,7 @@ chmod +x verify_build_files.sh
 ```
 
 ### **Error: "Hook no se ejecuta"**
+
 ```bash
 # Verificar que el hook existe y es ejecutable
 ls -la .git/hooks/pre-push
@@ -175,6 +208,7 @@ chmod +x .git/hooks/pre-push
 ```
 
 ### **Error: "Permisos denegados"**
+
 ```bash
 # Dar permisos de ejecución a todos los scripts
 chmod +x *.sh
