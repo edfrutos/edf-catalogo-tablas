@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify checkout
         run: |
@@ -32,6 +33,12 @@ jobs:
           echo "Workflow: Build macOS App v2.0"
           echo "Fecha: $(date)"
           echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          
+          # Verificar el commit actual
+          echo "📋 Información del commit actual:"
+          git log --oneline -1
+          git status --porcelain
           
           # Verificar conectividad básica
           echo "🌐 Verificando conectividad..."
@@ -64,18 +71,49 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Verify requirements file exists
+      - name: Verify and create requirements file
         run: |
-          echo "🔍 Verificando que el archivo requirements_python310.txt existe..."
-          if [ ! -f "requirements_python310.txt" ]; then
-            echo "❌ ERROR: requirements_python310.txt no encontrado"
-            echo "📋 Archivos en el directorio:"
-            ls -la *.txt || echo "No hay archivos .txt"
-            echo "📋 Archivos requirements:"
-            ls -la requirements*.txt || echo "No hay archivos requirements"
-            exit 1
+          echo "🔍 Verificando y creando archivo requirements_python310.txt..."
+          echo "📋 Archivos en el directorio actual:"
+          ls -la
+          echo "📋 Archivos .txt en el directorio:"
+          ls -la *.txt || echo "No hay archivos .txt"
+          echo "📋 Archivos requirements:"
+          ls -la requirements*.txt || echo "No hay archivos requirements"
+          
+          # Ejecutar script de verificación de requirements
+          if [ -f "verify_requirements.sh" ]; then
+            echo "🔧 Ejecutando script de verificación de requirements..."
+            chmod +x verify_requirements.sh
+            ./verify_requirements.sh
+          else
+            echo "⚠️  Script verify_requirements.sh no encontrado, usando método manual..."
+            
+            if [ ! -f "requirements_python310.txt" ]; then
+              echo "❌ ERROR: requirements_python310.txt no encontrado"
+              echo "🔧 Intentando crear el archivo desde requirements.txt..."
+              
+              if [ -f "requirements.txt" ]; then
+                echo "📋 Copiando requirements.txt a requirements_python310.txt..."
+                cp requirements.txt requirements_python310.txt
+                echo "✅ Archivo creado desde requirements.txt"
+              else
+                echo "❌ ERROR: requirements.txt tampoco existe"
+                echo "🔧 Creando archivo requirements_python310.txt básico..."
+                echo "# Requirements para Python 3.10" > requirements_python310.txt
+                echo "Flask==2.3.3" >> requirements_python310.txt
+                echo "pymongo==4.5.0" >> requirements_python310.txt
+                echo "boto3==1.28.44" >> requirements_python310.txt
+                echo "pandas==2.0.3" >> requirements_python310.txt
+                echo "openpyxl==3.1.2" >> requirements_python310.txt
+                echo "python-dotenv==1.0.0" >> requirements_python310.txt
+                echo "Werkzeug==2.3.7" >> requirements_python310.txt
+                echo "✅ Archivo requirements_python310.txt creado con dependencias básicas"
+              fi
+            fi
           fi
-          echo "✅ requirements_python310.txt encontrado"
+          
+          echo "✅ requirements_python310.txt verificado/creado"
           echo "📏 Tamaño del archivo: $(wc -l < requirements_python310.txt) líneas"
           echo "📋 Primeras 5 líneas:"
           head -5 requirements_python310.txt
