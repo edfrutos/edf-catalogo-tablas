@@ -117,7 +117,16 @@ jobs:
       - name: Verify spec file
         run: |
           echo "🔍 Verificando archivo .spec..."
-          cat EDF_CatalogoDeTablas.spec
+          if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
+            echo "❌ ERROR: EDF_CatalogoDeTablas.spec no encontrado"
+            echo "📋 Archivos .spec disponibles:"
+            ls -la *.spec || echo "No hay archivos .spec"
+            exit 1
+          fi
+          echo "✅ EDF_CatalogoDeTablas.spec encontrado"
+          echo "📏 Tamaño del archivo: $(wc -l < EDF_CatalogoDeTablas.spec) líneas"
+          echo "📋 Primeras 10 líneas:"
+          head -10 EDF_CatalogoDeTablas.spec
           echo "✅ Verificación completada"
           
       - name: Verify requirements file
