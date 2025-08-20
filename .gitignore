@@ -7,6 +7,14 @@ tests/original/
 .01_Proyecto_backup/
 
 # -------------------------------------------
+# ARCHIVOS SENSIBLES - SEGURIDAD CRÍTICA
+# -------------------------------------------
+server_logs.txt
+*.log
+logs/
+*.txt
+
+# -------------------------------------------
 # IGNORAR ENTORNOS VIRTUALES
 # -------------------------------------------
 .venv/
