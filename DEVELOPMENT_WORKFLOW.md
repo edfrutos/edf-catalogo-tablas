@@ -10,15 +10,21 @@ Este proyecto incluye un sistema completo de verificaciones previas al push para
 ```bash
 ./verify_build_files.sh
 ```
-Ejecuta todas las verificaciones de archivos críticos y sintaxis.
+Ejecuta todas las verificaciones de archivos críticos, sintaxis y conectividad básica.
 
-### 2. **Push Seguro (Recomendado)**
+### 2. **Diagnóstico de Conectividad**
+```bash
+./verify_connectivity.sh
+```
+Diagnóstico completo de conectividad de red y servicios críticos.
+
+### 3. **Push Seguro (Recomendado)**
 ```bash
 ./safe_push.sh
 ```
 Ejecuta verificaciones automáticas y hace push de forma segura.
 
-### 3. **Push Normal (Con Hook Automático)**
+### 4. **Push Normal (Con Hook Automático)**
 ```bash
 git push origin main
 ```
@@ -53,6 +59,12 @@ El hook de pre-push se ejecuta automáticamente y verifica todo antes del push.
 - ✅ Detección de archivos sensibles
 - ✅ Verificación de mensajes de commit
 
+### **Verificaciones de Conectividad**
+- ✅ Conectividad básica con PyPI y GitHub
+- ✅ Resolución DNS de servicios críticos
+- ✅ Accesibilidad de puertos HTTPS/SSH
+- ✅ Velocidad de red y latencia
+
 ## 🛡️ Protecciones de Seguridad
 
 ### **Hook de Pre-Push**
@@ -81,6 +93,12 @@ El sistema detecta y bloquea archivos con extensiones sensibles:
 4. Hacer commit
 5. Usar `./safe_push.sh`
 
+### **Para Problemas de Conectividad:**
+1. Ejecutar `./verify_connectivity.sh` para diagnóstico completo
+2. Verificar configuración de red y firewall
+3. Esperar unos minutos si hay problemas temporales
+4. Reintentar el push cuando la conectividad esté restaurada
+
 ## ⚠️ Casos de Error
 
 ### **Si las Verificaciones Fallan:**
@@ -106,6 +124,17 @@ El sistema detecta y bloquea archivos con extensiones sensibles:
 - `🔧 FIX: Corregir error en login`
 - `✨ FEAT: Añadir nueva funcionalidad`
 - `📝 DOC: Actualizar documentación`
+
+### **Si hay Problemas de Conectividad:**
+```
+❌ PyPI - NO ACCESIBLE
+❌ GitHub - NO ACCESIBLE
+```
+**Solución:** 
+1. Ejecutar `./verify_connectivity.sh` para diagnóstico completo
+2. Verificar conexión a internet
+3. Comprobar firewall/proxy
+4. Esperar y reintentar si es temporal
 
 ## 🔧 Configuración
 
