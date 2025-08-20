@@ -13,6 +13,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify checkout
+        run: |
+          echo "🔍 Verificando checkout del código..."
+          echo "📁 Directorio actual: $(pwd)"
+          echo "📋 Archivos en el directorio raíz:"
+          ls -la
+          echo "📋 Archivos requirements:"
+          ls -la requirements*.txt || echo "No hay archivos requirements"
+          echo "✅ Verificación de checkout completada"
 
       - name: Verify workflow version
         run: |
@@ -35,12 +47,33 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
+      - name: Verify requirements file exists
+        run: |
+          echo "🔍 Verificando que el archivo requirements_python310.txt existe..."
+          if [ ! -f "requirements_python310.txt" ]; then
+            echo "❌ ERROR: requirements_python310.txt no encontrado"
+            echo "📋 Archivos en el directorio:"
+            ls -la *.txt || echo "No hay archivos .txt"
+            echo "📋 Archivos requirements:"
+            ls -la requirements*.txt || echo "No hay archivos requirements"
+            exit 1
+          fi
+          echo "✅ requirements_python310.txt encontrado"
+          echo "📏 Tamaño del archivo: $(wc -l < requirements_python310.txt) líneas"
+          echo "📋 Primeras 5 líneas:"
+          head -5 requirements_python310.txt
+
       - name: Install dependencies
         run: |
+          echo "📦 Instalando dependencias..."
           python -m pip install --upgrade pip
+          echo "📋 Instalando desde requirements_python310.txt..."
           pip install -r requirements_python310.txt
+          echo "🔧 Instalando PyInstaller..."
           pip install pyinstaller==6.15.0 pyinstaller-hooks-contrib==2025.8
+          echo "🌐 Instalando pywebview..."
           pip install pywebview
+          echo "✅ Todas las dependencias instaladas correctamente"
 
       - name: Setup environment variables (non-sensitive)
         run: |
