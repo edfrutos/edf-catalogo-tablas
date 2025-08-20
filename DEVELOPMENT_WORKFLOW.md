@@ -22,7 +22,15 @@ Ejecuta todas las verificaciones de archivos críticos, sintaxis y conectividad 
 
 Diagnóstico completo de conectividad de red y servicios críticos.
 
-### 3. **Push Seguro (Recomendado)**
+### 3. **Verificación de Requirements**
+
+```bash
+./verify_requirements.sh
+```
+
+Verifica y crea el archivo requirements_python310.txt si no existe.
+
+### 4. **Push Seguro (Recomendado)**
 
 ```bash
 ./safe_push.sh
@@ -30,7 +38,7 @@ Diagnóstico completo de conectividad de red y servicios críticos.
 
 Ejecuta verificaciones automáticas y hace push de forma segura.
 
-### 4. **Push Normal (Con Hook Automático)**
+### 5. **Push Normal (Con Hook Automático)**
 
 ```bash
 git push origin main
@@ -117,6 +125,13 @@ El sistema detecta y bloquea archivos con extensiones sensibles:
 2. Verificar configuración de red y firewall
 3. Esperar unos minutos si hay problemas temporales
 4. Reintentar el push cuando la conectividad esté restaurada
+
+### **Para Problemas de Requirements:**
+
+1. Ejecutar `./verify_requirements.sh` para verificar/crear el archivo
+2. Verificar que requirements_python310.txt existe y es válido
+3. Si no existe, el script lo creará automáticamente
+4. Hacer commit y push de los cambios
 
 ## ⚠️ Casos de Error
 
