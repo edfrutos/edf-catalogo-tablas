@@ -1,0 +1,283 @@
+# Requirements para Python 3.10
+# Archivo específico para builds con Python 3.10
+
+# Core Flask y dependencias web
+Flask==3.1.1
+Flask-Login==0.6.3
+Flask-Session==0.8.0
+Flask-WTF==1.2.2
+Flask-Mail==0.9.1
+Flask-PyMongo==2.3.0
+Flask-Limiter==3.12
+Werkzeug==3.1.3
+Jinja2==3.1.6
+MarkupSafe==3.0.2
+itsdangerous==2.2.0
+click==8.1.8
+blinker==1.9.0
+
+# Base de datos
+pymongo==4.10.1
+dnspython==2.6.1
+
+# AWS y S3
+boto3==1.34.34
+botocore==1.34.34
+s3transfer==0.10.4
+
+# Google APIs
+google-api-python-client==2.171.0
+google-auth==2.40.3
+google-auth-oauthlib==1.2.2
+google-auth-httplib2==0.2.0
+google-api-core==2.25.0
+googleapis-common-protos==1.70.0
+google-cloud-storage==2.19.0
+google-cloud-logging==3.12.1
+google-cloud-secret-manager==2.24.0
+google-cloud-bigquery==3.35.0
+google-cloud-speech==2.33.0
+google-cloud-aiplatform==1.104.0
+google-cloud-core==2.4.3
+google-cloud-resource-manager==1.14.2
+google-cloud-trace==1.16.2
+google-cloud-audit-log==0.3.2
+google-cloud-appengine-logging==1.6.2
+google-crc32c==1.7.1
+google-genai==1.26.0
+google-resumable-media==2.7.2
+grpc-google-iam-v1==0.14.2
+grpcio==1.73.1
+grpcio-status==1.73.1
+protobuf==6.31.1
+proto-plus==1.26.1
+
+# Procesamiento de datos
+pandas==2.0.3
+numpy==1.24.4
+openpyxl==3.1.2
+python-dateutil==2.9.0.post0
+pytz==2025.2
+tzdata==2025.2
+tzlocal==5.3.1
+
+# Seguridad y autenticación
+cryptography==43.0.3
+bcrypt==4.1.2
+passlib==1.7.4
+pyotp==2.9.0
+rsa==4.9.1
+pyOpenSSL==24.2.1
+cffi==1.17.1
+pycparser==2.22
+
+# Utilidades del sistema
+psutil==7.0.0
+watchdog==6.0.0
+platformdirs==4.3.6
+appdirs==1.4.4
+
+# HTTP y networking
+requests==2.32.4
+urllib3==2.0.7
+certifi==2024.2.2
+charset-normalizer==3.4.1
+idna==3.10
+httplib2==0.22.0
+httpx==0.28.1
+httpcore==1.0.9
+h11==0.16.0
+sniffio==1.3.1
+
+# Validación y formularios
+email_validator==2.2.0
+WTForms==3.2.1
+
+# Imágenes y multimedia
+Pillow==10.4.0
+PyWavelets==1.8.0
+ImageHash==4.3.2
+qrcode==7.4.2
+pypng==0.20220715.0
+
+# Desarrollo y testing
+pytest==8.2.0
+pytest-html==4.1.1
+pytest-metadata==3.1.1
+debugpy==1.8.13
+
+# Linting y formateo
+black==24.8.0
+isort==6.0.1
+pylint==3.3.7
+pylint-pytest==1.1.8
+pathspec==0.12.1
+
+# Variables de entorno
+python-dotenv==1.0.1
+dotenv==0.9.9
+
+# Cache y sesiones
+redis==5.2.1
+flask-redis==0.4.0
+cachelib==0.13.0
+cachetools==5.5.2
+
+# Utilidades adicionales
+Faker==37.3.0
+tenacity==8.5.0
+tqdm==4.67.1
+tabulate==0.9.0
+rich==13.9.4
+typer==0.16.0
+
+# Servidor web
+gunicorn==23.0.0
+
+# Web scraping y parsing
+beautifulsoup4==4.13.4
+lxml==5.4.0
+soupsieve==2.7
+duckduckgo_search==8.0.3
+
+# OAuth y autenticación
+oauthlib==3.2.2
+oauth2client==4.1.3
+requests-oauthlib==2.0.0
+Authlib==1.6.1
+
+# Utilidades de fecha y tiempo
+DateTime==5.5
+
+# Utilidades de archivos
+shapely==2.1.1
+scipy==1.15.3
+
+# Utilidades de desarrollo
+debugger==1.3
+print==1.3.0
+prettier==0.0.7
+
+# Tipos y stubs
+typing_extensions==4.14.0
+typing-inspection==0.4.1
+mypy_extensions==1.1.0
+types-requests==2.32.4.20250611
+types-psutil==7.0.0.20250601
+types-pytz==2025.2.0.20250516
+types-Markdown==3.8.0.20250708
+types-awscrt==0.27.4
+types-s3transfer==0.13.0
+
+# Utilidades de empaquetado
+packaging==24.2
+setuptools
+wheel
+
+# Utilidades de configuración
+PyYAML==6.0.2
+tomlkit==0.13.3
+tomli==2.2.1
+iniconfig==2.1.0
+
+# Utilidades de logging y monitoreo
+opentelemetry-api==1.35.0
+opentelemetry-sdk==1.35.0
+opentelemetry-exporter-gcp-trace==1.9.0
+opentelemetry-resourcedetector-gcp==1.9.0a0
+opentelemetry-semantic-conventions==0.56b0
+
+# Utilidades de web
+websockets==15.0.1
+fastapi==0.116.1
+uvicorn==0.34.3
+starlette==0.47.1
+asgiref==3.9.1
+python-multipart==0.0.20
+sse-starlette==2.3.6
+httpx-sse==0.4.0
+
+# Utilidades de base de datos
+SQLAlchemy==2.0.41
+
+# Utilidades de serialización
+msgspec==0.18.6
+pydantic==2.11.7
+pydantic-settings==2.10.0
+pydantic_core==2.33.2
+
+# Utilidades de archivos y compresión
+et_xmlfile==2.0.0
+backports.tarfile==1.2.0
+
+# Utilidades de shell
+shellingham==1.5.4
+
+# Utilidades de interfaz
+PyQt6==6.9.1
+PyQt6-Qt6==6.9.1
+PyQt6_sip==13.10.2
+
+# Utilidades de macOS (solo para builds nativos)
+pyobjc-core==11.1
+pyobjc-framework-Cocoa==11.1
+pyobjc-framework-Quartz==11.1
+pyobjc-framework-Security==11.1
+pyobjc-framework-WebKit==11.1
+
+# Utilidades de empaquetado para macOS
+py2app==0.28.8
+altgraph==0.17.4
+macholib==1.16.3
+modulegraph==0.19.6
+
+# Utilidades de web view
+pywebview==5.4
+
+# Utilidades de PDF
+pdfkit==1.0.0
+
+# Utilidades de Google Drive
+PyDrive2==1.21.3
+
+# Utilidades de logging
+Pygments==2.19.2
+
+# Utilidades de desarrollo
+pluggy==1.6.0
+mccabe==0.7.0
+astroid==3.3.11
+
+# Utilidades de utilidades
+more-itertools==10.7.0
+ordered-set==4.1.0
+six==1.17.0
+zipp==3.20.2
+wrapt==1.17.2
+uritemplate==4.2.0
+jmespath==1.0.1
+docstring_parser==0.16
+Deprecated==1.2.18
+cloudpickle==3.1.1
+dill==0.4.0
+exceptiongroup==1.3.0
+autocommand==2.2.2
+primp==0.15.0
+proxy_tools==0.1.0
+stubs==1.0.0
+limits==5.4.0
+flask-redis==0.4.0
+bottle==0.13.4
+async-timeout==5.0.1
+anyio==4.9.0
+Markdown==3.8
+markdown-it-py==3.0.0
+mdurl==0.1.2
+importlib_metadata==8.5.0
+jaraco.context==6.0.1
+jaraco.functools==4.1.0
+jaraco.text==4.0.0
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
+pyparsing==3.2.3
+zope.interface==7.2
