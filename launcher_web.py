@@ -15,7 +15,7 @@ def open_browser():
     """Abre el navegador después de un breve delay"""
     time.sleep(2)  # Esperar a que el servidor se inicie
     try:
-        webbrowser.open("http://localhost:5001")
+        _ = webbrowser.open("http://localhost:5001")
         print("🌐 Navegador abierto en http://localhost:5001")
     except Exception as e:
         print(f"⚠️  No se pudo abrir el navegador automáticamente: {e}")
