@@ -4,6 +4,7 @@
 tools/original/
 scripts/original/
 tests/original/
+.01_Proyecto_backup/
 
 # -------------------------------------------
 # IGNORAR ENTORNOS VIRTUALES
