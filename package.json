@@ -1,0 +1,27 @@
+{
+  "name": "edf_catalogotablas",
+  "version": "1.0.0",
+  "description": "Sistema de gestión de catálogos y tablas con integración AWS S3.",
+  "main": "fix_js_simple.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edfrutos/edf_catalogotablas.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/edfrutos/edf_catalogotablas/issues"
+  },
+  "homepage": "https://github.com/edfrutos/edf_catalogotablas#readme",
+  "dependencies": {
+    "markdownlint-cli": "^0.45.0"
+  }
+}

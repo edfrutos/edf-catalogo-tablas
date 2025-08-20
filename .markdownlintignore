@@ -1,0 +1,32 @@
+# Archivos y directorios a ignorar por markdownlint
+
+# Directorios de build y distribución
+dist/
+build/
+*.egg-info/
+
+# Directorios de dependencias
+node_modules/
+.venv/
+__pycache__/
+
+# Archivos de backup
+*.backup
+*.bak
+*.old
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos específicos que no necesitan verificación
+CHANGELOG.md
+HISTORY.md
+LICENSE.md
+
+# Archivos de documentación generada
+docs/generated/
+docs/api/
+
+# Archivos de plantillas
+app/templates/dev_template/README.md
