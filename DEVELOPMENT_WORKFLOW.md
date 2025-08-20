@@ -30,7 +30,15 @@ Diagnóstico completo de conectividad de red y servicios críticos.
 
 Verifica y crea el archivo requirements_python310.txt si no existe.
 
-### 4. **Push Seguro (Recomendado)**
+### 4. **Verificación de Archivo .SPEC**
+
+```bash
+./verify_spec.sh
+```
+
+Verifica y crea el archivo EDF_CatalogoDeTablas.spec si no existe.
+
+### 5. **Push Seguro (Recomendado)**
 
 ```bash
 ./safe_push.sh
@@ -38,7 +46,7 @@ Verifica y crea el archivo requirements_python310.txt si no existe.
 
 Ejecuta verificaciones automáticas y hace push de forma segura.
 
-### 5. **Push Normal (Con Hook Automático)**
+### 6. **Push Normal (Con Hook Automático)**
 
 ```bash
 git push origin main
@@ -131,6 +139,13 @@ El sistema detecta y bloquea archivos con extensiones sensibles:
 1. Ejecutar `./verify_requirements.sh` para verificar/crear el archivo
 2. Verificar que requirements_python310.txt existe y es válido
 3. Si no existe, el script lo creará automáticamente
+4. Hacer commit y push de los cambios
+
+### **Para Problemas de Archivo .SPEC:**
+
+1. Ejecutar `./verify_spec.sh` para verificar/crear el archivo
+2. Verificar que EDF_CatalogoDeTablas.spec existe y es válido
+3. Si no existe, el script lo creará desde archivos de backup
 4. Hacer commit y push de los cambios
 
 ## ⚠️ Casos de Error
