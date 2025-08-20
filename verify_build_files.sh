@@ -89,6 +89,22 @@ for file in $PYTHON_FILES; do
 done
 
 echo ""
+echo "🌐 Verificando conectividad básica..."
+if ping -c 3 pypi.org > /dev/null 2>&1; then
+    echo "✅ PyPI - ACCESIBLE"
+else
+    echo "❌ PyPI - NO ACCESIBLE"
+    ERRORS=$((ERRORS + 1))
+fi
+
+if ping -c 3 github.com > /dev/null 2>&1; then
+    echo "✅ GitHub - ACCESIBLE"
+else
+    echo "❌ GitHub - NO ACCESIBLE"
+    ERRORS=$((ERRORS + 1))
+fi
+
+echo ""
 echo "📊 RESUMEN DE VERIFICACIÓN"
 echo "=========================="
 if [ $ERRORS -eq 0 ]; then

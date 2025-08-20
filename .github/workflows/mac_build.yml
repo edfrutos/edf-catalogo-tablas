@@ -26,18 +26,35 @@ jobs:
           ls -la requirements*.txt || echo "No hay archivos requirements"
           echo "✅ Verificación de checkout completada"
 
-      - name: Verify workflow version
+      - name: Verify workflow version and connectivity
         run: |
-          echo "🔍 Verificando versión del workflow..."
+          echo "🔍 Verificando versión del workflow y conectividad..."
           echo "Workflow: Build macOS App v2.0"
           echo "Fecha: $(date)"
           echo "Commit: ${{ github.sha }}"
+          
+          # Verificar conectividad básica
+          echo "🌐 Verificando conectividad..."
+          if ping -c 3 pypi.org > /dev/null 2>&1; then
+            echo "✅ Conectividad con PyPI OK"
+          else
+            echo "⚠️  Problemas de conectividad con PyPI"
+          fi
+          
+          if ping -c 3 github.com > /dev/null 2>&1; then
+            echo "✅ Conectividad con GitHub OK"
+          else
+            echo "⚠️  Problemas de conectividad con GitHub"
+          fi
+          
           echo "✅ Verificación completada"
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          check-latest: false
+        timeout-minutes: 15
 
       - name: Cache pip dependencies
         uses: actions/cache@v3
@@ -63,16 +80,91 @@ jobs:
           echo "📋 Primeras 5 líneas:"
           head -5 requirements_python310.txt
 
-      - name: Install dependencies
+      - name: Install dependencies with retry
         run: |
-          echo "📦 Instalando dependencias..."
-          python -m pip install --upgrade pip
+          echo "📦 Instalando dependencias con reintentos..."
+          
+          # Función para instalar con reintentos
+          install_with_retry() {
+            local max_attempts=3
+            local attempt=1
+            
+            while [ $attempt -le $max_attempts ]; do
+              echo "🔄 Intento $attempt de $max_attempts..."
+              
+              if python -m pip install --upgrade pip; then
+                echo "✅ pip actualizado correctamente"
+                break
+              else
+                echo "❌ Error en intento $attempt"
+                if [ $attempt -eq $max_attempts ]; then
+                  echo "🚫 Falló después de $max_attempts intentos"
+                  exit 1
+                fi
+                echo "⏳ Esperando 10 segundos antes del siguiente intento..."
+                sleep 10
+                attempt=$((attempt + 1))
+              fi
+            done
+          }
+          
+          # Actualizar pip con reintentos
+          install_with_retry
+          
+          # Instalar requirements con reintentos
           echo "📋 Instalando desde requirements_python310.txt..."
-          pip install -r requirements_python310.txt
+          for attempt in 1 2 3; do
+            echo "🔄 Intento $attempt de 3 para requirements..."
+            if pip install -r requirements_python310.txt; then
+              echo "✅ Requirements instalados correctamente"
+              break
+            else
+              echo "❌ Error en intento $attempt"
+              if [ $attempt -eq 3 ]; then
+                echo "🚫 Falló después de 3 intentos"
+                exit 1
+              fi
+              echo "⏳ Esperando 15 segundos antes del siguiente intento..."
+              sleep 15
+            fi
+          done
+          
+          # Instalar PyInstaller con reintentos
           echo "🔧 Instalando PyInstaller..."
-          pip install pyinstaller==6.15.0 pyinstaller-hooks-contrib==2025.8
+          for attempt in 1 2 3; do
+            echo "🔄 Intento $attempt de 3 para PyInstaller..."
+            if pip install pyinstaller==6.15.0 pyinstaller-hooks-contrib==2025.8; then
+              echo "✅ PyInstaller instalado correctamente"
+              break
+            else
+              echo "❌ Error en intento $attempt"
+              if [ $attempt -eq 3 ]; then
+                echo "🚫 Falló después de 3 intentos"
+                exit 1
+              fi
+              echo "⏳ Esperando 10 segundos antes del siguiente intento..."
+              sleep 10
+            fi
+          done
+          
+          # Instalar pywebview con reintentos
           echo "🌐 Instalando pywebview..."
-          pip install pywebview
+          for attempt in 1 2 3; do
+            echo "🔄 Intento $attempt de 3 para pywebview..."
+            if pip install pywebview; then
+              echo "✅ pywebview instalado correctamente"
+              break
+            else
+              echo "❌ Error en intento $attempt"
+              if [ $attempt -eq 3 ]; then
+                echo "🚫 Falló después de 3 intentos"
+                exit 1
+              fi
+              echo "⏳ Esperando 10 segundos antes del siguiente intento..."
+              sleep 10
+            fi
+          done
+          
           echo "✅ Todas las dependencias instaladas correctamente"
 
       - name: Setup environment variables (non-sensitive)
