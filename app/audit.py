@@ -10,9 +10,10 @@ Módulo de auditoría para el registro de acciones de usuarios y sistema.
 Proporciona funciones para registrar eventos y consultar el historial de auditoría.
 """
 
-import logging
 import datetime
-from typing import Optional, Dict, Any
+import logging
+from typing import Any, Dict, Optional
+
 from bson.objectid import ObjectId
 
 from app.database import get_audit_logs_collection

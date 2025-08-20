@@ -4,18 +4,19 @@ Utilidades de monitoreo para scripts de mantenimiento.
 Incluye alertas, métricas y notificaciones.
 """
 
-import os
-import sys
 import json
 import logging
-import smtplib
-import psutil
+import os
 import platform
+import smtplib
+import sys
 from datetime import datetime, timedelta
-from pathlib import Path
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Dict, Any, List, Optional
+from email.mime.text import MIMEText
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import psutil
 
 
 # Importar configuración
@@ -275,7 +276,7 @@ class LogAnalyzer:
             info_count = 0
             recent_errors = []
 
-            with open(log_file, "r", encoding="utf-8") as f:
+            with open(log_file, encoding="utf-8") as f:
                 for line in f:
                     try:
                         # Parsear timestamp del log

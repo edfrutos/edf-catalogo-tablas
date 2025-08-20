@@ -7,6 +7,7 @@
 # Autor: EDF Developer - 2025-05-28
 
 import os
+
 import certifi
 from pymongo import MongoClient
 
@@ -35,4 +36,4 @@ def eliminar_huerfanos(collection, label):
 eliminar_huerfanos('catalogs', 'Catálogos')
 eliminar_huerfanos('spreadsheets', 'Spreadsheets')
 
-print('--- FIN DE LA ELIMINACIÓN DE HUÉRFANOS ---') 
+print('--- FIN DE LA ELIMINACIÓN DE HUÉRFANOS ---')

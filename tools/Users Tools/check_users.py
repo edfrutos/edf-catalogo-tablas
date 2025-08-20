@@ -6,12 +6,13 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-06-09
 
+import logging
 import os
 import sys
-import logging
+
+import certifi
 from dotenv import load_dotenv
 from pymongo import MongoClient
-import certifi
 
 # Cargar variables de entorno primero
 load_dotenv()
@@ -27,14 +28,14 @@ def get_collections():
     """Obtener las colecciones de usuarios de forma segura"""
     try:
         from app.models import get_mongo_client, get_mongo_db, get_users_collection
-        
+
         # Obtener cliente y base de datos
         client = get_mongo_client()
         db = get_mongo_db()
-        
+
         # Obtener colección principal de usuarios
         users = get_users_collection()
-        
+
         # Verificar si existe la colección users_unified
         collection_names = db.list_collection_names()
         if 'users_unified' in collection_names:
@@ -42,7 +43,7 @@ def get_collections():
         else:
             logger.warning("La colección 'users_unified' no existe en la base de datos")
             unified = None
-        
+
         return users, unified, client
     except ImportError as e:
         logger.error(f"Error al importar módulos: {str(e)}")
@@ -55,7 +56,7 @@ def check_users():
     """Verificar usuarios en ambas colecciones"""
     try:
         users, unified, client = get_collections()
-        
+
         print("\n=== Usuarios en la colección 'users' ===")
         users_count = 0
         try:
@@ -75,7 +76,7 @@ def check_users():
                 print(f"Locked Until: {user.get('locked_until')}")
         except Exception as e:
             logger.error(f"Error al leer la colección 'users': {str(e)}")
-        
+
         print(f"\nTotal usuarios en 'users': {users_count}")
 
         if unified is not None:
@@ -98,13 +99,13 @@ def check_users():
                     print(f"Locked Until: {user.get('locked_until')}")
             except Exception as e:
                 logger.error(f"Error al leer la colección 'users_unified': {str(e)}")
-            
+
             print(f"\nTotal usuarios en 'users_unified': {unified_count}")
         else:
             print("\n=== La colección 'users_unified' no existe ===")
-        
+
         # No cerramos la conexión aquí ya que es gestionada globalmente
-        
+
     except Exception as e:
         logger.error(f"Error al verificar usuarios: {str(e)}")
         raise

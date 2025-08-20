@@ -5,9 +5,10 @@ Script para corregir el hash de imagen del pendrive en la base de datos
 
 import os
 import sys
+
+from bson import ObjectId
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from bson import ObjectId
 
 # Cargar variables de entorno
 load_dotenv()
@@ -113,7 +114,7 @@ def fix_pendrive_hash():
                 print(f"   ⚠️  No se realizaron cambios en documento {doc_id}")
 
         # Verificar que la corrección funcionó
-        print(f"\n🔍 Verificando corrección...")
+        print("\n🔍 Verificando corrección...")
         documentos_verificacion = list(spreadsheets_collection.find(query))
 
         if len(documentos_verificacion) == 0:

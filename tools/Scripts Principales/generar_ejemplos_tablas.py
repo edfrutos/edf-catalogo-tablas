@@ -5,10 +5,11 @@ Descripción: Genera tablas de ejemplo con 15 filas sobre temas de oficina, peri
 Uso: python3 tools/generar_ejemplos_tablas.py
 Autor: EDF Equipo de desarrollo - 2024-05-28
 """
-import os
 import csv
-from openpyxl import Workbook
+import os
 from datetime import datetime
+
+from openpyxl import Workbook
 
 EXPORT_DIR = 'exportados'
 os.makedirs(EXPORT_DIR, exist_ok=True)
@@ -128,4 +129,4 @@ exportar('articulos_oficina', ['Nombre', 'Descripción', 'Imagen'], articulos)
 exportar('perifericos_computador', ['Nombre', 'Descripción', 'Imagen'], perifericos)
 exportar('unidades_almacenamiento', ['Nombre', 'Descripción', 'Imagen'], almacenamiento)
 exportar('motos', ['Modelo', 'Descripción', 'Imagen'], motos)
-exportar('coches', ['Modelo', 'Descripción', 'Imagen'], coches) 
+exportar('coches', ['Modelo', 'Descripción', 'Imagen'], coches)

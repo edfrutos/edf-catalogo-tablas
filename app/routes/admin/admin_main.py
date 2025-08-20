@@ -8,7 +8,8 @@
 """
 Main admin routes and core functionality.
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+
 from app.routes.maintenance_routes import admin_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')

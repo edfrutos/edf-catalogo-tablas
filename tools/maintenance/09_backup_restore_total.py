@@ -6,13 +6,14 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-05-28
 
+import csv
+import json
 import os
+import zipfile
+from datetime import datetime
+
 import certifi
 from pymongo import MongoClient
-import json
-import csv
-from datetime import datetime
-import zipfile
 
 MONGO_URI = os.getenv("MONGO_URI")
 client: MongoClient = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
@@ -77,7 +78,7 @@ def restore_collection():
     if not os.path.exists(path):
         print(f"❌ Archivo {path} no encontrado.")
         return
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         docs = json.load(f)
     from bson import ObjectId
 
@@ -111,7 +112,7 @@ def restore_multiple_collections():
             json_file = files[idx]
             collection_name = input(f"Colección destino para {json_file}: ").strip()
             path = os.path.join(BACKUP_DIR, json_file)
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 docs = json.load(f)
             from bson import ObjectId
 

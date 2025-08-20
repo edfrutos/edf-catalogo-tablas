@@ -13,11 +13,13 @@ solucionar problemas con la visualización de tablas.
 import logging
 import os
 import traceback
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify
-from pymongo import MongoClient
-from bson import ObjectId
 from datetime import datetime
+
 import certifi  # Añadido para certificados SSL
+from bson import ObjectId
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
+from pymongo import MongoClient
+
 from app.database import get_mongo_db
 
 # Configuración de logging
@@ -37,44 +39,44 @@ def list_tables():
         email = session.get('email', 'no-email')
         username = session.get('username', session.get('email', 'no-username'))
         role = session.get('role', 'no-role')
-        
+
         logger.info(f"Acceso a lista de tablas por: {email} (ID: {user_id}, Rol: {role})")
-        
+
         # Obtener la base de datos
         db = get_mongo_db()
         if db is None:
-            return render_template('admin/tables_emergency.html', 
-                                message="Error de conexión a MongoDB", 
-                                tables=[], 
+            return render_template('admin/tables_emergency.html',
+                                message="Error de conexión a MongoDB",
+                                tables=[],
                                 user={'email': email, 'username': username, 'role': role})
-        
+
         # Buscar colecciones de tablas
         collections = db.list_collection_names()
         tables_collection = None
-        
+
         # Detectar colección correcta
         if 'tables' in collections:
             tables_collection = db.tables
         elif 'tables_data' in collections:
             tables_collection = db.tables_data
-        
+
         if tables_collection is None:
             return render_template('admin/tables_emergency.html',
                                 message="No se encontró la colección de tablas",
                                 tables=[],
                                 user={'email': email, 'username': username, 'role': role})
-        
+
         # Obtener todas las tablas
         tables = list(tables_collection.find().sort('created_at', -1))
-        
+
         return render_template('admin/tables_emergency.html',
                             tables=tables,
                             user={'email': email, 'username': username, 'role': role})
-    
+
     except Exception as e:
         logger.error(f"Error en list_tables: {str(e)}")
         traceback.print_exc()
-        
+
         # Devolver una página de emergencia simple
         emergency_html = """
         <!DOCTYPE html>
@@ -132,7 +134,7 @@ def list_tables():
             username=session.get('username', session.get('email', 'no-username')),
             role=session.get('role', 'no-role')
         )
-        
+
         return emergency_html
 
 # Vista de tabla por ID
@@ -144,11 +146,11 @@ def view_table(table_id):
         email = session.get('email', 'no-email')
         username = session.get('username', session.get('email', 'no-username'))
         role = session.get('role', 'no-role')
-        
+
         logger.info(f"Acceso a tabla {table_id} por: {email}")
-        
+
         # Devolver HTML básico con información
-        emergency_html = """
+        emergency_html = f"""
         <!DOCTYPE html>
         <html lang="es">
         <head>
@@ -198,16 +200,10 @@ def view_table(table_id):
             </p>
         </body>
         </html>
-        """.format(
-            table_id=table_id,
-            user_id=user_id,
-            email=email,
-            username=username,
-            role=role
-        )
-        
+        """
+
         return emergency_html
-        
+
     except Exception as e:
         logger.error(f"Error en view_table: {str(e)}")
         return f"Error al mostrar la tabla: {str(e)}"

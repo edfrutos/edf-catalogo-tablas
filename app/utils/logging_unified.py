@@ -3,9 +3,9 @@
 Script para gestionar el sistema de logging unificado.
 """
 
+import logging
 import os
 import sys
-import logging
 from datetime import datetime
 
 # Agregar el directorio raíz al path
@@ -17,11 +17,11 @@ def setup_logging():
     """Configurar el sistema de logging unificado"""
     try:
         from app.logging_unified import setup_unified_logging
-        
+
         print("🔧 Configurando sistema de logging unificado...")
         setup_unified_logging()
         print("✅ Sistema de logging configurado correctamente")
-        
+
         # Mostrar información del logging
         log_dir = os.path.join(root_dir, 'logs')
         if os.path.exists(log_dir):
@@ -29,9 +29,9 @@ def setup_logging():
             print(f"📁 Archivos de log encontrados: {len(log_files)}")
             for log_file in log_files[:5]:  # Mostrar solo los primeros 5
                 print(f"   - {log_file}")
-        
+
         return True
-        
+
     except ImportError as e:
         print(f"❌ Error importando módulo: {e}")
         return False
@@ -42,4 +42,4 @@ def setup_logging():
 if __name__ == "__main__":
     print("🚀 Iniciando configuración de logging unificado...")
     success = setup_logging()
-    sys.exit(0 if success else 1) 
+    sys.exit(0 if success else 1)

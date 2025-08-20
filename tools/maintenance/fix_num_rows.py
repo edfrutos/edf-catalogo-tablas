@@ -13,8 +13,9 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from app.models.database import get_mongo_db
 from bson.objectid import ObjectId
+
+from app.models.database import get_mongo_db
 
 
 def fix_num_rows():
@@ -71,9 +72,9 @@ def fix_num_rows():
                 print(f"   ✅ Corregido: num_rows = {real_rows}")
                 updated_count += 1
             else:
-                print(f"   ❌ Error al actualizar")
+                print("   ❌ Error al actualizar")
         else:
-            print(f"   ✅ Ya está correcto")
+            print("   ✅ Ya está correcto")
 
         print()
 

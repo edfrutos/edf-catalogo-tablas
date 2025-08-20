@@ -6,9 +6,10 @@
 # Variables de entorno: [si aplica]
 # Autor: [Tu nombre o equipo] - 2025-05-28
 
-from pymongo import MongoClient
-import certifi
 import os
+
+import certifi
+from pymongo import MongoClient
 
 MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:

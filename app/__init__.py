@@ -1,45 +1,45 @@
 # app/__init__.py
 
-import os
 import logging
+import os
 import secrets  # noqa: F401  # Puede ser usado en producción para claves
 from datetime import timedelta  # noqa: F401
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask, g, current_app  # noqa: F401
+from dotenv import load_dotenv
+from flask import Flask, current_app, g  # noqa: F401
 from flask_login import LoginManager
 from flask_mail import (
     Mail,  # noqa: F401
 )  # noqa: F401  # Usado condicionalmente en diferentes entornos
-from dotenv import load_dotenv
 from pymongo import MongoClient  # noqa: F401  # Usado en algunos entornos específicos
 from werkzeug.exceptions import (
     HTTPException,  # noqa: F401
 )  # noqa: F401  # Para manejo de errores en producción
 
-from config import Config  # noqa: F401  # Usado condicionalmente según entorno
+# Importar filtros personalizados
+from app.filters import init_app as init_filters
 from app.logging_config import setup_logging  # noqa: F401  # Usado en otros módulos
+from config import Config  # noqa: F401  # Usado condicionalmente según entorno
 
-# Importar blueprints
-from .routes.main_routes import main_bp
+from .error_handlers import errors_bp
 from .routes.admin_routes import admin_bp, admin_logs_bp
 from .routes.auth_routes import auth_bp
+from .routes.catalog_images_routes import image_bp
 
 # maintenance_bp se registra a través de register_maintenance_routes
 from .routes.catalogs_routes import catalogs_bp
-from .routes.catalog_images_routes import image_bp
+from .routes.dev_template import bp_dev_template
+from .routes.emergency_access import emergency_bp
 from .routes.images_routes import (
     images_bp,
 )  # Blueprint para /imagenes_subidas/<filename> (ahora llamado uploaded_images)
-from .routes.usuarios_routes import usuarios_bp
-from .error_handlers import errors_bp
-from .routes.emergency_access import emergency_bp
+
+# Importar blueprints
+from .routes.main_routes import main_bp
 from .routes.scripts_routes import scripts_bp
 from .routes.scripts_tools_routes import scripts_tools_bp
-from .routes.dev_template import bp_dev_template
-
-# Importar filtros personalizados
-from app.filters import init_app as init_filters
+from .routes.usuarios_routes import usuarios_bp
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -97,7 +97,7 @@ def create_app(testing=False):
     # Importamos el módulo de base de datos que maneja las conexiones de forma resiliente
     app.logger.info("Inicializando conexión a MongoDB usando el módulo database.py...")
     try:
-        from app.database import initialize_db, get_mongo_client, get_mongo_db
+        from app.database import get_mongo_client, get_mongo_db, initialize_db
 
         initialize_db(app)
         app.logger.info("✅ Conexión global a MongoDB inicializada (initialize_db)")
@@ -116,7 +116,8 @@ def create_app(testing=False):
     # Función para asegurar que las colecciones estén disponibles en g
     def ensure_db():
         from flask import g
-        from app.database import get_mongo_db, get_mongo_client
+
+        from app.database import get_mongo_client, get_mongo_db
 
         client = get_mongo_client()
         db = get_mongo_db()
@@ -219,7 +220,7 @@ def create_app(testing=False):
     # ---
     # Error handlers globales para API (devuelven JSON en endpoints tipo /api/ o si se acepta JSON)
     def api_error_handler(error):
-        from flask import request, jsonify
+        from flask import jsonify, request
 
         code = getattr(error, "code", 500)
         message = getattr(error, "description", str(error))

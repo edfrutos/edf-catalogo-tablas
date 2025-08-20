@@ -10,14 +10,16 @@ Rutas de gestión y monitoreo de sistemas para la funcionalidad de administraci�
 """
 import logging
 import os
-import psutil
 import platform
 from datetime import datetime
-from flask import Blueprint, render_template, jsonify, flash, redirect, url_for, current_app, request
-from app.routes.maintenance_routes import admin_required
-from app.monitoring import check_system_health, get_health_status
+
+import psutil
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
+
 from app.cache_system import get_cache_stats
-from app.routes.temp_files_utils import list_temp_files, delete_temp_files
+from app.monitoring import check_system_health, get_health_status
+from app.routes.maintenance_routes import admin_required
+from app.routes.temp_files_utils import delete_temp_files, list_temp_files
 
 admin_system_bp = Blueprint('admin_system', __name__, url_prefix='/admin/system')
 logger = logging.getLogger(__name__)
@@ -33,7 +35,7 @@ def get_system_status_data(full=False):
         health_status = get_health_status()
         metrics = health_status.get("metrics", {})
         request_stats = metrics.get("request_stats", {})
-        
+
         # Calcular uptime
         start_time = datetime.strptime(
             metrics.get("start_time", ""), "%Y-%m-%d %H:%M:%S"
@@ -143,21 +145,21 @@ def system_status():
     try:
         # Obtener datos del sistema
         data = get_system_status_data()
-        
+
         # Obtener la lista de archivos de log
         logs_dir = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "../../../logs")
         )
         log_files = get_log_files(logs_dir)
-        
+
         # Obtener la lista de archivos de backup
         backup_dir = os.path.abspath(os.path.join(os.getcwd(), "backups"))
         backup_files = get_backup_files(backup_dir)
-        
+
         # Pasar cache_stats y temp_files como variables independientes para el template
         cache_stats = data.get("cache_stats")
         temp_files = data.get("temp_files")
-        
+
         return render_template(
             "admin/system_status.html",
             data=data,
@@ -209,7 +211,7 @@ def get_log_files(logs_dir):
         if not os.path.exists(logs_dir):
             os.makedirs(logs_dir, exist_ok=True)
             return []
-            
+
         log_files = []
         for file in os.listdir(logs_dir):
             if file.endswith(".log"):
@@ -222,11 +224,11 @@ def get_log_files(logs_dir):
                 log_files.append(
                     {"name": file, "size": f"{size_kb:.2f} KB", "modified": mod_time}
                 )
-                
+
         # Ordenar y limitar a 20 más recientes
         log_files.sort(key=lambda x: x["modified"], reverse=True)
         return log_files[:20]
-        
+
     except Exception as e:
         logger.error("Error al obtener archivos de log: %s", str(e), exc_info=True)
         return []
@@ -242,16 +244,16 @@ def get_backup_files(backup_dir):
             os.makedirs(backup_dir, exist_ok=True)
             logger.info("Directorio de backups creado: %s", backup_dir)
             return []
-            
+
         backup_files = []
         for file in os.listdir(backup_dir):
             if file.startswith("."):
                 continue
-                
+
             full_path = os.path.join(backup_dir, file)
             if not os.path.isfile(full_path):
                 continue
-                
+
             # Solo archivos de backup por extensión
             if not any(
                 file.endswith(ext)
@@ -273,21 +275,21 @@ def get_backup_files(backup_dir):
                 ]
             ):
                 continue
-                
+
             stats = os.stat(full_path)
             size_bytes = stats.st_size
-            
+
             if size_bytes < 1024:
                 size_str = f"{size_bytes} bytes"
             elif size_bytes < 1024 * 1024:
                 size_str = f"{size_bytes / 1024:.2f} KB"
             else:
                 size_str = f"{size_bytes / (1024 * 1024):.2f} MB"
-                
+
             mod_time = datetime.fromtimestamp(stats.st_mtime).strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
-            
+
             backup_files.append(
                 {
                     "name": file,
@@ -296,11 +298,11 @@ def get_backup_files(backup_dir):
                     "path": full_path,
                 }
             )
-            
+
         # Ordenar y limitar a 20 más recientes
         backup_files.sort(key=lambda x: x["modified"], reverse=True)
         return backup_files[:20]
-        
+
     except Exception as e:
         logger.error("Error al obtener archivos de backup: %s", str(e), exc_info=True)
         return []

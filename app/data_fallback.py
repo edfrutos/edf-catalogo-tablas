@@ -10,9 +10,10 @@ Sistema de fallback de datos para cuando la conexión a MongoDB no está disponi
 Permite que la aplicación siga funcionando con datos básicos.
 """
 
-import os
 import json
 import logging
+import os
+
 from app.cache_system import cached
 
 # Configuración de logging (solo consola para evitar problemas de permisos)
@@ -51,7 +52,7 @@ def ensure_fallback_data():
         with open(USER_DATA_FILE, 'w') as f:
             json.dump([DEFAULT_ADMIN], f)
             logging.info(f"Creado archivo de respaldo de usuarios: {USER_DATA_FILE}")
-    
+
     # Datos de catálogos
     if not os.path.exists(CATALOG_DATA_FILE):
         with open(CATALOG_DATA_FILE, 'w') as f:
@@ -74,7 +75,7 @@ def save_catalog_data(catalogs):
     try:
         with open(CATALOG_DATA_FILE, 'w') as f:
             json.dump(catalogs, f)
-        
+
         return True
     except Exception as e:
         logging.error(f"Error al guardar datos de catálogos: {str(e)}")
@@ -84,17 +85,17 @@ def save_catalog_data(catalogs):
 def get_fallback_users():
     """Obtiene usuarios del modo sin conexión"""
     try:
-        with open(USER_DATA_FILE, 'r') as f:
+        with open(USER_DATA_FILE) as f:
             return json.load(f)
     except Exception as e:
         logging.error(f"Error al leer datos de usuarios: {str(e)}")
         return [DEFAULT_ADMIN]
 
-@cached(ttl=300, key_prefix='fallback')  
+@cached(ttl=300, key_prefix='fallback')
 def get_fallback_catalogs():
     """Obtiene catálogos del modo sin conexión"""
     try:
-        with open(CATALOG_DATA_FILE, 'r') as f:
+        with open(CATALOG_DATA_FILE) as f:
             return json.load(f)
     except Exception as e:
         logging.error(f"Error al leer datos de catálogos: {str(e)}")
@@ -126,12 +127,12 @@ def sync_users_to_fallback(users_collection):
     """Sincroniza usuarios de MongoDB a archivos locales"""
     try:
         users = list(users_collection.find({}, {'password_hash': 1, 'email': 1, 'username': 1, 'role': 1, 'is_active': 1, 'profile': 1}))
-        
+
         # Convertir ObjectId a str para JSON
         for user in users:
             if '_id' in user:
                 user['_id'] = str(user['_id'])
-        
+
         return save_user_data(users)
     except Exception as e:
         logging.error(f"Error al sincronizar usuarios: {str(e)}")
@@ -141,14 +142,14 @@ def sync_catalogs_to_fallback(catalogs_collection):
     """Sincroniza catálogos de MongoDB a archivos locales"""
     try:
         catalogs = list(catalogs_collection.find({}, {'name': 1, 'description': 1, 'user_id': 1, 'items': 1, 'is_public': 1}))
-        
+
         # Convertir ObjectId a str para JSON
         for catalog in catalogs:
             if '_id' in catalog:
                 catalog['_id'] = str(catalog['_id'])
             if 'user_id' in catalog:
                 catalog['user_id'] = str(catalog['user_id'])
-        
+
         return save_catalog_data(catalogs)
     except Exception as e:
         logging.error(f"Error al sincronizar catálogos: {str(e)}")

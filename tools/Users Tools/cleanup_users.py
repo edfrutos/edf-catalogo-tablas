@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-from pymongo import MongoClient
 import os
-from datetime import datetime
-from dotenv import load_dotenv
 import re
+from datetime import datetime
+
 import certifi
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Cargar variables de entorno
 load_dotenv()
@@ -49,12 +50,12 @@ suspicious_users = []
 for user in all_users:
     nombre = user.get('nombre', '')
     if nombre and is_random_name(nombre):
-        print(f"\nUsuario sospechoso encontrado:")
+        print("\nUsuario sospechoso encontrado:")
         print(f"Email: {user.get('email')}")
         print(f"Nombre: {nombre}")
         print(f"ID: {user.get('_id')}")
         print(f"Fecha de registro: {user.get('created_at', 'No especificada')}")
-        
+
         # Verificar si tiene tablas
         tables = list(spreadsheets_collection.find({"owner": user.get('username', '')}))
         if tables:
@@ -63,7 +64,7 @@ for user in all_users:
                 print(f"- {table.get('name')} (Creada: {table.get('created_at')})")
         else:
             print("No tiene tablas asociadas")
-        
+
         suspicious_users.append(user.get('_id'))
 
 print(f"\nTotal de usuarios sospechosos encontrados: {len(suspicious_users)}")

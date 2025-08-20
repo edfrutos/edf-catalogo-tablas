@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Script de diagnóstico para verificar y solucionar problemas de sesión en la aplicación Flask.
@@ -13,15 +12,17 @@ Acceso:
     http://localhost:5050/
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import secrets
+import sys
 import tempfile
 import traceback
-import secrets
 from datetime import datetime, timedelta
-from flask import Flask, session, request, jsonify, render_template_string, redirect, url_for
+
+from flask import Flask, jsonify, redirect, render_template_string, request, session, url_for
+
 from flask_session import Session
 
 # Configurar logging
@@ -125,7 +126,7 @@ TEMPLATE = """
 def create_diagnostic_app():
     """Crea una aplicación Flask para diagnóstico de sesiones."""
     app = Flask(__name__)
-    
+
     # Configuración básica
     app.config['SECRET_KEY'] = 'clave_diagnostico_segura_123'
     app.config['SESSION_TYPE'] = 'filesystem'
@@ -135,10 +136,10 @@ def create_diagnostic_app():
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['PERMANENT_SESSION_LIFETIME'] = 86400
-    
+
     # Asegurar que el directorio de sesiones existe
     os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
-    
+
     # Inicializar Flask-Session si está disponible
     try:
         from flask_session import Session
@@ -146,7 +147,7 @@ def create_diagnostic_app():
         logger.info("Flask-Session inicializado correctamente")
     except ImportError:
         logger.warning("Flask-Session no está instalado, usando sesiones basadas en cookies")
-    
+
     @app.route('/')
     def index():
         """Página principal de diagnóstico."""
@@ -154,7 +155,7 @@ def create_diagnostic_app():
         session_id = request.cookies.get(app.config['SESSION_COOKIE_NAME'], 'No disponible')
         session_permanent = session.permanent if hasattr(session, 'permanent') else False
         session_data = json.dumps(dict(session), indent=2) if session else '{}'
-        
+
         # Información de configuración
         secret_key_info = f"{type(app.config['SECRET_KEY']).__name__} de longitud {len(str(app.config['SECRET_KEY']))}"
         session_type = app.config.get('SESSION_TYPE', 'No configurado')
@@ -164,17 +165,18 @@ def create_diagnostic_app():
         session_cookie_httponly = app.config.get('SESSION_COOKIE_HTTPONLY', True)
         session_cookie_samesite = app.config.get('SESSION_COOKIE_SAMESITE', 'No configurado')
         permanent_session_lifetime = str(app.config.get('PERMANENT_SESSION_LIFETIME', 'No configurado'))
-        
+
         # Información de cookies
         cookies = json.dumps({k: v for k, v in request.cookies.items()}, indent=2)
-        
+
         # Información del sistema
         import platform
+
         import flask
         python_version = platform.python_version()
         flask_version = flask.__version__
         working_dir = os.getcwd()
-        
+
         # Verificar permisos del directorio de sesiones
         session_dir = app.config.get('SESSION_FILE_DIR', '')
         if os.path.exists(session_dir):
@@ -186,7 +188,7 @@ def create_diagnostic_app():
             session_dir_permissions = f"Permisos: {permissions}, UID: {owner}, GID: {group}"
         else:
             session_dir_permissions = "Directorio no existe"
-        
+
         return render_template_string(
             TEMPLATE,
             session_id=session_id,
@@ -206,7 +208,7 @@ def create_diagnostic_app():
             working_dir=working_dir,
             session_dir_permissions=session_dir_permissions
         )
-    
+
     @app.route('/set_session_value')
     def set_session_value():
         """Establece un valor de prueba en la sesión."""
@@ -215,14 +217,14 @@ def create_diagnostic_app():
         session.permanent = True
         logger.info(f"Valor de prueba establecido en la sesión: {session.get('test_value')}")
         return redirect(url_for('index'))
-    
+
     @app.route('/clear_session')
     def clear_session():
         """Limpia la sesión actual."""
         session.clear()
         logger.info("Sesión limpiada")
         return redirect(url_for('index'))
-    
+
     @app.route('/test_login')
     def test_login():
         """Simula un inicio de sesión de usuario normal."""
@@ -236,7 +238,7 @@ def create_diagnostic_app():
         session.permanent = True
         logger.info(f"Sesión de usuario simulada: {session.get('username')}")
         return redirect(url_for('index'))
-    
+
     @app.route('/test_admin')
     def test_admin():
         """Simula un inicio de sesión de administrador."""
@@ -250,7 +252,7 @@ def create_diagnostic_app():
         session.permanent = True
         logger.info(f"Sesión de administrador simulada: {session.get('username')}")
         return redirect(url_for('index'))
-    
+
     @app.route('/fix_permissions')
     def fix_permissions():
         """Repara los permisos del directorio de sesiones."""
@@ -266,14 +268,14 @@ def create_diagnostic_app():
                 return jsonify({"status": "error", "message": f"Error: {str(e)}"})
         else:
             return jsonify({"status": "error", "message": "El directorio de sesiones no existe"})
-    
+
     @app.route('/check_blueprints')
     def check_blueprints():
         """Verifica los blueprints registrados en la aplicación principal."""
         try:
             # Importar la aplicación principal
             from app import app as main_app
-            
+
             # Obtener información de los blueprints
             blueprints = []
             for blueprint_name, blueprint in main_app.blueprints.items():
@@ -283,7 +285,7 @@ def create_diagnostic_app():
                     "static_folder": blueprint.static_folder,
                     "template_folder": blueprint.template_folder
                 })
-            
+
             return jsonify({
                 "status": "success",
                 "blueprints": blueprints,
@@ -295,7 +297,7 @@ def create_diagnostic_app():
                 "status": "error",
                 "message": f"Error al verificar blueprints: {str(e)}"
             })
-    
+
     @app.route('/test_blueprint_registration')
     def test_blueprint_registration():
         """Prueba la importación y registro de blueprints de diagnóstico."""
@@ -303,16 +305,16 @@ def create_diagnostic_app():
             # Intentar importar los blueprints de diagnóstico
             from app.routes.diagnostico import diagnostico_bp
             from app.routes.test_session import test_session_bp
-            
+
             # Verificar las rutas registradas en cada blueprint
             diagnostico_routes = []
             for rule in diagnostico_bp.deferred_functions:
                 diagnostico_routes.append(str(rule))
-            
+
             test_session_routes = []
             for rule in test_session_bp.deferred_functions:
                 test_session_routes.append(str(rule))
-            
+
             return jsonify({
                 "status": "success",
                 "diagnostico_bp": {
@@ -374,11 +376,11 @@ PERMANENT_SESSION_LIFETIME = 86400  # 24 horas en segundos
 # Clave secreta fija para desarrollo
 SECRET_KEY = 'desarrollo_clave_secreta_fija_12345'
 """
-            
+
             config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'session_config.py')
             with open(config_path, 'w') as f:
                 f.write(config_content)
-            
+
             return jsonify({
                 "status": "success",
                 "message": f"Archivo de configuración de sesión creado en {config_path}",
@@ -390,14 +392,14 @@ SECRET_KEY = 'desarrollo_clave_secreta_fija_12345'
                 "status": "error",
                 "message": f"Error al crear archivo de configuración: {str(e)}"
             })
-    
+
     return app
 
 
 
 if __name__ == '__main__':
     app = create_diagnostic_app()
-    print(f"\n\n✅ Herramienta de diagnóstico de sesión iniciada en http://localhost:5001/")
+    print("\n\n✅ Herramienta de diagnóstico de sesión iniciada en http://localhost:5001/")
     print("📝 Usa esta herramienta para diagnosticar y solucionar problemas de sesión en tu aplicación Flask.")
     print("🔍 Accede a la herramienta desde tu navegador para ver información detallada.\n")
     app.run(debug=True, host='0.0.0.0', port=5001)

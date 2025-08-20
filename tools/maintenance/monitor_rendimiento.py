@@ -6,12 +6,13 @@
 # Variables de entorno: MONGO_URI
 # Autor: EDF Equipo de Desarrollo - 2025-06-05
 
+import argparse
 import os
 import time
-import argparse
 from datetime import datetime
-from pymongo import MongoClient
+
 from dotenv import load_dotenv
+from pymongo import MongoClient
 from tabulate import tabulate
 
 # Configuración de argumentos
@@ -24,11 +25,11 @@ def conectar_mongodb():
     """Establece conexión con MongoDB."""
     load_dotenv()
     mongo_uri = os.getenv('MONGO_URI')
-    
+
     if not mongo_uri:
         print("ERROR: La variable de entorno MONGO_URI no está definida")
         return None
-    
+
     try:
         client = MongoClient(
             mongo_uri,
@@ -48,18 +49,18 @@ def conectar_mongodb():
 def obtener_estadisticas(client):
     """Obtiene estadísticas de rendimiento de MongoDB."""
     db = client.get_database()
-    
+
     # Estadísticas generales de la base de datos
     stats = db.command('dbstats')
-    
+
     # Estadísticas de operaciones
     server_status = db.command('serverStatus')
-    
+
     # Obtener operaciones lentas
     current_op = db.current_op()
-    operaciones_lentas = [op for op in current_op.get('inprog', []) 
+    operaciones_lentas = [op for op in current_op.get('inprog', [])
                          if op.get('secs_running', 0) > 10]  # > 10 segundos
-    
+
     # Estadísticas de colecciones
     collections_stats = {}
     for collection_name in db.list_collection_names():
@@ -74,7 +75,7 @@ def obtener_estadisticas(client):
             }
         except:
             continue
-    
+
     return {
         'fecha_hora': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'estadisticas': {
@@ -94,7 +95,7 @@ def obtener_estadisticas(client):
 def mostrar_resumen(estadisticas):
     """Muestra un resumen de las estadísticas."""
     print(f"\n=== Resumen de Rendimiento - {estadisticas['fecha_hora']} ===")
-    
+
     # Estadísticas generales
     print("\n📊 Estadísticas Generales:")
     print(f"📄 Documentos totales: {estadisticas['estadisticas']['documentos']:,}")
@@ -102,13 +103,13 @@ def mostrar_resumen(estadisticas):
     print(f"💿 Almacenamiento usado: {estadisticas['estadisticas']['almacenamiento']}")
     print(f"🔍 Total de índices: {estadisticas['estadisticas']['indices']:,}")
     print(f"📏 Tamaño de índices: {estadisticas['estadisticas']['tamano_indices']}")
-    
+
     # Conexiones y operaciones
     print("\n🔄 Estado de Operaciones:")
     print(f"🔌 Conexiones activas: {estadisticas['estadisticas']['conexiones_activas']}")
     print(f"⏳ Operaciones en cola: {estadisticas['estadisticas']['cola_operaciones']}")
     print(f"🐌 Operaciones lentas (>10s): {estadisticas['estadisticas']['operaciones_lentas']}")
-    
+
     # Estadísticas de operaciones
     ops = estadisticas['estadisticas']['operaciones']
     print("\n📈 Contadores de Operaciones (totales):")
@@ -116,7 +117,7 @@ def mostrar_resumen(estadisticas):
     print(f"  • Consultas: {ops.get('query', 0):,}")
     print(f"  • Actualizaciones: {ops.get('update', 0):,}")
     print(f"  • Eliminaciones: {ops.get('delete', 0):,}")
-    
+
     # Tabla de colecciones
     if estadisticas['colecciones']:
         print("\n🗂️ Estadísticas por Colección:")
@@ -130,47 +131,47 @@ def mostrar_resumen(estadisticas):
                 stats['indices'],
                 stats['tamano_indices']
             ])
-        
+
         headers = [
-            'Colección', 'Documentos', 'Tamaño', 'Almacenamiento', 
+            'Colección', 'Documentos', 'Tamaño', 'Almacenamiento',
             'Índices', 'Tamaño Índices'
         ]
         print(tabulate(table_data, headers=headers, tablefmt='grid'))
-    
+
     print("\n" + "="*80 + "\n")
 
 def main():
     """Función principal."""
     print(f"🔍 Iniciando monitoreo de MongoDB (Intervalo: {args.intervalo}s, Duración: {args.duracion}s)")
-    
+
     client = conectar_mongodb()
     if not client:
         return
-    
+
     try:
         inicio = time.time()
         while (time.time() - inicio) < args.duracion:
             try:
                 estadisticas = obtener_estadisticas(client)
                 mostrar_resumen(estadisticas)
-                
+
                 # Registrar en archivo de log
                 with open('mongodb_monitor.log', 'a') as f:
                     f.write(f"{estadisticas['fecha_hora']} - "
                            f"Documentos: {estadisticas['estadisticas']['documentos']}, "
                            f"Tamaño: {estadisticas['estadisticas']['tamano']}, "
                            f"Conexiones: {estadisticas['estadisticas']['conexiones_activas']}\n")
-                
+
                 # Esperar hasta la próxima iteración
                 time.sleep(args.intervalo)
-                
+
             except KeyboardInterrupt:
                 print("\nMonitoreo detenido manualmente.")
                 break
             except Exception as e:
                 print(f"Error durante el monitoreo: {str(e)}")
                 time.sleep(5)  # Esperar antes de reintentar
-                
+
     finally:
         client.close()
         print("Conexión cerrada.")

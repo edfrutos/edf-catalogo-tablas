@@ -1,12 +1,13 @@
 # app/factory.py
 
-import os
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 
+from dotenv import load_dotenv
 from flask import Flask, g
 from flask_login import LoginManager
-from dotenv import load_dotenv
+
 
 def create_app(testing=False):
     app = Flask(
@@ -28,7 +29,7 @@ def create_app(testing=False):
         app.logger.info(f"✅ Directorio de sesiones configurado: {session_dir}")
 
     try:
-        from app.database import initialize_db, get_mongo_client, get_mongo_db
+        from app.database import get_mongo_client, get_mongo_db, initialize_db
         initialize_db(app)
         app.logger.info("✅ Conexión global a MongoDB inicializada (initialize_db)")
         client = get_mongo_client()
@@ -43,7 +44,8 @@ def create_app(testing=False):
 
     def ensure_db():
         from flask import g
-        from app.database import get_mongo_db, get_mongo_client
+
+        from app.database import get_mongo_client, get_mongo_db
         client = get_mongo_client()
         db = get_mongo_db()
         g.mongo_client = client
@@ -91,20 +93,20 @@ def create_app(testing=False):
     security_middleware.init_app(app)
 
     # Registrar blueprints
-    from .routes.main_routes import main_bp
-    from .routes.auth_routes import auth_bp
-    from .routes.catalogs_routes import catalogs_bp
-    from .routes.catalog_images_routes import image_bp
-    from .routes.images_routes import images_bp
-    from .routes.usuarios_routes import usuarios_bp
     from .error_handlers import errors_bp
     from .routes.admin_routes import admin_bp, admin_logs_bp
+    from .routes.auth_routes import auth_bp
+    from .routes.catalog_images_routes import image_bp
+    from .routes.catalogs_routes import catalogs_bp
+    from .routes.dev_template import bp_dev_template
+    from .routes.emergency_access import emergency_bp
+    from .routes.images_routes import images_bp
+    from .routes.main_routes import main_bp
+    from .routes.maintenance_routes import register_maintenance_routes
     from .routes.scripts_routes import scripts_bp
     from .routes.scripts_tools_routes import scripts_tools_bp
-    from .routes.dev_template import bp_dev_template
     from .routes.testing_routes import testing_bp
-    from .routes.maintenance_routes import register_maintenance_routes
-    from .routes.emergency_access import emergency_bp
+    from .routes.usuarios_routes import usuarios_bp
 
     blueprints = [
         (main_bp, ""),

@@ -1,12 +1,13 @@
 # app/routes/diagnostico.py
 
-import logging
 import json
+import logging
 import traceback
 from datetime import datetime
 from functools import wraps
+
 from bson import ObjectId, json_util  # noqa: F401
-from flask import Blueprint, jsonify, session, request, current_app, url_for, g
+from flask import Blueprint, current_app, g, jsonify, request, session, url_for
 
 logger = logging.getLogger(__name__)
 diagnostico_bp = Blueprint("diagnostico", __name__, url_prefix="/diagnostico")

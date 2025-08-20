@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Diagnóstico de la Aplicación macOS EDF CatálogoDeTablas
 =======================================================
@@ -9,12 +8,13 @@ estén funcionando correctamente.
 
 """
 
-import os
-import sys
-import subprocess
-import time
-import requests
 import json
+import os
+import subprocess
+import sys
+import time
+
+import requests
 
 
 def verificar_estructura_app():
@@ -160,7 +160,7 @@ def verificar_funcionamiento_basico():
             return True
         else:
             stdout, stderr = process.communicate()
-            print(f"❌ La aplicación se cerró prematuramente")
+            print("❌ La aplicación se cerró prematuramente")
             print(f"   Salida: {stdout[:200]}...")
             print(f"   Errores: {stderr[:200]}...")
             return False

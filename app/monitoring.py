@@ -11,13 +11,14 @@ Este módulo proporciona herramientas para monitorear la salud de la aplicación
 y generar alertas cuando se detectan problemas.
 """
 
-import os
-import time
-import threading
-import logging
 import datetime  # type: ignore
-import psutil  # type: ignore
 import json
+import logging
+import os
+import threading
+import time
+
+import psutil  # type: ignore
 from flask import current_app  # noqa: F401
 
 # Importar módulo de notificaciones
@@ -65,7 +66,7 @@ def load_metrics():
     """Carga las métricas desde el archivo JSON si existe"""
     if os.path.exists(_metrics_file):
         try:
-            with open(_metrics_file, "r") as f:
+            with open(_metrics_file) as f:
                 data = json.load(f)
                 # Actualizar solo las métricas que se pueden persistir
                 for key in ["cache_status", "request_stats"]:

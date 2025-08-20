@@ -1,39 +1,41 @@
 # app/routes/auth_routes.py
 
+import base64
+import hashlib
 import logging
+import os
+import secrets
+import sys
+import traceback
+from datetime import datetime, timedelta
+
+import bcrypt
 from flask import (
     Blueprint,
+    current_app,
+    flash,
+    g,
+    jsonify,
+    redirect,
     render_template,
     request,
-    redirect,
-    url_for,
     session,
-    flash,
-    current_app,
-    jsonify,
-    g,
+    url_for,
 )
 from flask_login import login_user
-from app.models.user import User
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Message
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from app.extensions import mail
 from app.models import (
-    get_users_collection,
-    get_resets_collection,
-    find_user_by_email_or_name,
     find_reset_token,
-    update_user_password,
+    find_user_by_email_or_name,
+    get_resets_collection,
+    get_users_collection,
     mark_token_as_used,
+    update_user_password,
 )
-import secrets
-from datetime import datetime, timedelta
-import hashlib
-import base64
-import traceback
-import bcrypt
-import os
-import sys
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)

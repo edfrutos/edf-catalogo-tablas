@@ -1,30 +1,32 @@
 # app/routes/main_routes.py
 
+import csv
+import logging
+import os
+import secrets
+import uuid
+from datetime import datetime
+
+import openpyxl
+from bson.objectid import ObjectId
 from flask import (
     Blueprint,
-    render_template,
-    redirect,
-    url_for,
-    session,
-    flash,
     current_app,
-    request,
+    flash,
     g,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
 )
-from app.decorators import login_required  # type: ignore[attr-defined]
-from bson.objectid import ObjectId
-import logging
-from werkzeug.routing import BuildError
-import os
-from werkzeug.utils import secure_filename
-import secrets
-from datetime import datetime
-import openpyxl
 from openpyxl import Workbook
-import csv
-import uuid
-from app.database import get_mongo_db
+from werkzeug.routing import BuildError
+from werkzeug.utils import secure_filename
+
 from app import notifications
+from app.database import get_mongo_db
+from app.decorators import login_required  # type: ignore[attr-defined]
 from app.utils.image_utils import get_images_for_template, get_raw_images_for_edit
 
 main_bp = Blueprint("main", __name__)
@@ -92,6 +94,7 @@ def dashboard_user():
     if user_id:
         try:
             from bson import ObjectId
+
             from app.models.database import get_users_collection
 
             users_collection = get_users_collection()
@@ -1457,11 +1460,11 @@ def agregar_fila(tabla_id):
             if result.modified_count > 0:
                 flash("Fila agregada correctamente", "success")
                 current_app.logger.info(
-                    f"[AGREGAR_FILA] Fila agregada exitosamente, redirigiendo a ver_tabla"
+                    "[AGREGAR_FILA] Fila agregada exitosamente, redirigiendo a ver_tabla"
                 )
             else:
                 flash("Error al agregar la fila", "error")
-                current_app.logger.error(f"[AGREGAR_FILA] No se pudo agregar la fila")
+                current_app.logger.error("[AGREGAR_FILA] No se pudo agregar la fila")
 
             return redirect(url_for("main.ver_tabla", table_id=tabla_id))
 
@@ -1871,7 +1874,7 @@ def editar_tabla(id):
 
             # 🎯 SIEMPRE redirigir después de actualizar (con o sin cambio de headers)
             flash("Tabla actualizada correctamente.", "success")
-            current_app.logger.info(f"[EDITAR_TABLA] ✅ Redirigiendo a dashboard_user")
+            current_app.logger.info("[EDITAR_TABLA] ✅ Redirigiendo a dashboard_user")
             return redirect(url_for("main.dashboard_user"))
 
         # GET: Mostrar formulario de edición

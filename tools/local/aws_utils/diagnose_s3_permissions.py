@@ -29,14 +29,15 @@ Autor: EDF Developer - 2025-08-08
 Versión: 1.0
 """
 
+import json
 import os
 import sys
-import json
+from datetime import datetime
+from pathlib import Path
+
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from dotenv import load_dotenv
-from pathlib import Path
-from datetime import datetime
 
 # Cargar variables de entorno
 load_dotenv()
@@ -453,7 +454,7 @@ class S3Diagnostic:
             1 for test in self.results["tests"].values() if test["status"] == "SKIP"
         )
 
-        print(f"📈 Resumen de pruebas:")
+        print("📈 Resumen de pruebas:")
         print(f"   Total: {total_tests}")
         print(f"   ✅ Exitosas: {passed_tests}")
         print(f"   ❌ Fallidas: {failed_tests}")

@@ -3,18 +3,17 @@
 # ==============================================
 
 # --- Imports estándar ---
-import os
-import sys
-import logging
-import tempfile
-import zipfile
-import secrets
-from typing import Any
-
 # traceback removido - no usado
 import hashlib
+import logging
+import os
+import secrets
+import sys
+import tempfile
 import time
+import zipfile
 from datetime import datetime
+from typing import Any
 
 # --- Imports de terceros ---
 import openpyxl  # type: ignore
@@ -22,20 +21,23 @@ from bson import ObjectId
 from dotenv import load_dotenv
 from flask import (
     Flask,
-    render_template,
-    request,
-    redirect,
-    send_from_directory,
-    url_for,
-    flash,
-    session,
     abort,
     current_app,
+    flash,
     g,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    session,
+    url_for,
 )
-from flask_session import Session  # type: ignore
+
+# Importar Flask-Login y modelo User para configuración
+from flask_login import LoginManager
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
+
 from app.decorators import login_required  # type: ignore
 
 # Importar otros módulos de utilidad
@@ -43,10 +45,8 @@ from app.extensions import init_extensions
 
 # Configurar logging unificado desde el inicio
 from app.logging_unified import setup_unified_logging
-
-# Importar Flask-Login y modelo User para configuración
-from flask_login import LoginManager
 from app.models.user import User
+from flask_session import Session  # type: ignore
 
 
 def allowed_file(filename: str) -> bool:
@@ -154,7 +154,7 @@ def create_app():
             app.config["SESSION_FILE_DIR"] = session_dir
         os.makedirs(session_dir, exist_ok=True)
         app.logger.info(f"✅ Directorio de sesiones configurado: {session_dir}")
-    
+
     app.logger.info("✅ Configuración de sesión unificada aplicada desde config.py")
 
     # Inicializar Flask-Session (debe estar después de configurar app.config)
@@ -163,7 +163,7 @@ def create_app():
 
     # Inicializar sistema de logging unificado
     setup_unified_logging(app)
-    
+
     # Inicializar extensiones (Flask-Login, Flask-Mail, etc.)
     init_extensions(app)
     app.logger.info(
@@ -177,7 +177,7 @@ def create_app():
 
     # Inicializar la conexión global a MongoDB (para funciones legacy y modelos)
     try:
-        from app.database import initialize_db, get_mongo_client, get_mongo_db
+        from app.database import get_mongo_client, get_mongo_db, initialize_db
 
         initialize_db(app)
         app.logger.info("✅ Conexión global a MongoDB inicializada (initialize_db)")
@@ -263,27 +263,27 @@ def create_app():
     #     return wrapper
 
     # Registrar blueprints principales
-    from app.routes.main_routes import main_bp
-    from app.routes.catalogs_routes import catalogs_bp
-    from app.routes.catalog_images_routes import image_bp
-    from app.routes.usuarios_routes import usuarios_bp
     from app.routes.admin_routes import (
         admin_bp,
         admin_logs_bp,
     )  # Importar también admin_logs_bp
-    from app.routes.error_routes import errors_bp
+    from app.routes.catalog_images_routes import image_bp
+    from app.routes.catalogs_routes import catalogs_bp
+    from app.routes.dev_template import (
+        bp_dev_template,
+    )  # Blueprint para plantilla de desarrollo
     from app.routes.emergency_access import emergency_bp
+    from app.routes.error_routes import errors_bp
+    from app.routes.main_routes import main_bp
+    from app.routes.maintenance_routes import (
+        maintenance_bp,
+    )  # Blueprint para mantenimiento
 
     # Debug blueprints ya registrados en otras partes
     from app.routes.scripts_routes import (
         scripts_bp,
     )  # Blueprint para gestión de scripts
-    from app.routes.maintenance_routes import (
-        maintenance_bp,
-    )  # Blueprint para mantenimiento
-    from app.routes.dev_template import (
-        bp_dev_template,
-    )  # Blueprint para plantilla de desarrollo
+    from app.routes.usuarios_routes import usuarios_bp
 
     print("ANTES DE BLUEPRINTS", app.db)  # type: ignore
     app.register_blueprint(main_bp)
@@ -308,7 +308,7 @@ def create_app():
     # Inicializar Flask-Login
     login_manager = LoginManager()
     # Para evitar error de tipo, asignar login_view con setattr
-    setattr(login_manager, "login_view", "auth.login")
+    login_manager.login_view = "auth.login"
     login_manager.init_app(app)
 
     # Definir user_loader para Flask-Login

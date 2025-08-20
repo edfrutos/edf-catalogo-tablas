@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Script para limpiar archivos de logs antiguos.
@@ -16,11 +15,11 @@ Opciones:
     --log-dir     Directorio donde se encuentran los logs (por defecto: ./logs)
 """
 
+import argparse
+import logging
 import os
 import sys
 import time
-import logging
-import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -32,7 +31,7 @@ LOG_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 class LogCleaner:
     """Clase para manejar la limpieza de logs antiguos."""
-    
+
     def __init__(self, log_dir, retention_days=None, dry_run=False, start_datetime=None, end_datetime=None):
         """Inicializa el limpiador de logs.
         
@@ -61,16 +60,16 @@ class LogCleaner:
         """Configura el sistema de logging."""
         logger = logging.getLogger('log_cleaner')
         logger.setLevel(logging.INFO)
-        
+
         # Evitar múltiples handlers si ya están configurados
         if not logger.handlers:
             formatter = logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-            
+
             # Handler para consola
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
-            
+
             # Handler para archivo
             log_file = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -81,29 +80,29 @@ class LogCleaner:
             file_handler = logging.FileHandler(log_file)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
-        
+
         return logger
-    
+
     def clean_old_logs(self):
         """Elimina archivos de logs antiguos o en rango de fechas/hora."""
         if not self.log_dir.exists():
             self.logger.error(f"El directorio de logs no existe: {self.log_dir}")
             return False
-        
+
         self.logger.info(f"Iniciando limpieza de logs en: {self.log_dir}")
         if self.start_datetime and self.end_datetime:
             self.logger.info(f"Eliminando logs entre {self.start_datetime} y {self.end_datetime}")
         elif self.retention_days is not None:
             self.logger.info(f"Eliminando logs con más de {self.retention_days} días de antigüedad")
         else:
-            self.logger.info(f"No se especificó criterio de limpieza válido.")
+            self.logger.info("No se especificó criterio de limpieza válido.")
             return False
-        
+
         # Patrones de archivos de log a limpiar
         log_patterns = ['*.log', '*.log.*']
         deleted_files = 0
         total_size = 0
-        
+
         try:
             for pattern in log_patterns:
                 for log_file in self.log_dir.glob(pattern):
@@ -136,7 +135,7 @@ class LogCleaner:
         except Exception as e:
             self.logger.error(f"Error inesperado: {str(e)}", exc_info=True)
             return False
-    
+
     @staticmethod
     def _format_size(size_bytes):
         """Formatea el tamaño en bytes a una cadena legible."""
@@ -160,17 +159,17 @@ def parse_arguments():
 def main():
     """Función principal."""
     args = parse_arguments()
-    
+
     try:
         cleaner = LogCleaner(
             log_dir=args.log_dir,
             retention_days=args.days,
             dry_run=args.dry_run
         )
-        
+
         success = cleaner.clean_old_logs()
         sys.exit(0 if success else 1)
-        
+
     except Exception as e:
         logging.error(f"Error inesperado: {str(e)}", exc_info=True)
         sys.exit(1)

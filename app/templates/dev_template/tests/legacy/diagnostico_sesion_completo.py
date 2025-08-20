@@ -2,13 +2,14 @@
 # Script de diagnóstico completo para problemas de sesión en Flask
 # Ejecutar con: python diagnostico_sesion_completo.py
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 import traceback
 from datetime import datetime
-from flask import Flask, session, request, redirect, jsonify, make_response
+
+from flask import Flask, jsonify, make_response, redirect, request, session
 
 # Configurar logging
 logging.basicConfig(
@@ -40,13 +41,13 @@ def verificar_directorio_sesiones(directorio):
             logging.info(f"✅ Directorio de sesiones creado: {directorio}")
         else:
             logging.info(f"✅ Directorio de sesiones existe: {directorio}")
-        
+
         # Verificar permisos
         if os.access(directorio, os.R_OK | os.W_OK):
-            logging.info(f"✅ Permisos correctos en directorio de sesiones")
+            logging.info("✅ Permisos correctos en directorio de sesiones")
         else:
-            logging.warning(f"⚠️ Permisos insuficientes en directorio de sesiones")
-            
+            logging.warning("⚠️ Permisos insuficientes en directorio de sesiones")
+
         # Listar archivos de sesión
         archivos = os.listdir(directorio)
         logging.info(f"📁 Archivos de sesión encontrados: {len(archivos)}")
@@ -55,10 +56,10 @@ def verificar_directorio_sesiones(directorio):
             tamaño = os.path.getsize(ruta_completa)
             modificado = datetime.fromtimestamp(os.path.getmtime(ruta_completa))
             logging.info(f"   - {archivo} ({tamaño} bytes, modificado: {modificado})")
-        
+
         if len(archivos) > 5:
             logging.info(f"   ... y {len(archivos) - 5} archivos más")
-            
+
         return True
     except Exception as e:
         logging.error(f"❌ Error al verificar directorio de sesiones: {e}")
@@ -68,7 +69,7 @@ def verificar_directorio_sesiones(directorio):
 def crear_app_diagnostico():
     """Crea una aplicación Flask para diagnóstico de sesiones"""
     app = Flask(__name__)
-    
+
     # Cargar configuración de sesión desde session_config.py si existe
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -97,16 +98,16 @@ def crear_app_diagnostico():
         app.config['SECRET_KEY'] = 'clave_emergencia_123'
         app.config['SESSION_TYPE'] = 'filesystem'
         app.config['SESSION_FILE_DIR'] = 'flask_session_emergencia'
-    
+
     # Asegurarse de que el directorio de sesiones existe
     if 'SESSION_FILE_DIR' in app.config and not os.path.isabs(app.config['SESSION_FILE_DIR']):
         app.config['SESSION_FILE_DIR'] = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
+            os.path.dirname(os.path.abspath(__file__)),
             app.config['SESSION_FILE_DIR']
         )
-    
+
     os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
-    
+
     # Inicializar Flask-Session
     try:
         from flask_session import Session
@@ -117,7 +118,7 @@ def crear_app_diagnostico():
     except Exception as e:
         logging.error(f"❌ Error al inicializar Flask-Session: {e}")
         logging.error(traceback.format_exc())
-    
+
     # Rutas de diagnóstico
     @app.route('/')
     def index():
@@ -126,7 +127,7 @@ def crear_app_diagnostico():
         session['diagnostico_timestamp'] = datetime.now().isoformat()
         session['contador'] = session.get('contador', 0) + 1
         session.modified = True
-        
+
         # Preparar respuesta HTML
         html = f"""
         <!DOCTYPE html>
@@ -212,20 +213,20 @@ def crear_app_diagnostico():
         </html>
         """
         return html
-    
+
     @app.route('/limpiar')
     def limpiar():
         """Limpia la sesión actual"""
         session.clear()
         return redirect('/')
-    
+
     @app.route('/test-cookie')
     def test_cookie():
         """Prueba la configuración de cookies"""
         resp = make_response(redirect('/'))
         resp.set_cookie('test_cookie', 'valor_de_prueba', max_age=3600)
         return resp
-    
+
     @app.route('/api/info')
     def api_info():
         """Devuelve información de diagnóstico en formato JSON"""
@@ -233,7 +234,7 @@ def crear_app_diagnostico():
             'session': dict(session),
             'cookies': {k: v for k, v in request.cookies.items()},
             'config': {
-                k: str(v) for k, v in app.config.items() 
+                k: str(v) for k, v in app.config.items()
                 if k.startswith('SESSION_') or k in ('SECRET_KEY', 'PERMANENT_SESSION_LIFETIME')
             },
             'system': {
@@ -247,31 +248,31 @@ def crear_app_diagnostico():
         # Ocultar la clave secreta
         if 'SECRET_KEY' in info['config']:
             info['config']['SECRET_KEY'] = '*' * len(str(info['config']['SECRET_KEY']))
-        
+
         return jsonify(info)
-    
+
     return app
 
 def ejecutar_diagnostico():
     """Ejecuta el diagnóstico completo de sesiones"""
     logging.info("🔍 Iniciando diagnóstico de sesiones...")
-    
+
     # Verificar instalación de Flask-Session
     verificar_instalacion_flask_session()
-    
+
     # Verificar directorio de sesiones
     directorio_sesiones = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         'flask_session'
     )
     verificar_directorio_sesiones(directorio_sesiones)
-    
+
     # Crear y ejecutar la aplicación de diagnóstico
     app = crear_app_diagnostico()
-    
+
     logging.info("✅ Diagnóstico completado. Iniciando servidor de prueba...")
     logging.info("📌 Accede a http://localhost:5001 para ver los resultados")
-    
+
     return app
 
 if __name__ == '__main__':

@@ -5,9 +5,10 @@
 # Variables de entorno: [si aplica]
 # Autor: [Tu nombre o equipo] - 2025-06-28
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel
-from PyQt6.QtCore import QSettings, Qt, QTimer
 import sys
+
+from PyQt6.QtCore import QSettings, Qt, QTimer
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget
 
 
 class CatalogoTablasWindow(QMainWindow):

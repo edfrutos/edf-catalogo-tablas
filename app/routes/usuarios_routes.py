@@ -5,22 +5,24 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-05-28
 
+import logging  # noqa: F401
+from datetime import datetime
+
+from bson.objectid import ObjectId
 from flask import (
     Blueprint,
-    render_template,
-    redirect,
-    url_for,
+    current_app,
     flash,
+    g,
+    redirect,
+    render_template,
     request,
     session,
-    current_app,
-    g,
+    url_for,
 )
-from werkzeug.security import generate_password_hash, check_password_hash  # noqa: F401
+from werkzeug.security import check_password_hash, generate_password_hash  # noqa: F401
+
 from app.decorators import admin_required
-from bson.objectid import ObjectId
-from datetime import datetime
-import logging  # noqa: F401
 
 usuarios_bp = Blueprint("usuarios", __name__, url_prefix="/usuarios")
 
@@ -37,7 +39,8 @@ def register():
         if users_collection is None:
             flash("Error de conexión a la base de datos.", "danger")
             return redirect(url_for("usuarios.register"))
-        import random, string  # noqa: E401
+        import random  # noqa: E401
+        import string
 
         email = request.form["email"]
         password = request.form["password"]

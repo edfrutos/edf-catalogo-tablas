@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import os
-from pymongo import MongoClient
-from app.models import get_users_collection
 
 # Cargar variables de entorno si es necesario
 from dotenv import load_dotenv
+from pymongo import MongoClient
+
+from app.models import get_users_collection
 
 load_dotenv()
 

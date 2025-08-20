@@ -5,8 +5,9 @@
 # Variables de entorno: Ninguna
 # Autor: EDF Developer - 2025-01-27
 
-from flask import Blueprint, jsonify, request, current_app
 import logging
+
+from flask import Blueprint, current_app, jsonify, request
 
 errors_bp = Blueprint("errors", __name__)
 

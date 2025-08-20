@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Verificación Final - Aplicación macOS EDF CatálogoDeTablas
 ==========================================================
@@ -10,9 +9,10 @@ que la aplicación funciona correctamente desde Finder.
 """
 
 import os
-import sys
 import subprocess
+import sys
 import time
+
 import requests
 
 
@@ -126,7 +126,7 @@ def verificar_funcionamiento_terminal():
             return True
         else:
             stdout, stderr = process.communicate()
-            print(f"❌ La aplicación se cerró prematuramente")
+            print("❌ La aplicación se cerró prematuramente")
             print(f"   Errores: {stderr[:200]}...")
             return False
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Script: mock_data.py
@@ -8,9 +7,10 @@ Uso: Importar las funciones necesarias
 Autor: Eugenio de Frutos - 2025
 """
 
-import os
 import json
+import os
 from datetime import datetime
+
 
 def get_mock_mongo():
     """
@@ -44,13 +44,13 @@ def patch_app(app):
     # Configurar la app para usar datos simulados
     app.config['TESTING'] = True
     app.config['MOCK_DATA'] = True
-    
+
     # Crear conexión simulada
     mock_db = get_mock_mongo()
-    
+
     # Inyectar la conexión simulada en la app
     app.mongo = mock_db
-    
+
     return app
 
 def get_mock_data(collection_name):
@@ -83,7 +83,7 @@ def get_mock_data(collection_name):
             }
         ]
     }
-    
+
     return mock_data.get(collection_name, [])
 
 if __name__ == '__main__':

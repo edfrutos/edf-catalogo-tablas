@@ -12,7 +12,9 @@ tests/original/
 server_logs.txt
 *.log
 logs/
+# Excluir archivos .txt excepto requirements
 *.txt
+!requirements*.txt
 
 # -------------------------------------------
 # IGNORAR ENTORNOS VIRTUALES

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Script mejorado para limpieza de imágenes no utilizadas
@@ -14,24 +13,24 @@ Características principales:
 - Estadísticas detalladas
 """
 
-import os
-import sys
-import json
-import hashlib
-import logging
-import shutil
 import argparse
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import List, Dict, Set, Tuple, Optional, Union, TypedDict
+import hashlib
+import json
+import logging
+import os
+import shutil
+import sys
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple, TypedDict, Union
 
-from PIL import Image, UnidentifiedImageError
+import certifi
 import imagehash
+from dotenv import load_dotenv
+from PIL import Image, UnidentifiedImageError
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
-from dotenv import load_dotenv
-import certifi
 
 
 class ConfigDict(TypedDict):

@@ -6,19 +6,20 @@
 # Autor: [Tu nombre o equipo] - 2025-07-29
 
 import os
+from functools import wraps
+
 from flask import (
     Blueprint,
-    send_file,
-    render_template_string,
-    render_template,
-    send_from_directory,
     abort,
-    request,
-    jsonify,
-    session,
     current_app,
+    jsonify,
+    render_template,
+    render_template_string,
+    request,
+    send_file,
+    send_from_directory,
+    session,
 )  # noqa: F401
-from functools import wraps
 
 
 # Decorador robusto para restringir a admin (soporta Flask-Login y session)
@@ -168,7 +169,7 @@ def update_tests_readme():
                 )
                 desc = ""
                 try:
-                    with open(script_path, "r", encoding="utf-8") as sf:
+                    with open(script_path, encoding="utf-8") as sf:
                         for _ in range(10):
                             line = sf.readline()
                             if not line:
@@ -188,7 +189,7 @@ def update_tests_readme():
 
     logger = logging.getLogger("update_tests_readme")
     try:
-        with open(README_PATH, "r", encoding="utf-8") as f:
+        with open(README_PATH, encoding="utf-8") as f:
             content = f.read()
         logger.info(
             f"[update-tests-readme] README.md leído correctamente: {README_PATH}"
@@ -235,8 +236,8 @@ def script_params_help():
     - Si no, lista las funciones test_* y sus argumentos.
     """
     import ast
-    import subprocess
     import re  # noqa: F401
+    import subprocess
 
     data = request.get_json(force=True)
     rel_path = data.get("script_path", "").strip()

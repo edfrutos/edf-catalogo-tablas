@@ -6,11 +6,11 @@
 # Autor: EDF Developer - 2025-06-18
 
 import os
-import time  # noqa: F401
-import tempfile
 import platform
+import tempfile
+import time  # noqa: F401
 from datetime import datetime
-from typing import List, Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 
 def list_temp_files(prefix: str = "edefrutos2025_", directory: Optional[str] = None) -> List[Dict[str, Union[str, float]]]:

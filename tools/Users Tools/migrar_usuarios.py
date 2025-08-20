@@ -5,11 +5,12 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-05-28
 
-from pymongo import MongoClient
-import certifi
 import os
-from werkzeug.security import generate_password_hash
 import secrets
+
+import certifi
+from pymongo import MongoClient
+from werkzeug.security import generate_password_hash
 
 client: MongoClient = MongoClient(os.getenv("MONGO_URI"), tlsCAFile=certifi.where())
 db = client.get_database()

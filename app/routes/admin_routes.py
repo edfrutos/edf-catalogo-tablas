@@ -5,53 +5,54 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-05-28
 
+import csv
+import io
+import json
 import logging
+import os
+import platform
 import re
-import subprocess
+import shutil
 import time
+import traceback
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import psutil  # type: ignore
 import requests
-from typing import Optional, Dict, Any, List, Union
+from bson import ObjectId
 from flask import (
     Blueprint,
-    render_template,
-    redirect,
-    url_for,
-    request,
-    flash,
-    session,
-    make_response,  # noqa: F401
-    jsonify,
     current_app,
+    flash,
+    jsonify,
+    make_response,  # noqa: F401
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
 )
 from flask_login import current_user  # type: ignore
-from bson import ObjectId
+from werkzeug.security import generate_password_hash
+
+import app.monitoring as monitoring
+import app.notifications as notifications
+from app.audit import audit_log
+from app.cache_system import get_cache_stats
 from app.database import (
-    get_reset_tokens_collection,
-    get_users_collection,
     get_audit_logs_collection,
     get_catalogs_collection,
     get_mongo_client,
     get_mongo_db,
+    get_reset_tokens_collection,
+    get_users_collection,
 )
-from app.audit import audit_log
 from app.decorators import admin_required
-import app.monitoring as monitoring
-import app.notifications as notifications
-from datetime import datetime, timedelta
-from werkzeug.security import generate_password_hash
-import io
-import csv
-import json
-import os
-import shutil
-from flask import send_file
-from tools.db_utils.google_drive_utils import upload_to_drive, list_files_in_folder
-import traceback
-import psutil  # type: ignore
-import platform
-from app.cache_system import get_cache_stats
-from app.routes.temp_files_utils import list_temp_files, delete_temp_files
 from app.decorators import admin_required as admin_required_logs
+from app.routes.temp_files_utils import delete_temp_files, list_temp_files
+from tools.db_utils.google_drive_utils import list_files_in_folder, upload_to_drive
 
 
 def log_action(
@@ -208,7 +209,7 @@ def dashboard_admin():
                         ):
                             catalogos_por_usuario[user_id]["last_update"] = last_update
         usuarios_con_catalogos = []
-        for user_id, user_info in catalogos_por_usuario.items():
+        for _user_id, user_info in catalogos_por_usuario.items():
             usuarios_con_catalogos.append(user_info)
 
         # Filtrar registros por usuario si es necesario
@@ -504,7 +505,7 @@ def get_log_files(logs_dir: str) -> List[Dict[str, Any]]:
         # Ordenar y limitar a 20 más recientes
         log_files.sort(key=lambda x: x["modified"], reverse=True)
         return log_files[:20]
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         logger.error(f"Error al obtener archivos de log: {str(e)}", exc_info=True)
         return []
 
@@ -569,7 +570,7 @@ def get_backup_files(backup_dir: str) -> List[Dict[str, Any]]:
         # Ordenar y limitar a 20 más recientes
         backup_files.sort(key=lambda x: x["modified"], reverse=True)
         return backup_files[:20]
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         logger.error(f"Error al obtener archivos de backup: {str(e)}", exc_info=True)
         return []
 
@@ -606,14 +607,12 @@ def lista_usuarios():
 
         collections_to_check = ["catalogs", "spreadsheets"]
         for user in usuarios:
-            posibles = set(
-                [
-                    user.get("email"),
-                    user.get("username"),
-                    user.get("name"),
-                    user.get("nombre"),
-                ]
-            )
+            posibles = {
+                user.get("email"),
+                user.get("username"),
+                user.get("name"),
+                user.get("nombre"),
+            }
             posibles = {v for v in posibles if v}
             total_count = 0
             for collection_name in collections_to_check:
@@ -677,14 +676,12 @@ def ver_catalogos_usuario(user_email: str):
             flash(f"Usuario con email {user_email} no encontrado", "error")
             return redirect(url_for("admin.lista_usuarios"))
         # Unificar criterio: buscar por todos los posibles identificadores
-        posibles = set(
-            [
-                user.get("email"),
-                user.get("username"),
-                user.get("name"),
-                user.get("nombre"),
-            ]
-        )
+        posibles = {
+            user.get("email"),
+            user.get("username"),
+            user.get("name"),
+            user.get("nombre"),
+        }
         posibles = {v for v in posibles if v}
         from app.extensions import mongo
 
@@ -768,8 +765,9 @@ def ver_catalogos_usuario(user_email: str):
 def ver_catalogo_admin(catalog_id: str):
     try:
         # Obtener el catálogo
-        from app.extensions import mongo
         from bson.objectid import ObjectId
+
+        from app.extensions import mongo
 
         if mongo and mongo.db is not None:
             catalog = mongo.db.catalogs.find_one({"_id": ObjectId(catalog_id)})
@@ -1002,7 +1000,7 @@ def backup_json():
                 "drive_url": enlace_drive,
             },
         )
-    except (IOError, OSError, PermissionError, ValueError) as e:
+    except (OSError, PermissionError, ValueError) as e:
         flash(
             f"Error al subir el backup a Google Drive: {str(e)}. El archivo local no se ha eliminado.",
             "danger",
@@ -1073,7 +1071,7 @@ def backup_csv():
                 "drive_url": enlace_drive,
             },
         )
-    except (IOError, OSError, PermissionError, ValueError) as e:
+    except (OSError, PermissionError, ValueError) as e:
         flash(
             f"Error al subir el backup a Google Drive: {str(e)}. El archivo local no se ha eliminado.",
             "danger",
@@ -1123,7 +1121,7 @@ def cleanup_old_backups():
                 os.remove(f)
                 removed += 1
                 logger.info(f"Backup eliminado por antigüedad: {f}")
-            except (OSError, IOError, PermissionError) as e:
+            except (OSError, PermissionError) as e:
                 logger.error(f"Error al eliminar backup {f}: {e}")
     # Si hay más de max_files, eliminar los más antiguos
     files = [
@@ -1137,7 +1135,7 @@ def cleanup_old_backups():
                 os.remove(f)
                 removed += 1
                 logger.info(f"Backup eliminado por exceso de cantidad: {f}")
-            except (OSError, IOError, PermissionError) as e:
+            except (OSError, PermissionError) as e:
                 logger.error(f"Error al eliminar backup {f}: {e}")
     flash(f"Backups antiguos eliminados: {removed}", "info")
     audit_log(
@@ -1285,9 +1283,7 @@ def api_truncate_logs():
                         line_count = 100  # Valor predeterminado si hay un error
 
                     try:
-                        with open(
-                            log_path, "r", encoding="utf-8", errors="ignore"
-                        ) as f:
+                        with open(log_path, encoding="utf-8", errors="ignore") as f:
                             lines = f.readlines()
 
                         # Mantener solo las últimas N líneas
@@ -1325,7 +1321,7 @@ def api_truncate_logs():
                                 if newlines > line_count:
                                     # Encontrar la posición de la línea de inicio
                                     pos = 0
-                                    for i in range(newlines - line_count):
+                                    for _i in range(newlines - line_count):
                                         next_pos = data.find(b"\n", pos) + 1
                                         if next_pos == 0:  # No se encontró
                                             break
@@ -1366,9 +1362,7 @@ def api_truncate_logs():
                         continue
 
                     try:
-                        with open(
-                            log_path, "r", encoding="utf-8", errors="ignore"
-                        ) as f:
+                        with open(log_path, encoding="utf-8", errors="ignore") as f:
                             lines = f.readlines()
 
                         # Filtrar líneas por fecha
@@ -1409,7 +1403,7 @@ def api_truncate_logs():
                     error_files.append(f"{log_file} (método de truncado no válido)")
                     continue
 
-            except (OSError, IOError, PermissionError, UnicodeError) as e:
+            except (OSError, PermissionError, UnicodeError) as e:
                 logger.error(
                     f"Error al truncar el archivo {log_file}: {str(e)}", exc_info=True
                 )
@@ -1505,7 +1499,7 @@ def api_delete_backups():
                     logger.info(
                         f"Archivo de backup {backup_file} eliminado correctamente"
                     )
-                except (OSError, IOError, PermissionError) as e:
+                except (OSError, PermissionError) as e:
                     logger.error(
                         f"Error al eliminar el archivo {backup_file}: {str(e)}",
                         exc_info=True,
@@ -1541,7 +1535,7 @@ def api_delete_backups():
                         logger.info(
                             f"Archivo de backup {backup_file['name']} eliminado (anterior a {cutoff_date})"
                         )
-                except (OSError, IOError, PermissionError, ValueError) as e:
+                except (OSError, PermissionError, ValueError) as e:
                     logger.error(
                         f"Error al procesar el archivo {backup_file['name']}: {str(e)}",
                         exc_info=True,
@@ -1557,7 +1551,7 @@ def api_delete_backups():
                     logger.info(
                         f"Archivo de backup {backup_file['name']} eliminado (eliminación total)"
                     )
-                except (OSError, IOError, PermissionError) as e:
+                except (OSError, PermissionError) as e:
                     logger.error(
                         f"Error al eliminar el archivo {backup_file['name']}: {str(e)}",
                         exc_info=True,
@@ -1627,7 +1621,7 @@ def download_log(filename: str):
         audit_log("log_file_download", details={"filename": filename})
 
         return send_file(log_path, as_attachment=True, download_name=filename)
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         logger.error(f"Error al descargar log {filename}: {str(e)}", exc_info=True)
         flash(f"Error al descargar el archivo: {str(e)}", "danger")
         return redirect(url_for("admin.system_status"))
@@ -1669,7 +1663,7 @@ def download_multiple_logs():
         audit_log("multiple_log_files_download", details={"files": files})
 
         return send_file(temp_file.name, as_attachment=True, download_name="logs.zip")
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         logger.error(f"Error al descargar múltiples logs: {str(e)}", exc_info=True)
         flash(f"Error al descargar los archivos: {str(e)}", "danger")
         return redirect(url_for("admin.system_status"))
@@ -1945,7 +1939,7 @@ def ver_catalogos_usuario_por_id(user_id: str):
         user_email = usuario.get("email", "")
         username = usuario.get("username", "")
         nombre = usuario.get("name", "")
-        posibles = set([user_email, username, nombre])
+        posibles = {user_email, username, nombre}
         posibles = {v for v in posibles if v}
         logger.info(
             f"[ADMIN] Buscando catálogos para el usuario con ID: {user_id}, posibles: {posibles}"
@@ -2227,8 +2221,9 @@ def editar_catalogo_admin(collection_source: str, catalog_id: str):
                         )
 
                     # Importar utilidades de imagen y S3
-                    from app.utils.image_utils import upload_image_to_s3
                     import uuid
+
+                    from app.utils.image_utils import upload_image_to_s3
 
                     # Generar nombre único para el archivo
                     file_extension = miniatura_file.filename.split(".")[-1].lower()
@@ -2242,8 +2237,9 @@ def editar_catalogo_admin(collection_source: str, catalog_id: str):
                         current_app.logger.info(f"Miniatura subida a S3: {s3_url}")
                     else:
                         # Fallback: guardar localmente si S3 falla
-                        from app.routes.catalogs_routes import get_upload_dir
                         import os
+
+                        from app.routes.catalogs_routes import get_upload_dir
 
                         upload_dir = get_upload_dir()
                         file_path = os.path.join(upload_dir, unique_filename)
@@ -2344,7 +2340,7 @@ def get_catalog_images(catalog_id: str):
         for row in data_to_search:
             if isinstance(row, dict):
                 # Buscar campos que contengan imágenes
-                for key, value in row.items():
+                for _key, value in row.items():
                     if isinstance(value, str) and any(
                         ext in value.lower()
                         for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp", "http"]
@@ -2439,7 +2435,7 @@ def eliminar_catalogos_multiple():
         logger.info("[ADMIN] Entrando en eliminar_catalogos_multiple")
 
         # Obtener los IDs de los catálogos a eliminar
-        catalogos_data = request.json.get("catalogos", [])
+        catalogos_data = request.json.get("catalogos", []) if request.json else []
 
         if not catalogos_data:
             return (
@@ -2542,8 +2538,8 @@ def db_scripts():
     """
     import glob
     import shlex
-    import time
     import subprocess
+    import time
     from datetime import datetime
 
     # Configuración de directorios
@@ -2562,13 +2558,13 @@ def db_scripts():
         # Obtener descripción del script (primera línea de comentario)
         description = "Sin descripción"
         try:
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line.startswith("#") and "descripci" in line.lower():
                         description = line.lstrip("#").strip()
                         break
-        except (OSError, IOError, PermissionError, UnicodeError) as e:
+        except (OSError, PermissionError, UnicodeError) as e:
             description = f"Error al leer descripción: {str(e)}"
 
         scripts.append(
@@ -2668,7 +2664,7 @@ def db_scripts():
                             proc.kill()
                             error = "El script excedió el tiempo máximo de ejecución (5 minutos)"
 
-                    except (OSError, IOError, PermissionError, TimeoutError) as e:
+                    except (OSError, PermissionError, TimeoutError) as e:
                         error = f"Error al ejecutar el script: {str(e)}"
 
     # Mensaje de advertencia de seguridad
@@ -2727,9 +2723,10 @@ def db_status():
 
         # Obtener información del servidor y convertir objetos no serializables
         def convert_timestamps(obj: Any) -> Any:
+            from datetime import datetime
+
             from bson import Timestamp
             from bson.objectid import ObjectId
-            from datetime import datetime
 
             if isinstance(obj, (list, tuple)):
                 return [convert_timestamps(item) for item in obj]
@@ -2954,9 +2951,9 @@ def get_db_ops():
                 "ops_per_sec": ops_per_sec,
                 "memory": memory,
                 "connections": connections,
-                "slow_ops": slow_ops[
-                    :10
-                ],  # Devolver solo las 10 operaciones más lentas
+                "slow_ops": (
+                    slow_ops[:10] if slow_ops else []
+                ),  # Devolver solo las 10 operaciones más lentas
                 "timestamp": current_time,
             }
         )
@@ -3086,8 +3083,8 @@ def db_backup():
                             backup_data["collections"][collection_name] = []
 
                     # Comprimir y escribir el backup
-                    import json
                     import gzip
+                    import json
 
                     json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
                     compressed_data = gzip.compress(json_data.encode("utf-8"))
@@ -3109,7 +3106,7 @@ def db_backup():
                     )
                     raise Exception(
                         f"No se pudo crear el backup JSON: {str(backup_error)}"
-                    )
+                    ) from backup_error
 
                 if not backup_created or not backup_file:
                     raise Exception("No se pudo crear el archivo de backup")
@@ -3146,7 +3143,7 @@ def db_backup():
                             current_app.logger.info(
                                 f"Respaldo binario antiguo eliminado: {old_backup}"
                             )
-                        except (OSError, IOError, PermissionError) as e:
+                        except (OSError, PermissionError) as e:
                             current_app.logger.error(
                                 f"Error al eliminar respaldo binario {old_backup}: {str(e)}"
                             )
@@ -3158,12 +3155,12 @@ def db_backup():
                             current_app.logger.info(
                                 f"Respaldo JSON antiguo eliminado: {old_backup}"
                             )
-                        except (OSError, IOError, PermissionError) as e:
+                        except (OSError, PermissionError) as e:
                             current_app.logger.error(
                                 f"Error al eliminar respaldo JSON {old_backup}: {str(e)}"
                             )
 
-                except (OSError, IOError, PermissionError) as e:
+                except (OSError, PermissionError) as e:
                     current_app.logger.error(
                         f"Error al limpiar respaldos antiguos: {str(e)}"
                     )
@@ -3173,7 +3170,7 @@ def db_backup():
                     "admin.download_backup_alt", filename=os.path.basename(backup_file)
                 )
                 return jsonify({"status": "success", "download_url": download_url})
-            except (OSError, IOError, PermissionError, ValueError, TypeError) as e:
+            except (OSError, PermissionError, ValueError, TypeError) as e:
                 current_app.logger.error(
                     f"Error al crear respaldo: {str(e)}\n{traceback.format_exc()}"
                 )
@@ -3266,7 +3263,7 @@ def db_backup():
                     "mtime": file_info.mtime,
                     "timestamp_from_name": file_info.timestamp_from_name,
                 }
-            except (OSError, IOError, PermissionError) as e:
+            except (OSError, PermissionError) as e:
                 current_app.logger.error(
                     f"Error al obtener info de archivo {filepath}: {str(e)}"
                 )
@@ -3328,7 +3325,6 @@ def db_backup():
 
     except (
         OSError,
-        IOError,
         PermissionError,
         AttributeError,
         KeyError,
@@ -3512,7 +3508,7 @@ def logs_tail():
         )
 
     try:
-        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(log_path, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
         # Si se especifican fechas, filtrar por rango
@@ -3561,7 +3557,7 @@ def logs_tail():
             }
         )
 
-    except (OSError, IOError, PermissionError, UnicodeError) as e:
+    except (OSError, PermissionError, UnicodeError) as e:
         return (
             jsonify(
                 {
@@ -3588,7 +3584,7 @@ def logs_search():
         abort(404, description=f"Archivo no encontrado: {log_file}")
     if not kw:
         return jsonify({"logs": []})  # Esto es éxito, no error, se mantiene igual.
-    with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+    with open(log_path, encoding="utf-8", errors="ignore") as f:
         lines = [line for line in f if kw.lower() in line.lower()]
     return jsonify({"logs": lines})
 
@@ -3658,7 +3654,7 @@ def backups_list():
                             "username": session.get("username", "desconocido"),
                         },
                     )
-                except (OSError, IOError, PermissionError) as e:
+                except (OSError, PermissionError) as e:
                     flash(f"Error al eliminar el backup: {str(e)}", "danger")
             else:
                 flash("El archivo no existe", "warning")
@@ -3747,9 +3743,10 @@ def restore_local_backup():
         )
 
         # Importar las utilidades necesarias
-        import tempfile
         import gzip
         import json
+        import tempfile
+
         from bson import ObjectId
 
         # Obtener la ruta del archivo de backup
@@ -3885,7 +3882,7 @@ def restore_local_backup():
                     current_app.logger.info("Archivo detectado como texto plano")
                     # Intentar como archivo de texto plano
                     try:
-                        with open(file_path, "r", encoding="utf-8") as file:
+                        with open(file_path, encoding="utf-8") as file:
                             content = file.read()
                             current_app.logger.info(
                                 f"Contenido plano leído, longitud: {len(content)} caracteres"
@@ -3900,7 +3897,7 @@ def restore_local_backup():
                         )
                         # Intentar con otras codificaciones
                         try:
-                            with open(file_path, "r", encoding="latin-1") as file:
+                            with open(file_path, encoding="latin-1") as file:
                                 content = file.read()
                                 current_app.logger.info(
                                     f"Contenido plano leído como latin-1, longitud: {len(content)} caracteres"
@@ -4128,9 +4125,10 @@ def restore_drive_backup():
         )
 
         # Importar las utilidades necesarias
-        import tempfile
         import gzip
         import json
+        import tempfile
+
         from bson import ObjectId
 
         # Descargar el archivo desde Google Drive usando la API
@@ -4143,7 +4141,12 @@ def restore_drive_backup():
         file_content = download_file(file_id)
 
         # Crear archivo temporal
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".gz") as temp_file:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".gz", mode="wb"
+        ) as temp_file:
+            # Asegurar que file_content sea bytes
+            if isinstance(file_content, str):
+                file_content = file_content.encode("utf-8")
             temp_file.write(file_content)
             temp_path = temp_file.name
 
@@ -4185,7 +4188,7 @@ def restore_drive_backup():
                 current_app.logger.error(f"Error leyendo GZIP: {str(e)}")
                 # Si no es GZIP, intentar como JSON plano
                 try:
-                    with open(temp_path, "r", encoding="utf-8") as file:
+                    with open(temp_path, encoding="utf-8") as file:
                         content = file.read()
                         current_app.logger.info(
                             f"Contenido plano leído, longitud: {len(content)} caracteres"
@@ -4385,7 +4388,7 @@ def reset_gdrive_token_route():
             flash(result.stdout, "info")
         else:
             flash(f"Error al eliminar el token: {result.stderr}", "danger")
-    except (OSError, IOError, PermissionError, subprocess.SubprocessError) as e:
+    except (OSError, PermissionError, subprocess.SubprocessError) as e:
         flash(f"Error al ejecutar el reseteo de token: {str(e)}", "danger")
     return redirect(url_for("maintenance.maintenance_dashboard"))
 
@@ -4394,7 +4397,9 @@ def reset_gdrive_token_route():
 @admin_required
 def gdrive_upload_test():
     import os
+
     from werkzeug.utils import secure_filename
+
     from tools.db_utils.google_drive_utils import upload_to_drive
 
     uploaded_links = []
@@ -4505,8 +4510,8 @@ def create_and_upload_backup():
                 backup_data["collections"][collection_name] = []
 
         # Comprimir y escribir el backup
-        import json
         import gzip
+        import json
 
         json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
         compressed_data = gzip.compress(json_data.encode("utf-8"))
@@ -4670,10 +4675,10 @@ def upload_backup_to_drive(filename: str):
         JSON: Respuesta con el resultado de la operación
     """
     import os
-    from flask import jsonify, current_app
-    from werkzeug.utils import secure_filename
     import sys
-    import os
+
+    from flask import current_app, jsonify
+    from werkzeug.utils import secure_filename
 
     # Agregar la ruta de tools/db_utils al path (compatible con aplicaciones empaquetadas)
     if getattr(sys, "frozen", False):
@@ -4850,7 +4855,7 @@ def upload_backup_to_drive(filename: str):
                 )
                 return jsonify(response_data)
 
-            except (OSError, IOError, PermissionError) as e:
+            except (OSError, PermissionError) as e:
                 error_msg = f"Error al eliminar el archivo local {filename}: {str(e)}"
                 current_app.logger.error(error_msg, exc_info=True)
 
@@ -5143,7 +5148,7 @@ def truncate_log_route():
             flash(result.stdout, "success")
         else:
             flash(result.stderr, "danger")
-    except (OSError, IOError, PermissionError, subprocess.SubprocessError) as e:
+    except (OSError, PermissionError, subprocess.SubprocessError) as e:
         flash(f"Error al truncar el log: {str(e)}", "danger")
     return redirect(url_for("maintenance.maintenance_dashboard"))
 
@@ -5282,8 +5287,9 @@ def api_cache_stats():
 @admin_required
 def test_cache():
     """Endpoint temporal para generar actividad en el caché y probar las estadísticas"""
-    from app.cache_system import set_cache, get_cache
     import random
+
+    from app.cache_system import get_cache, set_cache
 
     try:
         # Generar algunas operaciones de caché para pruebas
@@ -5298,7 +5304,7 @@ def test_cache():
                 set_cache(key, f"test_value_{random.randint(1, 100)}", ttl=300)
 
         # Hacer algunas consultas adicionales para generar hits
-        for i in range(3):
+        for _i in range(3):
             get_cache(f"test_key_{random.randint(0, 4)}")
 
         cache_stats = get_cache_stats()
@@ -5325,8 +5331,8 @@ def test_cache():
 def test_database():
     """Endpoint para probar la conexión de base de datos manualmente"""
     try:
-        from app.database import get_mongo_client
         from app import monitoring
+        from app.database import get_mongo_client
 
         # Intentar obtener cliente y verificar conexión
         client = get_mongo_client()
@@ -5632,8 +5638,8 @@ def bulk_password_action():
     Acciones masivas sobre usuarios con contraseñas temporales.
     """
     try:
-        action = request.json.get("action")
-        user_ids = request.json.get("user_ids", [])
+        action = request.json.get("action") if request.json else None
+        user_ids = request.json.get("user_ids", []) if request.json else []
 
         if not action or not user_ids:
             return jsonify(
@@ -5736,9 +5742,10 @@ def assign_temp_password(user_id):
     Asignar contraseña temporal a un usuario normal.
     """
     try:
-        from werkzeug.security import generate_password_hash
-        from app.models.database import get_users_collection
         from bson import ObjectId
+        from werkzeug.security import generate_password_hash
+
+        from app.models.database import get_users_collection
 
         users_collection = get_users_collection()
         if users_collection is None:

@@ -6,12 +6,13 @@
 # Variables de entorno: MONGO_URI
 # Autor: EDF Developer - 2025-05-28
 
+import os
+from datetime import datetime
+
+import certifi
+from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.database import Database
-import certifi
-import os
-from dotenv import load_dotenv
-from datetime import datetime
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -99,7 +100,7 @@ for col in colecciones:
             # Mostrar ejemplo de documento de forma más limpia
             doc = db[col].find_one()
             if doc:
-                print_info(f"  • Ejemplo de documento:")
+                print_info("  • Ejemplo de documento:")
                 for key, value in list(doc.items())[:3]:  # Solo primeros 3 campos
                     if key != "_id":
                         value_str = str(value)

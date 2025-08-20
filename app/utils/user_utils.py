@@ -6,10 +6,12 @@
 # Autor: EDF Developer - 2025-05-28
 
 import logging
-from flask import current_app, g
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
 from bson.objectid import ObjectId
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import current_app, g
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from app.utils.db_utils import get_db
 
 logger = logging.getLogger(__name__)

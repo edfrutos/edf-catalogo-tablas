@@ -4,8 +4,8 @@ Lanzador nativo para EDF Catálogo de Tablas
 Usa PyWebView para crear una aplicación de escritorio nativa
 """
 
-import sys
 import os
+import sys
 import tempfile
 from pathlib import Path
 
@@ -30,10 +30,11 @@ if getattr(sys, "frozen", False):
     os.environ["FLASK_DEBUG"] = "0"  # Deshabilitar debug
     print(f"🔧 Configurado entorno de producción")  # noqa: F541
 
-import webview
 import threading
 import time
+
 import requests
+import webview
 
 
 def start_flask_server():

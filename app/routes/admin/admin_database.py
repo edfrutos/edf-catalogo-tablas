@@ -15,10 +15,12 @@ import sys
 import time
 import traceback
 from datetime import datetime
-from flask import Blueprint, render_template, jsonify, flash, redirect, url_for, request, session
-from app.decorators import admin_required
-from app.database import get_mongo_db, get_mongo_client
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
+
 from app.audit import audit_log
+from app.database import get_mongo_client, get_mongo_db
+from app.decorators import admin_required
 
 admin_database_bp = Blueprint('admin_database', __name__, url_prefix='/admin/db')
 logger = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ def db_status():
         if client is None:
             status["error"] = "Cliente MongoDB no disponible"
             return render_template("admin/db_status.html", status=status)
-            
+
         # Probar conexión
         client.admin.command("ping")
         status["is_connected"] = True
@@ -81,7 +83,7 @@ def db_status():
             str(e),
             traceback.format_exc()
         )
-        
+
     return render_template("admin/db_status.html", status=status)
 
 @admin_database_bp.route("/monitor")
@@ -97,7 +99,7 @@ def db_monitor():
         if client is None:
             status["error"] = "Cliente MongoDB no disponible"
             return render_template("admin/db_monitor.html", status=status)
-            
+
         # Verificar conexión
         client.admin.command("ping")
         status["is_connected"] = True
@@ -170,7 +172,7 @@ def db_performance():
                     "message": "No se pudo acceder a la base de datos",
                 }
                 return render_template("admin/db_performance.html", results=results)
-                
+
             test_collection = db.performance_test
 
             # Limpiar colección de prueba
@@ -279,7 +281,7 @@ def db_scripts():
         # Obtener descripción del script (primera línea de comentario)
         description = "Sin descripción"
         try:
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line.startswith("#") and "descripci" in line.lower():

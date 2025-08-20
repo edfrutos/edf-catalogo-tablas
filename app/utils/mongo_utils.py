@@ -8,9 +8,10 @@
 """
 Utilidades para trabajar con MongoDB
 """
+import logging
+
 from bson.objectid import ObjectId
 from flask import current_app
-import logging
 
 logger = logging.getLogger(__name__)
 

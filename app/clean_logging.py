@@ -11,6 +11,7 @@ Aplica configuraciones para reducir la información verbosa que ya no es necesar
 """
 
 import logging
+
 from flask import Flask
 
 

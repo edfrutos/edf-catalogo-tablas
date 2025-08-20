@@ -1,35 +1,33 @@
-# -*- coding: utf-8 -*-
 """
 Rutas de mantenimiento refactorizadas para el panel de administración.
 Este archivo consolida funciones duplicadas y mejora el manejo de errores.
 """
 
-import os
-import json
-import gzip
 import csv
+import getpass
+import gzip
 import io
-import tempfile  # noqa: F401
+import json
+import os
+import platform
 import shutil  # noqa: F401
+import tempfile  # noqa: F401
 from datetime import datetime
-from typing import Dict, Any, List, Optional, Tuple, Union
 from pathlib import Path
-
-from bson import ObjectId
-import pymongo
-from pymongo import errors as pymongo_errors
-from flask import current_app, Blueprint, jsonify, request, send_file
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import psutil
-import platform
-import getpass
+import pymongo
+from bson import ObjectId
+from flask import Blueprint, current_app, jsonify, request, send_file
+from pymongo import errors as pymongo_errors
 
-from app.decorators import admin_required
 from app.database import get_mongo_db
+from app.decorators import admin_required
+from app.logging_unified import get_logger
 
 # from app.auth_utils import require_google_drive_auth  # Función no disponible
 from app.utils.storage_utils import get_storage_client
-from app.logging_unified import get_logger
 
 # Configurar logger
 logger = get_logger(__name__)
@@ -215,8 +213,8 @@ class GoogleDriveManager:
         """Lista los backups disponibles en Google Drive."""
         try:
             # Importar la función de listado real
-            import sys
             import os
+            import sys
 
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
@@ -260,8 +258,8 @@ class GoogleDriveManager:
         """Descarga un archivo de Google Drive."""
         try:
             # Importar la función de descarga real
-            import sys
             import os
+            import sys
 
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
@@ -280,8 +278,8 @@ class GoogleDriveManager:
         """Elimina un archivo de Google Drive."""
         try:
             # Importar la función de eliminación real
-            import sys
             import os
+            import sys
 
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
@@ -305,8 +303,8 @@ class GoogleDriveManager:
         """Sube un archivo a Google Drive desde contenido en bytes."""
         try:
             # Importar la función de subida real
-            import sys
             import os
+            import sys
             import tempfile
 
             sys.path.append(
@@ -511,7 +509,8 @@ def maintenance_dashboard():
     try:
         import shutil
         from datetime import datetime
-        from flask import render_template, current_app, flash, redirect, url_for
+
+        from flask import current_app, flash, redirect, render_template, url_for
         from flask_login import current_user
 
         total, used, free = shutil.disk_usage("/")
@@ -711,9 +710,10 @@ def _execute_disk_task():
 def api_system_status():
     """API endpoint para el estado del sistema compatible con el dashboard."""
     try:
-        import psutil
-        import platform
         import getpass
+        import platform
+
+        import psutil
 
         # Obtener información de memoria
         mem = psutil.virtual_memory()
@@ -831,6 +831,7 @@ def download_backup(filename):
     """Descarga un archivo de backup."""
     try:
         from pathlib import Path
+
         from flask import send_file
 
         project_root = Path(__file__).parent.parent.parent
@@ -860,8 +861,8 @@ def create_backup():
     """Crea un backup de la base de datos y lo sube a Google Drive."""
     try:
         # Importar función de Google Drive
-        import sys
         import os
+        import sys
 
         # Agregar la ruta de tools/db_utils al path
         db_utils_path = os.path.join(
@@ -1292,7 +1293,7 @@ def list_local_backups():
         project_root = Path(__file__).parent.parent.parent
         backup_dir = str(project_root / "backups")
 
-        log_info(f"🔍 DEBUG: Función list_local_backups llamada")
+        log_info("🔍 DEBUG: Función list_local_backups llamada")
         log_info(f"🔍 DEBUG: backup_dir = {backup_dir}")
         log_info(f"🔍 DEBUG: backup_dir existe = {os.path.exists(backup_dir)}")
 

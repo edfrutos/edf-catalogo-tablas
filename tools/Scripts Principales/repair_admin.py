@@ -7,13 +7,14 @@ Este script:
 3. Resetea la contraseña del administrador a un valor conocido
 """
 
+import logging
 import os
 import sys
-import logging
 from datetime import datetime
+
+import certifi
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash
-import certifi
 
 # Configuración de logging
 logging.basicConfig(
@@ -43,7 +44,7 @@ def main():
         client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
         client.admin.command('ping')
         logger.info("Conexión a MongoDB establecida correctamente")
-        
+
         # Determinar el nombre de la base de datos
         db_name = "app_catalogojoyero_nueva"
         if mongo_uri and "app_catalogojoyero_nueva" not in mongo_uri and "/" in mongo_uri:
@@ -52,14 +53,14 @@ def main():
                 db_name_part = parts[3].split("?")[0]
                 if db_name_part:
                     db_name = db_name_part
-                    
+
         logger.info(f"Usando base de datos: {db_name}")
         db = client[db_name]
-        
+
         # Mostrar colecciones disponibles
         collections = db.list_collection_names()
         logger.info(f"Colecciones disponibles: {collections}")
-        
+
         # Determinar la colección de usuarios
         user_collection = None
         if "users" in collections:
@@ -71,18 +72,18 @@ def main():
         else:
             user_collection = db.users
             logger.info("No se encontró colección de usuarios, usando 'users' por defecto")
-        
+
         # Datos del usuario administrador
         admin_email = "admin@example.com"
         admin_password = "admin123"
         admin_pass_hash = generate_password_hash(admin_password)
-        
+
         # Buscar si existe el administrador
         admin_user = user_collection.find_one({"email": admin_email})
-        
+
         if admin_user:
             logger.info(f"Usuario administrador encontrado con ID: {admin_user.get('_id')}")
-            
+
             # Actualizar contraseña
             try:
                 user_collection.update_one(
@@ -99,7 +100,7 @@ def main():
                 logger.info("Contraseña de administrador actualizada")
             except Exception as e:
                 logger.error(f"Error al actualizar usuario: {str(e)}")
-                
+
                 # Intentar actualizar solo la contraseña como último recurso
                 try:
                     user_collection.update_one(
@@ -111,7 +112,7 @@ def main():
                     logger.error(f"Error también al actualizar solo la contraseña: {str(e2)}")
         else:
             logger.info("No se encontró usuario administrador, creándolo...")
-            
+
             # Crear nuevo usuario administrador
             new_admin = {
                 "email": admin_email,
@@ -126,13 +127,13 @@ def main():
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
-            
+
             try:
                 result = user_collection.insert_one(new_admin)
                 logger.info(f"Usuario administrador creado con ID: {result.inserted_id}")
             except Exception as e:
                 logger.error(f"Error al crear usuario administrador: {str(e)}")
-                
+
                 # Intentar con un nombre de usuario único
                 try:
                     import time
@@ -141,11 +142,11 @@ def main():
                     logger.info(f"Usuario administrador creado con username alternativo y ID: {result.inserted_id}")
                 except Exception as e2:
                     logger.error(f"Error también con username alternativo: {str(e2)}")
-        
+
         # Crear archivo HTML para acceso directo
         try:
             admin_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "admin_direct.php")
-            
+
             with open(admin_file, 'w') as f:
                 f.write("""<?php
 // Archivo admin_direct.php - Redirige al usuario directamente al panel de administración
@@ -153,11 +154,11 @@ header("Location: /login_directo");
 exit();
 ?>
 """)
-            
+
             logger.info(f"Archivo de acceso directo creado: {admin_file}")
         except Exception as e:
             logger.error(f"Error al crear archivo de acceso directo: {str(e)}")
-        
+
         # Mostrar instrucciones para acceso
         print("\n" + "=" * 60)
         print(" ACCESO ADMINISTRATIVO CONFIGURADO ".center(60))
@@ -170,7 +171,7 @@ exit();
         print("\nURL de acceso normal:")
         print("  https://edefrutos2025.xyz/login")
         print("=" * 60)
-        
+
         return 0
     except Exception as e:
         logger.error(f"Error inesperado: {str(e)}")

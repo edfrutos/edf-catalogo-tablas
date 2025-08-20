@@ -2,14 +2,15 @@
 # Script para actualizar la lista blanca de IPs en MongoDB Atlas
 # Creado: 18/05/2025
 
-import os
-import sys
+import datetime
 import json
-import requests
+import os
+import re
 import socket
 import subprocess
-import datetime
-import re
+import sys
+
+import requests
 from dotenv import load_dotenv
 
 # Configuración
@@ -34,7 +35,7 @@ def get_server_ip():
             return ip
     except Exception as e:
         log(f"Error al obtener IP de ipify.org: {e}")
-    
+
     try:
         # Método 2: Usando otro servicio externo
         response = requests.get('https://ifconfig.me/ip', timeout=5)
@@ -44,7 +45,7 @@ def get_server_ip():
             return ip
     except Exception as e:
         log(f"Error al obtener IP de ifconfig.me: {e}")
-    
+
     try:
         # Método 3: Usando comandos del sistema
         result = subprocess.run(['curl', '-s', 'https://ifconfig.me'], capture_output=True, text=True)
@@ -54,7 +55,7 @@ def get_server_ip():
             return ip
     except Exception as e:
         log(f"Error al obtener IP mediante curl: {e}")
-    
+
     log("No se pudo obtener la IP pública del servidor")
     return None
 
@@ -64,18 +65,18 @@ def extract_mongodb_info():
     if not os.path.exists(env_path):
         log(f"No se encontró el archivo {env_path}")
         return None
-    
-    with open(env_path, 'r') as f:
+
+    with open(env_path) as f:
         content = f.read()
-    
+
     # Buscar la URI de MongoDB
     mongo_uri_match = re.search(r'^MONGO_URI\s*=\s*(.*)$', content, re.MULTILINE)
     if not mongo_uri_match:
         log("No se encontró la URI de MongoDB en el archivo .env")
         return None
-    
+
     mongo_uri = mongo_uri_match.group(1).strip()
-    
+
     # Extraer información de la URI
     if mongo_uri.startswith("mongodb+srv://"):
         # URI SRV
@@ -83,12 +84,12 @@ def extract_mongodb_info():
         if not match:
             log("No se pudo analizar la URI de MongoDB")
             return None
-        
+
         username, password, hostname, database, _ = match.groups()
-        
+
         # Extraer el nombre del proyecto/grupo
         project_name = hostname.split('.')[0]
-        
+
         return {
             "username": username,
             "password": password,
@@ -102,12 +103,12 @@ def extract_mongodb_info():
         if not match:
             log("No se pudo analizar la URI de MongoDB")
             return None
-        
+
         username, password, hosts, database, _ = match.groups()
-        
+
         # Extraer el primer hostname
         hostname = hosts.split(',')[0].split(':')[0]
-        
+
         # Intentar determinar el nombre del proyecto/grupo
         if "cluster" in hostname:
             parts = hostname.split('.')
@@ -117,7 +118,7 @@ def extract_mongodb_info():
                 project_name = "unknown"
         else:
             project_name = "unknown"
-        
+
         return {
             "username": username,
             "password": password,
@@ -133,18 +134,18 @@ def save_config(config):
     """Guarda la configuración en un archivo JSON"""
     # Asegurarse de que el directorio existe
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
-    
+
     with open(CONFIG_FILE, 'w') as f:
         json.dump(config, f, indent=2)
-    
+
     log(f"Configuración guardada en {CONFIG_FILE}")
 
 def load_config():
     """Carga la configuración desde un archivo JSON"""
     if not os.path.exists(CONFIG_FILE):
         return None
-    
-    with open(CONFIG_FILE, 'r') as f:
+
+    with open(CONFIG_FILE) as f:
         return json.load(f)
 
 def generate_instructions():
@@ -152,11 +153,11 @@ def generate_instructions():
     server_ip = get_server_ip()
     if not server_ip:
         return "No se pudo obtener la IP del servidor"
-    
+
     mongodb_info = extract_mongodb_info()
     if not mongodb_info:
         return "No se pudo extraer la información de MongoDB"
-    
+
     instructions = f"""
 ==========================================================
 INSTRUCCIONES PARA ACTUALIZAR LA LISTA BLANCA DE IPS EN MONGODB ATLAS
@@ -177,7 +178,7 @@ La IP del servidor ({server_ip}) ahora debería estar en la lista blanca y permi
 
 ==========================================================
 """
-    
+
     # Guardar la configuración
     config = {
         "server_ip": server_ip,
@@ -185,30 +186,30 @@ La IP del servidor ({server_ip}) ahora debería estar en la lista blanca y permi
         "last_updated": datetime.datetime.now().isoformat()
     }
     save_config(config)
-    
+
     return instructions
 
 def main():
     """Función principal"""
     # Asegurarse de que el directorio de logs existe
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-    
+
     log("Generando instrucciones para actualizar la lista blanca de IPs en MongoDB Atlas...")
-    
+
     instructions = generate_instructions()
-    
+
     log("Instrucciones generadas correctamente")
     print("\n" + instructions)
-    
+
     # Guardar las instrucciones en un archivo
     instructions_file = "/docs/mongodb_whitelist_instructions.txt"
     os.makedirs(os.path.dirname(instructions_file), exist_ok=True)
-    
+
     with open(instructions_file, 'w') as f:
         f.write(instructions)
-    
+
     log(f"Instrucciones guardadas en {instructions_file}")
-    
+
     print(f"\nLas instrucciones también se han guardado en {instructions_file}")
 
 if __name__ == "__main__":

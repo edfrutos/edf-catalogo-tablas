@@ -3,7 +3,8 @@
 import logging
 import os
 from logging.handlers import RotatingFileHandler
-from config import LOG_ROTATION_SIZE, LOG_BACKUP_COUNT
+
+from config import LOG_BACKUP_COUNT, LOG_ROTATION_SIZE
 
 
 def setup_logging(app):

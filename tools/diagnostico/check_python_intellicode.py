@@ -4,10 +4,10 @@
 # Uso: python3 check_python_intellicode.py
 # Autor: EDF Developer - 2025-01-28
 
-import os
-import sys
 import json
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -37,13 +37,13 @@ def check_vscode_config():
 
     vscode_dir = Path(".vscode")
     if vscode_dir.exists():
-        print(f"✓ Directorio .vscode encontrado")
+        print("✓ Directorio .vscode encontrado")
 
         settings_file = vscode_dir / "settings.json"
         if settings_file.exists():
-            print(f"✓ Archivo settings.json encontrado")
+            print("✓ Archivo settings.json encontrado")
             try:
-                with open(settings_file, "r", encoding="utf-8") as f:
+                with open(settings_file, encoding="utf-8") as f:
                     settings = json.load(f)
 
                 # Verificar configuraciones clave
@@ -76,9 +76,9 @@ def check_pyright_config():
 
     pyright_file = Path("pyrightconfig.json")
     if pyright_file.exists():
-        print(f"✓ Archivo pyrightconfig.json encontrado")
+        print("✓ Archivo pyrightconfig.json encontrado")
         try:
-            with open(pyright_file, "r", encoding="utf-8") as f:
+            with open(pyright_file, encoding="utf-8") as f:
                 config = json.load(f)
 
             # Verificar configuraciones importantes
@@ -103,9 +103,9 @@ def check_pylint_config():
 
     pylint_file = Path(".pylintrc")
     if pylint_file.exists():
-        print(f"✓ Archivo .pylintrc encontrado")
+        print("✓ Archivo .pylintrc encontrado")
         try:
-            with open(pylint_file, "r", encoding="utf-8") as f:
+            with open(pylint_file, encoding="utf-8") as f:
                 content = f.read()
 
             if "disable=all" in content:
@@ -125,7 +125,7 @@ def check_extensions():
 
     extensions_file = Path("extensiones_instaladas.txt")
     if extensions_file.exists():
-        print(f"✓ Lista de extensiones encontrada")
+        print("✓ Lista de extensiones encontrada")
 
         # Verificar extensiones clave
         key_extensions = [
@@ -134,7 +134,7 @@ def check_extensions():
             "ms-python.isort",
         ]
 
-        with open(extensions_file, "r", encoding="utf-8") as f:
+        with open(extensions_file, encoding="utf-8") as f:
             content = f.read()
 
         for ext in key_extensions:
@@ -156,7 +156,7 @@ def check_intellicode_compatibility():
         settings_file = vscode_dir / "settings.json"
         if settings_file.exists():
             try:
-                with open(settings_file, "r", encoding="utf-8") as f:
+                with open(settings_file, encoding="utf-8") as f:
                     settings = json.load(f)
 
                 # Verificar configuraciones de IntelliCode

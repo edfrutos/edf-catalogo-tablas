@@ -11,13 +11,14 @@ Este módulo se encarga de enviar notificaciones y alertas cuando
 se detectan problemas en el sistema o cuando se alcanzan umbrales críticos.
 """
 
-import smtplib
+import json
 import logging
 import os
-import json
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import smtplib
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 from flask import render_template_string
 
 # Configuración del logger
@@ -48,7 +49,7 @@ def load_config():
     """Carga la configuración de notificaciones desde el archivo de configuración"""
     if os.path.exists(CONFIG_FILE):
         try:
-            with open(CONFIG_FILE, "r") as f:
+            with open(CONFIG_FILE) as f:
                 config = json.load(f)
                 # Asegurar que la estructura es correcta combinando con los defaults
                 result = DEFAULT_CONFIG.copy()

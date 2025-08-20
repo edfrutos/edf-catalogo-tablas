@@ -5,20 +5,21 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-05-28
 
+import logging
+from datetime import datetime  # noqa: F401
+from typing import Any
+
+from bson.objectid import ObjectId
 from flask import (
     Blueprint,  # noqa: F401
+    current_app,
+    flash,
+    redirect,
     render_template,
     request,
-    redirect,
-    url_for,
-    flash,
-    current_app,
     session,
+    url_for,
 )
-from datetime import datetime  # noqa: F401
-from bson.objectid import ObjectId
-import logging
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

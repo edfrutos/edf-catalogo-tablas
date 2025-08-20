@@ -1,11 +1,12 @@
 # app/auth2fa_routes.py
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+import io
+
 import pyotp
 import qrcode  # type: ignore
-import io
-from flask import send_file
-from app.models import users_collection  # type: ignore
 from bson.objectid import ObjectId
+from flask import Blueprint, flash, redirect, render_template, request, send_file, session, url_for
+
+from app.models import users_collection  # type: ignore
 
 auth2fa_bp = Blueprint("auth2fa", __name__, url_prefix="/2fa")
 

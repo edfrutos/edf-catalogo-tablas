@@ -6,12 +6,14 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-05-28
 
-import os
-import certifi
-from pymongo import MongoClient
 import json
+import os
 from datetime import datetime, timezone
+
+import certifi
 from bson import ObjectId
+from pymongo import MongoClient
+
 from tools.db_utils.google_drive_utils import upload_to_drive
 
 MONGO_URI = os.getenv('MONGO_URI')
@@ -24,7 +26,7 @@ os.makedirs(BACKUP_DIR, exist_ok=True)
 
 def get_last_backup_time():
     if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, 'r') as f:
+        with open(STATE_FILE) as f:
             state = json.load(f)
             return datetime.fromisoformat(state.get('last_backup'))
     return None
@@ -88,4 +90,4 @@ if __name__ == '__main__':
         since = datetime.fromisoformat(custom)
     else:
         since = last
-    backup_incremental(since) 
+    backup_incremental(since)

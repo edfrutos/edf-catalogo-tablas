@@ -7,6 +7,7 @@
 # Autor: EDF Equipo de Desarrollo - 2025-05-28
 
 import os
+
 import certifi
 from pymongo import MongoClient
 
@@ -41,4 +42,4 @@ for col, label in colecciones:
     if ids_modificados:
         print(f"    IDs modificados: {ids_modificados}")
     total_modificados += modificados
-print(f'--- FIN. Total modificados: {total_modificados} ---') 
+print(f'--- FIN. Total modificados: {total_modificados} ---')

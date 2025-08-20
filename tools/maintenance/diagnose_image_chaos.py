@@ -11,8 +11,9 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from app.models.database import get_mongo_db
 from bson.objectid import ObjectId
+
+from app.models.database import get_mongo_db
 
 
 def diagnose_image_chaos():

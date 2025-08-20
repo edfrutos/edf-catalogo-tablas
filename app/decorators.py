@@ -1,9 +1,10 @@
 # app/decorators.py
 
-from functools import wraps
 import logging
-from flask import session, redirect, url_for, request, flash
-from typing import Callable, Any, TypeVar, cast
+from functools import wraps
+from typing import Any, Callable, TypeVar, cast
+
+from flask import flash, redirect, request, session, url_for
 from flask.typing import ResponseReturnValue
 
 logger = logging.getLogger(__name__)

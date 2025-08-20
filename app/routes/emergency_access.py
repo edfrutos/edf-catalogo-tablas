@@ -10,11 +10,12 @@ Rutas de acceso de emergencia que establecen la sesión directamente
 sin depender del sistema normal de inicio de sesión.
 """
 
-import os  # noqa: F401
 import logging
-from bson import ObjectId  # noqa: F401
-from flask import Blueprint, render_template, redirect, url_for, session, flash  # noqa: F401
+import os  # noqa: F401
 from datetime import datetime, timedelta  # noqa: F401
+
+from bson import ObjectId  # noqa: F401
+from flask import Blueprint, flash, redirect, render_template, session, url_for  # noqa: F401
 
 logger = logging.getLogger(__name__)
 emergency_bp = Blueprint("emergency", __name__)

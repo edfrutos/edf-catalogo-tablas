@@ -3,11 +3,12 @@
 Script para ejecutar testing manual con servidor en paralelo
 """
 
-import subprocess
-import time
-import requests
-import sys
 import os
+import subprocess
+import sys
+import time
+
+import requests
 
 
 def start_server():

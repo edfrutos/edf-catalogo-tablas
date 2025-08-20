@@ -21,8 +21,8 @@ Versión: 1.0
 """
 
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -136,7 +136,7 @@ class AWS_S3_Menu:
 
         if self.readme_file.exists():
             try:
-                with open(self.readme_file, "r", encoding="utf-8") as f:
+                with open(self.readme_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Mostrar contenido con paginación
@@ -213,7 +213,7 @@ class AWS_S3_Menu:
 
                 # Mostrar contenido del reporte
                 try:
-                    with open(report_path, "r") as f:
+                    with open(report_path) as f:
                         content = f.read()
 
                     # Mostrar solo las primeras líneas

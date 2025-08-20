@@ -4,8 +4,8 @@ Script de demostración de las mejoras implementadas en el sistema de mantenimie
 Muestra el uso del wrapper, configuración centralizada y monitoreo mejorado.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Configurar path para importaciones
@@ -14,12 +14,13 @@ sys.path.insert(0, str(current_dir))
 
 # Importar las nuevas utilidades
 try:
+    from monitoring_utils import LogAnalyzer, SystemMonitor, setup_monitoring_logger
+
     from config import config
-    from monitoring_utils import SystemMonitor, LogAnalyzer, setup_monitoring_logger
 except ImportError as e:
     print(f"❌ Error de importación: {e}")
     print(
-        f"💡 Asegúrate de que los archivos config.py y monitoring_utils.py estén en el directorio:"
+        "💡 Asegúrate de que los archivos config.py y monitoring_utils.py estén en el directorio:"
     )
     print(f"   {current_dir}")
     sys.exit(1)
@@ -37,16 +38,16 @@ def demo_configuration():
     print(f"📁 Directorio de backup: {config.BACKUP_DIR}")
     print(f"📁 Directorio de imágenes: {config.UPLOAD_FOLDER}")
 
-    print(f"\n⚙️ Configuración de MongoDB:")
+    print("\n⚙️ Configuración de MongoDB:")
     print(f"   URI: {config.MONGO_URI[:50]}...")
     print(f"   Base de datos: {config.MONGODB_DB}")
 
-    print(f"\n📧 Configuración de correo:")
+    print("\n📧 Configuración de correo:")
     print(f"   Envío habilitado: {config.SEND_EMAIL}")
     print(f"   Servidor: {config.EMAIL_SERVER}")
     print(f"   Puerto: {config.EMAIL_PORT}")
 
-    print(f"\n🔍 Configuración de monitoreo:")
+    print("\n🔍 Configuración de monitoreo:")
     print(f"   Umbral de disco: {config.DISK_USAGE_THRESHOLD}%")
     print(f"   Umbral de memoria: {config.MEMORY_USAGE_THRESHOLD}%")
     print(f"   Modo de limpieza: {config.CLEANUP_MODE}")
@@ -115,7 +116,7 @@ def demo_log_analysis():
 
             recent_errors = analysis.get("recent_errors", [])
             if recent_errors:
-                print(f"\n🔍 Últimos errores:")
+                print("\n🔍 Últimos errores:")
                 for error in recent_errors[-3:]:  # Mostrar solo los últimos 3
                     print(f"   {error}")
         else:

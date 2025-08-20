@@ -10,33 +10,34 @@ Módulo para gestionar la conexión a la base de datos MongoDB de forma resilien
 Permite modo fallback y reconexión automática.
 """
 
-import os
-import time
 import logging
+import os
 import threading
+import time
+
+import certifi  # Añadir al inicio junto con los otros imports
 from pymongo import MongoClient
 from pymongo.errors import (
     ConnectionFailure,
-    ServerSelectionTimeoutError,
     OperationFailure,
+    ServerSelectionTimeoutError,
 )
-from config import (
-    MONGO_CONFIG,
-    COLLECTION_USERS,
-    COLLECTION_CATALOGOS,
-    COLLECTION_RESET_TOKENS,
-    COLLECTION_AUDIT_LOGS,
-)
-import certifi  # Añadir al inicio junto con los otros imports
 
 # Importar sistemas de caché y fallback
-from app.cache_system import cached, set_cache, get_cache
+from app.cache_system import cached, get_cache, set_cache
 from app.data_fallback import (
+    get_fallback_catalogs_by_user,
     get_fallback_user_by_email,
     get_fallback_user_by_id,
-    get_fallback_catalogs_by_user,
-    sync_users_to_fallback,
     sync_catalogs_to_fallback,
+    sync_users_to_fallback,
+)
+from config import (
+    COLLECTION_AUDIT_LOGS,
+    COLLECTION_CATALOGOS,
+    COLLECTION_RESET_TOKENS,
+    COLLECTION_USERS,
+    MONGO_CONFIG,
 )
 
 # Configuración de logging (solo consola para evitar problemas de permisos)

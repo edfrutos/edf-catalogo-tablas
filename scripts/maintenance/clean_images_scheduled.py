@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Script de limpieza periódica de imágenes no utilizadas
@@ -12,19 +11,20 @@ Este script:
 5. Envía un correo con el resumen si se configuró para ello
 """
 
-import os
-import sys
-import shutil
-import logging
-import smtplib
 import datetime
-import certifi
-from email.mime.text import MIMEText
+import logging
+import os
+import shutil
+import smtplib
+import sys
 from email.mime.multipart import MIMEMultipart
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
+from email.mime.text import MIMEText
+
+import certifi
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
+from pymongo import MongoClient
+from pymongo.server_api import ServerApi
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()

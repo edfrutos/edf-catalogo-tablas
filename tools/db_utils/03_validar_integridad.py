@@ -7,11 +7,12 @@
 # Autor: [Tu nombre o equipo] - 2025-05-28
 
 import os
-import certifi
-from pymongo import MongoClient
 from collections import Counter
-from dotenv import load_dotenv
 from datetime import datetime
+
+import certifi
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Cargar variables de entorno desde .env
 load_dotenv()

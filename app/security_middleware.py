@@ -5,9 +5,10 @@ Middleware de Seguridad - EDF CatálogoDeTablas
 Implementa headers de seguridad y protecciones básicas
 """
 
-from flask import request, abort, current_app
 import re
 from pathlib import Path
+
+from flask import abort, current_app, request
 
 
 class SecurityMiddleware:

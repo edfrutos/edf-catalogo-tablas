@@ -3,26 +3,28 @@
 Script para diagnosticar y corregir problemas de rutas de scripts
 """
 
-import os
-import sys
-import subprocess
 import json
-import requests
+import os
+import subprocess
+import sys
 from datetime import datetime
+
+import requests
+
 
 def check_blueprint_registration():
     """Verifica el registro de blueprints"""
     print("=== VERIFICACIÓN DE BLUEPRINTS ===")
-    
+
     # Verificar qué archivos de rutas existen
     route_files = [
         "app/routes/scripts_routes.py",
-        "app/routes/scripts_tools_routes.py", 
+        "app/routes/scripts_tools_routes.py",
         "app/routes/script_routes.py",
         "tools/app/routes/scripts_routes.py",
         "scripts/local/app/routes/scripts_routes.py"
     ]
-    
+
     existing_files = []
     for file_path in route_files:
         if os.path.exists(file_path):
@@ -30,23 +32,23 @@ def check_blueprint_registration():
             print(f"✅ {file_path}")
         else:
             print(f"❌ {file_path} (no existe)")
-    
+
     return existing_files
 
 def test_script_runner():
     """Prueba el script_runner directamente"""
     print("\n=== PRUEBA DE SCRIPT_RUNNER ===")
-    
+
     try:
         result = subprocess.run([
-            sys.executable, 
-            "tools/script_runner.py", 
+            sys.executable,
+            "tools/script_runner.py",
             "tools/local/db_utils/conexion_MongoDB.py"
         ], capture_output=True, text=True, timeout=30)
-        
-        print(f"✅ script_runner ejecutado exitosamente")
+
+        print("✅ script_runner ejecutado exitosamente")
         print(f"   Código de salida: {result.returncode}")
-        
+
         if result.stdout:
             try:
                 json_output = json.loads(result.stdout)
@@ -56,9 +58,9 @@ def test_script_runner():
                 print("   ❌ Error parseando JSON")
                 print(f"   Salida: {result.stdout[:200]}...")
                 return False
-        
+
         return result.returncode == 0
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
@@ -66,20 +68,20 @@ def test_script_runner():
 def test_web_routes():
     """Prueba las rutas web"""
     print("\n=== PRUEBA DE RUTAS WEB ===")
-    
+
     base_url = "http://127.0.0.1:8000"
     routes_to_test = [
         "/admin/tools/",
         "/admin/tools/execute",
         "/admin/scripts-tools-api/run"
     ]
-    
+
     session = requests.Session()
-    
+
     for route in routes_to_test:
         try:
             print(f"\nProbando: {route}")
-            
+
             if route.endswith("/execute"):
                 # POST request para execute
                 response = session.post(
@@ -99,10 +101,10 @@ def test_web_routes():
             else:
                 # GET request para otras rutas
                 response = session.get(f"{base_url}{route}", timeout=10)
-            
+
             print(f"   Código: {response.status_code}")
             print(f"   Content-Type: {response.headers.get('Content-Type', 'N/A')}")
-            
+
             if response.status_code == 200:
                 content_type = response.headers.get('Content-Type', '')
                 if 'application/json' in content_type:
@@ -121,16 +123,16 @@ def test_web_routes():
                 print("   ❌ No autorizado")
             else:
                 print(f"   ❌ Código inesperado: {response.status_code}")
-                
+
         except Exception as e:
             print(f"   ❌ Error: {e}")
-    
+
     return False
 
 def create_unified_script_route():
     """Crea una ruta unificada para scripts"""
     print("\n=== CREANDO RUTA UNIFICADA ===")
-    
+
     # Crear un archivo de ruta unificada
     unified_route_content = '''#!/usr/bin/env python3
 """
@@ -233,27 +235,27 @@ def tools_dashboard():
     """Página principal de herramientas"""
     return current_app.send_static_file("admin/tools_dashboard.html")
 '''
-    
+
     # Escribir el archivo
     with open("app/routes/unified_scripts_routes.py", "w") as f:
         f.write(unified_route_content)
-    
+
     print("✅ Archivo unified_scripts_routes.py creado")
     return True
 
 def update_app_registration():
     """Actualiza el registro de blueprints en la aplicación"""
     print("\n=== ACTUALIZANDO REGISTRO DE BLUEPRINTS ===")
-    
+
     # Leer el archivo main_app.py
     main_app_path = "main_app.py"
     if not os.path.exists(main_app_path):
         print(f"❌ {main_app_path} no encontrado")
         return False
-    
-    with open(main_app_path, "r") as f:
+
+    with open(main_app_path) as f:
         content = f.read()
-    
+
     # Buscar y reemplazar el registro de scripts_bp
     if "scripts_bp" in content:
         # Comentar el registro existente
@@ -261,17 +263,17 @@ def update_app_registration():
             "app.register_blueprint(scripts_bp)",
             "# app.register_blueprint(scripts_bp)  # Comentado para usar unified_scripts_bp"
         )
-        
+
         # Agregar el nuevo registro
         content = content.replace(
             "# Registrar rutas de mantenimiento y API usando la función dedicada",
             "# Registrar rutas de mantenimiento y API usando la función dedicada\n    from app.routes.unified_scripts_routes import unified_scripts_bp\n    app.register_blueprint(unified_scripts_bp)"
         )
-        
+
         # Escribir el archivo actualizado
         with open(main_app_path, "w") as f:
             f.write(content)
-        
+
         print("✅ main_app.py actualizado")
         return True
     else:
@@ -281,18 +283,18 @@ def update_app_registration():
 def restart_server():
     """Reinicia el servidor"""
     print("\n=== REINICIANDO SERVIDOR ===")
-    
+
     try:
-        result = subprocess.run(["systemctl", "restart", "edefrutos2025"], 
+        result = subprocess.run(["systemctl", "restart", "edefrutos2025"],
                               capture_output=True, text=True)
-        
+
         if result.returncode == 0:
             print("✅ Servidor reiniciado exitosamente")
             return True
         else:
             print(f"❌ Error reiniciando servidor: {result.stderr}")
             return False
-            
+
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
@@ -302,52 +304,52 @@ def main():
     print("🔧 DIAGNÓSTICO Y CORRECCIÓN DE RUTAS DE SCRIPTS")
     print("=" * 60)
     print(f"📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
     # Verificaciones
     print("\n1. Verificando blueprints existentes...")
     existing_files = check_blueprint_registration()
-    
+
     print("\n2. Probando script_runner...")
     script_runner_ok = test_script_runner()
-    
+
     print("\n3. Probando rutas web...")
     web_routes_ok = test_web_routes()
-    
+
     # Si hay problemas, aplicar correcciones
     if not web_routes_ok:
         print("\n🔧 APLICANDO CORRECCIONES...")
-        
+
         print("\n4. Creando ruta unificada...")
         create_unified_script_route()
-        
+
         print("\n5. Actualizando registro de blueprints...")
         update_app_registration()
-        
+
         print("\n6. Reiniciando servidor...")
         restart_server()
-        
+
         # Esperar un momento y probar de nuevo
         import time
         time.sleep(5)
-        
+
         print("\n7. Probando rutas después de las correcciones...")
         web_routes_ok = test_web_routes()
-    
+
     # Resumen final
     print("\n" + "=" * 60)
     print("📊 RESUMEN FINAL")
     print("=" * 60)
-    
+
     print(f"✅ Script Runner: {'OK' if script_runner_ok else 'ERROR'}")
     print(f"✅ Rutas Web: {'OK' if web_routes_ok else 'ERROR'}")
-    
+
     if script_runner_ok and web_routes_ok:
         print("\n🎉 ¡Todas las correcciones aplicadas exitosamente!")
         print("El sistema de scripts debería funcionar correctamente ahora.")
     else:
         print("\n⚠️  Algunos problemas persisten.")
         print("Revisar los errores anteriores para más detalles.")
-    
+
     return script_runner_ok and web_routes_ok
 
 if __name__ == "__main__":

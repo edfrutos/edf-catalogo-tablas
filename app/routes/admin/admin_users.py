@@ -10,12 +10,14 @@ User management routes for admin functionality.
 """
 import logging
 from datetime import datetime
+
 from bson import ObjectId
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
+
+from app.audit import audit_log
 from app.database import get_users_collection
 from app.routes.maintenance_routes import admin_required
-from app.audit import audit_log
 
 admin_users_bp = Blueprint('admin_users', __name__, url_prefix='/admin/users')
 logger = logging.getLogger(__name__)
@@ -166,10 +168,10 @@ def editar_usuario(user_id):
                 )
                 # Registrar en el log de auditoría
                 audit_log(
-                    "user_verified", 
+                    "user_verified",
                     user_id=session.get('user_id'),
                     details={
-                        "verified_user_email": user.get('email'), 
+                        "verified_user_email": user.get('email'),
                         "verified_by": session.get('username'),
                         "verified_user_name": user.get('nombre', 'desconocido')
                     }

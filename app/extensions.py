@@ -1,14 +1,16 @@
 # app/extensions.py
 
-from flask_pymongo import PyMongo
-from flask_mail import Mail
-from flask_login import LoginManager
-from flask_session import Session
-import boto3
-import certifi
 import logging
 import os
 import sys
+
+import boto3
+import certifi
+from flask_login import LoginManager
+from flask_mail import Mail
+from flask_pymongo import PyMongo
+
+from flask_session import Session
 
 mail = Mail()
 mongo = PyMongo()

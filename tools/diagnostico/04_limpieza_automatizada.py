@@ -7,10 +7,11 @@
 # Autor: EDF Developer - 2025-05-28
 
 import os
-import certifi
-from pymongo import MongoClient
 from collections import Counter, defaultdict
+
+import certifi
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -50,7 +51,7 @@ for email, us in email_dups.items():
                 f"   _id: {u.get('_id')}, username: {u.get('username')}, name: {u.get('name', '')} "
             )
         print(
-            f"  SUGERENCIA: Mantén solo uno y elimina los demás con: db.users.deleteOne({{'_id': ObjectId('...')}})"
+            "  SUGERENCIA: Mantén solo uno y elimina los demás con: db.users.deleteOne({'_id': ObjectId('...')})"
         )
 
 print("\nUsuarios duplicados por username:")
@@ -62,7 +63,7 @@ for username, us in username_dups.items():
                 f"   _id: {u.get('_id')}, email: {u.get('email')}, name: {u.get('name', '')} "
             )
         print(
-            f"  SUGERENCIA: Mantén solo uno y elimina los demás con: db.users.deleteOne({{'_id': ObjectId('...')}})"
+            "  SUGERENCIA: Mantén solo uno y elimina los demás con: db.users.deleteOne({'_id': ObjectId('...')})"
         )
 
 # 2. Catálogos/spreadsheets huérfanos

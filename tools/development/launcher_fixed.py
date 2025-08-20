@@ -5,12 +5,12 @@
 # Variables de entorno: [si aplica]
 # Autor: [Tu nombre o equipo] - 2025-06-28
 
-import sys
+import logging
 import os
+import socket
+import sys
 import threading
 import time
-import socket
-import logging
 import traceback
 
 # Configurar logging básico
@@ -32,14 +32,14 @@ logs_dir = os.path.join(base_path, 'logs')
 try:
     os.makedirs(logs_dir, exist_ok=True)
     log_file = os.path.join(logs_dir, 'launcher.log')
-    
+
     # Configurar logging a archivo
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    
+
     logger.info("Sistema de logging configurado correctamente")
 except Exception as e:
     logger.warning(f"No se pudo configurar logging a archivo: {e}")
@@ -47,7 +47,7 @@ except Exception as e:
 # Importar módulos necesarios
 try:
     import webview
-    logger.info(f"PyWebView importado correctamente")
+    logger.info("PyWebView importado correctamente")
 except ImportError as e:
     logger.error(f"Error importando PyWebView: {e}")
     sys.exit(1)
@@ -90,35 +90,35 @@ def main():
     """Función principal"""
     try:
         logger.info("Iniciando aplicación EDF CatalogoJoyero...")
-        
+
         # Encontrar puerto libre
         port = find_free_port()
         logger.info(f"Puerto seleccionado: {port}")
-        
+
         # Iniciar Flask en un hilo separado
         flask_thread = threading.Thread(target=run_flask, args=(port,), daemon=True)
         flask_thread.start()
         logger.info("Hilo de Flask iniciado")
-        
+
         # Esperar a que Flask esté listo
         time.sleep(3)
         logger.info("Esperando a que Flask esté listo...")
-        
+
         # Crear ventana webview
         logger.info("Creando ventana webview...")
-        
+
         window = webview.create_window(
-            'EDF CatalogoJoyero', 
-            f'http://127.0.0.1:{port}', 
-            width=1200, 
+            'EDF CatalogoJoyero',
+            f'http://127.0.0.1:{port}',
+            width=1200,
             height=800,
             min_size=(800, 600),
             text_select=True,
             confirm_close=True
         )
-        
+
         logger.info("Ventana webview creada, iniciando...")
-        
+
         # Iniciar webview
         if sys.platform == 'darwin':
             try:
@@ -132,9 +132,9 @@ def main():
                     raise
         else:
             webview.start(debug=False)
-            
+
         logger.info("Aplicación finalizada")
-        
+
     except Exception as e:
         logger.error(f"Error en main(): {e}")
         logger.error(traceback.format_exc())

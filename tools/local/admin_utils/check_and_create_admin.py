@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Script: check_and_create_admin.py
 Descripción: Verifica si existe un usuario admin y lo crea si no existe
@@ -9,14 +8,15 @@ Variables de entorno: MONGO_URI
 Autor: EDF Developer - 2025-01-27
 """
 
+import hashlib
 import os
+import secrets
 import sys
 from pathlib import Path
+
+import certifi
 from dotenv import load_dotenv
 from pymongo import MongoClient
-import certifi
-import hashlib
-import secrets
 
 # Cargar variables de entorno
 load_dotenv()
@@ -41,7 +41,7 @@ def create_admin_user() -> bool:
         admin_user = users_collection.find_one({"role": "admin"})
 
         if admin_user:
-            print(f"✅ Usuario admin ya existe:")
+            print("✅ Usuario admin ya existe:")
             print(f"   Usuario: {admin_user.get('username', 'N/A')}")
             print(f"   Email: {admin_user.get('email', 'N/A')}")
             print(f"   Rol: {admin_user.get('role', 'N/A')}")

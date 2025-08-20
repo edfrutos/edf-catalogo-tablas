@@ -6,9 +6,10 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-06-30
 
+import csv
 import random
 import string
-import csv
+
 
 def generar_contraseña(longitud=12):
     """Genera una contraseña aleatoria de la longitud especificada."""

@@ -6,11 +6,12 @@
 # Autor: EDF Developer - 2025-05-28
 
 import os
+import secrets
+
 import boto3
-from werkzeug.utils import secure_filename
 from botocore.exceptions import ClientError
 from flask import current_app
-import secrets
+from werkzeug.utils import secure_filename
 
 # Importaciones para Google Drive
 try:
@@ -66,7 +67,7 @@ def get_storage_client():
         if get_drive is None:
             print("Google Drive utils no disponible")
             return None
-        
+
         # Intentar obtener el cliente de Google Drive
         drive_client = get_drive()
         if drive_client:

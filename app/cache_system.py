@@ -9,13 +9,12 @@
 Sistema de caché en memoria para reducir la dependencia en MongoDB. Almacena temporalmente resultados de consultas frecuentes.
 """
 
-import time
-import logging
-import threading
 import json
+import logging
 import os
+import threading
+import time
 from functools import wraps
-
 
 # Configuración de logging (solo consola para evitar errores de permisos)
 logging.basicConfig(
@@ -201,7 +200,7 @@ def _load_cache_from_disk():
 
     try:
         if os.path.exists(_cache_file):
-            with open(_cache_file, "r") as f:
+            with open(_cache_file) as f:
                 disk_cache = json.load(f)
 
             # Filtrar elementos expirados

@@ -7,6 +7,7 @@ Define rutas, configuraciones y constantes compartidas.
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Cargar variables de entorno

@@ -5,9 +5,10 @@ Script para sincronizar los campos 'data' y 'rows' en todas las tablas
 
 import os
 import sys
+
+from bson import ObjectId  # noqa: F401
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from bson import ObjectId  # noqa: F401
 
 # Cargar variables de entorno
 load_dotenv()
@@ -69,7 +70,7 @@ def sync_data_rows():
                 )
                 if result.modified_count > 0:
                     actualizado = True
-                    print(f"   ✅ 'data' actualizado desde 'rows'")
+                    print("   ✅ 'data' actualizado desde 'rows'")
 
             # Caso 3: ambos existen pero tienen diferentes longitudes
             elif len(data) != len(rows):
@@ -83,7 +84,7 @@ def sync_data_rows():
                     )
                     if result.modified_count > 0:
                         actualizado = True
-                        print(f"   ✅ 'rows' actualizado desde 'data'")
+                        print("   ✅ 'rows' actualizado desde 'data'")
                 else:
                     print(
                         f"   📝 'rows' tiene más elementos ({len(rows)} vs {len(data)}), actualizando 'data'"
@@ -93,15 +94,15 @@ def sync_data_rows():
                     )
                     if result.modified_count > 0:
                         actualizado = True
-                        print(f"   ✅ 'data' actualizado desde 'rows'")
+                        print("   ✅ 'data' actualizado desde 'rows'")
             else:
-                print(f"   ✅ 'data' y 'rows' ya están sincronizados")
+                print("   ✅ 'data' y 'rows' ya están sincronizados")
 
             if actualizado:
                 documentos_actualizados += 1
 
-        print(f"\n" + "=" * 60)
-        print(f"📊 RESUMEN:")
+        print("\n" + "=" * 60)
+        print("📊 RESUMEN:")
         print(f"✅ Documentos procesados: {len(documentos)}")
         print(f"🔧 Documentos actualizados: {documentos_actualizados}")
         print(
@@ -113,7 +114,7 @@ def sync_data_rows():
                 f"\n🎉 ¡Sincronización completada! {documentos_actualizados} documentos corregidos"
             )
         else:
-            print(f"\n✅ ¡Todas las tablas ya estaban sincronizadas!")
+            print("\n✅ ¡Todas las tablas ya estaban sincronizadas!")
 
         return True
 

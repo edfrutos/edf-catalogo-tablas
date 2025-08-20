@@ -4,11 +4,11 @@ Lanzador para la aplicación web empaquetada
 Abre automáticamente el navegador cuando el servidor esté listo
 """
 
-import webbrowser
+import os
+import sys  # noqa: F401
 import threading
 import time
-import sys  # noqa: F401
-import os
+import webbrowser
 
 
 def open_browser():
@@ -34,10 +34,10 @@ def main():
     # Importar y ejecutar el servidor Flask con la configuración correcta
     try:
         # Importar desde wsgi pero aplicar configuración especial de sesiones
-        from wsgi import app
-
         # Aplicar la misma configuración de sesiones que la app nativa
         import sys
+
+        from wsgi import app
 
         if getattr(sys, "frozen", False):
             app.config["SESSION_TYPE"] = "filesystem"

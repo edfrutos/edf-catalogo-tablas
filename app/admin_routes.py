@@ -1,9 +1,10 @@
 # app/admin_routes.py
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
-from app.models import get_users_collection
-from app.database import get_mongo_db
 from bson.objectid import ObjectId
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+
+from app.database import get_mongo_db
 from app.decorators import admin_required  # type: ignore[attr-defined]
+from app.models import get_users_collection
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 

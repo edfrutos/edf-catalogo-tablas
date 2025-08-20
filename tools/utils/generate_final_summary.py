@@ -5,6 +5,7 @@ Script para generar el resumen final del sistema de notificación de contraseña
 
 import os
 import sys
+
 from dotenv import load_dotenv
 
 # Agregar el directorio actual al path
@@ -45,12 +46,12 @@ def generate_final_summary():
             print(f"🔑 Administradores: {len(admins)}")
             print(f"👤 Usuarios regulares: {len(regular_users)}")
 
-            print(f"\n🔐 CREDENCIALES DE ACCESO")
+            print("\n🔐 CREDENCIALES DE ACCESO")
             print("-" * 50)
 
             # Mostrar credenciales de administradores
             if admins:
-                print(f"\n🔑 ADMINISTRADORES:")
+                print("\n🔑 ADMINISTRADORES:")
                 for user in admins:
                     username = user.get("username", "N/A")
                     email = user.get("email", "N/A")
@@ -66,7 +67,7 @@ def generate_final_summary():
 
             # Mostrar algunos usuarios regulares como ejemplo
             if regular_users:
-                print(f"👤 USUARIOS REGULARES (ejemplos):")
+                print("👤 USUARIOS REGULARES (ejemplos):")
                 for i, user in enumerate(
                     regular_users[:5]
                 ):  # Solo mostrar 5 como ejemplo
@@ -113,28 +114,28 @@ def main():
             f"⚠️  Notificación de contraseñas: https://edefrutos2025.xyz/password/password-reset-notification"  # noqa: F541
         )
         print(
-            f"🔑 Login temporal: https://edefrutos2025.xyz/password/temporary-login"
+            "🔑 Login temporal: https://edefrutos2025.xyz/password/temporary-login"
         )  # noqa: F541
         print(
-            f"🔄 Cambio forzado: https://edefrutos2025.xyz/usuarios/force_password_change"
+            "🔄 Cambio forzado: https://edefrutos2025.xyz/usuarios/force_password_change"
         )
 
-        print(f"\n📋 INSTRUCCIONES PARA USUARIOS")
+        print("\n📋 INSTRUCCIONES PARA USUARIOS")
         print("-" * 50)
-        print(f"1. 📧 Los usuarios deben usar su EMAIL como identificador")
-        print(f"2. 🔑 La contraseña temporal es: username123")
-        print(f"3. ⚠️  Al acceder, serán redirigidos a cambiar la contraseña")
-        print(f"4. ✅ Después del cambio, podrán usar el sistema normalmente")
+        print("1. 📧 Los usuarios deben usar su EMAIL como identificador")
+        print("2. 🔑 La contraseña temporal es: username123")
+        print("3. ⚠️  Al acceder, serán redirigidos a cambiar la contraseña")
+        print("4. ✅ Después del cambio, podrán usar el sistema normalmente")
 
-        print(f"\n🎯 FLUJO DE USUARIO")
+        print("\n🎯 FLUJO DE USUARIO")
         print("-" * 50)
-        print(f"1. Usuario va a: /password/password-reset-notification")
-        print(f"2. Busca sus credenciales o va a: /password/temporary-login")
-        print(f"3. Accede con email + contraseña temporal")
-        print(f"4. Es redirigido a: /usuarios/force_password_change")
-        print(f"5. Cambia su contraseña y accede al sistema")
+        print("1. Usuario va a: /password/password-reset-notification")
+        print("2. Busca sus credenciales o va a: /password/temporary-login")
+        print("3. Accede con email + contraseña temporal")
+        print("4. Es redirigido a: /usuarios/force_password_change")
+        print("5. Cambia su contraseña y accede al sistema")
 
-        print(f"\n✅ SISTEMA COMPLETAMENTE FUNCIONAL")
+        print("\n✅ SISTEMA COMPLETAMENTE FUNCIONAL")
         print("=" * 70)
         return True
     else:

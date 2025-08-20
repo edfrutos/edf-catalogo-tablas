@@ -10,15 +10,16 @@ This script will:
 """
 
 import os
+import secrets
 import sys
 import time
 from pathlib import Path
-from dotenv import load_dotenv
+
 import boto3
-from botocore.exceptions import ClientError
-from pymongo import MongoClient
-import secrets
 import certifi
+from botocore.exceptions import ClientError
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Load environment variables from .env file
 load_dotenv()
@@ -83,7 +84,7 @@ def upload_file_to_s3(file_path, object_name=None):
     """
     if object_name is None:
         object_name = os.path.basename(file_path)
-        
+
     try:
         s3_client.upload_file(file_path, S3_BUCKET_NAME, object_name)
         return True
@@ -100,61 +101,61 @@ def migrate_images():
     images_migrated = 0
     images_failed = 0
     images_not_found = 0
-    
+
     print(f"Starting migration of images to S3 bucket: {S3_BUCKET_NAME}")
-    
+
     # Find all records with images
     query = {"Imagenes": {"$exists": True, "$ne": [None, None, None]}}
     records = catalog_collection.find(query)
-    
+
     total_records = catalog_collection.count_documents({})
     records_with_images = catalog_collection.count_documents(query)
-    
+
     print(f"Found {records_with_images} records with images out of {total_records} total records")
-    
+
     # Process each record
     for record in records:
         record_id = record.get("_id")
         images = record.get("Imagenes", [])
-        
+
         # Skip records without images
         if not images:
             continue
-            
+
         print(f"\nProcessing record {record_id}:")
-        
+
         # Process each image in the record
         for i, image_path in enumerate(images):
             if not image_path:
                 continue
-                
+
             total_images += 1
-            
+
             # Check if image path is already in S3 format
             if image_path.startswith("s3://"):
                 print(f"  Image {i+1} already in S3 format: {image_path}")
                 continue
-                
+
             # Extract filename from the image path
             if image_path.startswith("/"):
                 image_path = image_path[1:]  # Remove leading slash
-                
+
             filename = os.path.basename(image_path)
             local_file_path = UPLOAD_FOLDER / filename
-            
+
             print(f"  Processing image {i+1}: {filename}")
-            
+
             # Check if file exists
             if not local_file_path.exists():
                 print(f"    File not found: {local_file_path}")
                 images_not_found += 1
                 continue
-                
+
             # Generate a unique filename to avoid collisions
             timestamp = int(time.time())
             random_suffix = secrets.token_hex(4)
             unique_filename = f"{timestamp}_{random_suffix}_{filename}"
-            
+
             # Upload file to S3
             print(f"    Uploading to S3 as: {unique_filename}")
             if upload_file_to_s3(str(local_file_path), unique_filename):
@@ -169,7 +170,7 @@ def migrate_images():
             else:
                 print(f"    ❌ Failed to upload {filename} to S3")
                 images_failed += 1
-    
+
     # Print statistics
     print("\n" + "="*50)
     print("MIGRATION STATISTICS")
@@ -181,7 +182,7 @@ def migrate_images():
     print(f"Images not found in filesystem: {images_not_found}")
     print(f"Images failed to upload: {images_failed}")
     print("="*50)
-    
+
     if images_migrated + images_not_found + images_failed == total_images:
         print("✅ Migration completed successfully")
     else:

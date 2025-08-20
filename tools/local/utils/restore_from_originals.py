@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Script: restore_from_originals.py
 Descripción: Restaura archivos desde sus ubicaciones originales
@@ -185,12 +184,12 @@ def restore_from_originals():
             print(f"  ⚠️  Archivo original no existe: {original_file}")
 
     print("\n" + "=" * 60)
-    print(f"📊 Resumen de restauración:")
+    print("📊 Resumen de restauración:")
     print(f"  ✅ Archivos restaurados: {len(restored_files)}")
     print(f"  ❌ Archivos fallidos: {len(failed_files)}")
 
     if failed_files:
-        print(f"\n❌ Archivos que fallaron:")
+        print("\n❌ Archivos que fallaron:")
         for file in failed_files:
             print(f"  - {file}")
 

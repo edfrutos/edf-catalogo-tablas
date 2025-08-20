@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-from pymongo import MongoClient
-from dotenv import load_dotenv
-import os
-from werkzeug.security import generate_password_hash
 import datetime
+import os
 from typing import Optional
+
+from dotenv import load_dotenv
+from pymongo import MongoClient
+from werkzeug.security import generate_password_hash
 
 load_dotenv()
 uri = os.getenv("MONGO_URI")

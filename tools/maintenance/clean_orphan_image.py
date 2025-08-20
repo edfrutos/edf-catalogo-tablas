@@ -3,14 +3,14 @@
 Script para limpiar imagen huérfana de LabelPrint
 """
 
-import sys
 import os
+import sys
 
 sys.path.append("/Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas")
 
 import pymongo
-from dotenv import load_dotenv
 from bson import ObjectId
+from dotenv import load_dotenv
 
 # Cargar variables de entorno
 load_dotenv()
@@ -62,7 +62,7 @@ def main():
             # Actualizar en MongoDB
             update_result = spreadsheets_collection.update_one(
                 {"_id": ObjectId(tabla_id)},
-                {"$set": {f"data.11.imagenes": imagenes_despues}},
+                {"$set": {"data.11.imagenes": imagenes_despues}},
             )
 
             if update_result.modified_count > 0:

@@ -5,11 +5,13 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-06-09
 
-import os
 import json
-from datetime import datetime
-from app.models import get_users_collection
 import logging
+import os
+from datetime import datetime
+
+from app.models import get_users_collection
+
 logger = logging.getLogger(__name__)
 
 def normalize_user_fields(user):

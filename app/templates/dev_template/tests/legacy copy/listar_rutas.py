@@ -2,6 +2,7 @@
 # Script para listar todas las rutas registradas en la aplicación Flask
 
 import logging
+
 from app import create_app
 
 # Desactivar logging para este script

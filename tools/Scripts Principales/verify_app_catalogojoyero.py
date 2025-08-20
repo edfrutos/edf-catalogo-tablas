@@ -6,12 +6,13 @@
 # Variables de entorno: MONGO_URI
 # Autor: Sistema de Verificación - 2025-05-28
 
+import os
+from typing import Optional
+
+import certifi
+from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.database import Database
-import certifi
-import os
-from dotenv import load_dotenv
-from typing import Optional
 
 
 # Colores para la salida
@@ -104,5 +105,5 @@ print_info(f"Total de documentos en todas las colecciones: {total_docs}")
 print_info("Verificación completada exitosamente")
 
 print(f"\n{Colors.BOLD}{Colors.GREEN}{'=' * 60}")
-print(f"  VERIFICACIÓN FINALIZADA")
+print("  VERIFICACIÓN FINALIZADA")
 print(f"{'=' * 60}{Colors.END}")

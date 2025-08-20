@@ -6,7 +6,9 @@
 # Autor: EDF Developer - 2025-05-28
 
 from datetime import datetime, timedelta
+
 from bson import ObjectId
+
 
 class LoginAttempt:
     def __init__(self, db):
@@ -25,7 +27,7 @@ class LoginAttempt:
                 'success': success
             }
             self.attempts_collection.insert_one(attempt)
-            
+
             if not success:
                 # Contar intentos fallidos en los últimos 30 minutos
                 recent_attempts = self.attempts_collection.count_documents({
@@ -33,7 +35,7 @@ class LoginAttempt:
                     'success': False,
                     'timestamp': {'$gt': now - timedelta(minutes=30)}
                 })
-                
+
                 if recent_attempts >= self.max_attempts:
                     # Bloquear usuario
                     self.users_collection.update_one(
@@ -44,9 +46,9 @@ class LoginAttempt:
                         }}
                     )
                     return False, 'Cuenta bloqueada por múltiples intentos fallidos'
-                    
+
             return True, None
-            
+
         except Exception as e:
             print(f'Error al registrar intento de login: {str(e)}')
             return False, 'Error interno del servidor'
@@ -56,7 +58,7 @@ class LoginAttempt:
             user = self.users_collection.find_one({'email': email})
             if not user:
                 return False, 'Usuario no encontrado'
-                
+
             if 'locked_until' in user:
                 if user['locked_until'] > datetime.now():
                     remaining = (user['locked_until'] - datetime.now()).total_seconds() / 60
@@ -68,9 +70,9 @@ class LoginAttempt:
                         {'$unset': {'locked_until': 1},
                          '$set': {'updated_at': datetime.now()}}
                     )
-                    
+
             return False, None
-            
+
         except Exception as e:
             print(f'Error al verificar bloqueo: {str(e)}')
             return True, 'Error interno del servidor'
@@ -221,7 +223,7 @@ class UserProfile:
         except Exception as e:
             print(f'Error al actualizar último login: {str(e)}')
             return False
-    
+
     @staticmethod
     def get_login_history(db, user_id, limit=10):
         return list(db.login_attempts.find(

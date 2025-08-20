@@ -5,8 +5,10 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-06-03
 
-import certifi
 import os
+
+import certifi
+
 os.environ['SSL_CERT_FILE'] = certifi.where()
 from pymongo import MongoClient
 

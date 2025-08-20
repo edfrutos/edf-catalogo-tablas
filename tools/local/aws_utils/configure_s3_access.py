@@ -29,13 +29,14 @@ Autor: EDF Developer - 2025-08-08
 Versión: 1.0
 """
 
+import json
 import os
 import sys
-import json
+from pathlib import Path
+
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from dotenv import load_dotenv
-from pathlib import Path
 
 # Cargar variables de entorno
 load_dotenv()
@@ -85,7 +86,7 @@ class S3Configurator:
 
             # Obtener identidad del usuario
             identity = sts_client.get_caller_identity()
-            print(f"✅ Conexión exitosa a AWS")
+            print("✅ Conexión exitosa a AWS")
             print(f"   Usuario: {identity['Arn']}")
             print(f"   Account ID: {identity['Account']}")
 

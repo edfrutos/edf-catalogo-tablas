@@ -2,24 +2,26 @@
 import os
 import tempfile
 import zipfile
+
 from flask import (
     Blueprint,
+    flash,
+    redirect,
     request,
     send_from_directory,
-    redirect,
-    url_for,
-    flash,
     session,
+    url_for,
 )
 from werkzeug.utils import secure_filename
+
 from app import app, s3_client  # type: ignore
+from app.models import S3_BUCKET_NAME  # type: ignore
 from app.utils import (
     allowed_file,  # type: ignore
-    upload_file_to_s3,  # type: ignore
-    get_s3_url,  # type: ignore
     eliminar_archivo_imagen,  # type: ignore
+    get_s3_url,  # type: ignore
+    upload_file_to_s3,  # type: ignore
 )
-from app.models import S3_BUCKET_NAME  # type: ignore
 
 uploads_bp = Blueprint("uploads", __name__)
 

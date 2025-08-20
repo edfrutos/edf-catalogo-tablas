@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-import os
-from pymongo import MongoClient
-from datetime import datetime
-from dotenv import load_dotenv
-import logging
-from werkzeug.security import generate_password_hash, check_password_hash
-import hashlib
 import base64
+import hashlib
+import logging
+import os
+from datetime import datetime
+
+from dotenv import load_dotenv
+from pymongo import MongoClient
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from app.models import get_users_collection
 
 # Configurar logging
@@ -35,21 +37,21 @@ def convert_scrypt_to_werkzeug(scrypt_hash, password):
         parts = scrypt_hash.split(':')
         if len(parts) != 4:
             return None
-            
+
         n = int(parts[1])
         r = int(parts[2])
         p = int(parts[3])
         salt_and_hash = parts[4]
-        
+
         # Extraer salt
         salt, _ = salt_and_hash.split('$')
         salt = bytes.fromhex(salt)
-        
+
         # Verificar si la contraseña coincide con el hash scrypt
         if hashlib.scrypt(password.encode('utf-8'), salt=salt, n=n, r=r, p=p, dklen=64).hex() == salt_and_hash.split('$')[1]:
             # Si coincide, generar un nuevo hash Werkzeug
             return generate_password_hash(password)
-        
+
         return None
     except Exception as e:
         logger.error(f"Error convirtiendo scrypt a werkzeug: {str(e)}")
@@ -60,12 +62,12 @@ def migrate_user(user_id):
         # Obtener datos de ambas colecciones
         user = users.find_one({'_id': user_id})
         unified = users_unified.find_one({'_id': user_id})
-        
+
         # Si no existe en ninguna colección, saltar
         if not user and not unified:
             logger.error(f"Usuario no encontrado en ninguna colección: {user_id}")
             return
-            
+
         # Usar el formato de 'users' como base
         merged_user = {
             '_id': user_id,
@@ -93,7 +95,7 @@ def migrate_user(user_id):
             # Convertir a string si es bytes
             if isinstance(password, bytes):
                 password = password.decode('utf-8')
-                
+
             # Determinar el tipo de hash
             if password.startswith('scrypt:'):
                 merged_user['password'] = password
@@ -112,15 +114,15 @@ def migrate_user(user_id):
             {'$set': merged_user},
             upsert=True
         )
-        
+
         if result.modified_count > 0 or result.upserted_id:
             logger.info(f"Usuario migrado exitosamente: {merged_user['email']}")
-            
+
             # Eliminar de users_unified si existe
             if unified:
                 users_unified.delete_one({'_id': user_id})
                 logger.info(f"Usuario eliminado de users_unified: {merged_user['email']}")
-        
+
     except Exception as e:
         logger.error(f"Error migrando usuario {user_id}: {str(e)}")
 
@@ -132,15 +134,15 @@ def main():
             all_ids.add(user['_id'])
         for user in users_unified.find({}, {'_id': 1}):
             all_ids.add(user['_id'])
-            
+
         logger.info(f"Iniciando migración de {len(all_ids)} usuarios")
-        
+
         # Migrar cada usuario
         for user_id in all_ids:
             migrate_user(user_id)
-            
+
         logger.info("Migración completada")
-        
+
     except Exception as e:
         logger.error(f"Error en la migración: {str(e)}")
 

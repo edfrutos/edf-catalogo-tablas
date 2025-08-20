@@ -2,20 +2,21 @@
 # app/routes/scripts_routes.py
 
 import os
-import sys
 import subprocess
+import sys
 import urllib.parse
 from datetime import datetime
 from functools import wraps
+
 from flask import (
     Blueprint,
-    render_template,
+    flash,
     jsonify,
+    redirect,
+    render_template,
     request,
     session,
-    redirect,
     url_for,
-    flash,
 )
 
 
@@ -23,7 +24,7 @@ from flask import (
 def extract_description(script_path):
     """Extrae la descripción de un script desde sus comentarios."""
     try:
-        with open(script_path, "r", encoding="utf-8") as f:
+        with open(script_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 # Para scripts Python con comentarios tipo '# Descripción:'
@@ -46,7 +47,7 @@ def extract_description(script_path):
                         parts = line.split("para")
                         if len(parts) > 1:
                             return parts[1].strip()
-    except (IOError, OSError, UnicodeDecodeError) as e:
+    except (OSError, UnicodeDecodeError) as e:
         print(f"Error al extraer descripción de {script_path}: {e}")
     return ""
 
@@ -188,7 +189,7 @@ def scripts_metadata():
                                     "entorno": "local",
                                 }
                             )
-                except (IOError, OSError) as e:
+                except OSError as e:
                     print(f"Error procesando {directorio}: {e}")
                     continue
 
@@ -233,7 +234,7 @@ def scripts_metadata():
                                     "entorno": "produccion",
                                 }
                             )
-                except (IOError, OSError) as e:
+                except OSError as e:
                     print(f"Error procesando {directorio}: {e}")
                     continue
 
@@ -272,7 +273,7 @@ def execute_script():
                         )
                 else:
                     print(
-                        f"Error: Content-Type indica JSON pero request no es JSON válido"
+                        "Error: Content-Type indica JSON pero request no es JSON válido"
                     )
                     script_path = ""
             elif (
@@ -477,7 +478,7 @@ def view_script_content_route(script_path):
                 {"error": f"Script fuera del directorio del proyecto: {abs_path}"}
             ), 403
 
-        with open(abs_path, "r", encoding="utf-8") as f:
+        with open(abs_path, encoding="utf-8") as f:
             content = f.read()
 
         return jsonify(

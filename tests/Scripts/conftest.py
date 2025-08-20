@@ -64,19 +64,19 @@ def app():
     app = create_app()
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False  # Si usas Flask-WTF
-    
+
     # La aplicación ya inicializa MongoDB en create_app(), pero nos aseguramos
     # de que esté correctamente inicializada para los tests
     if not hasattr(app, 'mongo_client') or app.mongo_client is None:
         initialize_db(app=app)
         app.mongo = get_mongo_client()
         app.mongo_db = get_mongo_db()
-    
+
     with app.app_context():
         g.mongo = app.mongo
         g.users_collection = app.mongo_db["users"]
         yield app  # Usar yield en lugar de return para permitir limpieza después
-    
+
     # No es necesario cerrar el cliente aquí ya que se maneja globalmente,
     # pero podríamos añadir limpieza adicional si fuera necesario
 

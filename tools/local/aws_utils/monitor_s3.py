@@ -30,16 +30,17 @@ Autor: EDF Developer - 2025-08-08
 Versión: 1.0
 """
 
+import json
+import logging
 import os
 import sys
-import json
+from collections import defaultdict
+from datetime import datetime, timedelta
+from pathlib import Path
+
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
-from pathlib import Path
-from datetime import datetime, timedelta
-import logging
-from collections import defaultdict
 
 # Cargar variables de entorno
 load_dotenv()
@@ -136,7 +137,7 @@ class S3Monitor:
                 "file_types": dict(top_file_types),
             }
 
-            print(f"✅ Métricas de almacenamiento obtenidas")
+            print("✅ Métricas de almacenamiento obtenidas")
             print(f"   📄 Objetos totales: {total_objects:,}")
             print(f"   💾 Tamaño total: {total_size_gb:.2f} GB")
             print(f"   📊 Tamaño promedio: {average_size / 1024:.2f} KB")
@@ -215,7 +216,7 @@ class S3Monitor:
                 "objects_larger_than_10mb": len(large_objects),
             }
 
-            print(f"✅ Análisis de objetos completado")
+            print("✅ Análisis de objetos completado")
             print(f"   📅 Objetos antiguos (>30 días): {len(old_objects)}")
             print(f"   📦 Objetos grandes (>10MB): {len(large_objects)}")
             print(f"   🆕 Objetos recientes (<7 días): {recent_objects}")
@@ -269,7 +270,7 @@ class S3Monitor:
                 "prices_used": region_prices,
             }
 
-            print(f"✅ Estimación de costos completada")
+            print("✅ Estimación de costos completada")
             print(f"   💰 Costo de almacenamiento: ${storage_cost:.2f}/mes")
             print(f"   🔄 Costo de requests: ${request_cost:.2f}/mes")
             print(f"   💵 Costo total estimado: ${total_estimated_cost:.2f}/mes")

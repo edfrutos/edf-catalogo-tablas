@@ -7,11 +7,12 @@
 # Autor: EDF Developer - 2025-05-28
 
 import os
-import certifi
-from pymongo import MongoClient
-from bson import ObjectId
 from collections import Counter
+
+import certifi
+from bson import ObjectId
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -160,7 +161,7 @@ def main():
         return
 
     # Mostrar resumen
-    print(f"\n📊 RESUMEN DE HUÉRFANOS:")
+    print("\n📊 RESUMEN DE HUÉRFANOS:")
     print(f"   - Catálogos: {len(huérfanos['catalogs'])}")
     print(f"   - Spreadsheets: {len(huérfanos['spreadsheets'])}")
 

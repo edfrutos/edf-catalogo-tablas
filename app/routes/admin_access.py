@@ -13,10 +13,11 @@ tanto en entorno local como en producción.
 
 import logging
 import traceback
-from bson import ObjectId
-from flask import Blueprint, request, redirect, url_for, flash, session
-from app.models import get_users_collection
 
+from bson import ObjectId
+from flask import Blueprint, flash, redirect, request, session, url_for
+
+from app.models import get_users_collection
 
 logger = logging.getLogger(__name__)
 admin_access_bp = Blueprint("admin_access", __name__, url_prefix="/admin_access")

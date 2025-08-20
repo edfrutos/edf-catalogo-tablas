@@ -28,4 +28,4 @@ else:
     print(f"Procesando {len(scripts_py)} scripts Python...")
     cmd = ['python3', 'tools/insertar_cabecera.py'] + scripts_py
     subprocess.run(cmd)
-    print("Cabeceras aplicadas a todos los scripts Python del proyecto.") 
+    print("Cabeceras aplicadas a todos los scripts Python del proyecto.")

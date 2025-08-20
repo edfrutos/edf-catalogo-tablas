@@ -3,8 +3,8 @@
 Script para verificar imágenes de LabelPrint en MongoDB
 """
 
-import sys
 import os
+import sys
 
 sys.path.append("/Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas")
 

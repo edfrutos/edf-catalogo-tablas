@@ -104,7 +104,7 @@ def check_network_connectivity(host, port):
     except socket.gaierror as e:
         print(f"  Error de resolución de dirección: {e}")
         return False
-    except socket.error as e:
+    except OSError as e:
         print(f"  Error de socket: {e}")
         return False
 
@@ -137,7 +137,7 @@ def update_env_file(env_path, new_uri=None, use_direct_uri=False, use_local_mong
     backup_file(env_path)
 
     # Leer el contenido actual
-    with open(env_path, "r") as f:
+    with open(env_path) as f:
         content = f.read()
 
     # Extraer la URI actual
@@ -190,7 +190,7 @@ def update_app_py(app_path, add_retry_logic=True):
     backup_file(app_path)
 
     # Leer el contenido actual
-    with open(app_path, "r") as f:
+    with open(app_path) as f:
         content = f.read()
 
     if add_retry_logic:
@@ -260,7 +260,7 @@ for retry in range(max_retries):
             latest_backup = sorted(backup_files)[-1]
             backup_path = os.path.join(os.path.dirname(app_path), latest_backup)
 
-            with open(backup_path, "r") as f:
+            with open(backup_path) as f:
                 content = f.read()
 
     # Guardar los cambios
@@ -320,7 +320,7 @@ def main():
     original_uri = None
     backup_env = os.path.join(root_dir, ".env.bak.20250517200439")
     if os.path.exists(backup_env):
-        with open(backup_env, "r") as f:
+        with open(backup_env) as f:
             content = f.read()
             mongo_uri_match = re.search(r"^MONGO_URI\s*=\s*(.*)$", content, re.MULTILINE)
             if mongo_uri_match:

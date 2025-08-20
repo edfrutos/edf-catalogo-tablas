@@ -2,12 +2,12 @@
 # Script para diagnosticar problemas en entorno de producción
 # Verifica permisos, rutas y ejecución de scripts
 
-import os
-import sys
-import subprocess
-import json
 import datetime
+import json
+import os
 import stat
+import subprocess
+import sys
 
 # Definir el directorio raíz
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,16 +21,16 @@ def check_file_permissions(file_path):
     """Verifica y muestra los permisos de un archivo"""
     if not os.path.exists(file_path):
         return f"El archivo no existe: {file_path}"
-    
+
     # Obtener estadísticas del archivo
     st = os.stat(file_path)
     perms = stat.filemode(st.st_mode)
     owner = st.st_uid
     group = st.st_gid
-    
+
     # Verificar si es ejecutable
     is_executable = os.access(file_path, os.X_OK)
-    
+
     return {
         "path": file_path,
         "permissions": perms,
@@ -45,7 +45,7 @@ def fix_permissions(file_path):
     """Intenta corregir los permisos de un archivo"""
     if not os.path.exists(file_path):
         return f"El archivo no existe: {file_path}"
-    
+
     try:
         # Establecer permisos 755 (rwxr-xr-x)
         os.chmod(file_path, 0o755)
@@ -60,11 +60,11 @@ def test_script(script_path):
             "success": False,
             "error": f"El script no existe: {script_path}"
         }
-    
+
     # Verificar y corregir permisos si es necesario
     if not os.access(script_path, os.X_OK):
         fix_permissions(script_path)
-    
+
     # Determinar el comando según la extensión
     _, ext = os.path.splitext(script_path)
     if ext == '.py':
@@ -73,7 +73,7 @@ def test_script(script_path):
         cmd = ['/bin/bash', script_path]
     else:
         cmd = [script_path]
-    
+
     try:
         # Ejecutar el script
         process = subprocess.run(
@@ -83,7 +83,7 @@ def test_script(script_path):
             timeout=10,
             cwd=os.path.dirname(script_path)
         )
-        
+
         return {
             "success": process.returncode == 0,
             "output": process.stdout,
@@ -110,10 +110,10 @@ def check_web_server_permissions():
         # Intentar obtener el usuario actual
         process = subprocess.run(['whoami'], capture_output=True, text=True)
         current_user = process.stdout.strip()
-        
+
         # Obtener información sobre el proceso del servidor web
         ps_process = subprocess.run(['ps', 'aux', '|', 'grep', 'gunicorn'], shell=True, capture_output=True, text=True)
-        
+
         return {
             "current_user": current_user,
             "web_server_processes": ps_process.stdout
@@ -129,20 +129,20 @@ def main():
     print(f"Directorio raíz: {ROOT_DIR}")
     print(f"Usuario actual: {os.getenv('USER', subprocess.getoutput('whoami'))}")
     print(f"Directorio actual: {os.getcwd()}")
-    
+
     # Verificar permisos del servidor web
     print_header("PERMISOS DEL SERVIDOR WEB")
     web_server_info = check_web_server_permissions()
     for key, value in web_server_info.items():
         print(f"{key}: {value}")
-    
+
     # Verificar scripts de prueba
     test_scripts = [
         os.path.join(ROOT_DIR, "tools", "test_script.sh"),
         os.path.join(ROOT_DIR, "tools", "simple_test.sh"),
         os.path.join(ROOT_DIR, "tools", "test_scripts", "simple_test.py")
     ]
-    
+
     print_header("VERIFICACIÓN DE PERMISOS DE SCRIPTS")
     for script in test_scripts:
         if os.path.exists(script):
@@ -154,7 +154,7 @@ def main():
             else:
                 print(f"  Error: {perms}")
             print()
-    
+
     print_header("PRUEBA DE EJECUCIÓN DE SCRIPTS")
     for script in test_scripts:
         if os.path.exists(script):
@@ -167,7 +167,7 @@ def main():
             if result.get('error'):
                 print(f"  Error: {result.get('error')}")
             print()
-    
+
     print_header("RECOMENDACIONES PARA PRODUCCIÓN")
     print("1. Asegúrese de que todos los scripts tengan permisos de ejecución (chmod +x)")
     print("2. Verifique que el usuario del servidor web tenga permisos para ejecutar los scripts")

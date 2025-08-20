@@ -1,29 +1,31 @@
 # app/routes/catalogs_routes.py
 
-from flask import (
-    Blueprint,
-    render_template,
-    redirect,
-    url_for,
-    flash,
-    session,
-    request,
-    current_app,
-    jsonify,  # noqa: F401
-    g,  # noqa: F401
-)
-from bson.objectid import ObjectId
-from functools import wraps
-import os
-import uuid
 import datetime
-import pandas as pd
-from werkzeug.utils import secure_filename
-from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
 
 # from app.decorators import is_datetime, is_list, is_string  # No utilizados
 import logging
+import os
+import uuid
+from functools import wraps
+
+import pandas as pd
+from bson.objectid import ObjectId
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    g,  # noqa: F401
+    jsonify,  # noqa: F401
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.utils import secure_filename
+
 from app.database import get_mongo_db
+from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
 
 logger = logging.getLogger(__name__)
 
@@ -707,8 +709,9 @@ def edit(catalog_id, catalog):
                         )
 
                     # Importar utilidades de imagen y S3
-                    from app.utils.image_utils import upload_image_to_s3
                     import uuid
+
+                    from app.utils.image_utils import upload_image_to_s3
 
                     # Generar nombre único para el archivo
                     file_extension = miniatura_file.filename.split(".")[-1].lower()
@@ -964,7 +967,7 @@ def add_row(catalog_id, catalog):
         if "images" in request.files:
             files = request.files.getlist("images")
             upload_dir = get_upload_dir()
-            from typing import cast, Any, Dict
+            from typing import Any, Dict, cast
 
             # Usar cast para indicar que sabemos que row acepta listas
             row = cast(Dict[str, Any], row)
@@ -1107,7 +1110,7 @@ def delete_catalog(catalog_id, catalog):
                 from app.audit import audit_log
 
                 audit_log(
-                    f"Eliminación de catálogo",
+                    "Eliminación de catálogo",
                     f"Catálogo '{catalog_name}' (ID: {catalog_id}) eliminado",
                     session.get("username"),
                 )

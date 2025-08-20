@@ -2,14 +2,14 @@
 # Script para diagnosticar problemas de ejecución de scripts desde la interfaz web
 # Creado: 18/05/2025
 
-import os
-import sys
-import json
-import subprocess
 import datetime
-import stat
-import re
+import json
+import os
 import platform
+import re
+import stat
+import subprocess
+import sys
 
 # Configuración - Corregir rutas para que apunten a las ubicaciones correctas
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -67,7 +67,7 @@ def check_script_existence(script_path):
             return True, full_path
 
     # Si no se encuentra, mostrar todas las ubicaciones donde se buscó
-    print(f"  ❌ Script no encontrado. Se buscó en las siguientes ubicaciones:")
+    print("  ❌ Script no encontrado. Se buscó en las siguientes ubicaciones:")
     for location in SCRIPT_LOCATIONS:
         if os.path.exists(location):
             print(f"    - {location}")
@@ -80,7 +80,7 @@ def check_script_existence(script_path):
 def check_script_permissions(script_path):
     """Verifica los permisos de un script"""
     if not os.path.exists(script_path):
-        print(f"  ❌ No se puede verificar permisos: script no encontrado")
+        print("  ❌ No se puede verificar permisos: script no encontrado")
         return False
 
     # Obtener información del archivo
@@ -90,7 +90,7 @@ def check_script_permissions(script_path):
     is_readable = os.access(script_path, os.R_OK)
     is_writable = os.access(script_path, os.W_OK)
 
-    print(f"  Información del script:")
+    print("  Información del script:")
     print(f"    - Permisos: {permissions}")
     print(f"    - Propietario: {st.st_uid}")
     print(f"    - Grupo: {st.st_gid}")
@@ -108,11 +108,11 @@ def check_script_permissions(script_path):
 def check_script_content(script_path):
     """Verifica el contenido de un script"""
     if not os.path.exists(script_path):
-        print(f"  ❌ No se puede verificar contenido: script no encontrado")
+        print("  ❌ No se puede verificar contenido: script no encontrado")
         return False
 
     try:
-        with open(script_path, "r") as f:
+        with open(script_path) as f:
             content = f.read()
 
         # Verificar shebang
@@ -122,7 +122,7 @@ def check_script_content(script_path):
             "/bin/bash" in first_line or "/usr/bin/env" in first_line
         )
 
-        print(f"  Análisis del contenido:")
+        print("  Análisis del contenido:")
         print(f"    - Líneas: {content.count(newline := os.linesep) + 1}")
         print(
             f"    - Shebang: {'✅ Válido' if valid_shebang else '❌ No válido o ausente'}"
@@ -133,7 +133,7 @@ def check_script_content(script_path):
         # Verificar si requiere root
         requires_root = "sudo" in content or "root" in content
         if requires_root:
-            print(f"    - ⚠️ El script parece requerir permisos de root")
+            print("    - ⚠️ El script parece requerir permisos de root")
 
         return True
     except Exception as e:
@@ -149,7 +149,7 @@ def check_script_runner():
 
     # Verificar permisos
     is_executable = os.access(SCRIPT_RUNNER, os.X_OK)
-    print(f"  Permisos de script_runner.py:")
+    print("  Permisos de script_runner.py:")
     print(f"    - Ejecutable: {'✅ Sí' if is_executable else '❌ No'}")
 
     # Verificar si puede ejecutarse
@@ -159,10 +159,10 @@ def check_script_runner():
         )
 
         if "Debe especificar la ruta del script a ejecutar" in result.stdout:
-            print(f"  ✅ script_runner.py se ejecuta correctamente")
+            print("  ✅ script_runner.py se ejecuta correctamente")
             return True
         else:
-            print(f"  ⚠️ script_runner.py se ejecuta pero con salida inesperada")
+            print("  ⚠️ script_runner.py se ejecuta pero con salida inesperada")
             print(f"    - Salida: {result.stdout[:100]}...")
             return True
     except Exception as e:
@@ -177,21 +177,21 @@ def check_routes_file():
         return False
 
     try:
-        with open(ROUTES_FILE, "r") as f:
+        with open(ROUTES_FILE) as f:
             content = f.read()
 
         # Verificar la función get_script_path
         has_get_script_path = "def get_script_path" in content
-        print(f"  Análisis de scripts_routes.py:")
+        print("  Análisis de scripts_routes.py:")
         print(
             f"    - Función get_script_path: {'✅ Encontrada' if has_get_script_path else '❌ No encontrada'}"
         )
 
         # Verificar la ruta de ejecución de scripts
         if "/run/<path:script_path>" in content:
-            print(f"    - Ruta para ejecutar scripts: ✅ /run/<path:script_path>")
+            print("    - Ruta para ejecutar scripts: ✅ /run/<path:script_path>")
         else:
-            print(f"    - Ruta para ejecutar scripts: ❌ No encontrada")
+            print("    - Ruta para ejecutar scripts: ❌ No encontrada")
 
         # Verificar blueprint prefix
         blueprint_prefix = re.search(
@@ -200,7 +200,7 @@ def check_routes_file():
         if blueprint_prefix:
             print(f"    - Prefijo del blueprint: ✅ {blueprint_prefix.group(1)}")
         else:
-            print(f"    - Prefijo del blueprint: ❌ No encontrado")
+            print("    - Prefijo del blueprint: ❌ No encontrado")
 
         return True
     except Exception as e:
@@ -211,11 +211,11 @@ def check_routes_file():
 def test_script_execution(script_path):
     """Prueba la ejecución de un script usando script_runner.py"""
     if not os.path.exists(script_path):
-        print(f"  ❌ No se puede probar ejecución: script no encontrado")
+        print("  ❌ No se puede probar ejecución: script no encontrado")
         return False
 
     try:
-        print(f"  Probando ejecución con script_runner.py...")
+        print("  Probando ejecución con script_runner.py...")
         result = subprocess.run(
             [sys.executable, SCRIPT_RUNNER, script_path],
             capture_output=True,
@@ -242,13 +242,13 @@ def test_script_execution(script_path):
             )
 
             if exit_code == 0:
-                print(f"    ✅ Script ejecutado correctamente")
+                print("    ✅ Script ejecutado correctamente")
                 return True
             else:
-                print(f"    ⚠️ Script ejecutado con errores")
+                print("    ⚠️ Script ejecutado con errores")
                 return False
         except json.JSONDecodeError:
-            print(f"    ❌ Error al decodificar la salida JSON")
+            print("    ❌ Error al decodificar la salida JSON")
             print(f"    - Salida: {result.stdout[:100]}...")
             print(f"    - Error: {result.stderr[:100]}...")
             return False
@@ -283,7 +283,7 @@ exit 0
 def fix_script_permissions(script_path):
     """Corrige los permisos de un script"""
     if not os.path.exists(script_path):
-        print(f"  ❌ No se pueden corregir permisos: script no encontrado")
+        print("  ❌ No se pueden corregir permisos: script no encontrado")
         return False
 
     try:

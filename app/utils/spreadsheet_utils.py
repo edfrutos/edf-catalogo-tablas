@@ -6,15 +6,17 @@
 # Autor: EDF Developer - 2025-05-28
 
 import logging
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+
 from flask import current_app, g
 from pymongo.collection import Collection
-from typing import TYPE_CHECKING, Any, Optional, Dict, List, Union
 
 if TYPE_CHECKING:
     from pymongo.collection import Collection as MongoCollection
 else:
     MongoCollection = Collection[Any]
 from bson.objectid import ObjectId
+
 from app.database import get_mongo_db
 
 logger = logging.getLogger(__name__)

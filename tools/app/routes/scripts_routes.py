@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 # app/routes/scripts_routes.py
 
-import os
-import sys
 import glob  # noqa: F401
-import subprocess
 import json  # noqa: F401
+import os
+import subprocess
+import sys
 from datetime import datetime
-from functools import wraps
+from functools import wraps  # noqa: F811  # pyright: ignore[reportDuplicateImport]
+
 from flask import (
     Blueprint,
-    render_template,
-    jsonify,
-    request,
     abort,  # noqa: F401
-    session,
-    redirect,
-    url_for,
-    flash,
     current_app,  # noqa: F401
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
     send_file,  # noqa: F401
+    session,
+    url_for,
 )
-from functools import wraps  # noqa: F811  # pyright: ignore[reportDuplicateImport]
 
 
 # === Utilidad para extraer la descripción de scripts ===
@@ -32,7 +32,7 @@ def extract_description(script_path):
     Lee solo las primeras 10 líneas para evitar errores de iterador.
     """
     try:
-        with open(script_path, "r", encoding="utf-8") as f:
+        with open(script_path, encoding="utf-8") as f:
             for i, line in enumerate(f):
                 if i > 9:
                     break
@@ -76,8 +76,8 @@ def scripts_metadata():
     """
     Devuelve un JSON con todos los scripts agrupados por categoría, extrayendo la descripción de la cabecera.
     """
-    import os
     import fnmatch
+    import os
 
     TOOLS_DIR = os.path.join(ROOT_DIR, "tools")
     resultado = []
@@ -307,11 +307,11 @@ def get_script_path(script_path):
     # Si ya es una ruta absoluta que contiene ROOT_DIR, usarla directamente
     if os.path.isabs(script_path) and ROOT_DIR in script_path:
         return script_path
-    
+
     # Si es una ruta absoluta pero no contiene ROOT_DIR, usarla directamente
     if os.path.isabs(script_path):
         return script_path
-    
+
     # Lista de posibles ubicaciones para buscar el script
     possible_paths = [
         # Ruta directa
@@ -321,18 +321,18 @@ def get_script_path(script_path):
         # En directorio scripts
         os.path.join(ROOT_DIR, 'scripts', script_path),
     ]
-    
+
     # Buscar en subdirectorios comunes
     for subdir in ['maintenance', 'admin_utils', 'backup', 'monitoring', 'security', 'database']:
         possible_paths.append(os.path.join(ROOT_DIR, 'tools', subdir, script_path))
         possible_paths.append(os.path.join(ROOT_DIR, 'scripts', subdir, script_path))
-    
+
     # Verificar cada ruta posible
     for path in possible_paths:
         if os.path.exists(path):
             print(f"Script encontrado en: {path}")
             return path
-    
+
     # Si no se encuentra, devolver la ruta original
     print(f"Script no encontrado: {script_path}")
     return os.path.join(ROOT_DIR, script_path)
@@ -356,7 +356,7 @@ def     view_script_content(script_path):
 
     try:
         # Leer el contenido del script
-        with open(abs_script_path, "r") as f:
+        with open(abs_script_path) as f:
             script_content = f.read()
 
         return render_template(

@@ -1,5 +1,6 @@
-from flask import Flask
 import logging
+
+from flask import Flask
 
 # Configuración de registro
 logging.basicConfig(

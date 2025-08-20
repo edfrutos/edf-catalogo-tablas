@@ -2,14 +2,15 @@
 # Script intermediario para ejecutar scripts desde la aplicación web
 # Este script se ejecuta con los permisos adecuados y devuelve los resultados
 
-import os
-import sys
-import subprocess
-import json
 import datetime
-import traceback
-import stat
+import json
+import os
 import platform
+import stat
+import subprocess
+import sys
+import traceback
+
 
 def run_script(script_path):
     """Ejecuta un script y devuelve su salida en formato JSON"""
@@ -27,7 +28,7 @@ def run_script(script_path):
             "script_runner_path": os.path.abspath(__file__)
         }
     }
-    
+
     # Verificar que el script existe
     if not os.path.exists(script_path):
         result["error"] = f"Script no encontrado: {script_path}"
@@ -35,7 +36,7 @@ def run_script(script_path):
         result["diagnostics"]["absolute_path"] = os.path.abspath(script_path)
         result["diagnostics"]["parent_dir_exists"] = os.path.exists(os.path.dirname(script_path))
         return result
-    
+
     # Recopilar información sobre el script
     try:
         st = os.stat(script_path)
@@ -52,7 +53,7 @@ def run_script(script_path):
         }
     except Exception as e:
         result["diagnostics"]["script_info_error"] = str(e)
-    
+
     # Verificar que el script tiene permisos de ejecución
     if not os.access(script_path, os.X_OK):
         try:
@@ -63,7 +64,7 @@ def run_script(script_path):
             result["error"] = f"No se pudieron establecer permisos de ejecución: {str(e)}"
             result["diagnostics"]["permissions_error"] = str(e)
             return result
-    
+
     try:
         # Determinar el comando adecuado según la extensión
         _, ext = os.path.splitext(script_path)
@@ -73,9 +74,9 @@ def run_script(script_path):
             cmd = ['/bin/bash', script_path]
         else:
             cmd = [script_path]
-        
+
         result["diagnostics"]["command"] = cmd
-        
+
         # Ejecutar el script
         process = subprocess.run(
             cmd,
@@ -84,11 +85,11 @@ def run_script(script_path):
             timeout=30,
             cwd=os.path.dirname(script_path)
         )
-        
+
         result["exit_code"] = process.returncode
         result["output"] = process.stdout
         result["error"] = process.stderr
-        
+
     except subprocess.TimeoutExpired:
         result["error"] = "El script tardó demasiado tiempo en ejecutarse (más de 30 segundos)"
         result["diagnostics"]["timeout"] = True
@@ -96,16 +97,16 @@ def run_script(script_path):
         result["error"] = f"Error al ejecutar el script: {str(e)}"
         result["diagnostics"]["exception"] = str(e)
         result["diagnostics"]["traceback"] = traceback.format_exc()
-    
+
     return result
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Debe especificar la ruta del script a ejecutar"}))
         sys.exit(1)
-    
+
     script_path = sys.argv[1]
     result = run_script(script_path)
-    
+
     # Imprimir el resultado en formato JSON
     print(json.dumps(result))

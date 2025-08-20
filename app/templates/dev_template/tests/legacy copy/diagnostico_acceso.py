@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Script de diagnóstico de acceso a la aplicación
@@ -7,17 +6,18 @@ Este script verifica la configuración de la aplicación y proporciona
 información detallada sobre el estado actual.
 """
 
+import json
+import logging
 import os
 import sys
-import logging
-import json
-from datetime import datetime
 import traceback
-from dotenv import load_dotenv
+from datetime import datetime
+
 import certifi
+from dotenv import load_dotenv
+from flask import Flask, flash, redirect, render_template_string, session, url_for
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
-from flask import Flask, session, render_template_string, redirect, url_for, flash
 
 # Configurar logging
 logging.basicConfig(
@@ -32,12 +32,12 @@ def verificar_mongodb():
     try:
         # Cargar variables de entorno
         load_dotenv()
-        
+
         # Obtener la URI de MongoDB
         mongo_uri = os.getenv("MONGO_URI")
         if not mongo_uri:
             return {"status": "error", "message": "No se encontró MONGO_URI en las variables de entorno"}
-        
+
         # Conectar a MongoDB
         client = MongoClient(
             mongo_uri,
@@ -45,17 +45,17 @@ def verificar_mongodb():
             tlsCAFile=certifi.where(),
             server_api=ServerApi('1')
         )
-        
+
         # Verificar conexión
         client.admin.command('ping')
-        
+
         # Seleccionar base de datos y colección
         db = client["app_catalogojoyero_nueva"]
         users_collection = db["users"]
-        
+
         # Buscar usuario administrador
         admin_user = users_collection.find_one({"email": "admin@example.com"})
-        
+
         if admin_user:
             admin_info = {
                 "id": str(admin_user.get("_id")),
@@ -66,18 +66,18 @@ def verificar_mongodb():
                 "failed_attempts": admin_user.get("failed_attempts")
             }
             return {
-                "status": "success", 
+                "status": "success",
                 "message": "Conexión a MongoDB establecida correctamente",
                 "admin_user": admin_info,
                 "total_users": users_collection.count_documents({})
             }
         else:
             return {
-                "status": "warning", 
+                "status": "warning",
                 "message": "No se encontró el usuario administrador",
                 "total_users": users_collection.count_documents({})
             }
-    
+
     except Exception as e:
         return {"status": "error", "message": f"Error al conectar a MongoDB: {str(e)}"}
 
@@ -86,10 +86,10 @@ def verificar_blueprints():
     try:
         # Añadir el directorio actual al path para importar módulos
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        
+
         # Importar la aplicación Flask
         from app import app
-        
+
         # Obtener información de blueprints
         blueprints = []
         for rule in app.url_map.iter_rules():
@@ -99,7 +99,7 @@ def verificar_blueprints():
                     "name": blueprint,
                     "url_prefix": None  # No podemos obtener el prefijo directamente
                 })
-        
+
         # Obtener información de rutas
         routes = []
         for rule in app.url_map.iter_rules():
@@ -108,14 +108,14 @@ def verificar_blueprints():
                 "methods": list(rule.methods),
                 "rule": str(rule)
             })
-        
+
         return {
             "status": "success",
             "message": f"Se encontraron {len(blueprints)} blueprints y {len(routes)} rutas",
             "blueprints": blueprints,
             "routes": routes[:20]  # Limitar a 20 rutas para no saturar la salida
         }
-    
+
     except Exception as e:
         return {"status": "error", "message": f"Error al verificar blueprints: {str(e)}"}
 
@@ -124,10 +124,10 @@ def verificar_configuracion_sesion():
     try:
         # Añadir el directorio actual al path para importar módulos
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        
+
         # Importar la aplicación Flask
         from app import app
-        
+
         # Obtener configuración de sesión
         session_config = {
             "SESSION_TYPE": app.config.get("SESSION_TYPE"),
@@ -142,14 +142,14 @@ def verificar_configuracion_sesion():
             "SESSION_USE_SIGNER": app.config.get("SESSION_USE_SIGNER"),
             "SECRET_KEY": "***OCULTO***" if app.config.get("SECRET_KEY") else None
         }
-        
+
         # Verificar directorio de sesiones
         session_dir = app.config.get("SESSION_FILE_DIR")
         if session_dir and os.path.exists(session_dir):
             session_files = os.listdir(session_dir)
         else:
             session_files = []
-        
+
         return {
             "status": "success",
             "message": "Configuración de sesión obtenida correctamente",
@@ -157,14 +157,14 @@ def verificar_configuracion_sesion():
             "session_files_count": len(session_files),
             "session_dir_exists": os.path.exists(session_dir) if session_dir else False
         }
-    
+
     except Exception as e:
         return {"status": "error", "message": f"Error al verificar configuración de sesión: {str(e)}"}
 
 def crear_app_diagnostico():
     """Crea una aplicación Flask para diagnóstico"""
     app = Flask(__name__)
-    
+
     # Configuración básica
     app.config['SECRET_KEY'] = 'clave_diagnostico_temporal'
     app.config['SESSION_TYPE'] = 'filesystem'
@@ -174,10 +174,10 @@ def crear_app_diagnostico():
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SESSION_PERMANENT'] = True
-    
+
     # Asegurar que el directorio de sesiones existe
     os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
-    
+
     # Ruta principal
     @app.route('/')
     def index():
@@ -185,7 +185,7 @@ def crear_app_diagnostico():
         mongodb_info = verificar_mongodb()
         blueprints_info = verificar_blueprints()
         session_info = verificar_configuracion_sesion()
-        
+
         # Preparar datos para la plantilla
         diagnostico = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -193,7 +193,7 @@ def crear_app_diagnostico():
             "blueprints": blueprints_info,
             "session": session_info
         }
-        
+
         # Plantilla HTML
         template = """
         <!DOCTYPE html>
@@ -315,20 +315,20 @@ def crear_app_diagnostico():
         </body>
         </html>
         """
-        
+
         # Función para convertir a JSON con formato
         def tojson_filter(obj, indent=None):
             return json.dumps(obj, indent=indent, ensure_ascii=False)
-        
+
         # Renderizar plantilla
         rendered = render_template_string(
-            template, 
+            template,
             diagnostico=diagnostico,
             tojson=tojson_filter
         )
-        
+
         return rendered
-    
+
     return app
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ import pdfkit
 
 # Leer el archivo Markdown
 def md_to_pdf(input_md, output_pdf):
-    with open(input_md, 'r', encoding='utf-8') as f:
+    with open(input_md, encoding='utf-8') as f:
         text = f.read()
     # Convertir Markdown a HTML
     html = markdown.markdown(text, extensions=['tables', 'fenced_code'])
@@ -27,8 +27,8 @@ def md_to_pdf(input_md, output_pdf):
     print(f"PDF generado: {output_pdf}")
 
 if __name__ == '__main__':
-    import sys
     import os
+    import sys
     if len(sys.argv) >= 2:
         input_md = sys.argv[1]
         if len(sys.argv) >= 3:

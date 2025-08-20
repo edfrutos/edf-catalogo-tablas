@@ -6,15 +6,16 @@ import subprocess
 import sys
 from datetime import datetime
 from functools import wraps
+
 from flask import (
     Blueprint,
-    render_template,
+    flash,
     jsonify,
+    redirect,
+    render_template,
     request,
     session,
-    redirect,
     url_for,
-    flash,
 )
 
 
@@ -97,7 +98,7 @@ def tests_metadata():
                                     "entorno": "local",
                                 }
                             )
-                except (IOError, OSError) as e:
+                except OSError as e:
                     print(f"Error procesando {directorio}: {e}")
                     continue
 
@@ -133,7 +134,7 @@ def tests_metadata():
                                     "entorno": "produccion",
                                 }
                             )
-                except (IOError, OSError) as e:
+                except OSError as e:
                     print(f"Error procesando {directorio}: {e}")
                     continue
 
@@ -149,13 +150,13 @@ def tests_metadata():
 def extract_test_description(test_path):
     """Extrae la descripción de un test desde sus comentarios."""
     try:
-        with open(test_path, "r", encoding="utf-8") as f:
+        with open(test_path, encoding="utf-8") as f:
             for line in f:
                 if line.strip().startswith("# Descripción:"):
                     return line.strip().replace("# Descripción:", "").strip()
                 if line.strip().startswith('"""') and "Descripción:" in line:
                     return line.strip().split("Descripción:")[1].split('"""')[0].strip()
-    except (IOError, OSError, UnicodeDecodeError) as e:
+    except (OSError, UnicodeDecodeError) as e:
         print(f"Error al extraer descripción de {test_path}: {e}")
     return ""
 

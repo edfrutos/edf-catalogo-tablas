@@ -2,12 +2,14 @@
 # Descripción: Rutas para la gestión de scripts y herramientas
 # Autor: Equipo de Desarrollo - 2025-06-17
 
-import os
-import logging
-import subprocess
 import importlib
+import logging
+import os
+import subprocess
 import traceback
-from flask import Blueprint, jsonify, request, current_app, abort, session, redirect, url_for, flash
+
+from flask import Blueprint, abort, current_app, flash, jsonify, redirect, request, session, url_for
+
 # Eliminamos la importación de Flask-Login
 # from flask_login import login_required, current_user
 # from app.decorators import admin_required
@@ -42,22 +44,22 @@ def list_files_with_info(directory, page=1, per_page=20, filetype=None):
     """
     if not os.path.isdir(directory):
         return []
-        
+
     files = []
     for name in sorted(os.listdir(directory)):
         if name.startswith('.'):
             continue
-            
+
         full_path = os.path.join(directory, name)
         rel_path = os.path.relpath(full_path, BASE_PATH)
-        
+
         # Filtrar por tipo de archivo si se especifica
         if filetype and not name.endswith(f'.{filetype}') and not os.path.isdir(full_path):
             continue
-            
+
         # Obtener información del archivo
         is_dir = os.path.isdir(full_path)
-        
+
         # Solo incluir archivos Python (.py) y Shell (.sh), excluir __pycache__ y archivos de configuración
         if not is_dir:
             if not (name.endswith('.py') or name.endswith('.sh')):
@@ -68,7 +70,7 @@ def list_files_with_info(directory, page=1, per_page=20, filetype=None):
             # Para app/, excluir archivos que no son scripts principales
             if 'app/' in rel_path and name in ['models.py', 'extensions.py', 'decorators.py', 'error_handlers.py', 'filters.py']:
                 continue
-        
+
         try:
             stat = os.stat(full_path)
             size = stat.st_size if not is_dir else None
@@ -78,12 +80,12 @@ def list_files_with_info(directory, page=1, per_page=20, filetype=None):
             logger.error(f"Error al obtener información del archivo {full_path}: {str(e)}")
             size = None
             mtime = None
-            
+
         # Obtener descripción del archivo (primera línea de comentario)
         description = None
         if not is_dir and (name.endswith('.py') or name.endswith('.sh')):
             try:
-                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(full_path, encoding='utf-8', errors='ignore') as f:
                     for line in f:
                         line = line.strip()
                         if line.startswith('#') and len(line) > 1:
@@ -91,7 +93,7 @@ def list_files_with_info(directory, page=1, per_page=20, filetype=None):
                             break
             except Exception as e:
                 logger.error(f"Error al leer descripción del archivo {full_path}: {str(e)}")
-                
+
         files.append({
             'name': name,
             'is_dir': is_dir,
@@ -100,7 +102,7 @@ def list_files_with_info(directory, page=1, per_page=20, filetype=None):
             'description': description,
             'rel_path': rel_path
         })
-        
+
     # Aplicar paginación
     start = (page - 1) * per_page
     end = start + per_page
@@ -129,7 +131,7 @@ def list_files():
     # Verificar si el usuario es admin
     if not check_admin():
         return jsonify({'error': 'Acceso denegado'}), 403
-    
+
     try:
         all_files = []
         for dir_info in DIRECTORY_INFOS:
@@ -137,7 +139,7 @@ def list_files():
             for file_info in files:
                 file_info['category'] = dir_info['name']
             all_files.extend(files)
-        
+
         return jsonify({'scripts': all_files})
     except Exception as e:
         logger.error(f"Error listando archivos: {str(e)}")
@@ -153,24 +155,24 @@ def run_script():
     # Verificar si el usuario es admin
     if not check_admin():
         return jsonify({'error': 'Acceso denegado'}), 403
-    
+
     try:
         data = request.get_json()
         script_path = data.get('path')
-        
+
         if not script_path:
             return jsonify({'error': 'Ruta del script no proporcionada'}), 400
-        
+
         # Construir ruta absoluta
         full_path = os.path.join(BASE_PATH, script_path)
-        
+
         if not os.path.exists(full_path):
             return jsonify({'error': f'Script no encontrado: {script_path}'}), 404
-        
+
         # Verificar que es un archivo ejecutable
         if not os.path.isfile(full_path):
             return jsonify({'error': 'La ruta especificada no es un archivo'}), 400
-        
+
         # Ejecutar el script
         result = subprocess.run(
             [full_path],
@@ -178,14 +180,14 @@ def run_script():
             text=True,
             timeout=300  # 5 minutos de timeout
         )
-        
+
         return jsonify({
             'success': result.returncode == 0,
             'output': result.stdout,
             'error': result.stderr,
             'exit_code': result.returncode
         })
-        
+
     except subprocess.TimeoutExpired:
         return jsonify({'error': 'El script tardó demasiado en ejecutarse'}), 408
     except Exception as e:
@@ -197,24 +199,24 @@ def download_file():
     # Verificar si el usuario es admin
     if not check_admin():
         return jsonify({'error': 'Acceso denegado'}), 403
-    
+
     try:
         path = request.args.get('path')
         if not path:
             return jsonify({'error': 'Ruta no proporcionada'}), 400
-        
+
         # Construir ruta absoluta
         full_path = os.path.join(BASE_PATH, path)
-        
+
         if not os.path.exists(full_path):
             return jsonify({'error': 'Archivo no encontrado'}), 404
-        
+
         # Leer contenido del archivo
-        with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(full_path, encoding='utf-8', errors='ignore') as f:
             content = f.read()
-        
+
         return content
-        
+
     except Exception as e:
         logger.error(f"Error descargando archivo: {str(e)}")
         return jsonify({'error': f'Error interno: {str(e)}'}), 500
@@ -228,7 +230,7 @@ def run_system_utility(utility):
     """Ejecuta utilidades del sistema"""
     if not check_admin():
         return jsonify({'error': 'Acceso denegado'}), 403
-    
+
     try:
         if utility == 'logging_unified':
             return run_logging_unified()
@@ -244,7 +246,7 @@ def run_system_utility(utility):
             return run_data_fallback()
         else:
             return jsonify({'error': f'Utilidad no reconocida: {utility}'}), 400
-            
+
     except Exception as e:
         logger.error(f"Error ejecutando utilidad {utility}: {str(e)}")
         return jsonify({'error': f'Error interno: {str(e)}'}), 500
@@ -353,7 +355,7 @@ def run_maintenance_utility(utility):
     """Ejecuta utilidades de mantenimiento"""
     if not check_admin():
         return jsonify({'error': 'Acceso denegado'}), 403
-    
+
     try:
         if utility == 'normalize_users':
             return run_normalize_users()
@@ -367,7 +369,7 @@ def run_maintenance_utility(utility):
             return run_cleanup_project()
         else:
             return jsonify({'error': f'Utilidad de mantenimiento no reconocida: {utility}'}), 400
-            
+
     except Exception as e:
         logger.error(f"Error ejecutando mantenimiento {utility}: {str(e)}")
         return jsonify({'error': f'Error interno: {str(e)}'}), 500
@@ -393,14 +395,14 @@ def run_backup_users():
     try:
         from app.maintenance import backup_users_to_json
         from app.models import get_users_collection
-        
+
         collection = get_users_collection()
         if collection is None:
             return jsonify({
                 'success': False,
                 'error': 'No se pudo acceder a la colección de usuarios'
             })
-        
+
         backup_file, count = backup_users_to_json(collection)
         return jsonify({
             'success': True,
@@ -475,7 +477,7 @@ def run_data_utility(utility):
     """Ejecuta utilidades de gestión de datos"""
     if not check_admin():
         return jsonify({'error': 'Acceso denegado'}), 403
-    
+
     try:
         if utility == 'create_backup':
             return run_create_backup()
@@ -491,7 +493,7 @@ def run_data_utility(utility):
             return run_s3_utils()
         else:
             return jsonify({'error': f'Utilidad de datos no reconocida: {utility}'}), 400
-            
+
     except Exception as e:
         logger.error(f"Error ejecutando utilidad de datos {utility}: {str(e)}")
         return jsonify({'error': f'Error interno: {str(e)}'}), 500
@@ -546,7 +548,7 @@ def run_validate_integrity():
 def run_image_utils():
     """Ejecuta utilidades de imágenes"""
     try:
-        from app.utils.image_utils import save_image, delete_image, get_image_path
+        from app.utils.image_utils import delete_image, get_image_path, save_image
         return jsonify({
             'success': True,
             'message': 'Utilidades de imágenes disponibles',
@@ -575,7 +577,7 @@ def run_spreadsheet_utils():
 def run_s3_utils():
     """Ejecuta utilidades de S3"""
     try:
-        from app.utils.s3_utils import upload_file_to_s3, delete_file_from_s3
+        from app.utils.s3_utils import delete_file_from_s3, upload_file_to_s3
         return jsonify({
             'success': True,
             'message': 'Utilidades de S3 disponibles',

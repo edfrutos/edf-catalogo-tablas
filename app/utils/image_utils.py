@@ -3,7 +3,8 @@ Utilidades unificadas para manejo de imágenes
 """
 
 import os
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from flask import current_app
 
 
@@ -174,8 +175,9 @@ def upload_image_to_s3(file_obj, filename):
         str: URL de S3 si tiene éxito, None si falla
     """
     try:
-        import tempfile
         import os
+        import tempfile
+
         from app.utils.s3_utils import upload_file_to_s3
 
         # Crear un archivo temporal

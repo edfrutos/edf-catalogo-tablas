@@ -2,12 +2,12 @@
 # Script para revisar, depurar y organizar scripts en el directorio /tools
 # Creado: 18/05/2025
 
-import os
-import sys
-import shutil
 import datetime
-import subprocess
 import json
+import os
+import shutil
+import subprocess
+import sys
 
 # Configuración
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -81,7 +81,7 @@ def check_script_quality(script_path):
 
     try:
         # Leer el contenido del script
-        with open(script_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(script_path, encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
         # Verificar shebang
@@ -205,7 +205,7 @@ def add_missing_shebangs():
 
                 try:
                     # Leer el contenido del script
-                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    with open(file_path, encoding="utf-8", errors="ignore") as f:
                         content = f.read()
 
                     # Verificar shebang

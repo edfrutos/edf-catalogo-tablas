@@ -7,12 +7,13 @@
 # Autor: EDF Developer - 2025-05-28
 
 import os
-import certifi
-from pymongo import MongoClient
 from collections import defaultdict
-from typing import Optional
-from dotenv import load_dotenv
 from datetime import datetime
+from typing import Optional
+
+import certifi
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Cargar variables de entorno desde .env
 load_dotenv()

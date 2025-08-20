@@ -2,21 +2,23 @@
 # Script global para chequeo y monitorización de MongoDB
 # Ejecutable en local y servidor, con modo diagnóstico y monitor
 
-import os
-import sys
-import socket
-import time
 import argparse
-import certifi
-import pymongo
-from pymongo.errors import ConfigurationError, ServerSelectionTimeoutError, OperationFailure
-import dns.resolver
-from dotenv import load_dotenv
+import os
+import socket
+import sys
+import time
 from datetime import datetime
+
+import certifi
+import dns.resolver
+import pymongo
+from dotenv import load_dotenv
+from pymongo.errors import ConfigurationError, OperationFailure, ServerSelectionTimeoutError
 
 # Importar sistema de notificaciones de la app
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from app import notifications
+
 
 def print_header(message):
     print("\n" + "="*80)
@@ -62,7 +64,7 @@ def check_network_connectivity(host, port):
     except socket.gaierror as e:
         print(f"  Error de resolución de dirección: {e}")
         return False
-    except socket.error as e:
+    except OSError as e:
         print(f"  Error de socket: {e}")
         return False
 
@@ -75,7 +77,7 @@ def test_mongodb_connection(uri):
             tlsCAFile=certifi.where()
         )
         server_info = client.server_info()
-        print(f"  Conexión exitosa a MongoDB")
+        print("  Conexión exitosa a MongoDB")
         print(f"  Versión del servidor: {server_info.get('version', 'desconocida')}")
         databases = client.list_database_names()
         print(f"  Bases de datos disponibles: {', '.join(databases)}")
@@ -99,7 +101,7 @@ def check_logs(logs_dir="logs", max_lines=200):
         if fname.endswith(".log"):
             fpath = os.path.join(logs_dir, fname)
             try:
-                with open(fpath, "r") as f:
+                with open(fpath) as f:
                     lines = f.readlines()[-max_lines:]
                     for line in lines:
                         if any(x in line for x in ["ERROR", "Exception", "Traceback"]):
@@ -183,4 +185,4 @@ def main():
     print("\nChequeo finalizado. Fecha y hora:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 if __name__ == "__main__":
-    main() 
+    main()

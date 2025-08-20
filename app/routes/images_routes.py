@@ -5,9 +5,9 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-06-18
 
-from flask import Blueprint, send_from_directory, redirect, request
+from flask import Blueprint, current_app, redirect, request, send_from_directory
+
 from app.utils.s3_utils import get_s3_url
-from flask import current_app
 
 # Blueprint para servir imágenes con fallback S3 -> Local
 
@@ -49,6 +49,7 @@ def uploaded_images(filename):
     Ruta inteligente para servir imágenes con fallback S3 -> Local
     """
     import os
+
     from flask import abort  # noqa: F401
 
     current_app.logger.info(f"Ruta /imagenes_subidas/ llamada para archivo: {filename}")

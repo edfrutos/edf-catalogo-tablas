@@ -10,19 +10,20 @@ Proporciona una solución universal que funciona tanto en entorno
 local como en producción, sin depender de la conexión a MongoDB.
 """
 
-import os  # noqa: F401
 import logging
+import os  # noqa: F401
+
 from bson import ObjectId  # noqa: F401
 from flask import (
     Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    session,
-    flash,
     abort,  # noqa: F401
     current_app,  # noqa: F401
+    flash,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
 )  # noqa: F401
 
 logger = logging.getLogger(__name__)

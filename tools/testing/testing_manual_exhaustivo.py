@@ -7,12 +7,13 @@ Este script ejecuta el testing manual siguiendo el plan exhaustivo
 definido en docs/testing/PLAN_TESTING_EXHAUSTIVO.md
 """
 
-import requests
-import time
 import json
 import os
 import sys
+import time
 from datetime import datetime
+
+import requests
 
 
 class TestingManualExhaustivo:

@@ -3,9 +3,9 @@
 # Descripción: Verifica que la configuración de Python e IntelliCode esté correcta
 # Autor: EDF Developer - 2025-01-XX
 
+import json
 import os
 import sys
-import json
 from pathlib import Path
 
 
@@ -31,7 +31,7 @@ def verificar_configuracion():
 
     # Leer y verificar settings.json
     try:
-        with open(settings_file, "r", encoding="utf-8") as f:
+        with open(settings_file, encoding="utf-8") as f:
             settings = json.load(f)
     except Exception as e:
         print(f"❌ Error al leer settings.json: {e}")
@@ -73,7 +73,7 @@ def verificar_configuracion():
     extensions_file = vscode_dir / "extensions.json"
     if extensions_file.exists():
         try:
-            with open(extensions_file, "r", encoding="utf-8") as f:
+            with open(extensions_file, encoding="utf-8") as f:
                 extensions = json.load(f)
 
             print("\n📦 EXTENSIONES RECOMENDADAS:")

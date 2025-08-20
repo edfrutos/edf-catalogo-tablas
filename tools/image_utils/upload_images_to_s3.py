@@ -5,6 +5,7 @@ Script para subir las imágenes corregidas a S3
 
 import os
 import sys
+
 from dotenv import load_dotenv
 
 # Agregar el directorio app al path para importar las utilidades
@@ -54,7 +55,7 @@ def upload_corrected_images():
         result = upload_file_to_s3(local_path, image_name)
 
         if result["success"]:
-            print(f"   ✅ Subido exitosamente")
+            print("   ✅ Subido exitosamente")
             print(f"   🔗 URL: {result['url']}")
             success_count += 1
         else:

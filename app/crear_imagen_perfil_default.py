@@ -5,8 +5,9 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-06-07
 
-import os
 import logging
+import os
+
 
 def crear_imagen_perfil_default(path="static/default_profile.png"):
     """

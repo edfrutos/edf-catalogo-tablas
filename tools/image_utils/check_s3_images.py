@@ -5,12 +5,13 @@ Script para verificar si las imágenes corregidas existen en S3
 
 import os
 import sys
+
 from dotenv import load_dotenv
 
 # Agregar el directorio app al path para importar las utilidades
 sys.path.append(os.path.join(os.path.dirname(__file__), "app"))
 
-from utils.s3_utils import get_s3_url, get_s3_client
+from utils.s3_utils import get_s3_client, get_s3_url
 
 # Cargar variables de entorno
 load_dotenv()
@@ -65,7 +66,7 @@ def check_images_in_s3():
             print(f"   ✅ Encontrado en S3: {s3_url}")
             results[image_name] = {"s3_exists": True, "s3_url": s3_url}
         else:
-            print(f"   ❌ NO encontrado en S3")
+            print("   ❌ NO encontrado en S3")
             results[image_name] = {"s3_exists": False, "s3_url": None}
 
         # Verificar en local
@@ -76,7 +77,7 @@ def check_images_in_s3():
             results[image_name]["local_exists"] = True
             results[image_name]["local_size"] = file_size
         else:
-            print(f"   📁 NO existe en local")
+            print("   📁 NO existe en local")
             results[image_name]["local_exists"] = False
 
         print()
@@ -92,13 +93,13 @@ def check_images_in_s3():
         print(f"   Local: {'✅ SÍ' if result['local_exists'] else '❌ NO'}")
 
         if result["local_exists"] and not result["s3_exists"]:
-            print(f"   ⚠️  Recomendación: Subir a S3")
+            print("   ⚠️  Recomendación: Subir a S3")
         elif result["s3_exists"] and not result["local_exists"]:
-            print(f"   ⚠️  Recomendación: Descargar de S3")
+            print("   ⚠️  Recomendación: Descargar de S3")
         elif result["s3_exists"] and result["local_exists"]:
-            print(f"   ✅ Sincronizado")
+            print("   ✅ Sincronizado")
         else:
-            print(f"   ❌ No encontrado en ningún lado")
+            print("   ❌ No encontrado en ningún lado")
         print()
 
     return True

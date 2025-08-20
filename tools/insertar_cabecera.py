@@ -5,8 +5,8 @@ Descripción: Inserta una cabecera estándar de documentación en scripts Python
 Uso: python3 insertar_cabecera.py ruta/al/script.py
 Autor: EDF Equipo de desarrollo - 2024-05-28
 """
-import sys
 import os
+import sys
 from datetime import date
 
 CABECERA = '''# Script: {nombre}
@@ -18,7 +18,7 @@ CABECERA = '''# Script: {nombre}
 '''
 
 def tiene_cabecera(path):
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, encoding='utf-8') as f:
         for _ in range(5):
             linea = f.readline()
             if '#' in linea:
@@ -28,7 +28,7 @@ def tiene_cabecera(path):
 def insertar_cabecera(path):
     nombre = os.path.basename(path)
     fecha = date.today().isoformat()
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, encoding='utf-8') as f:
         contenido = f.read()
     with open(path, 'w', encoding='utf-8') as f:
         f.write(CABECERA.format(nombre=nombre, fecha=fecha))
@@ -47,4 +47,4 @@ if __name__ == "__main__":
         if tiene_cabecera(script):
             print(f"Ya tiene cabecera: {script}")
         else:
-            insertar_cabecera(script) 
+            insertar_cabecera(script)

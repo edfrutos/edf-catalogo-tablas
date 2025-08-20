@@ -7,6 +7,7 @@
 # Autor: EDF Developer - 2025-05-28
 
 import os
+
 import certifi
 from pymongo import MongoClient
 

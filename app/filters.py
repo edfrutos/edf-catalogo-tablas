@@ -7,6 +7,7 @@
 
 from datetime import datetime
 
+
 def datetimeformat(value, format='%Y-%m-%d %H:%M'):
     """Format a datetime object or timestamp string."""
     if value is None:
@@ -28,7 +29,7 @@ def datetimeformat(value, format='%Y-%m-%d %H:%M'):
             value = datetime.fromtimestamp(float(value))
         except (ValueError, TypeError):
             return ""
-    
+
     return value.strftime(format)
 
 def init_app(app):

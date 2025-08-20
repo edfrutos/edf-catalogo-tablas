@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Script: restore_damaged_files.py
 Descripción: Restaura archivos dañados por correcciones automáticas
@@ -207,12 +206,12 @@ def restore_damaged_files():
             print(f"  ⚠️  Archivo no existe en Git: {file_path}")
 
     print("\n" + "=" * 60)
-    print(f"📊 Resumen de restauración:")
+    print("📊 Resumen de restauración:")
     print(f"  ✅ Archivos restaurados: {len(restored_files)}")
     print(f"  ❌ Archivos fallidos: {len(failed_files)}")
 
     if failed_files:
-        print(f"\n❌ Archivos que fallaron:")
+        print("\n❌ Archivos que fallaron:")
         for file in failed_files:
             print(f"  - {file}")
 

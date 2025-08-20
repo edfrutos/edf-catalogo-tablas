@@ -5,13 +5,14 @@ Ejecuta pruebas básicas para detectar bugs comunes
 """
 
 import os
-import sys
-import time
-import requests
 import subprocess
+import sys
 import threading
+import time
 from datetime import datetime
 from typing import Dict, List, Tuple
+
+import requests
 
 # Configuración
 BASE_URL = "http://localhost:5001"
