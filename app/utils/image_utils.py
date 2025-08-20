@@ -160,3 +160,43 @@ def get_raw_images_for_edit(row_data: Dict[str, Any]) -> List[str]:
 
     # Eliminar duplicados manteniendo orden
     return list(dict.fromkeys(raw_images))
+
+
+def upload_image_to_s3(file_obj, filename):
+    """
+    Sube una imagen a S3 usando un objeto de archivo.
+
+    Args:
+        file_obj: Objeto de archivo (FileStorage de Flask)
+        filename: Nombre del archivo a usar en S3
+
+    Returns:
+        str: URL de S3 si tiene éxito, None si falla
+    """
+    try:
+        import tempfile
+        import os
+        from app.utils.s3_utils import upload_file_to_s3
+
+        # Crear un archivo temporal
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=f"_{filename}"
+        ) as temp_file:
+            # Guardar el contenido del archivo subido al archivo temporal
+            file_obj.save(temp_file.name)
+
+            # Subir a S3
+            result = upload_file_to_s3(temp_file.name, filename)
+
+            # Limpiar el archivo temporal
+            os.unlink(temp_file.name)
+
+            if result.get("success"):
+                return result.get("url")
+            else:
+                current_app.logger.error(f"Error subiendo a S3: {result.get('error')}")
+                return None
+
+    except Exception as e:
+        current_app.logger.error(f"Error en upload_image_to_s3: {str(e)}")
+        return None

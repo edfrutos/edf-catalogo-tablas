@@ -688,7 +688,58 @@ def edit(catalog_id, catalog):
             # Obtener los datos del formulario
             new_name = request.form.get("name", "").strip()
             headers_str = request.form.get("headers", "").strip()
-            nueva_miniatura = request.form.get("miniatura", "").strip()  # noqa: F841
+            nueva_miniatura = request.form.get("miniatura", "").strip()
+
+            # Manejar subida de archivo de miniatura
+            miniatura_file = request.files.get("miniatura_file")
+            if miniatura_file and miniatura_file.filename:
+                try:
+                    # Verificar que sea una imagen válida
+                    if not miniatura_file.filename.lower().endswith(
+                        (".png", ".jpg", ".jpeg", ".gif", ".webp")
+                    ):
+                        flash(
+                            "El archivo debe ser una imagen (PNG, JPG, JPEG, GIF, WEBP).",
+                            "error",
+                        )
+                        return render_template(
+                            "editar_catalogo.html", catalog=catalog, session=session
+                        )
+
+                    # Importar utilidades de imagen y S3
+                    from app.utils.image_utils import upload_image_to_s3
+                    import uuid
+
+                    # Generar nombre único para el archivo
+                    file_extension = miniatura_file.filename.split(".")[-1].lower()
+                    unique_filename = f"miniatura_{uuid.uuid4().hex}.{file_extension}"
+
+                    # Subir a S3
+                    s3_url = upload_image_to_s3(miniatura_file, unique_filename)
+
+                    if s3_url:
+                        nueva_miniatura = s3_url
+                        current_app.logger.info(f"Miniatura subida a S3: {s3_url}")
+                    else:
+                        # Fallback: guardar localmente si S3 falla
+                        upload_dir = get_upload_dir()
+                        file_path = os.path.join(upload_dir, unique_filename)
+                        miniatura_file.save(file_path)
+                        nueva_miniatura = url_for(
+                            "static", filename=f"uploads/{unique_filename}"
+                        )
+                        current_app.logger.info(
+                            f"Miniatura guardada localmente: {nueva_miniatura}"
+                        )
+
+                except Exception as e:
+                    current_app.logger.error(
+                        f"Error al procesar archivo de miniatura: {str(e)}"
+                    )
+                    flash(f"Error al subir la imagen: {str(e)}", "error")
+                    return render_template(
+                        "editar_catalogo.html", catalog=catalog, session=session
+                    )
 
             # Validar los datos
             if not new_name:

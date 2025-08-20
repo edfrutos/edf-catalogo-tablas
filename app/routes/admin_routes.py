@@ -2208,6 +2208,62 @@ def editar_catalogo_admin(collection_source: str, catalog_id: str):
             name = request.form.get("name")
             description = request.form.get("description", "")
             headers_raw = request.form.get("headers")
+            nueva_miniatura = request.form.get("miniatura", "").strip()
+
+            # Manejar subida de archivo de miniatura
+            miniatura_file = request.files.get("miniatura_file")
+            if miniatura_file and miniatura_file.filename:
+                try:
+                    # Verificar que sea una imagen válida
+                    if not miniatura_file.filename.lower().endswith(
+                        (".png", ".jpg", ".jpeg", ".gif", ".webp")
+                    ):
+                        flash(
+                            "El archivo debe ser una imagen (PNG, JPG, JPEG, GIF, WEBP).",
+                            "error",
+                        )
+                        return render_template(
+                            "admin/editar_catalogo.html", catalog=catalog
+                        )
+
+                    # Importar utilidades de imagen y S3
+                    from app.utils.image_utils import upload_image_to_s3
+                    import uuid
+
+                    # Generar nombre único para el archivo
+                    file_extension = miniatura_file.filename.split(".")[-1].lower()
+                    unique_filename = f"miniatura_{uuid.uuid4().hex}.{file_extension}"
+
+                    # Subir a S3
+                    s3_url = upload_image_to_s3(miniatura_file, unique_filename)
+
+                    if s3_url:
+                        nueva_miniatura = s3_url
+                        current_app.logger.info(f"Miniatura subida a S3: {s3_url}")
+                    else:
+                        # Fallback: guardar localmente si S3 falla
+                        from app.routes.catalogs_routes import get_upload_dir
+                        import os
+
+                        upload_dir = get_upload_dir()
+                        file_path = os.path.join(upload_dir, unique_filename)
+                        miniatura_file.save(file_path)
+                        nueva_miniatura = url_for(
+                            "static", filename=f"uploads/{unique_filename}"
+                        )
+                        current_app.logger.info(
+                            f"Miniatura guardada localmente: {nueva_miniatura}"
+                        )
+
+                except Exception as e:
+                    current_app.logger.error(
+                        f"Error al procesar archivo de miniatura: {str(e)}"
+                    )
+                    flash(f"Error al subir la imagen: {str(e)}", "error")
+                    return render_template(
+                        "admin/editar_catalogo.html", catalog=catalog
+                    )
+
             update_data: Dict[str, Any] = {
                 "name": name,
                 "description": description,
@@ -2216,6 +2272,10 @@ def editar_catalogo_admin(collection_source: str, catalog_id: str):
             if headers_raw is not None:
                 headers = [h.strip() for h in headers_raw.split(",") if h.strip()]
                 update_data["headers"] = headers
+
+            # Añadir miniatura si se proporcionó
+            if nueva_miniatura:
+                update_data["miniatura"] = nueva_miniatura
             # Actualizar el catálogo en la colección correspondiente
             collection.update_one({"_id": ObjectId(catalog_id)}, {"$set": update_data})
             flash("Catálogo actualizado correctamente", "success")
@@ -2251,6 +2311,80 @@ def editar_catalogo_admin(collection_source: str, catalog_id: str):
         logger.error(f"Error en editar_catalogo_admin: {str(e)}", exc_info=True)
         flash(f"Error al editar el catálogo: {str(e)}", "error")
         return redirect(url_for("admin.dashboard_admin"))
+
+
+@admin_bp.route("/admin/catalogo/<catalog_id>/get-images", methods=["GET"])
+@admin_required
+def get_catalog_images(catalog_id: str):
+    """
+    Obtiene las imágenes disponibles en un catálogo para la funcionalidad de miniatura automática
+    """
+    try:
+        db = get_mongo_db()
+        if db is None:
+            return jsonify({"error": "No se pudo acceder a la base de datos"}), 500
+
+        # Buscar en las colecciones principales
+        catalog = None
+        collections_to_check = ["spreadsheets", "catalogs"]
+
+        for collection_name in collections_to_check:
+            collection = db[collection_name]
+            catalog = collection.find_one({"_id": ObjectId(catalog_id)})
+            if catalog:
+                break
+
+        if not catalog:
+            return jsonify({"error": "Catálogo no encontrado"}), 404
+
+        # Extraer imágenes de las filas del catálogo
+        images = []
+        data_to_search = catalog.get("data", catalog.get("rows", []))
+
+        for row in data_to_search:
+            if isinstance(row, dict):
+                # Buscar campos que contengan imágenes
+                for key, value in row.items():
+                    if isinstance(value, str) and any(
+                        ext in value.lower()
+                        for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp", "http"]
+                    ):
+                        if value.startswith(("http://", "https://", "/")):
+                            images.append(value)
+                    elif isinstance(value, list):
+                        for item in value:
+                            if isinstance(item, str) and any(
+                                ext in item.lower()
+                                for ext in [
+                                    ".jpg",
+                                    ".jpeg",
+                                    ".png",
+                                    ".gif",
+                                    ".webp",
+                                    "http",
+                                ]
+                            ):
+                                if item.startswith(("http://", "https://", "/")):
+                                    images.append(item)
+
+                # Buscar específicamente en campo 'imagenes' si existe
+                if "imagenes" in row and isinstance(row["imagenes"], list):
+                    for img in row["imagenes"]:
+                        if isinstance(img, str) and img.startswith(
+                            ("http://", "https://", "/")
+                        ):
+                            images.append(img)
+
+        # Eliminar duplicados y limitar a 20 imágenes
+        unique_images = list(dict.fromkeys(images))[:20]
+
+        return jsonify({"images": unique_images})
+
+    except Exception as e:
+        current_app.logger.error(
+            f"Error obteniendo imágenes del catálogo {catalog_id}: {str(e)}"
+        )
+        return jsonify({"error": str(e)}), 500
 
 
 @admin_bp.route("/catalogo/<collection_source>/<catalog_id>/eliminar", methods=["POST"])
