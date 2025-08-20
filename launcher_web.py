@@ -35,8 +35,6 @@ def main():
     try:
         # Importar desde wsgi pero aplicar configuración especial de sesiones
         # Aplicar la misma configuración de sesiones que la app nativa
-        import sys
-
         from wsgi import app
 
         if getattr(sys, "frozen", False):
