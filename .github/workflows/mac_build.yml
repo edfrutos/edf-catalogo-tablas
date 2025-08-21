@@ -238,8 +238,12 @@ jobs:
         run: |
           echo "🧹 Limpiando builds anteriores y resolviendo conflictos de PyInstaller..."
           
-          # Ejecutar script de limpieza pre-build si existe
-          if [ -f "pre_build_cleanup.sh" ]; then
+          # Ejecutar script de limpieza pre-build si existe (prioridad a la versión más agresiva)
+          if [ -f "fix_pyinstaller_tools_conflict_v2.sh" ]; then
+            echo "🔧 Ejecutando script de resolución de conflictos V2 (más agresivo)..."
+            chmod +x fix_pyinstaller_tools_conflict_v2.sh
+            ./fix_pyinstaller_tools_conflict_v2.sh
+          elif [ -f "pre_build_cleanup.sh" ]; then
             echo "🔧 Ejecutando script de limpieza pre-build para CI/CD..."
             chmod +x pre_build_cleanup.sh
             ./pre_build_cleanup.sh
@@ -291,7 +295,11 @@ jobs:
           fi
           
           # Si no existe, intentar ejecutar el script de verificación
-          if [ -f "verify_spec.sh" ]; then
+          if [ -f "create_safe_spec.sh" ]; then
+            echo "🔧 Ejecutando script de creación de .spec seguro..."
+            chmod +x create_safe_spec.sh
+            ./create_safe_spec.sh
+          elif [ -f "verify_spec.sh" ]; then
             echo "🔧 Ejecutando script de verificación de spec..."
             chmod +x verify_spec.sh
             ./verify_spec.sh
