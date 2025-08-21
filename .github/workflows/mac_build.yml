@@ -238,13 +238,17 @@ jobs:
         run: |
           echo "🧹 Limpiando builds anteriores y resolviendo conflictos de PyInstaller..."
           
-          # Ejecutar script de resolución de conflictos si existe
-          if [ -f "ci_fix_pyinstaller.sh" ]; then
+          # Ejecutar script de limpieza pre-build si existe
+          if [ -f "pre_build_cleanup.sh" ]; then
+            echo "🔧 Ejecutando script de limpieza pre-build para CI/CD..."
+            chmod +x pre_build_cleanup.sh
+            ./pre_build_cleanup.sh
+          elif [ -f "ci_fix_pyinstaller.sh" ]; then
             echo "🔧 Ejecutando script de resolución de conflictos para CI/CD..."
             chmod +x ci_fix_pyinstaller.sh
             ./ci_fix_pyinstaller.sh
           else
-            echo "⚠️  Script ci_fix_pyinstaller.sh no encontrado, usando limpieza manual..."
+            echo "⚠️  Scripts de limpieza no encontrados, usando limpieza manual..."
             rm -rf dist/ build/ || true
             find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
             find . -name "*.pyc" -delete 2>/dev/null || true
@@ -254,9 +258,19 @@ jobs:
             # Eliminar archivos conflictivos específicos
             rm -f tools 2>/dev/null || true
             rm -f dist/EDF_CatalogoDeTablas.app/Contents/Frameworks/tools 2>/dev/null || true
+            
+            # Buscar y eliminar archivos 'tools' conflictivos
+            find . -name "tools" -type f -delete 2>/dev/null || true
           fi
           
           echo "✅ Limpieza completa y resolución de conflictos completada"
+          
+          # Verificar que el entorno está listo para el build
+          if [ -f "verify_build_environment.sh" ]; then
+            echo "🔍 Verificando que el entorno está listo para el build..."
+            chmod +x verify_build_environment.sh
+            ./verify_build_environment.sh
+          fi
 
       - name: Verify and create spec file
         run: |
