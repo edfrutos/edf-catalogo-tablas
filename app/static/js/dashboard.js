@@ -934,6 +934,10 @@ $(function () {
 
     $("#driveBackupsCount").text(`${backups.length} respaldo${backups.length !== 1 ? 's' : ''}`);
 
+    // Inicializar funcionalidad de selección múltiple
+    initializeDriveBackupsSelection();
+    updateSelectAllState();
+
     // Inicializar DataTable para ordenamiento y paginación
     if ($.fn.DataTable) {
       if ($.fn.DataTable.isDataTable('#driveBackupsTable')) {
@@ -954,12 +958,62 @@ $(function () {
     }
   }
 
+  // Función para manejar selección múltiple en Google Drive
+  function initializeDriveBackupsSelection() {
+    // Event listener para el checkbox "Seleccionar todos" en el header
+    $(document).off("change", "#selectAllHeader").on("change", "#selectAllHeader", function() {
+      const isChecked = $(this).prop("checked");
+      $(".backup-checkbox:not(:disabled)").prop("checked", isChecked);
+      
+      if (isChecked) {
+        $(".backup-checkbox:not(:disabled)").each(function() {
+          selectedBackups.add($(this).data("backup-id"));
+        });
+      } else {
+        selectedBackups.clear();
+      }
+      
+      updateDeleteButton();
+      updateSelectAllState();
+    });
+
+    // Event listener para checkboxes individuales
+    $(document).off("change", ".backup-checkbox").on("change", ".backup-checkbox", function() {
+      const backupId = $(this).data("backup-id");
+      if ($(this).prop("checked")) {
+        selectedBackups.add(backupId);
+      } else {
+        selectedBackups.delete(backupId);
+      }
+      
+      updateDeleteButton();
+      updateSelectAllState();
+    });
+  }
+
+  // Función para actualizar el estado del checkbox "Seleccionar todos"
+  function updateSelectAllState() {
+    const totalCheckboxes = $(".backup-checkbox:not(:disabled)").length;
+    const checkedCheckboxes = $(".backup-checkbox:checked").length;
+    
+    $("#selectAllHeader").prop("checked", totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes);
+    $("#selectAllHeader").prop("indeterminate", checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
+    $("#selectAllBackups").prop("checked", totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes);
+    $("#selectAllBackups").prop("indeterminate", checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
+  }
+
 
 
   // Función para actualizar botón de eliminar seleccionados
   function updateDeleteButton() {
     const selectedCount = selectedBackups.size;
     const btn = $("#deleteSelectedBackups");
+    const countSpan = $("#selectedCount");
+
+    // Actualizar contador de seleccionados
+    if (countSpan.length > 0) {
+      countSpan.text(`${selectedCount} seleccionado${selectedCount !== 1 ? 's' : ''}`);
+    }
 
     if (selectedCount > 0) {
       btn.prop("disabled", false).html(`<i class="bi bi-trash"></i> Eliminar ${selectedCount} seleccionado${selectedCount !== 1 ? 's' : ''}`);

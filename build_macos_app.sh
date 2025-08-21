@@ -21,6 +21,12 @@ source .venv/bin/activate
 echo "🧹 Limpiando builds anteriores..."
 ./clean_build.sh
 
+# Verificar que no hay archivos .spec residuales
+if [ -f "EDF_CatalogoDeTablas.spec" ]; then
+    echo "🗑️ Eliminando archivo .spec residual..."
+    rm -f EDF_CatalogoDeTablas.spec
+fi
+
 # Crear el archivo .spec para PyInstaller
 echo "📝 Creando archivo de especificación..."
 cat > EDF_CatalogoDeTablas.spec << 'EOF'
@@ -46,7 +52,7 @@ a = Analysis(
         ('app/logging_unified.py', 'app'),
         ('app/security_middleware.py', 'app'),
         ('scripts', 'scripts'),
-        ('tools', 'tools'),
+        ('tools', 'app_tools'),
         ('docs', 'docs'),
         ('backups', 'backups'),
         ('backup_empty_files', 'backup_empty_files'),
@@ -138,9 +144,9 @@ EOF
 
 # Verificar que no hay conflictos de directorios
 echo "🔍 Verificando conflictos de directorios..."
-if [ -f "dist/EDF_CatalogoDeTablas.app/Contents/Frameworks/tools" ]; then
-    echo "⚠️  Eliminando archivo conflictivo..."
-    rm -f "dist/EDF_CatalogoDeTablas.app/Contents/Frameworks/tools"
+if [ -d "dist" ]; then
+    echo "🧹 Limpiando directorio dist completamente..."
+    rm -rf dist/
 fi
 
 # Construir la aplicación

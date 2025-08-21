@@ -49,7 +49,6 @@
     "reportIncompatibleMethodOverride": "warning",
     "reportIncompatibleVariableOverride": "warning",
     "reportInconsistentConstructor": "warning",
-    "reportOverlappingOverloads": "warning",
     "reportMissingSuperCall": "warning",
     "reportUnusedClass": "warning",
     "reportUnusedFunction": "warning",
@@ -83,17 +82,5 @@
     "reportUnusedImport": "warning",
     "reportUnusedExpression": "warning",
     "reportUnusedCallResult": "warning",
-    "reportUnnecessaryTypeIgnoreComment": "warning",
-    "reportUnnecessaryCast": "warning",
-    "reportUnnecessaryComparison": "warning",
-    "reportUnnecessaryIsInstance": "warning",
-    "reportUnnecessaryDictComprehension": "warning",
-    "reportUnnecessaryListComprehension": "warning",
-    "reportUnnecessarySetComprehension": "warning",
-    "reportMissingTypeStubs": false,
-    "reportUntypedFunctionDecorator": false,
-    "reportUntypedClassDecorator": false,
-    "reportUntypedBaseClass": false,
-    "reportUntypedNamedTuple": false,
-    "reportPrivateUsage": false
+    "reportUnnecessaryTypeIgnoreComment": "warning"
 }

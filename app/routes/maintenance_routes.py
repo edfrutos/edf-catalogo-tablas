@@ -219,11 +219,11 @@ class GoogleDriveManager:
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            # Import google_drive_utils from the correct path
+            # Import google_drive_utils_v2 from the correct path
             sys.path.append(
-                os.path.join(os.path.dirname(__file__), "..", "..", "tools")
+                os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            from db_utils.google_drive_utils import list_files_in_folder
+            from google_drive_utils_v2 import list_files_in_folder
 
             # Listar archivos en la carpeta de backups
             files = list_files_in_folder("Backups_CatalogoTablas")
@@ -264,7 +264,7 @@ class GoogleDriveManager:
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            from google_drive_utils import download_file
+            from google_drive_utils_v2 import download_file
 
             # Descargar el archivo y devolver el contenido como bytes
             content = download_file(file_id)
@@ -284,7 +284,7 @@ class GoogleDriveManager:
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            from google_drive_utils import delete_file
+            from google_drive_utils_v2 import delete_file
 
             # Eliminar el archivo usando la función real
             success = delete_file(file_id)
@@ -310,7 +310,7 @@ class GoogleDriveManager:
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            from google_drive_utils import upload_to_drive
+            from google_drive_utils_v2 import upload_file_to_drive
 
             # Crear archivo temporal
             with tempfile.NamedTemporaryFile(
@@ -321,7 +321,7 @@ class GoogleDriveManager:
 
             try:
                 # Subir archivo usando la función real
-                result = upload_to_drive(temp_file_path)
+                result = upload_file_to_drive(temp_file_path, "Backups_CatalogoTablas")
 
                 if result and result.get("success"):
                     file_id = result.get("file_id")
@@ -870,7 +870,7 @@ def create_backup():
         )
         if db_utils_path not in sys.path:
             sys.path.insert(0, db_utils_path)
-        from google_drive_utils import upload_to_drive
+        from google_drive_utils_v2 import upload_file_to_drive
 
         backup_manager = BackupManager()
         backup_data = backup_manager.create_backup()
@@ -902,7 +902,7 @@ def create_backup():
 
         # **SUBIR A GOOGLE DRIVE**
         try:
-            drive_result = upload_to_drive(backup_path)
+            drive_result = upload_file_to_drive(backup_path, "Backups_CatalogoTablas")
 
             if drive_result and drive_result.get("success"):
                 # Eliminar archivo local después de subida exitosa
