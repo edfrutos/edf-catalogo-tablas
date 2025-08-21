@@ -234,15 +234,29 @@ jobs:
           EOF
           echo "✅ Archivos de ejemplo creados"
 
-      - name: Clean previous builds
+      - name: Clean previous builds and resolve PyInstaller conflicts
         run: |
-          echo "🧹 Limpiando builds anteriores..."
-          rm -rf dist/ build/ || true
-          find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-          find . -name "*.pyc" -delete 2>/dev/null || true
-          find . -name ".mypy_cache" -type d -exec rm -rf {} + 2>/dev/null || true
-          find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
-          echo "✅ Limpieza completa de cachés completada"
+          echo "🧹 Limpiando builds anteriores y resolviendo conflictos de PyInstaller..."
+          
+          # Ejecutar script de resolución de conflictos si existe
+          if [ -f "ci_fix_pyinstaller.sh" ]; then
+            echo "🔧 Ejecutando script de resolución de conflictos para CI/CD..."
+            chmod +x ci_fix_pyinstaller.sh
+            ./ci_fix_pyinstaller.sh
+          else
+            echo "⚠️  Script ci_fix_pyinstaller.sh no encontrado, usando limpieza manual..."
+            rm -rf dist/ build/ || true
+            find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+            find . -name "*.pyc" -delete 2>/dev/null || true
+            find . -name ".mypy_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+            find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+            
+            # Eliminar archivos conflictivos específicos
+            rm -f tools 2>/dev/null || true
+            rm -f dist/EDF_CatalogoDeTablas.app/Contents/Frameworks/tools 2>/dev/null || true
+          fi
+          
+          echo "✅ Limpieza completa y resolución de conflictos completada"
 
       - name: Verify and create spec file
         run: |
@@ -283,7 +297,21 @@ jobs:
             echo "        ('app/templates', 'app/templates')," >> "EDF_CatalogoDeTablas.spec"
             echo "        ('app/static', 'app/static')," >> "EDF_CatalogoDeTablas.spec"
             echo "        ('app/routes', 'app/routes')," >> "EDF_CatalogoDeTablas.spec"
-            echo "        ('tools', 'tools')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/db_utils', 'app_tools/db_utils')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/utils', 'app_tools/utils')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/maintenance', 'app_tools/maintenance')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/monitoring', 'app_tools/monitoring')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/Admin Utils', 'app_tools/Admin Utils')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/Scripts Principales', 'app_tools/Scripts Principales')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/Users Tools', 'app_tools/Users Tools')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/Test Scripts', 'app_tools/Test Scripts')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/testing', 'app_tools/testing')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/image_utils', 'app_tools/image_utils')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/local', 'app_tools/local')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/macOS', 'app_tools/macOS')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/production', 'app_tools/production')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/system', 'app_tools/system')," >> "EDF_CatalogoDeTablas.spec"
+            echo "        ('tools/src', 'app_tools/src')," >> "EDF_CatalogoDeTablas.spec"
             echo "        ('config', 'config')," >> "EDF_CatalogoDeTablas.spec"
             echo "        ('requirements_python310.txt', '.')," >> "EDF_CatalogoDeTablas.spec"
             echo "        ('.env', '.')," >> "EDF_CatalogoDeTablas.spec"
@@ -364,9 +392,19 @@ jobs:
 
       - name: Build App
         run: |
-          echo "Iniciando construcción de la aplicación..."
-          python -m PyInstaller EDF_CatalogoDeTablas.spec --clean
-          echo "Construcción completada"
+          echo "🔨 Iniciando construcción de la aplicación..."
+          
+          # Intentar usar el script de build mejorado si existe
+          if [ -f "build_macos_app.sh" ]; then
+            echo "🔧 Usando script de build mejorado..."
+            chmod +x build_macos_app.sh
+            ./build_macos_app.sh
+          else
+            echo "⚠️  Script build_macos_app.sh no encontrado, usando PyInstaller directamente..."
+            python -m PyInstaller EDF_CatalogoDeTablas.spec --clean
+          fi
+          
+          echo "✅ Construcción completada"
 
       - name: Verify build output
         run: |
