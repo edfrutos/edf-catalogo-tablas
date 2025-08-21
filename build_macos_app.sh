@@ -19,7 +19,7 @@ source .venv/bin/activate
 
 # Limpiar builds anteriores
 echo "🧹 Limpiando builds anteriores..."
-rm -rf build/ dist/ *.spec
+./clean_build.sh
 
 # Crear el archivo .spec para PyInstaller
 echo "📝 Creando archivo de especificación..."
@@ -135,6 +135,13 @@ coll = COLLECT(
     name='EDF_CatalogoDeTablas',
 )
 EOF
+
+# Verificar que no hay conflictos de directorios
+echo "🔍 Verificando conflictos de directorios..."
+if [ -f "dist/EDF_CatalogoDeTablas.app/Contents/Frameworks/tools" ]; then
+    echo "⚠️  Eliminando archivo conflictivo..."
+    rm -f "dist/EDF_CatalogoDeTablas.app/Contents/Frameworks/tools"
+fi
 
 # Construir la aplicación
 echo "🔨 Construyendo aplicación con PyInstaller..."
