@@ -275,6 +275,13 @@ jobs:
             chmod +x verify_build_environment.sh
             ./verify_build_environment.sh
           fi
+          
+          # Modificar archivo .spec existente para evitar conflictos
+          if [ -f "fix_existing_spec.sh" ]; then
+            echo "🔧 Modificando archivo .spec existente para evitar conflictos..."
+            chmod +x fix_existing_spec.sh
+            ./fix_existing_spec.sh
+          fi
 
       - name: Verify and create spec file
         run: |
@@ -415,6 +422,13 @@ jobs:
       - name: Build App
         run: |
           echo "🔨 Iniciando construcción de la aplicación..."
+          
+          # Verificación final antes del build
+          if [ -f "pre_build_final_check.sh" ]; then
+            echo "🔍 Ejecutando verificación final pre-build..."
+            chmod +x pre_build_final_check.sh
+            ./pre_build_final_check.sh
+          fi
           
           # Intentar usar el script de build mejorado si existe
           if [ -f "build_macos_app.sh" ]; then
