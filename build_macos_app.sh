@@ -21,6 +21,10 @@ source .venv/bin/activate
 echo "🧹 Limpiando builds anteriores..."
 ./clean_build.sh
 
+# Resolver conflictos específicos de PyInstaller
+echo "🔧 Resolviendo conflictos específicos de PyInstaller..."
+./fix_pyinstaller_tools_conflict.sh
+
 # Verificar que no hay archivos .spec residuales
 if [ -f "EDF_CatalogoDeTablas.spec" ]; then
     echo "🗑️ Eliminando archivo .spec residual..."
@@ -52,7 +56,21 @@ a = Analysis(
         ('app/logging_unified.py', 'app'),
         ('app/security_middleware.py', 'app'),
         ('scripts', 'scripts'),
-        ('tools', 'app_tools'),
+        ('tools/db_utils', 'app_tools/db_utils'),
+        ('tools/utils', 'app_tools/utils'),
+        ('tools/maintenance', 'app_tools/maintenance'),
+        ('tools/monitoring', 'app_tools/monitoring'),
+        ('tools/Admin Utils', 'app_tools/Admin Utils'),
+        ('tools/Scripts Principales', 'app_tools/Scripts Principales'),
+        ('tools/Users Tools', 'app_tools/Users Tools'),
+        ('tools/Test Scripts', 'app_tools/Test Scripts'),
+        ('tools/testing', 'app_tools/testing'),
+        ('tools/image_utils', 'app_tools/image_utils'),
+        ('tools/local', 'app_tools/local'),
+        ('tools/macOS', 'app_tools/macOS'),
+        ('tools/production', 'app_tools/production'),
+        ('tools/system', 'app_tools/system'),
+        ('tools/src', 'app_tools/src'),
         ('docs', 'docs'),
         ('backups', 'backups'),
         ('backup_empty_files', 'backup_empty_files'),
