@@ -13,9 +13,16 @@ if [ ! -f "config.py" ]; then
     exit 1
 fi
 
-# Activar entorno virtual
-echo "📦 Activando entorno virtual..."
-source .venv/bin/activate
+# Activar entorno virtual (si existe) o usar Python global
+echo "📦 Verificando entorno virtual..."
+if [ -f ".venv/bin/activate" ]; then
+    echo "✅ Entorno virtual encontrado, activando..."
+    source .venv/bin/activate
+else
+    echo "⚠️  Entorno virtual no encontrado, usando Python global..."
+    echo "📋 Python disponible: $(which python)"
+    echo "📋 Versión de Python: $(python --version)"
+fi
 
 # Limpiar builds anteriores
 echo "🧹 Limpiando builds anteriores..."
