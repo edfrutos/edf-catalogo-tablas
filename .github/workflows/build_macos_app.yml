@@ -215,6 +215,26 @@ jobs:
           EOF
           echo "✅ Variables de entorno no sensibles configuradas"
 
+      - name: Create required directories for build
+        run: |
+          echo "📁 Creando directorios requeridos para el build..."
+          
+          # Crear directorio backups (requerido por PyInstaller)
+          mkdir -p backups
+          echo "✅ Directorio backups creado"
+          
+          # Crear otros directorios que puedan ser necesarios
+          mkdir -p uploads
+          mkdir -p static/uploads
+          mkdir -p logs
+          mkdir -p exportados
+          mkdir -p spreadsheets
+          mkdir -p imagenes
+          
+          echo "📋 Directorios creados:"
+          ls -la | grep "^d"
+          echo "✅ Directorios requeridos creados"
+
       - name: Create placeholder credentials
         run: |
           echo "📝 Creando archivos de credenciales de ejemplo..."
