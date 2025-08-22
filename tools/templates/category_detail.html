@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category_name }} - Gestor de Scripts de Build</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .script-card {
+            transition: transform 0.2s;
+        }
+        .script-card:hover {
+            transform: translateY(-2px);
+        }
+        .status-badge {
+            font-size: 1.1em;
+        }
+        .execute-btn {
+            min-width: 120px;
+        }
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .execution-log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .path-info {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row bg-primary text-white py-3 mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="/" class="text-white text-decoration-none">
+                                <i class="fas fa-home"></i> Inicio
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">
+                            {{ category_name }}
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0 mt-2">
+                    <i class="fas fa-folder-open"></i> 
+                    {{ category_name }}
+                </h1>
+                <p class="mb-0 text-light">{{ description }}</p>
+            </div>
+            <div class="col-auto d-flex align-items-center">
+                <span class="badge bg-light text-dark me-2">
+                    <i class="fas fa-file-code"></i> 
+                    {{ scripts|length }} scripts
+                </span>
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+
+        <!-- Alertas -->
+        <div id="alerts-container"></div>
+
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h4 class="mb-0">{{ scripts | selectattr('status', 'equalto', '✅') | list | length }}</h4>
+                        <small>Scripts Activos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h4 class="mb-0">{{ scripts | selectattr('status', 'equalto', '❌') | list | length }}</h4>
+                        <small>Scripts con Error</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h4 class="mb-0">{{ scripts | selectattr('exists', 'equalto', true) | list | length }}</h4>
+                        <small>Enlaces Válidos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h4 class="mb-0">{{ scripts | selectattr('original_exists', 'equalto', true) | list | length }}</h4>
+                        <small>Archivos Originales</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <div class="row">
+            {% for script in scripts %}
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card script-card h-100 shadow-sm">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-file-code"></i> 
+                                {{ script.display_name }}
+                            </h6>
+                            <span class="status-badge">{{ script.status }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Archivo:</strong> {{ script.name }}
+                        </div>
+                        
+                        {% if script.original_path %}
+                        <div class="mb-3">
+                            <strong>Ruta Original:</strong>
+                            <div class="path-info">{{ script.original_path }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if script.error %}
+                        <div class="alert alert-danger alert-sm mb-3">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ script.error }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small text-muted">
+                                <i class="fas fa-link"></i> 
+                                {{ 'Enlace válido' if script.exists else 'Enlace no encontrado' }}
+                            </div>
+                            <button class="btn btn-primary execute-btn" 
+                                    onclick="executeScript('{{ category }}', '{{ script.name }}')"
+                                    {{ 'disabled' if script.status != '✅' }}>
+                                <i class="fas fa-play"></i> Ejecutar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Modal de Ejecución -->
+        <div class="modal fade" id="executionModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-play-circle"></i> 
+                            Ejecutando Script
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="execution-info">
+                            <p><strong>Script:</strong> <span id="executing-script"></span></p>
+                            <p><strong>Categoría:</strong> <span id="executing-category"></span></p>
+                            <p><strong>Estado:</strong> <span id="execution-status">Iniciando...</span></p>
+                        </div>
+                        <div id="execution-log" class="execution-log" style="display: none;">
+                            <div id="log-content"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let executionModal;
+        let currentExecution = null;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            executionModal = new bootstrap.Modal(document.getElementById('executionModal'));
+        });
+
+        // Ejecutar script
+        async function executeScript(category, script) {
+            if (currentExecution) {
+                showAlert('Ya hay una ejecución en curso', 'warning');
+                return;
+            }
+
+            // Mostrar modal
+            document.getElementById('executing-script').textContent = script;
+            document.getElementById('executing-category').textContent = category;
+            document.getElementById('execution-status').textContent = 'Iniciando...';
+            document.getElementById('execution-log').style.display = 'none';
+            document.getElementById('log-content').innerHTML = '';
+            
+            executionModal.show();
+
+            try {
+                currentExecution = true;
+                
+                // Deshabilitar botón
+                const button = event.target.closest('.execute-btn');
+                button.disabled = true;
+                button.classList.add('loading');
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ejecutando...';
+
+                // Ejecutar script
+                const response = await fetch(`/execute/${category}/${script}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                // Actualizar estado
+                document.getElementById('execution-status').textContent = 
+                    result.success ? 'Completado' : 'Error';
+                
+                // Mostrar resultado
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    document.getElementById('execution-status').className = 'text-success';
+                } else {
+                    showAlert(result.error, 'danger');
+                    document.getElementById('execution-status').className = 'text-danger';
+                }
+
+                // Mostrar log si está disponible
+                if (result.log) {
+                    document.getElementById('log-content').innerHTML = result.log;
+                    document.getElementById('execution-log').style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Error executing script:', error);
+                showAlert('Error de conexión', 'danger');
+                document.getElementById('execution-status').textContent = 'Error de conexión';
+                document.getElementById('execution-status').className = 'text-danger';
+            } finally {
+                currentExecution = false;
+                
+                // Rehabilitar botón
+                if (button) {
+                    button.disabled = false;
+                    button.classList.remove('loading');
+                    button.innerHTML = '<i class="fas fa-play"></i> Ejecutar';
+                }
+            }
+        }
+
+        // Mostrar alerta
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertHtml = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            alertsContainer.insertAdjacentHTML('beforeend', alertHtml);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
