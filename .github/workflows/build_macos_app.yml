@@ -223,6 +223,10 @@ jobs:
           mkdir -p backups
           echo "✅ Directorio backups creado"
           
+          # Crear directorio flask_session (requerido por Flask-Session)
+          mkdir -p flask_session
+          echo "✅ Directorio flask_session creado"
+          
           # Crear otros directorios que puedan ser necesarios
           mkdir -p uploads
           mkdir -p static/uploads
@@ -230,6 +234,7 @@ jobs:
           mkdir -p exportados
           mkdir -p spreadsheets
           mkdir -p imagenes
+          mkdir -p instance
           
           echo "📋 Directorios creados:"
           ls -la | grep "^d"
