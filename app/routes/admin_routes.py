@@ -2147,26 +2147,55 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
             f"[ADMIN] Mostrando catálogo desde {collection_source}: {catalog.get('name', 'Sin nombre')}"
         )
         # Determinar return_url
-        return_url = request.referrer
-        # Intentar deducir el user_id para volver a la lista de catálogos del usuario
-        user_id = None
-        if "created_by_id" in catalog and catalog["created_by_id"]:
-            user_id = str(catalog["created_by_id"])
-        elif "created_by" in catalog and catalog["created_by"]:
-            user = db.users.find_one(
-                {
-                    "$or": [
-                        {"email": catalog["created_by"]},
-                        {"username": catalog["created_by"]},
-                    ]
-                }
-            )
-            if user:
-                user_id = str(user["_id"])
-        if not return_url and user_id:
-            return_url = url_for("admin.ver_catalogos_usuario_por_id", user_id=user_id)
+        return_url = request.args.get("return_url") or request.referrer
+
+        # Si el referrer es la página de edición de fila, construir una URL apropiada
+        if return_url and "editar-fila" in return_url:
+            # Intentar deducir el user_id para volver a la lista de catálogos del usuario
+            user_id = None
+            if "created_by_id" in catalog and catalog["created_by_id"]:
+                user_id = str(catalog["created_by_id"])
+            elif "created_by" in catalog and catalog["created_by"]:
+                user = db.users.find_one(
+                    {
+                        "$or": [
+                            {"email": catalog["created_by"]},
+                            {"username": catalog["created_by"]},
+                        ]
+                    }
+                )
+                if user:
+                    user_id = str(user["_id"])
+
+            if user_id:
+                return_url = url_for(
+                    "admin.ver_catalogos_usuario_por_id", user_id=user_id
+                )
+            else:
+                return_url = url_for("admin.dashboard_admin")
         elif not return_url:
-            return_url = url_for("admin.dashboard_admin")
+            # Si no hay referrer, intentar deducir el user_id para volver a la lista de catálogos del usuario
+            user_id = None
+            if "created_by_id" in catalog and catalog["created_by_id"]:
+                user_id = str(catalog["created_by_id"])
+            elif "created_by" in catalog and catalog["created_by"]:
+                user = db.users.find_one(
+                    {
+                        "$or": [
+                            {"email": catalog["created_by"]},
+                            {"username": catalog["created_by"]},
+                        ]
+                    }
+                )
+                if user:
+                    user_id = str(user["_id"])
+
+            if user_id:
+                return_url = url_for(
+                    "admin.ver_catalogos_usuario_por_id", user_id=user_id
+                )
+            else:
+                return_url = url_for("admin.dashboard_admin")
         return render_template(
             "admin/ver_catalogo.html",
             catalog=catalog,
@@ -2439,18 +2468,22 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
                         file.save(file_path)
                         nuevas_imagenes.append(filename)
                 if nuevas_imagenes:
-                    updated_row["images"] = (
-                        updated_row.get("images", []) + nuevas_imagenes
-                    )
+                    existing_images = updated_row.get("images", [])
+                    if isinstance(existing_images, list):
+                        updated_row["images"] = existing_images + nuevas_imagenes
+                    else:
+                        updated_row["images"] = nuevas_imagenes
 
             # Eliminar imágenes seleccionadas
             delete_images = request.form.getlist("delete_images")
             if delete_images:
-                updated_row["images"] = [
-                    img
-                    for img in updated_row.get("images", [])
-                    if img not in delete_images
-                ]
+                current_images = updated_row.get("images", [])
+                if isinstance(current_images, list):
+                    updated_row["images"] = [
+                        img for img in current_images if img not in delete_images
+                    ]
+                else:
+                    updated_row["images"] = []
 
             # Actualizar la fila en el catálogo
             catalog["rows"][row_index] = updated_row
