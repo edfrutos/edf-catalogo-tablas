@@ -263,42 +263,22 @@ jobs:
         run: |
           echo "🧹 Limpiando builds anteriores y resolviendo conflictos de PyInstaller..."
           
-          # Ejecutar script de limpieza pre-build (prioridad a la versión más reciente)
-          if [ -f "fix_tools_directory_conflict.sh" ]; then
-            echo "🔧 Ejecutando script específico para conflicto del directorio tools..."
-            chmod +x fix_tools_directory_conflict.sh
-            ./fix_tools_directory_conflict.sh
-          elif [ -f "fix_pyinstaller_tools_conflict_v3.sh" ]; then
-            echo "🔧 Ejecutando script de resolución de conflictos V3 (solución completa)..."
-            chmod +x fix_pyinstaller_tools_conflict_v3.sh
-            ./fix_pyinstaller_tools_conflict_v3.sh
-          elif [ -f "fix_pyinstaller_tools_conflict_v2.sh" ]; then
-            echo "🔧 Ejecutando script de resolución de conflictos V2 (más agresivo)..."
-            chmod +x fix_pyinstaller_tools_conflict_v2.sh
-            ./fix_pyinstaller_tools_conflict_v2.sh
-          elif [ -f "pre_build_cleanup.sh" ]; then
-            echo "🔧 Ejecutando script de limpieza pre-build para CI/CD..."
-            chmod +x pre_build_cleanup.sh
-            ./pre_build_cleanup.sh
-          elif [ -f "ci_fix_pyinstaller.sh" ]; then
-            echo "🔧 Ejecutando script de resolución de conflictos para CI/CD..."
-            chmod +x ci_fix_pyinstaller.sh
-            ./ci_fix_pyinstaller.sh
-          else
-            echo "⚠️  Scripts de limpieza no encontrados, usando limpieza manual..."
-            rm -rf dist/ build/ || true
-            find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-            find . -name "*.pyc" -delete 2>/dev/null || true
-            find . -name ".mypy_cache" -type d -exec rm -rf {} + 2>/dev/null || true
-            find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
-            
-            # Eliminar archivos conflictivos específicos
-            rm -f tools 2>/dev/null || true
-            rm -f dist/EDF_CatalogoDeTablas.app/Contents/Frameworks/tools 2>/dev/null || true
-            
-            # Buscar y eliminar archivos 'tools' conflictivos
-            find . -name "tools" -type f -delete 2>/dev/null || true
-          fi
+          # Ejecutar limpieza manual (evitar scripts que sobrescriben .spec)
+          echo "🧹 Ejecutando limpieza manual para evitar conflictos..."
+          rm -rf dist/ build/ || true
+          find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+          find . -name "*.pyc" -delete 2>/dev/null || true
+          find . -name ".mypy_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+          find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+          
+          # Eliminar archivos conflictivos específicos
+          rm -f tools 2>/dev/null || true
+          rm -f dist/EDF_CatalogoDeTablas.app/Contents/Frameworks/tools 2>/dev/null || true
+          
+          # Buscar y eliminar archivos 'tools' conflictivos
+          find . -name "tools" -type f -delete 2>/dev/null || true
+          
+          echo "✅ Limpieza manual completada sin sobrescribir archivo .spec"
           
           echo "✅ Limpieza completa y resolución de conflictos completada"
           
