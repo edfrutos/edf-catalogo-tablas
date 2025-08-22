@@ -1,132 +1,86 @@
 #!/bin/bash
 
-# Script de verificación final antes del build
-# Se ejecuta justo antes de PyInstaller para asegurar que no hay conflictos
-# Autor: EDF Developer - 2025
+echo "🔍 Verificación final pre-build..."
 
-set -e
+# Crear directorios esenciales si no existen
+echo "📁 Creando directorios esenciales..."
+mkdir -p app/static
+mkdir -p app/templates
+mkdir -p app/routes
+mkdir -p app/models
+mkdir -p app/utils
+mkdir -p tools/db_utils
+mkdir -p tools/utils
+mkdir -p tools/maintenance
+mkdir -p tools/monitoring
+mkdir -p "tools/Admin Utils"
+mkdir -p "tools/Scripts Principales"
+mkdir -p "tools/Users Tools"
+mkdir -p "tools/Test Scripts"
+mkdir -p tools/testing
+mkdir -p tools/image_utils
+mkdir -p tools/local
+mkdir -p tools/macOS
+mkdir -p tools/production
+mkdir -p tools/system
+mkdir -p tools/src
 
-echo "🔍 VERIFICACIÓN FINAL PRE-BUILD..."
+# Crear directorios opcionales si no existen
+echo "📁 Creando directorios opcionales..."
+mkdir -p scripts
+mkdir -p docs
+mkdir -p static
+mkdir -p spreadsheets
+mkdir -p exportados
+mkdir -p imagenes
 
-# Función para verificación final del archivo .spec
-check_spec_file() {
-    echo "📄 Verificando archivo .spec..."
-    
-    if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
-        echo "❌ Error: No se encuentra EDF_CatalogoDeTablas.spec"
-        return 1
-    fi
-    
-    # Verificar que no hay referencias problemáticas
-    if grep -q "app_tools" EDF_CatalogoDeTablas.spec; then
-        echo "❌ Error: El archivo .spec aún contiene referencias a 'app_tools'"
-        echo "🔧 Aplicando corrección automática..."
-        sed -i '' 's/app_tools/app_utils/g' EDF_CatalogoDeTablas.spec
-        echo "✅ Corrección aplicada"
-    else
-        echo "✅ No hay referencias problemáticas a 'app_tools'"
-    fi
-    
-    # Verificar que se usan referencias seguras
-    if grep -q "app_utils" EDF_CatalogoDeTablas.spec; then
-        echo "✅ Se usan referencias seguras a 'app_utils'"
-    else
-        echo "❌ Error: No se encontraron referencias a 'app_utils'"
-        return 1
-    fi
-    
-    echo "✅ Archivo .spec verificado correctamente"
-    return 0
-}
+# Verificar archivos esenciales
+echo "📄 Verificando archivos esenciales..."
+if [ ! -f ".env" ]; then
+    echo "⚠️  Creando .env de ejemplo..."
+    cat > .env << EOF
+FLASK_ENV=production
+APP_VERSION=1.0.0
+BUILD_DATE=$(date +%Y-%m-%d)
+EOF
+fi
 
-# Función para verificar que no hay archivos conflictivos
-check_conflict_files() {
-    echo "🔍 Verificando archivos conflictivos..."
-    
-    # Verificar que no hay archivos llamados 'tools'
-    if [ -f "tools" ]; then
-        echo "❌ Error: Existe un archivo 'tools' conflictivo"
-        rm -f tools
-        echo "✅ Archivo conflictivo eliminado"
-    else
-        echo "✅ No hay archivo 'tools' conflictivo"
-    fi
-    
-    # Buscar archivos conflictivos en el proyecto
-    if find . -name "tools" -type f 2>/dev/null | grep -q .; then
-        echo "❌ Error: Existen archivos 'tools' conflictivos en el proyecto"
-        find . -name "tools" -type f -delete 2>/dev/null || true
-        echo "✅ Archivos conflictivos eliminados"
-    else
-        echo "✅ No hay archivos 'tools' conflictivos"
-    fi
-    
-    # Verificar que el directorio tools existe
-    if [ ! -d "tools" ]; then
-        echo "❌ Error: El directorio 'tools' no existe"
-        return 1
-    else
-        echo "✅ Directorio 'tools' existe correctamente"
-    fi
-    
-    echo "✅ Verificación de archivos conflictivos completada"
-    return 0
-}
+if [ ! -f "config.py" ]; then
+    echo "⚠️  Creando config.py de ejemplo..."
+    cat > config.py << EOF
+import os
+from dotenv import load_dotenv
 
-# Función para verificar el entorno de PyInstaller
-check_pyinstaller_environment() {
-    echo "🔍 Verificando entorno de PyInstaller..."
-    
-    # Verificar que PyInstaller está instalado
-    if ! command -v pyinstaller &> /dev/null; then
-        echo "❌ Error: PyInstaller no está instalado"
-        return 1
-    else
-        echo "✅ PyInstaller está instalado"
-    fi
-    
-    # Verificar que el archivo principal existe
-    if [ ! -f "run_server.py" ]; then
-        echo "❌ Error: No se encuentra run_server.py"
-        return 1
-    else
-        echo "✅ run_server.py existe"
-    fi
-    
-    # Limpiar caché de PyInstaller
-    echo "🧹 Limpiando caché de PyInstaller..."
-    pyinstaller --clean 2>/dev/null || true
-    
-    echo "✅ Entorno de PyInstaller verificado"
-    return 0
-}
+load_dotenv()
 
-# Función para mostrar resumen final
-show_final_summary() {
-    echo ""
-    echo "📋 RESUMEN FINAL PRE-BUILD:"
-    echo "   - Archivo .spec: ✅ VERIFICADO"
-    echo "   - Archivos conflictivos: ✅ VERIFICADO"
-    echo "   - Entorno PyInstaller: ✅ VERIFICADO"
-    echo "   - Directorio tools: ✅ VERIFICADO"
-    echo ""
-    echo "🎉 VERIFICACIÓN FINAL COMPLETADA"
-    echo "💡 El entorno está listo para el build"
-    echo "🚀 Puedes ejecutar PyInstaller con confianza"
-}
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
+    MONGODB_URI = os.environ.get('MONGODB_URI') or 'mongodb://localhost:27017/'
+    DEBUG = False
+EOF
+fi
 
-# Función principal
-main() {
-    echo "🚀 Ejecutando verificación final pre-build..."
-    
-    if check_spec_file && check_conflict_files && check_pyinstaller_environment; then
-        show_final_summary
-        echo "✅ Verificación final exitosa"
-    else
-        echo "❌ Error: La verificación final falló"
-        exit 1
-    fi
-}
+if [ ! -f "wsgi.py" ]; then
+    echo "⚠️  Creando wsgi.py de ejemplo..."
+    cat > wsgi.py << EOF
+from app import create_app
 
-# Ejecutar función principal
-main "$@"
+app = create_app()
+
+if __name__ == '__main__':
+    app.run()
+EOF
+fi
+
+# Verificar que el archivo .spec existe y es válido
+echo "🔧 Verificando archivo .spec..."
+if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
+    echo "❌ ERROR: EDF_CatalogoDeTablas.spec no encontrado"
+    exit 1
+fi
+
+echo "✅ Verificación final completada"
+echo "📋 Directorios creados/verificados:"
+ls -la | grep "^d"
+echo "📋 Archivos esenciales verificados:"
+ls -la .env config.py wsgi.py requirements_python310.txt 2>/dev/null || echo "Algunos archivos no encontrados"

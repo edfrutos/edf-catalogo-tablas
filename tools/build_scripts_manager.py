@@ -11,7 +11,7 @@ from typing import List, Optional
 
 
 class BuildScriptsManager:
-    def __init__(self):
+    def __init__(self):  # type: ignore
         # Obtener el directorio base del proyecto
         script_path = Path(__file__).resolve()
         self.base_dir = script_path.parent.parent
@@ -61,6 +61,19 @@ class BuildScriptsManager:
             "configuration": {
                 "description": "Scripts de configuración y verificación",
                 "scripts": ["verify_pyright.sh"],
+            },
+            "spell-check": {
+                "description": "Utilidades de verificación ortográfica y corrección",
+                "scripts": [
+                    "quick_spell_check.py",
+                    "quick_setup_spell_check.py",
+                    "complete_spell_check_workflow.py",
+                    "add_common_words.py",
+                    "add_categorized_words.py",
+                    "fix_spell_check.py",
+                    "spell_check_gui.py",
+                    "launch_spell_check_gui.sh",
+                ],
             },
         }
 

@@ -202,7 +202,7 @@ def input_file_path(prompt: str) -> Optional[str]:
             if create in ["s", "si", "sí", "y", "yes"]:
                 try:
                     with open(file_path, "w", encoding="utf-8") as f:
-                        f.write("")
+                        _ = f.write("")
                     print(f"✅ Archivo '{file_path}' creado.")
                     return file_path
                 except Exception as e:
