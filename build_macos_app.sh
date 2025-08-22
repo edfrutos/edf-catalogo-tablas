@@ -32,15 +32,13 @@ echo "🧹 Limpiando builds anteriores..."
 echo "🔧 Resolviendo conflictos específicos de PyInstaller..."
 ./fix_pyinstaller_tools_conflict.sh
 
-# Verificar que no hay archivos .spec residuales
+# Verificar que existe el archivo .spec correcto
 if [ -f "EDF_CatalogoDeTablas.spec" ]; then
-    echo "🗑️ Eliminando archivo .spec residual..."
-    rm -f EDF_CatalogoDeTablas.spec
-fi
-
-# Crear el archivo .spec para PyInstaller
-echo "📝 Creando archivo de especificación..."
-cat > EDF_CatalogoDeTablas.spec << 'EOF'
+    echo "✅ Archivo .spec existente encontrado, usando el existente..."
+else
+    echo "❌ Error: No se encuentra el archivo EDF_CatalogoDeTablas.spec"
+    echo "🔧 Creando archivo .spec básico..."
+    cat > EDF_CatalogoDeTablas.spec << 'EOF'
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
@@ -166,6 +164,7 @@ coll = COLLECT(
     name='EDF_CatalogoDeTablas',
 )
 EOF
+fi
 
 # Verificar que no hay conflictos de directorios
 echo "🔍 Verificando conflictos de directorios..."
