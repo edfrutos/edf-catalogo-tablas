@@ -5,8 +5,6 @@
 # Variables de entorno: Ninguna
 # Autor: EDF Developer - 2025-01-27
 
-import logging
-
 from flask import Blueprint, current_app, jsonify, request
 
 errors_bp = Blueprint("errors", __name__)
@@ -20,49 +18,80 @@ def bad_request(error):
         error.description
     ):
         current_app.logger.warning(f"Request malformado detectado: {error.description}")
-        return jsonify(
-            {
-                "error": "Request malformado",
-                "message": "El navegador envió un request que el servidor no pudo entender",
-                "status": "error",
-            }
-        ), 400
+        return (
+            jsonify(
+                {
+                    "error": "Request malformado",
+                    "message": "El navegador envió un request que el servidor no pudo entender",
+                    "status": "error",
+                }
+            ),
+            400,
+        )
 
     # Para otros errores 400
-    return jsonify(
-        {
-            "error": "Bad Request",
-            "message": str(error.description)
-            if hasattr(error, "description")
-            else "Request inválido",
-            "status": "error",
-        }
-    ), 400
+    return (
+        jsonify(
+            {
+                "error": "Bad Request",
+                "message": (
+                    str(error.description)
+                    if hasattr(error, "description")
+                    else "Request inválido"
+                ),
+                "status": "error",
+            }
+        ),
+        400,
+    )
 
 
 @errors_bp.errorhandler(404)
 def not_found(error):
     """Maneja errores 404 (Not Found)."""
-    return jsonify(
-        {
-            "error": "Not Found",
-            "message": "La página o recurso solicitado no fue encontrado",
-            "status": "error",
-        }
-    ), 404
+    return (
+        jsonify(
+            {
+                "error": "Not Found",
+                "message": "La página o recurso solicitado no fue encontrado",
+                "status": "error",
+            }
+        ),
+        404,
+    )
+
+
+@errors_bp.errorhandler(413)
+def request_entity_too_large(error):
+    """Maneja errores 413 (Request Entity Too Large)."""
+    current_app.logger.warning(f"Archivo demasiado grande: {error}")
+    return (
+        jsonify(
+            {
+                "error": "Request Entity Too Large",
+                "message": "El archivo que intentas subir es demasiado grande. El límite máximo es 300MB.",
+                "status": "error",
+                "max_size": "300MB",
+            }
+        ),
+        413,
+    )
 
 
 @errors_bp.errorhandler(500)
 def internal_error(error):
     """Maneja errores 500 (Internal Server Error)."""
     current_app.logger.error(f"Error interno del servidor: {error}")
-    return jsonify(
-        {
-            "error": "Internal Server Error",
-            "message": "Ocurrió un error interno en el servidor",
-            "status": "error",
-        }
-    ), 500
+    return (
+        jsonify(
+            {
+                "error": "Internal Server Error",
+                "message": "Ocurrió un error interno en el servidor",
+                "status": "error",
+            }
+        ),
+        500,
+    )
 
 
 @errors_bp.before_request

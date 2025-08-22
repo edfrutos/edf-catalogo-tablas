@@ -1,5 +1,5 @@
 """
-Rutas de mantenimiento refactorizadas para el panel de administración.
+Rutas de mantenimiento reorganizadas para el panel de administración.
 Este archivo consolida funciones duplicadas y mejora el manejo de errores.
 """
 
@@ -10,16 +10,12 @@ import io
 import json
 import os
 import platform
-import shutil  # noqa: F401
-import tempfile  # noqa: F401
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import psutil
-import pymongo
 from bson import ObjectId
-from flask import Blueprint, current_app, jsonify, request, send_file
+from flask import Blueprint, flash, jsonify, redirect, request, send_file, url_for
 from pymongo import errors as pymongo_errors
 
 from app.database import get_mongo_db
@@ -223,7 +219,7 @@ class GoogleDriveManager:
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            from google_drive_utils_v2 import list_files_in_folder
+            from google_drive_utils_v2 import list_files_in_folder  # type: ignore
 
             # Listar archivos en la carpeta de backups
             files = list_files_in_folder("Backups_CatalogoTablas")
@@ -264,7 +260,7 @@ class GoogleDriveManager:
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            from google_drive_utils_v2 import download_file
+            from google_drive_utils_v2 import download_file  # type: ignore
 
             # Descargar el archivo y devolver el contenido como bytes
             content = download_file(file_id)
@@ -284,7 +280,7 @@ class GoogleDriveManager:
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            from google_drive_utils_v2 import delete_file
+            from google_drive_utils_v2 import delete_file  # type: ignore
 
             # Eliminar el archivo usando la función real
             success = delete_file(file_id)
@@ -310,13 +306,13 @@ class GoogleDriveManager:
             sys.path.append(
                 os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
             )
-            from google_drive_utils_v2 import upload_file_to_drive
+            from google_drive_utils_v2 import upload_file_to_drive  # type: ignore
 
             # Crear archivo temporal
             with tempfile.NamedTemporaryFile(
                 delete=False, suffix=os.path.splitext(filename)[1]
             ) as temp_file:
-                temp_file.write(file_content)
+                _ = temp_file.write(file_content)
                 temp_file_path = temp_file.name
 
             try:
@@ -383,6 +379,8 @@ class BackupManager:
             }
 
             # Obtener todas las colecciones
+            if self.db is None:
+                raise Exception("No se pudo conectar a la base de datos")
             collection_names = self.db.list_collection_names()
 
             for collection_name in collection_names:
@@ -408,7 +406,7 @@ class BackupManager:
             raise
 
     def _serialize_document(self, doc):
-        """Serializa recursivamente un documento para JSON."""
+        """Convierte recursivamente un documento para JSON."""
         for key, value in doc.items():
             if isinstance(value, ObjectId):
                 doc[key] = str(value)
@@ -469,6 +467,8 @@ class BackupManager:
         self, collection_name: str, documents: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Restaura una colección específica."""
+        if self.db is None:
+            raise Exception("No se pudo conectar a la base de datos")
         collection = self.db[collection_name]
         inserted_count = 0
         errors = []
@@ -484,7 +484,7 @@ class BackupManager:
                         pass
 
                 # Insertar documento
-                collection.insert_one(doc)
+                _ = collection.insert_one(doc)
                 inserted_count += 1
             except pymongo_errors.DuplicateKeyError:
                 # Documento duplicado, continuar
@@ -510,10 +510,10 @@ def maintenance_dashboard():
         import shutil
         from datetime import datetime
 
-        from flask import current_app, flash, redirect, render_template, url_for
+        from flask import current_app, render_template
         from flask_login import current_user
 
-        total, used, free = shutil.disk_usage("/")
+        total, used, _ = shutil.disk_usage("/")
 
         used_gb = used // (2**30)
         total_gb = total // (2**30)
@@ -649,7 +649,7 @@ def api_run_task():
             }
         )
     except Exception as e:
-        log_error(f"Error ejecutando tarea {task_name}: {str(e)}")
+        log_error(f"Error ejecutando tarea: {str(e)}")
         return (
             jsonify({"success": False, "message": f"Error ejecutando tarea: {str(e)}"}),
             500,
@@ -674,6 +674,8 @@ def _execute_mongo_task():
     try:
         # Verificar conexión a MongoDB
         db = get_mongo_db()
+        if db is None:
+            raise Exception("No se pudo conectar a la base de datos")
         collections = db.list_collection_names()
         log_info("Verificación de MongoDB completada")
         return {
@@ -793,7 +795,7 @@ def create_local_backup():
         compressed_data = gzip.compress(json_data.encode("utf-8"))
 
         with open(backup_path, "wb") as f:
-            f.write(compressed_data)
+            _ = f.write(compressed_data)
 
         # Calcular estadísticas
         file_size = backup_path.stat().st_size
@@ -870,7 +872,7 @@ def create_backup():
         )
         if db_utils_path not in sys.path:
             sys.path.insert(0, db_utils_path)
-        from google_drive_utils_v2 import upload_file_to_drive
+        from google_drive_utils_v2 import upload_file_to_drive  # type: ignore
 
         backup_manager = BackupManager()
         backup_data = backup_manager.create_backup()
@@ -891,7 +893,7 @@ def create_backup():
         compressed_data = gzip.compress(json_data.encode("utf-8"))
 
         with open(backup_path, "wb") as f:
-            f.write(compressed_data)
+            _ = f.write(compressed_data)
 
         # Calcular estadísticas
         file_size = os.path.getsize(backup_path)
@@ -1454,5 +1456,5 @@ def register_maintenance_routes(app):
     """Registra las rutas de mantenimiento en la aplicación Flask."""
     app.register_blueprint(maintenance_bp)
     app.register_blueprint(maintenance_api_bp)
-    log_info("Rutas de mantenimiento refactorizadas registradas")
+    log_info("Rutas de mantenimiento reorganizadas registradas")
     log_info("Rutas de API de mantenimiento registradas")

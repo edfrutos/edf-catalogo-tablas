@@ -312,6 +312,8 @@ def interactive_mode():
             success = sync_files(file1, file2)
         elif operation == "compare":
             success = compare_files(file1, file2)
+        else:
+            success = False
 
         if success:
             print("\n✅ Operación completada exitosamente!")
@@ -398,6 +400,8 @@ def batch_mode():
                 success = sync_files(file1, file2)
             elif operation == "compare":
                 success = compare_files(file1, file2)
+            else:
+                success = False
 
             if success:
                 print(f"✅ {file1} + {file2} procesados exitosamente!")

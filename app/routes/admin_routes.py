@@ -2103,6 +2103,10 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
                                     f"[ADMIN] Usando URL local para imagen: {img} -> {local_url}"
                                 )
 
+                    # Asignar las URLs procesadas a _imagenes para la plantilla
+                    if "imagen_urls" in row:
+                        row["_imagenes"] = row["imagen_urls"]
+
                 # Procesar imágenes en el campo 'images' (compatibilidad)
                 elif "images" in row and row["images"]:
                     # Crear un array con las URLs de las imágenes
@@ -2128,6 +2132,10 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
 
                     # Para compatibilidad, copiar a 'imagenes'
                     row["imagenes"] = row["images"]
+
+                # Asignar las URLs procesadas a _imagenes para la plantilla
+                if "imagen_urls" in row:
+                    row["_imagenes"] = row["imagen_urls"]
 
             logger.info(
                 f"[ADMIN] Procesadas {catalog['row_count']} filas con imágenes para el catálogo {catalog_id}"
@@ -2306,6 +2314,169 @@ def editar_catalogo_admin(collection_source: str, catalog_id: str):
     except (AttributeError, KeyError, TypeError, ValueError) as e:
         logger.error(f"Error en editar_catalogo_admin: {str(e)}", exc_info=True)
         flash(f"Error al editar el catálogo: {str(e)}", "error")
+        return redirect(url_for("admin.dashboard_admin"))
+
+
+@admin_bp.route(
+    "/catalogo/<collection_source>/<catalog_id>/editar-fila/<int:row_index>",
+    methods=["GET", "POST"],
+)
+@admin_required
+def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
+    """
+    Editar una fila específica de un catálogo desde la interfaz de administración
+    """
+    logger.info(
+        f"[ADMIN] Entrando en editar_fila_admin con collection_source={collection_source}, catalog_id={catalog_id}, row_index={row_index}"
+    )
+    try:
+        db = get_mongo_db()
+        if db is None:
+            flash("Error: No se pudo acceder a la base de datos", "error")
+            return redirect(url_for("admin.dashboard_admin"))
+
+        collection = db[collection_source]
+        catalog = collection.find_one({"_id": ObjectId(catalog_id)})
+        if not catalog:
+            logger.warning(
+                f"[ADMIN] Catálogo no encontrado en {collection_source} para id={catalog_id}"
+            )
+            flash("Catálogo no encontrado", "warning")
+            return redirect(url_for("admin.dashboard_admin"))
+
+        # Asegurar que rows existe
+        if "rows" not in catalog or not catalog["rows"]:
+            catalog["rows"] = []
+
+        # Verificar que el índice de fila es válido
+        if row_index < 0 or row_index >= len(catalog["rows"]):
+            flash("Índice de fila inválido", "error")
+            return redirect(
+                url_for(
+                    "admin.ver_catalogo_unificado",
+                    collection_source=collection_source,
+                    catalog_id=catalog_id,
+                )
+            )
+
+        row_data = catalog["rows"][row_index]
+
+        # Añadir información sobre la colección de origen
+        catalog["collection_source"] = collection_source
+        catalog["_id_str"] = str(catalog["_id"])
+
+        if request.method == "POST":
+            # Procesar campos normales y especiales
+            updated_row = {}
+            for header in catalog["headers"]:
+                if header == "Multimedia":
+                    # Manejar campo Multimedia
+                    multimedia_url = request.form.get(f"{header}_url", "").strip()
+                    multimedia_file = request.files.get(f"{header}_file")
+
+                    if multimedia_url:
+                        updated_row[header] = multimedia_url
+                    elif multimedia_file and multimedia_file.filename:
+                        # Procesar archivo multimedia
+                        import uuid
+                        from werkzeug.utils import secure_filename
+                        from app.routes.catalogs_routes import get_upload_dir
+
+                        filename = secure_filename(
+                            f"{uuid.uuid4().hex}_{multimedia_file.filename}"
+                        )
+                        upload_dir = get_upload_dir()
+                        file_path = os.path.join(upload_dir, filename)
+                        multimedia_file.save(file_path)
+                        updated_row[header] = filename
+                    else:
+                        # Mantener valor existente si no hay cambios
+                        updated_row[header] = row_data.get(header, "")
+
+                elif header in ["Documentos", "Documentación"]:
+                    # Manejar campo Documentos/Documentación
+                    documento_url = request.form.get(f"{header}_url", "").strip()
+                    documento_file = request.files.get(f"{header}_file")
+
+                    if documento_url:
+                        updated_row[header] = documento_url
+                    elif documento_file and documento_file.filename:
+                        # Procesar archivo documento
+                        import uuid
+                        from werkzeug.utils import secure_filename
+                        from app.routes.catalogs_routes import get_upload_dir
+
+                        filename = secure_filename(
+                            f"{uuid.uuid4().hex}_{documento_file.filename}"
+                        )
+                        upload_dir = get_upload_dir()
+                        file_path = os.path.join(upload_dir, filename)
+                        documento_file.save(file_path)
+                        updated_row[header] = filename
+                    else:
+                        # Mantener valor existente si no hay cambios
+                        updated_row[header] = row_data.get(header, "")
+                else:
+                    # Campo normal
+                    updated_row[header] = request.form.get(header, "")
+
+            # Manejo de imágenes (mantener compatibilidad)
+            if "images" in request.files:
+                files = request.files.getlist("images")
+                from app.routes.catalogs_routes import get_upload_dir, allowed_image
+
+                upload_dir = get_upload_dir()
+                nuevas_imagenes = []
+                for file in files:
+                    if file and file.filename and allowed_image(file.filename):
+                        import uuid
+                        from werkzeug.utils import secure_filename
+
+                        filename = secure_filename(
+                            f"{uuid.uuid4().hex}_{file.filename}"
+                        )
+                        file_path = os.path.join(upload_dir, filename)
+                        file.save(file_path)
+                        nuevas_imagenes.append(filename)
+                if nuevas_imagenes:
+                    updated_row["images"] = (
+                        updated_row.get("images", []) + nuevas_imagenes
+                    )
+
+            # Eliminar imágenes seleccionadas
+            delete_images = request.form.getlist("delete_images")
+            if delete_images:
+                updated_row["images"] = [
+                    img
+                    for img in updated_row.get("images", [])
+                    if img not in delete_images
+                ]
+
+            # Actualizar la fila en el catálogo
+            catalog["rows"][row_index] = updated_row
+
+            # Actualizar en la base de datos
+            collection.update_one(
+                {"_id": ObjectId(catalog_id)}, {"$set": {"rows": catalog["rows"]}}
+            )
+
+            flash("Fila actualizada correctamente", "success")
+            return redirect(
+                url_for(
+                    "admin.ver_catalogo_unificado",
+                    collection_source=collection_source,
+                    catalog_id=catalog_id,
+                )
+            )
+
+        # Renderizar formulario de edición
+        return render_template(
+            "admin/editar_fila.html", catalog=catalog, row=row_data, row_index=row_index
+        )
+
+    except Exception as e:
+        logger.error(f"Error en editar_fila_admin: {str(e)}", exc_info=True)
+        flash(f"Error al editar la fila: {str(e)}", "error")
         return redirect(url_for("admin.dashboard_admin"))
 
 

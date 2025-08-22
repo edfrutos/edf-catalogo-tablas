@@ -1,21 +1,94 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Añadir Fila a {{ catalog.name }}</h2>
-<form method="POST" enctype="multipart/form-data">
-  {% for header in catalog.headers %}
-  <div class="mb-3">
-    <label class="form-label">{{ header }}</label>
-    <input type="text" class="form-control" name="{{ header }}">
-  </div>
-  {% endfor %}
-  <div class="mb-3">
-    <label class="form-label">Imágenes (máx. 3)</label>
-    <input type="file" class="form-control" name="images" accept="image/*" multiple>
-    <div class="form-text">Seleccione hasta 3 imágenes</div>
-  </div>
-  <div class="d-flex gap-2 mt-4">
-    <button type="submit" class="btn btn-success">Añadir</button>
-    <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary">Cancelar</a>
-  </div>
-</form>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">➕ Añadir Nueva Fila - {{ catalog.name }}</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% for header in catalog.headers %}
+                        <div class="mb-3">
+                            {% if header == 'Multimedia' %}
+                                <!-- Campo especial para Multimedia -->
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-video"></i> {{ header }}
+                                </label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">URL de Multimedia (opcional)</label>
+                                        <input type="url" class="form-control" name="{{ header }}_url" 
+                                               placeholder="https://ejemplo.com/video.mp4">
+                                        <div class="form-text">Enlaza a un archivo multimedia externo</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Subir Archivo Multimedia</label>
+                                        <input type="file" class="form-control" name="{{ header }}_file" 
+                                               accept="video/*,audio/*,image/*">
+                                        <div class="form-text">Videos: MP4, AVI, MOV | Audio: MP3, WAV | Imágenes: JPG, PNG, GIF | Máximo: 300MB</div>
+                                    </div>
+                                </div>
+                                
+                            {% elif header in ['Documentos', 'Documentación'] %}
+                                <!-- Campo especial para Documentos/Documentación -->
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-file-alt"></i> {{ header }}
+                                </label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">URL de Documento (opcional)</label>
+                                        <input type="url" class="form-control" name="{{ header }}_url" 
+                                               placeholder="https://ejemplo.com/documento.pdf">
+                                        <div class="form-text">Enlaza a un documento externo</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Subir Documento</label>
+                                        <input type="file" class="form-control" name="{{ header }}_file" 
+                                               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.md">
+                                        <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB</div>
+                                    </div>
+                                </div>
+                                
+                            {% else %}
+                                <!-- Campo normal -->
+                                <label class="form-label">{{ header }}</label>
+                                <input type="text" class="form-control" name="{{ header }}" placeholder="Ingresa {{ header.lower() }}">
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        
+                        <!-- Sección de imágenes (mantener compatibilidad) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-images"></i> Imágenes Adicionales (máx. 3)
+                            </label>
+                            <input type="file" class="form-control" name="images" accept="image/*" multiple>
+                            <div class="form-text">Estas imágenes se mostrarán en la columna de imágenes del catálogo</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Información sobre las columnas especiales:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Multimedia:</strong> Puedes subir archivos multimedia (videos, audio, imágenes) o enlazar URLs externas</li>
+                                <li><strong>Documentos/Documentación:</strong> Puedes subir documentos (PDFs, Word, Excel, Markdown) o enlazar URLs externas</li>
+                                <li><strong>Imágenes:</strong> Las imágenes adicionales se mostrarán en la columna de imágenes del catálogo</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Añadir Fila
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

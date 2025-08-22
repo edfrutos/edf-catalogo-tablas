@@ -1,16 +1,50 @@
 
 {% extends 'base.html' %}
 {% block content %}
-<h2>Editar Catálogo</h2>
-<form method="POST">
-  <div class="mb-3">
-    <label class="form-label">Nombre</label>
-    <input type="text" class="form-control" name="name" value="{{ catalog.name }}" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Encabezados (separados por coma)</label>
-    <input type="text" class="form-control" name="headers" value="{{ catalog.headers | join(', ') }}" required>
-  </div>
-  <button type="submit" class="btn btn-success">Actualizar</button>
-</form>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">✏️ Editar Catálogo</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">📝 Nombre del Catálogo</label>
+                            <input type="text" class="form-control" name="name" value="{{ catalog.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">📋 Encabezados de Columnas</label>
+                            <textarea class="form-control" name="headers" rows="4" required>{{ catalog.headers | join(', ') }}</textarea>
+                            <div class="form-text">
+                                <strong>💡 Sugerencia:</strong> Incluye las columnas "Multimedia" y "Documentos" para permitir archivos multimedia y documentos.<br>
+                                <strong>📁 Multimedia:</strong> Para imágenes, videos, audio<br>
+                                <strong>📄 Documentos:</strong> Para PDFs, documentos, archivos de texto
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Columnas Especiales:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Multimedia:</strong> Permite subir archivos multimedia (imágenes, videos, audio) o enlazar URLs (máximo 300MB)</li>
+                                <li><strong>Documentos:</strong> Permite subir documentos (PDFs, Word, Excel) o enlazar URLs (máximo 50MB)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('catalogs.view', catalog_id=catalog._id) }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Actualizar Catálogo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

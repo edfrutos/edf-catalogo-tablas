@@ -238,8 +238,16 @@ jobs:
         run: |
           echo "🧹 Limpiando builds anteriores y resolviendo conflictos de PyInstaller..."
           
-          # Ejecutar script de limpieza pre-build si existe (prioridad a la versión más agresiva)
-          if [ -f "fix_pyinstaller_tools_conflict_v2.sh" ]; then
+          # Ejecutar script de limpieza pre-build (prioridad a la versión más reciente)
+          if [ -f "fix_tools_directory_conflict.sh" ]; then
+            echo "🔧 Ejecutando script específico para conflicto del directorio tools..."
+            chmod +x fix_tools_directory_conflict.sh
+            ./fix_tools_directory_conflict.sh
+          elif [ -f "fix_pyinstaller_tools_conflict_v3.sh" ]; then
+            echo "🔧 Ejecutando script de resolución de conflictos V3 (solución completa)..."
+            chmod +x fix_pyinstaller_tools_conflict_v3.sh
+            ./fix_pyinstaller_tools_conflict_v3.sh
+          elif [ -f "fix_pyinstaller_tools_conflict_v2.sh" ]; then
             echo "🔧 Ejecutando script de resolución de conflictos V2 (más agresivo)..."
             chmod +x fix_pyinstaller_tools_conflict_v2.sh
             ./fix_pyinstaller_tools_conflict_v2.sh

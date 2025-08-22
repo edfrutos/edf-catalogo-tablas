@@ -2,25 +2,14 @@
 
 import logging
 import os
-import secrets  # noqa: F401  # Puede ser usado en producción para claves
-from datetime import timedelta  # noqa: F401
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
-from flask import Flask, current_app, g  # noqa: F401
+from flask import Flask, g  # noqa: F401
 from flask_login import LoginManager
-from flask_mail import (
-    Mail,  # noqa: F401
-)  # noqa: F401  # Usado condicionalmente en diferentes entornos
-from pymongo import MongoClient  # noqa: F401  # Usado en algunos entornos específicos
-from werkzeug.exceptions import (
-    HTTPException,  # noqa: F401
-)  # noqa: F401  # Para manejo de errores en producción
 
 # Importar filtros personalizados
 from app.filters import init_app as init_filters
-from app.logging_config import setup_logging  # noqa: F401  # Usado en otros módulos
-from config import Config  # noqa: F401  # Usado condicionalmente según entorno
 
 from .error_handlers import errors_bp
 from .routes.admin_routes import admin_bp, admin_logs_bp
@@ -42,14 +31,14 @@ from .routes.scripts_tools_routes import scripts_tools_bp
 from .routes.usuarios_routes import usuarios_bp
 
 # Cargar variables de entorno desde .env
-load_dotenv()
+_ = load_dotenv()
 
 # Configurar el cliente de S3 si está habilitado
 use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
 if use_s3:
     try:
         # Importar boto3 y verificar que esté instalado
-        import boto3  # noqa: F401  # Usado condicionalmente cuando S3 está habilitado
+        import boto3  # type: ignore # noqa: F401  # Usado condicionalmente cuando S3 está habilitado
 
         logging.info("AWS S3 está habilitado y boto3 está instalado correctamente")
     except ImportError:
@@ -85,6 +74,10 @@ def create_app(testing=False):
     # Cargar configuración unificada desde config.py
     app.config.from_object("config.Config")
 
+    # Configuración adicional para archivos grandes
+    app.config["MAX_CONTENT_LENGTH"] = 300 * 1024 * 1024  # 300MB
+    app.config["MAX_CONTENT_PATH"] = None
+
     # Asegurar que el directorio de sesiones existe
     session_dir = app.config.get("SESSION_FILE_DIR")
     if session_dir:
@@ -99,7 +92,7 @@ def create_app(testing=False):
     try:
         from app.database import get_mongo_client, get_mongo_db, initialize_db
 
-        initialize_db(app)
+        _ = initialize_db(app)
         app.logger.info("✅ Conexión global a MongoDB inicializada (initialize_db)")
         client = get_mongo_client()
         db = get_mongo_db()
@@ -132,18 +125,18 @@ def create_app(testing=False):
             g.resets_collection = None
             g.spreadsheets_collection = None
 
-    app.before_request(ensure_db)
-
+    # Registrar la función para que se use
+    _ = app.before_request(ensure_db)
     # Configurar el cargador de usuarios para Flask-Login
     from app.models.user import User
 
     @login_manager.user_loader
-    def load_user(user_id: str):
-        if user_id is None or user_id == "":
+    def load_user(user_id: str):  # type: ignore
+        if not user_id or user_id == "":
             return None
         # Usar g para la colección de usuarios
         users_collection = getattr(g, "users_collection", None)
-        if users_collection is None:
+        if not users_collection:
             app.logger.error(
                 "[CRÍTICO] users_collection no está inicializada. Verifica la conexión a MongoDB antes de autenticar usuarios."
             )
@@ -166,8 +159,7 @@ def create_app(testing=False):
     # Configurar logging unificado
     from app.logging_unified import setup_unified_logging
 
-    setup_unified_logging(app)
-
+    _ = setup_unified_logging(app)
     # Inicializar middleware de seguridad
     from app.security_middleware import security_middleware
 
@@ -244,6 +236,9 @@ def create_app(testing=False):
     def page_not_found(error):
         return render_template("error/404.html"), 404
 
+    # Registrar el handler para que se use
+    app.register_error_handler(404, page_not_found)
+
     # Registrar blueprint de test de sesión SOLO en testing o desarrollo
     if (
         app.config.get("TESTING")
@@ -251,12 +246,27 @@ def create_app(testing=False):
         or os.environ.get("FLASK_ENV") in ("development", "testing")
     ):
         try:
-            from app.routes.test_session_routes import test_session_bp
+            # Intentar importar test_session_routes solo si existe
+            import importlib.util
 
-            app.register_blueprint(test_session_bp)
-            app.logger.info(
-                "Blueprint test_session_bp registrado para tests y desarrollo"
-            )
+            spec = importlib.util.find_spec("app.routes.test_session_routes")
+            if spec is not None:
+                # Solo importar si el módulo existe
+                try:
+                    from app.routes.test_session_routes import test_session_bp  # type: ignore
+
+                    app.register_blueprint(test_session_bp)
+                    app.logger.info(
+                        "Blueprint test_session_bp registrado para tests y desarrollo"
+                    )
+                except ImportError:
+                    app.logger.info(
+                        "test_session_routes encontrado pero no se pudo importar - omitiendo registro"
+                    )
+            else:
+                app.logger.info(
+                    "test_session_routes no encontrado - omitiendo registro"
+                )
         except Exception as e:
             app.logger.error(f"No se pudo registrar test_session_bp: {e}")
 
@@ -315,7 +325,7 @@ def create_app(testing=False):
 
     # Ruta de test de sesión
     @app.route("/test_session")
-    def test_session():
+    def test_session():  # type: ignore
         from flask import session
 
         session["test"] = "ok"
@@ -323,12 +333,13 @@ def create_app(testing=False):
 
     # Añadir log para depuración de cookies
     @app.before_request
-    def log_cookie():
-        from flask import request  # noqa: F401  # Usado en debugging cuando se habilita
+    def log_cookie():  # type: ignore
+        # Función de debugging - se ejecuta automáticamente
+        pass
 
     # Log de la cookie enviada en la respuesta
     @app.after_request
-    def log_set_cookie(response):
+    def log_set_cookie(response):  # type: ignore
         app.logger.info(
             f"[COOKIES] Set-Cookie enviada: {response.headers.get('Set-Cookie')}"
         )

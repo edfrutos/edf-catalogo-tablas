@@ -1,8 +1,6 @@
 # app/routes/catalogs_routes.py
 
 import datetime
-
-# from app.decorators import is_datetime, is_list, is_string  # No utilizados
 import logging
 import os
 import uuid
@@ -14,8 +12,6 @@ from flask import (
     Blueprint,
     current_app,
     flash,
-    g,  # noqa: F401
-    jsonify,  # noqa: F401
     redirect,
     render_template,
     request,
@@ -584,7 +580,7 @@ def view(catalog_id, catalog):
 
             # Procesar cada fila para obtener URLs de imágenes
             # IMPORTANTE: Usar data que contiene las imágenes reales (campo 'imagenes')
-            # rows tiene datos desactualizados sin imágenes
+            # rows tiene datos obsoletos sin imágenes
             filas_a_procesar = catalog.get("data", [])
             for i, fila in enumerate(filas_a_procesar):
                 if isinstance(fila, dict):
@@ -599,7 +595,7 @@ def view(catalog_id, catalog):
                     )
 
                     # get_images_for_template retorna un diccionario con imagen_urls
-                    if isinstance(imagenes_result, dict):
+                    if imagenes_result:
                         fila["_imagenes"] = imagenes_result.get("imagen_urls", [])
                     else:
                         fila["_imagenes"] = []
@@ -617,7 +613,7 @@ def view(catalog_id, catalog):
             )
             # Procesar manualmente si no está disponible la utilidad
             for i, fila in enumerate(catalog.get("data", [])):
-                if isinstance(fila, dict):
+                if fila:
                     imagenes_urls = []
 
                     # 1. URLs externas (campo Imagen)
@@ -654,7 +650,7 @@ def view(catalog_id, catalog):
                                                         filename=f"uploads/{img}",
                                                     )
                                                 )
-                                        except:
+                                        except Exception:
                                             imagenes_urls.append(
                                                 url_for(
                                                     "static", filename=f"uploads/{img}"
@@ -835,9 +831,52 @@ def edit_row(catalog_id, row_index, catalog):
         current_app.logger.error(f"[edit_row] Fila no encontrada en índice {row_index}")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     if request.method == "POST":
+        # Procesar campos normales y especiales
         for header in catalog["headers"]:
-            row_data[header] = request.form.get(header, "")
-        # Manejo de imágenes
+            if header == "Multimedia":
+                # Manejar campo Multimedia
+                multimedia_url = request.form.get(f"{header}_url", "").strip()
+                multimedia_file = request.files.get(f"{header}_file")
+
+                if multimedia_url:
+                    row_data[header] = multimedia_url
+                elif multimedia_file and multimedia_file.filename:
+                    # Procesar archivo multimedia
+                    filename = secure_filename(
+                        f"{uuid.uuid4().hex}_{multimedia_file.filename}"
+                    )
+                    upload_dir = get_upload_dir()
+                    file_path = os.path.join(upload_dir, filename)
+                    multimedia_file.save(file_path)
+                    row_data[header] = filename
+                else:
+                    # Mantener valor existente si no hay cambios
+                    row_data[header] = row_data.get(header, "")
+
+            elif header in ["Documentos", "Documentación"]:
+                # Manejar campo Documentos/Documentación
+                documento_url = request.form.get(f"{header}_url", "").strip()
+                documento_file = request.files.get(f"{header}_file")
+
+                if documento_url:
+                    row_data[header] = documento_url
+                elif documento_file and documento_file.filename:
+                    # Procesar archivo documento
+                    filename = secure_filename(
+                        f"{uuid.uuid4().hex}_{documento_file.filename}"
+                    )
+                    upload_dir = get_upload_dir()
+                    file_path = os.path.join(upload_dir, filename)
+                    documento_file.save(file_path)
+                    row_data[header] = filename
+                else:
+                    # Mantener valor existente si no hay cambios
+                    row_data[header] = row_data.get(header, "")
+            else:
+                # Campo normal
+                row_data[header] = request.form.get(header, "")
+
+        # Manejo de imágenes (mantener compatibilidad)
         if "images" in request.files:
             files = request.files.getlist("images")
             upload_dir = get_upload_dir()
@@ -892,7 +931,7 @@ def edit_row(catalog_id, row_index, catalog):
 
         imagenes_result = get_images_for_template(row_data)
         # get_images_for_template retorna un diccionario con imagen_urls
-        if isinstance(imagenes_result, dict):
+        if imagenes_result:
             row_data["_imagenes"] = imagenes_result.get("imagen_urls", [])
         else:
             row_data["_imagenes"] = []
@@ -935,7 +974,7 @@ def edit_row(catalog_id, row_index, catalog):
                                     imagenes_urls.append(
                                         url_for("static", filename=f"uploads/{img}")
                                     )
-                            except:
+                            except Exception:
                                 imagenes_urls.append(
                                     url_for("static", filename=f"uploads/{img}")
                                 )
@@ -962,8 +1001,51 @@ def add_row(catalog_id, catalog):
         current_app.logger.error("[add_row] Error de conexión a la base de datos.")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     if request.method == "POST":
-        row = {header: request.form.get(header, "") for header in catalog["headers"]}
-        # Manejo de imágenes
+        # Procesar campos normales y especiales
+        row = {}
+        for header in catalog["headers"]:
+            if header == "Multimedia":
+                # Manejar campo Multimedia
+                multimedia_url = request.form.get(f"{header}_url", "").strip()
+                multimedia_file = request.files.get(f"{header}_file")
+
+                if multimedia_url:
+                    row[header] = multimedia_url
+                elif multimedia_file and multimedia_file.filename:
+                    # Procesar archivo multimedia
+                    filename = secure_filename(
+                        f"{uuid.uuid4().hex}_{multimedia_file.filename}"
+                    )
+                    upload_dir = get_upload_dir()
+                    file_path = os.path.join(upload_dir, filename)
+                    multimedia_file.save(file_path)
+                    row[header] = filename
+                else:
+                    row[header] = ""
+
+            elif header in ["Documentos", "Documentación"]:
+                # Manejar campo Documentos/Documentación
+                documento_url = request.form.get(f"{header}_url", "").strip()
+                documento_file = request.files.get(f"{header}_file")
+
+                if documento_url:
+                    row[header] = documento_url
+                elif documento_file and documento_file.filename:
+                    # Procesar archivo documento
+                    filename = secure_filename(
+                        f"{uuid.uuid4().hex}_{documento_file.filename}"
+                    )
+                    upload_dir = get_upload_dir()
+                    file_path = os.path.join(upload_dir, filename)
+                    documento_file.save(file_path)
+                    row[header] = filename
+                else:
+                    row[header] = ""
+            else:
+                # Campo normal
+                row[header] = request.form.get(header, "")
+
+        # Manejo de imágenes (mantener compatibilidad)
         if "images" in request.files:
             files = request.files.getlist("images")
             upload_dir = get_upload_dir()
@@ -1109,7 +1191,7 @@ def delete_catalog(catalog_id, catalog):
             try:
                 from app.audit import audit_log
 
-                audit_log(
+                _ = audit_log(
                     "Eliminación de catálogo",
                     f"Catálogo '{catalog_name}' (ID: {catalog_id}) eliminado",
                     session.get("username"),
@@ -1217,7 +1299,7 @@ def create():
             flash(f'Catálogo "{catalog_name}" creado correctamente', "success")
 
             # Actualizar el catálogo con el ID como string para facilitar su uso en plantillas
-            db.spreadsheets.update_one(
+            _ = db.spreadsheets.update_one(
                 {"_id": result.inserted_id}, {"$set": {"_id_str": catalog_id}}
             )
 
@@ -1335,7 +1417,7 @@ def import_catalog():
             catalog_id = str(result.inserted_id)
 
             # Refuerzo: actualizar el campo owner si por alguna razón no se guardó
-            db.spreadsheets.update_one(
+            _ = db.spreadsheets.update_one(
                 {"_id": result.inserted_id}, {"$set": {"owner": username}}
             )
             current_app.logger.info(
@@ -1357,3 +1439,54 @@ def import_catalog():
 
     # Para peticiones GET, mostrar el formulario de importación
     return render_template("importar_catalogo.html")
+
+
+@catalogs_bp.route("/view_markdown/<filename>")
+def view_markdown(filename):
+    """
+    Ruta para servir archivos Markdown como texto plano para previsualización
+    """
+    try:
+        current_app.logger.info(
+            f"[DEBUG] Intentando servir archivo Markdown: {filename}"
+        )
+
+        # Verificar que el archivo existe y es un archivo Markdown
+        if not filename.endswith(".md"):
+            current_app.logger.warning(
+                f"[DEBUG] Archivo no válido (no es .md): {filename}"
+            )
+            return "Archivo no válido", 400
+
+        # Construir la ruta del archivo
+        upload_dir = get_upload_dir()
+        file_path = os.path.join(upload_dir, filename)
+        current_app.logger.info(f"[DEBUG] Ruta del archivo: {file_path}")
+
+        # Verificar que el archivo existe
+        if not os.path.exists(file_path):
+            current_app.logger.warning(f"[DEBUG] Archivo no encontrado: {file_path}")
+            return "Archivo no encontrado", 404
+
+        current_app.logger.info(f"[DEBUG] Archivo encontrado, leyendo contenido...")
+
+        # Leer el contenido del archivo
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        current_app.logger.info(
+            f"[DEBUG] Contenido leído, longitud: {len(content)} caracteres"
+        )
+
+        # Servir como texto plano
+        from flask import Response
+
+        response = Response(content, mimetype="text/plain; charset=utf-8")
+        response.headers["Content-Disposition"] = "inline"
+        return response
+
+    except Exception as e:
+        current_app.logger.error(
+            f"Error al servir archivo Markdown {filename}: {str(e)}"
+        )
+        return "Error interno del servidor", 500

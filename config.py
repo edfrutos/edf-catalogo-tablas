@@ -79,8 +79,8 @@ class BaseConfig:
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_DOMAIN = None
 
-    # Limitar tamaño de subidas para evitar ataques DoS
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB límite máximo
+    # Limitar tamaño de subidas para permitir archivos multimedia y documentos
+    MAX_CONTENT_LENGTH = 300 * 1024 * 1024  # 300MB límite máximo para multimedia
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     UPLOAD_FOLDER = os.path.join(BASE_DIR, "app/static/uploads")
 

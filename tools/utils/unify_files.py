@@ -81,7 +81,7 @@ def unify_merge(file1: str, file2: str, output: str = None) -> bool:
 
     # Combinar y eliminar duplicados
     combined_set = set(lines1 + lines2)
-    combined_lines = sorted(list(combined_set))
+    combined_lines = sorted(list(combined_set))  # noqa: C414
 
     # Determinar archivo de salida
     if output is None:
@@ -126,14 +126,14 @@ def sync_files(file1: str, file2: str, backup: bool = True) -> bool:
 
     # Combinar contenido único
     combined_set = set(lines1 + lines2)
-    combined_lines = sorted(list(combined_set))
+    combined_lines = sorted(list(combined_set))  # noqa: C414
 
     # Sincronizar ambos archivos
     success1 = write_file_lines(file1, combined_lines)
     success2 = write_file_lines(file2, combined_lines)
 
     if success1 and success2:
-        print(f"✅ Archivos sincronizados exitosamente")
+        print(f"✅ Archivos sincronizados exitosamente")  # noqa: F541
         print(f"📊 Contenido único en ambos archivos: {len(combined_lines)} líneas")
         return True
     else:
