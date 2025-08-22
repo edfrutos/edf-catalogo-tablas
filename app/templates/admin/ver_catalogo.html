@@ -215,6 +215,14 @@
                onload="hideImageLoadingSpinner()" onerror="handleImageError()">
         </div>
       </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" onclick="downloadImage()">
+          <i class="fas fa-download"></i> Descargar
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -233,6 +241,14 @@
         <div id="multimediaContent">
           <!-- El contenido multimedia se cargará aquí -->
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" onclick="downloadMultimedia()">
+          <i class="fas fa-download"></i> Descargar
+        </button>
       </div>
     </div>
   </div>
@@ -278,6 +294,9 @@ function showImageModal(imageSrc, imageTitle) {
         alert('Error: No se pudo abrir el modal de imagen');
         return;
     }
+    
+    // Almacenar la URL para descarga
+    currentImageUrl = imageSrc;
     
     // Mostrar spinner de carga
     const spinner = modal.querySelector('.image-loading-spinner');
@@ -327,6 +346,9 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
         alert('Error: No se pudo abrir el modal de multimedia');
         return;
     }
+    
+    // Almacenar la URL para descarga
+    currentMultimediaUrl = multimediaSrc;
     
     // Configurar el título
     modalTitle.innerHTML = `<i class="fas fa-video"></i> ${multimediaTitle}`;
@@ -569,6 +591,34 @@ function showDocumentModal(documentSrc, documentTitle) {
     const bsModal = new bootstrap.Modal(modal);
     bsModal.show();
     console.log('[DEBUG] Modal mostrado correctamente');
+}
+
+// Variables globales para almacenar las URLs de descarga
+let currentImageUrl = '';
+let currentMultimediaUrl = '';
+
+// Función para descargar imagen
+function downloadImage() {
+    if (currentImageUrl) {
+        const link = document.createElement('a');
+        link.href = currentImageUrl;
+        link.download = currentImageUrl.split('/').pop();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+// Función para descargar multimedia
+function downloadMultimedia() {
+    if (currentMultimediaUrl) {
+        const link = document.createElement('a');
+        link.href = currentMultimediaUrl;
+        link.download = currentMultimediaUrl.split('/').pop();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
 
 // Asegurar que el DOM esté cargado antes de ejecutar funciones
