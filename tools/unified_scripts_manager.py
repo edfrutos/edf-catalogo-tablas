@@ -324,9 +324,6 @@ class UnifiedScriptsGUI:
         # Crear interfaz
         self.create_widgets()
 
-        # Cargar configuración inicial
-        self.load_spell_check_config()
-
     def setup_styles(self):
         """Configurar estilos de la interfaz"""
         style = ttk.Style()
@@ -739,30 +736,6 @@ class UnifiedScriptsGUI:
         thread = threading.Thread(target=run)
         thread.daemon = True
         thread.start()
-
-
-
-    def load_spell_check_config(self):
-        """Cargar configuración de spell check"""
-        try:
-            config = self.manager.get_spell_check_config()
-
-            total_words = (
-                len(config["pyproject_toml"]["words"])
-                + len(config["vscode_settings"]["words"])
-                + len(config["cspell_json"]["words"])
-            )
-
-            config_info = f"📋 Configuración Spell Check:\n"
-            config_info += f"   📄 pyproject.toml: {'✅' if config['pyproject_toml']['exists'] else '❌'} ({len(config['pyproject_toml']['words'])} palabras)\n"
-            config_info += f"   ⚙️ VS Code settings: {'✅' if config['vscode_settings']['exists'] else '❌'} ({len(config['vscode_settings']['words'])} palabras)\n"
-            config_info += f"   🔤 cspell.json: {'✅' if config['cspell_json']['exists'] else '❌'} ({len(config['cspell_json']['words'])} palabras)\n"
-            config_info += f"   📊 Total palabras: {total_words}"
-
-            self.spell_check_info.set(config_info)
-
-        except Exception as e:
-            self.spell_check_info.set(f"❌ Error al cargar configuración: {e}")
 
     def show_spell_check_config(self):
         """Mostrar configuración detallada de spell check"""
