@@ -462,7 +462,7 @@ function showDocumentModal(documentSrc, documentTitle) {
         // PDF - usar iframe para previsualización
         modalContent.innerHTML = `
             <div class="text-center mb-3">
-                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2">
+                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="event.preventDefault(); window.open('${documentSrc}', '_blank');">
                     <i class="fas fa-external-link-alt"></i> Abrir PDF en nueva pestaña
                 </a>
             </div>
