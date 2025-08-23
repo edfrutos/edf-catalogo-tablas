@@ -388,7 +388,8 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
 // Función para mostrar modal de documento
 function showDocumentModal(documentSrc, documentTitle) {
     console.log('[DEBUG] showDocumentModal llamado con:', { documentSrc, documentTitle });
-    console.log('[VERSION] PDF Modal v1.1 - Corregido auto-ejecución');
+    console.log('[VERSION] PDF Modal v1.2 - Forzando recarga de caché');
+    console.log('[TIMESTAMP]', new Date().toISOString());
     
     const modalElement = document.getElementById('documentModal');
     const modalContent = document.getElementById('documentContent');
@@ -592,6 +593,7 @@ function sortTable(columnIndex, dataType) {
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("[catalog-view] DOM loaded - Funcionalidades listas");
+    console.log("[VERSION] Template v1.2 - Cache busting");
     
     // Verificar que los elementos del modal existen
     const modal = document.getElementById('documentModal');
@@ -603,6 +605,9 @@ document.addEventListener("DOMContentLoaded", () => {
         modalContent: !!modalContent,
         modalTitle: !!modalTitle
     });
+    
+    // Forzar recarga de caché
+    console.log('[CACHE-BUST] Timestamp:', Date.now());
 });
 </script>
 {% endblock %}
