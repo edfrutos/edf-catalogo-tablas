@@ -388,6 +388,7 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
 // Función para mostrar modal de documento
 function showDocumentModal(documentSrc, documentTitle) {
     console.log('[DEBUG] showDocumentModal llamado con:', { documentSrc, documentTitle });
+    console.log('[VERSION] PDF Modal v1.1 - Corregido auto-ejecución');
     
     const modalElement = document.getElementById('documentModal');
     const modalContent = document.getElementById('documentContent');
@@ -419,7 +420,7 @@ function showDocumentModal(documentSrc, documentTitle) {
     if (fileExtension === 'pdf') {
         documentElement = `
             <div class="text-center mb-3">
-                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="event.preventDefault(); window.open('${documentSrc}', '_blank');">
+                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="event.preventDefault(); window.open('${documentSrc}', '_blank'); return false;">
                     <i class="fas fa-external-link-alt"></i> Abrir PDF en nueva pestaña
                 </a>
             </div>

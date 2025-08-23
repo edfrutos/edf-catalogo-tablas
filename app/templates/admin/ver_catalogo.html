@@ -399,6 +399,7 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
 
 function showDocumentModal(documentSrc, documentTitle) {
     console.log('[DEBUG] showDocumentModal llamado con:', { documentSrc, documentTitle });
+    console.log('[VERSION] PDF Modal v1.1 - Corregido auto-ejecución');
     
     // Verificar el estado del DOM antes de buscar elementos
     console.log('[DEBUG] Estado del DOM antes de buscar elementos:');
@@ -462,7 +463,7 @@ function showDocumentModal(documentSrc, documentTitle) {
         // PDF - usar iframe para previsualización
         modalContent.innerHTML = `
             <div class="text-center mb-3">
-                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="event.preventDefault(); window.open('${documentSrc}', '_blank');">
+                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="event.preventDefault(); window.open('${documentSrc}', '_blank'); return false;">
                     <i class="fas fa-external-link-alt"></i> Abrir PDF en nueva pestaña
                 </a>
             </div>
