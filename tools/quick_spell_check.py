@@ -27,7 +27,7 @@ def load_known_words() -> Set[str]:
 
 def categorize_words(words: Set[str]) -> Dict[str, List[str]]:
     """Categorizar palabras según su tipo y origen"""
-    categories = {
+    categories: Dict[str, List[str]] = {
         "python_modules": [],
         "technical_terms": [],
         "english_words": [],
@@ -111,9 +111,15 @@ def categorize_words(words: Set[str]) -> Dict[str, List[str]]:
     return categories
 
 
-def suggest_additions(categories: Dict[str, List[str]]) -> Dict[str, List[str]]:
+def suggest_additions(
+    categories: Dict[str, List[str]],
+) -> Dict[str, List[str]]:
     """Sugerir palabras para agregar al diccionario"""
-    suggestions = {"auto_add": [], "review_needed": [], "ignore": []}
+    suggestions: Dict[str, List[str]] = {
+        "auto_add": [],
+        "review_needed": [],
+        "ignore": [],
+    }
 
     # Agregar automáticamente
     suggestions["auto_add"].extend(categories["python_modules"])
@@ -206,7 +212,8 @@ def interactive_word_management(unknown_words: Set[str]) -> None:
         if choice == "1":
             if suggestions["auto_add"]:
                 print(
-                    f"\n✅ Agregando {len(suggestions['auto_add'])} palabras automáticamente..."
+                    f"\n✅ Agregando {len(suggestions['auto_add'])} "
+                    + "palabras automáticamente..."
                 )
                 if update_dictionary(suggestions["auto_add"]):
                     print("✅ Diccionario actualizado exitosamente")
