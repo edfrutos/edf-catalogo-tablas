@@ -254,6 +254,108 @@ class UnifiedScriptsManager:
         except Exception as e:
             return {"success": False, "error": f"Error ejecutando script: {e}"}
 
+    def execute_script_with_realtime_output(
+        self, category: str, script: str, output_widget
+    ) -> Dict[str, any]:
+        """Ejecutar un script con salida en tiempo real"""
+        if category not in self.categories:
+            return {"success": False, "error": f"Categoría '{category}' no encontrada"}
+
+        if script not in self.categories[category]["scripts"]:
+            return {"success": False, "error": f"Script '{script}' no encontrado"}
+
+        script_info = self.categories[category]["scripts"][script]
+        script_path = self.get_script_path(category, script)
+
+        if not script_path.exists():
+            return {"success": False, "error": f"Script no encontrado: {script_path}"}
+
+        try:
+            # Construir comando según el tipo
+            if script_info["type"] == "python":
+                cmd = [sys.executable, str(script_path)]
+            else:
+                cmd = [str(script_path)]
+
+            # Ejecutar script con salida en tiempo real
+            process = subprocess.Popen(
+                cmd,
+                cwd=self.base_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True,
+            )
+
+            stdout_lines = []
+            stderr_lines = []
+
+            # Leer salida en tiempo real
+            while True:
+                output = process.stdout.readline()
+                if output == "" and process.poll() is not None:
+                    break
+                if output:
+                    # Limpiar la línea y agregar timestamp
+                    clean_output = output.strip()
+                    if clean_output:
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        formatted_output = f"[{timestamp}] {clean_output}\n"
+
+                        # Actualizar widget en el hilo principal
+                        output_widget.after(
+                            0,
+                            lambda o=formatted_output: self.update_output_widget(
+                                output_widget, o
+                            ),
+                        )
+
+                        stdout_lines.append(clean_output)
+
+            # Esperar a que termine el proceso
+            returncode = process.poll()
+
+            # Leer cualquier salida restante
+            remaining_output, remaining_stderr = process.communicate()
+            if remaining_output:
+                for line in remaining_output.split("\n"):
+                    if line.strip():
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        formatted_output = f"[{timestamp}] {line.strip()}\n"
+                        output_widget.after(
+                            0,
+                            lambda o=formatted_output: self.update_output_widget(
+                                output_widget, o
+                            ),
+                        )
+                        stdout_lines.append(line.strip())
+
+            return {
+                "success": returncode == 0,
+                "stdout": "\n".join(stdout_lines),
+                "stderr": "\n".join(stderr_lines),
+                "returncode": returncode,
+                "script": script,
+                "category": category,
+            }
+
+        except Exception as e:
+            error_msg = f"Error ejecutando script: {e}"
+            output_widget.after(
+                0, lambda: self.update_output_widget(output_widget, f"❌ {error_msg}\n")
+            )
+            return {"success": False, "error": error_msg}
+
+    def update_output_widget(self, widget, text):
+        """Actualizar widget de salida de forma segura"""
+        try:
+            widget.insert(tk.END, text)
+            widget.see(tk.END)
+            widget.update_idletasks()
+        except Exception:
+            pass  # Widget puede haber sido cerrado
+
     def get_spell_check_config(self) -> Dict[str, any]:
         """Obtener configuración actual de spell check"""
         config = {
@@ -685,7 +787,7 @@ class UnifiedScriptsGUI:
         self.execute_script_threaded("spell-check", script_name)
 
     def execute_script_threaded(self, category, script_name):
-        """Ejecutar script en hilo separado"""
+        """Ejecutar script en hilo separado con ventana de salida en tiempo real"""
 
         def run():
             try:
@@ -693,7 +795,13 @@ class UnifiedScriptsGUI:
                 self.progress_var.set(10)
                 self.log_message(f"🚀 Iniciando: {script_name}")
 
-                result = self.manager.execute_script(category, script_name)
+                # Crear ventana de salida en tiempo real
+                output_window = self.create_output_window(script_name)
+
+                # Ejecutar script con salida en tiempo real
+                result = self.manager.execute_script_with_realtime_output(
+                    category, script_name, output_window
+                )
 
                 self.progress_var.set(50)
 
@@ -705,9 +813,17 @@ class UnifiedScriptsGUI:
                     if result.get("stdout"):
                         self.log_message(f"📤 Salida:\n{result['stdout']}")
 
-                    messagebox.showinfo(
-                        "Éxito", f"{script_name} completado exitosamente"
+                    # Mostrar mensaje de éxito en la ventana de salida
+                    output_window.insert(
+                        tk.END, "\n\n✅ SCRIPT COMPLETADO EXITOSAMENTE\n"
                     )
+                    output_window.see(tk.END)
+
+                    # Cambiar color del botón de cerrar
+                    output_window.master.children["!button"].configure(
+                        text="✅ Cerrar (Completado)", style="Success.TButton"
+                    )
+
                 else:
                     self.current_status.set("❌ Error")
                     self.progress_var.set(0)
@@ -718,24 +834,122 @@ class UnifiedScriptsGUI:
                     if result.get("stderr"):
                         self.log_message(f"⚠️ Errores:\n{result['stderr']}")
 
-                    messagebox.showerror(
-                        "Error", f"{script_name} falló. Revisa los logs."
+                    # Mostrar error en la ventana de salida
+                    output_window.insert(
+                        tk.END,
+                        f"\n\n❌ ERROR: {result.get('error', 'Error desconocido')}\n",
+                    )
+                    if result.get("stderr"):
+                        output_window.insert(
+                            tk.END, f"⚠️ Errores:\n{result['stderr']}\n"
+                        )
+                    output_window.see(tk.END)
+
+                    # Cambiar color del botón de cerrar
+                    output_window.master.children["!button"].configure(
+                        text="❌ Cerrar (Error)", style="Error.TButton"
                     )
 
             except Exception as e:
                 self.current_status.set("❌ Error")
                 self.progress_var.set(0)
                 self.log_message(f"❌ Error ejecutando {script_name}: {e}")
-                messagebox.showerror("Error", f"Error ejecutando {script_name}: {e}")
 
-            # Recargar configuración si es spell check
-            if category == "spell-check":
-                self.load_spell_check_config()
+                # Mostrar error en la ventana de salida si existe
+                if "output_window" in locals():
+                    output_window.insert(tk.END, f"\n\n❌ ERROR: {e}\n")
+                    output_window.see(tk.END)
+                    output_window.master.children["!button"].configure(
+                        text="❌ Cerrar (Error)", style="Error.TButton"
+                    )
 
         # Ejecutar en hilo separado
         thread = threading.Thread(target=run)
         thread.daemon = True
         thread.start()
+
+    def create_output_window(self, script_name):
+        """Crear ventana de salida en tiempo real"""
+        # Crear ventana
+        output_window = tk.Toplevel(self.root)
+        output_window.title(f"🚀 Ejecutando: {script_name}")
+        output_window.geometry("800x600")
+        output_window.configure(bg="#f0f0f0")
+
+        # Configurar grid
+        output_window.columnconfigure(0, weight=1)
+        output_window.rowconfigure(0, weight=1)
+
+        # Frame principal
+        main_frame = ttk.Frame(output_window, padding="10")
+        main_frame.grid(row=0, column=0, sticky="nsew")
+        main_frame.columnconfigure(0, weight=1)
+        main_frame.rowconfigure(0, weight=1)
+
+        # Título
+        title_label = ttk.Label(
+            main_frame, text=f"🚀 Ejecutando: {script_name}", style="Title.TLabel"
+        )
+        title_label.grid(row=0, column=0, pady=(0, 10))
+
+        # Área de texto con scroll
+        text_frame = ttk.Frame(main_frame)
+        text_frame.grid(row=1, column=0, sticky="nsew", pady=(0, 10))
+        text_frame.columnconfigure(0, weight=1)
+        text_frame.rowconfigure(0, weight=1)
+
+        text_widget = tk.Text(
+            text_frame,
+            wrap=tk.WORD,
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Consolas", 10),
+            insertbackground="#2c3e50",
+        )
+
+        scrollbar = ttk.Scrollbar(
+            text_frame, orient="vertical", command=text_widget.yview
+        )
+        text_widget.configure(yscrollcommand=scrollbar.set)
+
+        text_widget.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Botón de cerrar
+        close_button = ttk.Button(
+            main_frame,
+            text="⏹️ Detener Ejecución",
+            command=lambda: self.stop_script_execution(output_window),
+            style="Action.TButton",
+        )
+        close_button.grid(row=2, column=0, pady=(10, 0))
+
+        # Configurar estilos adicionales
+        style = ttk.Style()
+        style.configure("Success.TButton", foreground="green")
+        style.configure("Error.TButton", foreground="red")
+
+        # Mensaje inicial
+        text_widget.insert(tk.END, f"🚀 Iniciando ejecución de: {script_name}\n")
+        text_widget.insert(
+            tk.END, f"⏰ Hora de inicio: {datetime.now().strftime('%H:%M:%S')}\n"
+        )
+        text_widget.insert(tk.END, "=" * 60 + "\n\n")
+        text_widget.see(tk.END)
+
+        return text_widget
+
+    def stop_script_execution(self, output_window):
+        """Detener la ejecución del script"""
+        output_window.insert(tk.END, "\n\n⏹️ EJECUCIÓN DETENIDA POR EL USUARIO\n")
+        output_window.see(tk.END)
+        output_window.master.children["!button"].configure(
+            text="⏹️ Cerrar (Detenido)", style="Warning.TButton"
+        )
+
+        # Configurar estilo de advertencia
+        style = ttk.Style()
+        style.configure("Warning.TButton", foreground="orange")
 
     def show_spell_check_config(self):
         """Mostrar configuración detallada de spell check"""
