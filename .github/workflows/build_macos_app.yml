@@ -289,11 +289,82 @@ jobs:
             ./verify_build_environment.sh
           fi
           
-          # Modificar archivo .spec existente para evitar conflictos
-          if [ -f "fix_existing_spec.sh" ]; then
-            echo "🔧 Modificando archivo .spec existente para evitar conflictos..."
-            chmod +x fix_existing_spec.sh
-            ./fix_existing_spec.sh
+          # Verificar archivo .spec existente (no modificar si ya está correcto)
+          if [ -f "EDF_CatalogoDeTablas.spec" ]; then
+            echo "✅ EDF_CatalogoDeTablas.spec encontrado y listo para usar"
+            echo "📏 Tamaño del archivo: $(wc -l < EDF_CatalogoDeTablas.spec) líneas"
+          else
+            echo "❌ ERROR: EDF_CatalogoDeTablas.spec no encontrado"
+            echo "🔧 Intentando crear archivo .spec básico..."
+            # Crear archivo .spec básico si no existe usando echo
+            echo "# -*- mode: python ; coding: utf-8 -*-" > EDF_CatalogoDeTablas.spec
+            echo "" >> EDF_CatalogoDeTablas.spec
+            echo "import os" >> EDF_CatalogoDeTablas.spec
+            echo "from pathlib import Path" >> EDF_CatalogoDeTablas.spec
+            echo "" >> EDF_CatalogoDeTablas.spec
+            echo "block_cipher = None" >> EDF_CatalogoDeTablas.spec
+            echo "" >> EDF_CatalogoDeTablas.spec
+            echo "def safe_data_paths():" >> EDF_CatalogoDeTablas.spec
+            echo "    paths = []" >> EDF_CatalogoDeTablas.spec
+            echo "    essential_paths = [" >> EDF_CatalogoDeTablas.spec
+            echo "        ('app/static', 'app/static')," >> EDF_CatalogoDeTablas.spec
+            echo "        ('app/templates', 'app/templates')," >> EDF_CatalogoDeTablas.spec
+            echo "        ('app/routes', 'app/routes')," >> EDF_CatalogoDeTablas.spec
+            echo "        ('app/models', 'app/models')," >> EDF_CatalogoDeTablas.spec
+            echo "        ('app/utils', 'app/utils')," >> EDF_CatalogoDeTablas.spec
+            echo "    ]" >> EDF_CatalogoDeTablas.spec
+            echo "    for src, dst in essential_paths:" >> EDF_CatalogoDeTablas.spec
+            echo "        if os.path.exists(src):" >> EDF_CatalogoDeTablas.spec
+            echo "            paths.append((src, dst))" >> EDF_CatalogoDeTablas.spec
+            echo "    return paths" >> EDF_CatalogoDeTablas.spec
+            echo "" >> EDF_CatalogoDeTablas.spec
+            echo "a = Analysis(" >> EDF_CatalogoDeTablas.spec
+            echo "    ['run_server.py']," >> EDF_CatalogoDeTablas.spec
+            echo "    pathex=[]," >> EDF_CatalogoDeTablas.spec
+            echo "    binaries=[]," >> EDF_CatalogoDeTablas.spec
+            echo "    datas=safe_data_paths()," >> EDF_CatalogoDeTablas.spec
+            echo "    hiddenimports=['flask', 'pymongo', 'boto3']," >> EDF_CatalogoDeTablas.spec
+            echo "    hookspath=[]," >> EDF_CatalogoDeTablas.spec
+            echo "    hooksconfig={}," >> EDF_CatalogoDeTablas.spec
+            echo "    runtime_hooks=[]," >> EDF_CatalogoDeTablas.spec
+            echo "    excludes=[]," >> EDF_CatalogoDeTablas.spec
+            echo "    win_no_prefer_redirects=False," >> EDF_CatalogoDeTablas.spec
+            echo "    win_private_assemblies=False," >> EDF_CatalogoDeTablas.spec
+            echo "    cipher=block_cipher," >> EDF_CatalogoDeTablas.spec
+            echo "    noarchive=False," >> EDF_CatalogoDeTablas.spec
+            echo ")" >> EDF_CatalogoDeTablas.spec
+            echo "" >> EDF_CatalogoDeTablas.spec
+            echo "pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)" >> EDF_CatalogoDeTablas.spec
+            echo "" >> EDF_CatalogoDeTablas.spec
+            echo "exe = EXE(" >> EDF_CatalogoDeTablas.spec
+            echo "    pyz," >> EDF_CatalogoDeTablas.spec
+            echo "    a.scripts," >> EDF_CatalogoDeTablas.spec
+            echo "    []," >> EDF_CatalogoDeTablas.spec
+            echo "    exclude_binaries=True," >> EDF_CatalogoDeTablas.spec
+            echo "    name='EDF_CatalogoDeTablas'," >> EDF_CatalogoDeTablas.spec
+            echo "    debug=False," >> EDF_CatalogoDeTablas.spec
+            echo "    bootloader_ignore_signals=False," >> EDF_CatalogoDeTablas.spec
+            echo "    strip=False," >> EDF_CatalogoDeTablas.spec
+            echo "    upx=True," >> EDF_CatalogoDeTablas.spec
+            echo "    console=True," >> EDF_CatalogoDeTablas.spec
+            echo "    disable_windowed_traceback=False," >> EDF_CatalogoDeTablas.spec
+            echo "    argv_emulation=False," >> EDF_CatalogoDeTablas.spec
+            echo "    target_arch=None," >> EDF_CatalogoDeTablas.spec
+            echo "    codesign_identity=None," >> EDF_CatalogoDeTablas.spec
+            echo "    entitlements_file=None," >> EDF_CatalogoDeTablas.spec
+            echo ")" >> EDF_CatalogoDeTablas.spec
+            echo "" >> EDF_CatalogoDeTablas.spec
+            echo "coll = COLLECT(" >> EDF_CatalogoDeTablas.spec
+            echo "    exe," >> EDF_CatalogoDeTablas.spec
+            echo "    a.binaries," >> EDF_CatalogoDeTablas.spec
+            echo "    a.zipfiles," >> EDF_CatalogoDeTablas.spec
+            echo "    a.datas," >> EDF_CatalogoDeTablas.spec
+            echo "    strip=False," >> EDF_CatalogoDeTablas.spec
+            echo "    upx=True," >> EDF_CatalogoDeTablas.spec
+            echo "    upx_exclude=[]," >> EDF_CatalogoDeTablas.spec
+            echo "    name='EDF_CatalogoDeTablas'," >> EDF_CatalogoDeTablas.spec
+            echo ")" >> EDF_CatalogoDeTablas.spec
+            echo "✅ Archivo .spec básico creado"
           fi
 
       - name: Verify and create spec file
