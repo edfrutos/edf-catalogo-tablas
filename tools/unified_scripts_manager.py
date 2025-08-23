@@ -598,9 +598,18 @@ class UnifiedScriptsGUI:
 
     def show_category_detail(self, category):
         """Mostrar detalle de una categoría"""
+        print(f"🔍 DEBUG: Intentando mostrar categoría: {category}")
+        self.log_message(f"🔍 Intentando mostrar categoría: {category}")
+
         if category not in self.manager.categories:
-            messagebox.showerror("Error", f"Categoría '{category}' no encontrada")
+            error_msg = f"Categoría '{category}' no encontrada"
+            print(f"❌ ERROR: {error_msg}")
+            self.log_message(f"❌ ERROR: {error_msg}")
+            messagebox.showerror("Error", error_msg)
             return
+
+        print(f"✅ DEBUG: Categoría encontrada, creando ventana...")
+        self.log_message(f"✅ Categoría encontrada, creando ventana...")
 
         # Crear ventana de detalle
         detail_window = tk.Toplevel(self.root)
