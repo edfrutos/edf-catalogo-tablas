@@ -422,7 +422,10 @@ function showDocumentModal(documentSrc, documentTitle) {
         console.log('[DEBUG] Generando HTML para PDF con onclick preventivo');
         documentElement = `
             <div class="text-center mb-3">
-                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="console.log('[DEBUG] Botón PDF clickeado manualmente'); event.preventDefault(); window.open('${documentSrc}', '_blank'); return false;">
+                <div class="alert alert-info mb-2" role="alert">
+                    <small><i class="fas fa-info-circle"></i> Si tienes Dropbox instalado, el PDF puede abrirse automáticamente en Dropbox. Esto es normal.</small>
+                </div>
+                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="console.log('[DEBUG] Botón PDF clickeado manualmente'); event.preventDefault(); window.open('${documentSrc}?no-dropbox=true', '_blank'); return false;">
                     <i class="fas fa-external-link-alt"></i> Abrir PDF en nueva pestaña
                 </a>
             </div>
