@@ -423,9 +423,16 @@ function showDocumentModal(documentSrc, documentTitle) {
         documentElement = `
             <div class="text-center mb-3">
                 <div class="alert alert-info mb-2" role="alert">
-                    <small><i class="fas fa-info-circle"></i> Si tienes Dropbox instalado, el PDF puede abrirse automáticamente en Dropbox. Esto es normal.</small>
+                    <small>
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Comportamiento normal:</strong> Si tienes Dropbox instalado, el PDF puede abrirse automáticamente en Dropbox. 
+                        Esto es una característica útil de Dropbox, no un error. 
+                        <br>
+                        <i class="fas fa-lightbulb"></i> 
+                        <em>Consejo: Puedes hacer clic derecho en el enlace y seleccionar "Abrir en nueva pestaña" para usar el navegador.</em>
+                    </small>
                 </div>
-                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="console.log('[DEBUG] Botón PDF clickeado manualmente'); event.preventDefault(); window.open('${documentSrc}?no-dropbox=true', '_blank'); return false;">
+                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="console.log('[DEBUG] Botón PDF clickeado manualmente'); event.preventDefault(); window.open('${documentSrc.replace(\'.pdf\', \'.pdf?view=browser\')}', '_blank'); return false;">
                     <i class="fas fa-external-link-alt"></i> Abrir PDF en nueva pestaña
                 </a>
             </div>
