@@ -683,7 +683,7 @@ class UnifiedScriptsGUI:
             style="Action.TButton",
         ).grid(row=0, column=1)
 
-            def execute_spell_check_script(self, script_name):
+    def execute_spell_check_script(self, script_name):
         """Ejecutar script de spell check"""
         self.execute_script_threaded("spell-check", script_name)
 
@@ -740,43 +740,7 @@ class UnifiedScriptsGUI:
         thread.daemon = True
         thread.start()
 
-    def show_script_info(self):
-        """Mostrar información del script seleccionado"""
-        category_selection = self.categories_listbox.curselection()
-        script_selection = self.scripts_listbox.curselection()
 
-        if not category_selection or not script_selection:
-            messagebox.showwarning(
-                "Advertencia", "Selecciona una categoría y un script"
-            )
-            return
-
-        category = self.categories_listbox.get(category_selection[0])
-        script_display = self.scripts_listbox.get(script_selection[0])
-        script_name = script_display.split(" (")[-1].rstrip(")")
-
-        if (
-            category in self.manager.categories
-            and script_name in self.manager.categories[category]["scripts"]
-        ):
-            script_info = self.manager.categories[category]["scripts"][script_name]
-
-            info_text = f"""
-📋 INFORMACIÓN DEL SCRIPT
-
-🔧 Nombre: {script_info['name']}
-📁 Archivo: {script_name}
-📂 Categoría: {category}
-📝 Descripción: {script_info['description']}
-🔧 Tipo: {script_info['type']}
-
-📄 Ruta: {self.manager.get_script_path(category, script_name)}
-✅ Existe: {'Sí' if self.manager.get_script_path(category, script_name).exists() else 'No'}
-            """
-
-            self.show_info_window("Información del Script", info_text)
-        else:
-            messagebox.showerror("Error", "No se pudo obtener información del script")
 
     def load_spell_check_config(self):
         """Cargar configuración de spell check"""
