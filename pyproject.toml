@@ -2,148 +2,18 @@
 target-version = "py38"
 line-length = 120
 
+[tool.cspell]
+words = [ "api", "aws", "backup", "backups", "bcrypt", "black", "boto3", "catalogos", "catalogotablas", "catálogo", "catálogos", "configuración", "configurar", "cors", "cryptography", "csrf", "diagnosticar", "diagnóstico", "dotenv", "edefrutos", "edf", "escalabilidad", "escalable", "flake8", "flask", "gcp", "gunicorn", "herramientas", "http", "httpdocs", "jinja2", "json", "jwt", "linting", "matplotlib", "migración", "migrar", "mongodb", "monitorear", "monitoreo", "mypy", "métricas", "numpy", "oauth", "pandas", "pillow", "pyc", "pycharm", "pyd", "pymongo", "pyo", "pyright", "pytest", "redirección", "redis", "requests", "restauración", "restore", "ruff", "s3", "sql", "ssl", "tablas", "templates", "testing", "tls", "utilidades", "venv", "verificación", "verificar", "vhosts", "werkzeug", "xml", "xyz",]
+ignorePaths = [ "node_modules/**", ".git/**", "venv/**", "__pycache__/**", "*.pyc", "build/**", "dist/**", "*.egg-info/**", ".venv/**", "backups/**", "logs/**", "*.log", "*.md", "*.txt", ".cursorrules", "tools/build/**", "tools/discarded_files_*/**", "app_data/**", "instance/**", "flask_session/**", "uploads/**", "static/uploads/**", "spreadsheets/**", "exportados/**", "imagenes/**", "static/imagenes/**",]
+
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "B", "C4", "UP"]
-ignore = [
-    "E501",  # Line too long
-    "F401",  # Unused imports
-    "F841",  # Unused variables
-    "F811",  # Redefined while unused
-    "B008",  # Do not perform function calls in argument defaults
-    "B006",  # Do not use mutable data structures for argument defaults
-    "C901",  # Function is too complex
-    "E203",  # Whitespace before ':'
-    "E731",  # Do not assign a lambda expression, use a def
-    "I001",  # Import block is un-sorted or un-formatted
-    "UP032", # Use f-string instead of format call
-    "F541",  # f-string without any placeholders
-]
+select = [ "E", "W", "F", "I", "B", "C4", "UP",]
+ignore = [ "E501", "F401", "F841", "F811", "B008", "B006", "C901", "E203", "E731", "I001", "UP032", "F541",]
 
 [tool.ruff.lint.per-file-ignores]
-"app/routes/admin_routes.py" = [
-    "F401",  # Unused imports
-    "F841",  # Unused variables
-    "F811",  # Redefined while unused
-    "E501",  # Line too long
-    "I001",  # Import block is un-sorted
-    "UP032", # Use f-string instead of format call
-    "F541",  # f-string without any placeholders
-]
-"tools/test_spell_check_utilities.py" = [
-    "F401",  # Unused imports
-    "F541",  # f-string without any placeholders
-]
-"tools/quick_test_spell_check_integration.py" = [
-    "F401",  # Unused imports
-    "F541",  # f-string without any placeholders
-    "UP032", # Use f-string instead of format call
-]
+"app/routes/admin_routes.py" = [ "F401", "F841", "F811", "E501", "I001", "UP032", "F541",]
+"tools/test_spell_check_utilities.py" = [ "F401", "F541",]
+"tools/quick_test_spell_check_integration.py" = [ "F401", "F541", "UP032",]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "tools", "scripts"]
-
-[tool.cspell]
-words = [
-    "edefrutos",
-    "catalogotablas", 
-    "edf",
-    "xyz",
-    "httpdocs",
-    "vhosts",
-    "api",
-    "http",
-    "ssl",
-    "tls",
-    "json",
-    "xml",
-    "sql",
-    "mongodb",
-    "redis",
-    "aws",
-    "s3",
-    "gcp",
-    "oauth",
-    "jwt",
-    "csrf",
-    "cors",
-    "flask",
-    "pymongo",
-    "werkzeug",
-    "jinja2",
-    "boto3",
-    "requests",
-    "numpy",
-    "pandas",
-    "matplotlib",
-    "pytest",
-    "black",
-    "flake8",
-    "gunicorn",
-    "dotenv",
-    "bcrypt",
-    "cryptography",
-    "pillow",
-    "pycharm",
-    "pyright",
-    "ruff",
-    "mypy",
-    "pyc",
-    "pyo",
-    "pyd",
-    "venv",
-    "catalogos",
-    "catálogo",
-    "catálogos",
-    "tablas",
-    "utilidades",
-    "herramientas",
-    "configuración",
-    "configurar",
-    "verificación",
-    "verificar",
-    "diagnóstico",
-    "diagnosticar",
-    "monitoreo",
-    "monitorear",
-    "métricas",
-    "backup",
-    "backups",
-    "restore",
-    "restauración",
-    "migración",
-    "migrar",
-    "escalabilidad",
-    "escalable",
-    "redirección",
-    "templates",
-    "linting",
-    "testing"
-]
-ignorePaths = [
-    "node_modules/**",
-    ".git/**",
-    "venv/**",
-    "__pycache__/**",
-    "*.pyc",
-    "build/**",
-    "dist/**",
-    "*.egg-info/**",
-    ".venv/**",
-    "backups/**",
-    "logs/**",
-    "*.log",
-    "*.md",
-    "*.txt",
-    ".cursorrules",
-    "tools/build/**",
-    "tools/discarded_files_*/**",
-    "app_data/**",
-    "instance/**",
-    "flask_session/**",
-    "uploads/**",
-    "static/uploads/**",
-    "spreadsheets/**",
-    "exportados/**",
-    "imagenes/**",
-    "static/imagenes/**"
-]
+known-first-party = [ "app", "tools", "scripts",]
