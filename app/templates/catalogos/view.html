@@ -418,9 +418,10 @@ function showDocumentModal(documentSrc, documentTitle) {
     let documentElement = '';
     
     if (fileExtension === 'pdf') {
+        console.log('[DEBUG] Generando HTML para PDF con onclick preventivo');
         documentElement = `
             <div class="text-center mb-3">
-                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="event.preventDefault(); window.open('${documentSrc}', '_blank'); return false;">
+                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="console.log('[DEBUG] Botón PDF clickeado manualmente'); event.preventDefault(); window.open('${documentSrc}', '_blank'); return false;">
                     <i class="fas fa-external-link-alt"></i> Abrir PDF en nueva pestaña
                 </a>
             </div>
@@ -547,6 +548,7 @@ function showDocumentModal(documentSrc, documentTitle) {
     
     modalContent.innerHTML = documentElement;
     console.log('[DEBUG] Intentando mostrar modal...');
+    console.log('[DEBUG] Contenido del modal:', documentElement.substring(0, 300) + '...');
     modal.show();
     console.log('[DEBUG] Modal mostrado correctamente');
 }
