@@ -78,7 +78,7 @@ done
 echo ""
 echo "🔧 Verificando archivos de configuración..."
 CONFIG_FILES=(
-    ".github/workflows/mac_build.yml"
+    ".github/workflows/build_macos_app.yml"
     "pyproject.toml"
     "pyrightconfig.json"
     "cspell.json"
