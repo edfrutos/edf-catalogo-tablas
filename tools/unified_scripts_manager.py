@@ -928,7 +928,7 @@ class UnifiedScriptsGUI:
         close_button = ttk.Button(
             main_frame,
             text="⏹️ Detener Ejecución",
-            command=lambda: self.stop_script_execution(output_window),
+            command=lambda: self.stop_script_execution(text_widget),
             style="Action.TButton",
         )
         close_button.grid(row=2, column=0, pady=(10, 0))
@@ -948,17 +948,26 @@ class UnifiedScriptsGUI:
 
         return text_widget
 
-    def stop_script_execution(self, output_window):
+    def stop_script_execution(self, text_widget):
         """Detener la ejecución del script"""
-        output_window.insert(tk.END, "\n\n⏹️ EJECUCIÓN DETENIDA POR EL USUARIO\n")
-        output_window.see(tk.END)
-        output_window.master.children["!button"].configure(
-            text="⏹️ Cerrar (Detenido)", style="Warning.TButton"
-        )
+        try:
+            text_widget.insert(tk.END, "\n\n⏹️ EJECUCIÓN DETENIDA POR EL USUARIO\n")
+            text_widget.see(tk.END)
 
-        # Configurar estilo de advertencia
-        style = ttk.Style()
-        style.configure("Warning.TButton", foreground="orange")
+            # Configurar estilo de advertencia
+            style = ttk.Style()
+            style.configure("Warning.TButton", foreground="orange")
+
+            # Mostrar mensaje informativo
+            messagebox.showinfo(
+                "Ejecución Detenida",
+                "La ejecución del script ha sido detenida por el usuario.",
+            )
+        except Exception as e:
+            print(f"Error al detener ejecución: {e}")
+            messagebox.showinfo(
+                "Ejecución Detenida", "La ejecución del script ha sido detenida."
+            )
 
     def show_spell_check_config(self):
         """Mostrar configuración detallada de spell check"""
