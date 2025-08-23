@@ -63,7 +63,8 @@ def wait_for_server():
         time.sleep(1)
         if attempt % 5 == 0:
             print(
-                f"⏳ Esperando servidor Flask... (intento {attempt + 1}/{max_attempts})"
+                f"⏳ Esperando servidor Flask... "
+                f"(intento {attempt + 1}/{max_attempts})"
             )
 
     print("❌ Timeout esperando al servidor Flask")
