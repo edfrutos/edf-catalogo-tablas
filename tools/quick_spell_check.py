@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script rápido para verificar palabras desconocidas en archivos específicos
-sUso: python tools/quick_spell_check.py [archivo_o_directorio]
+Uso: python tools/quick_spell_check.py [archivo_o_directorio]
 """
 
 import json
