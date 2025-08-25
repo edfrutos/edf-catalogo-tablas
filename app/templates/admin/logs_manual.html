@@ -53,14 +53,14 @@
         </div>
         <div class="col-md-3 d-flex align-items-end">
           <div class="btn-group w-100" role="group">
-            <button class="btn btn-secondary" onclick="buscarLogs()" title="Buscar por palabra clave">
-              <i class="bi bi-search"></i> Buscar
+            <button class="btn btn-primary" onclick="aplicarFiltrosUnificados()" title="Aplicar todos los filtros">
+              <i class="bi bi-funnel"></i> Aplicar Filtros
             </button>
             <button class="btn btn-success" onclick="descargarLog()" title="Descargar log">
               <i class="bi bi-download"></i>
             </button>
             <button class="btn btn-danger" onclick="mostrarModalTruncar()" title="Truncar log">
-              <i class="bi bi-trash"></i>
+              <i class="bi bi-scissors"></i> Truncar
             </button>
             <button class="btn btn-info" onclick="verTamano()" title="Ver tamaño y rotaciones">
               <i class="bi bi-info-circle"></i>
@@ -102,27 +102,78 @@
 
 <!-- Modal para truncar log -->
 <div class="modal fade" id="modalTruncar" tabindex="-1" aria-labelledby="modalTruncarLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <form id="formTruncar" onsubmit="truncarLog(event)">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalTruncarLabel">Truncar log seleccionado</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="modalTruncarLabel">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Truncar Archivo de Log
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label for="numLineas" class="form-label">Truncar a las últimas N líneas:</label>
-            <input type="number" class="form-control" id="numLineas" name="numLineas" min="10" placeholder="Ej: 100">
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>¡Atención!</strong> Esta acción eliminará permanentemente parte del contenido del archivo de log.
           </div>
-          <div class="mb-3">
-            <label for="fechaCorte" class="form-label">O truncar a partir de fecha (YYYY-MM-DD):</label>
-            <input type="date" class="form-control" id="fechaCorte" name="fechaCorte">
+          
+          <div class="alert alert-info">
+            <i class="bi bi-file-text me-2"></i>
+            <strong>Archivo seleccionado:</strong> <span id="logFileName">Ninguno</span>
           </div>
-          <div class="form-text">Rellena solo una de las dos opciones.</div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-header">
+                  <h6 class="mb-0"><i class="bi bi-list-ol me-2"></i>Por Número de Líneas</h6>
+                </div>
+                <div class="card-body">
+                  <label for="numLineas" class="form-label">Mantener las últimas N líneas:</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="numLineas" name="numLineas" min="10" max="10000" placeholder="Ej: 100">
+                    <span class="input-group-text">líneas</span>
+                  </div>
+                  <div class="form-text">Se eliminarán todas las líneas excepto las últimas N.</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-header">
+                  <h6 class="mb-0"><i class="bi bi-calendar me-2"></i>Por Fecha</h6>
+                </div>
+                <div class="card-body">
+                  <label for="fechaCorte" class="form-label">Mantener desde fecha:</label>
+                  <input type="date" class="form-control" id="fechaCorte" name="fechaCorte">
+                  <div class="form-text">Se mantendrán solo las líneas desde esta fecha en adelante (se eliminarán las anteriores).</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="confirmTruncate" required>
+              <label class="form-check-label" for="confirmTruncate">
+                Confirmo que entiendo que esta acción es irreversible
+              </label>
+            </div>
+            <div class="mt-2">
+              <button type="button" class="btn btn-outline-info btn-sm" onclick="mostrarVistaPrevia()">
+                <i class="bi bi-eye me-1"></i>Vista previa del resultado
+              </button>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger">Truncar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancelar
+          </button>
+          <button type="submit" class="btn btn-danger" id="btnTruncar" disabled>
+            <i class="bi bi-scissors me-2"></i>Truncar Archivo
+          </button>
         </div>
       </form>
     </div>
@@ -150,21 +201,32 @@ function updateFilterInfo() {
   let info = [];
   
   if (currentFilters.lines) {
-    info.push(`Mostrando ${currentFilters.lines} líneas`);
+    info.push(`Líneas: ${currentFilters.lines}`);
   }
   
   if (currentFilters.dateFrom || currentFilters.dateTo) {
     const from = currentFilters.dateFrom || 'inicio';
     const to = currentFilters.dateTo || 'hoy';
-    info.push(`Filtro por fecha: ${from} a ${to}`);
+    info.push(`Fecha: ${from} a ${to}`);
   }
   
   if (currentFilters.keyword) {
     info.push(`Búsqueda: "${currentFilters.keyword}"`);
   }
   
+  if (logSeleccionado) {
+    info.push(`Archivo: ${logSeleccionado}`);
+  }
+  
   if (info.length > 0) {
-    infoEl.innerHTML = `<strong>Filtros aplicados:</strong> ${info.join(' | ')} <button class="btn btn-sm btn-outline-danger float-end" onclick="resetFilters()">Limpiar filtros</button>`;
+    infoEl.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <div><strong>Filtros activos:</strong> ${info.join(' | ')}</div>
+        <button class="btn btn-sm btn-outline-danger" onclick="resetFilters()">
+          <i class="bi bi-x-circle"></i> Limpiar filtros
+        </button>
+      </div>
+    `;
     infoEl.classList.remove('d-none');
   } else {
     infoEl.classList.add('d-none');
@@ -259,11 +321,16 @@ function resetFilters() {
   document.getElementById('dateTo').value = '';
   document.getElementById('keyword').value = '';
   
-  verUltimos(50);
-  updateFilterInfo();
+  // Usar el sistema unificado de filtros
+  aplicarFiltrosUnificados();
 }
 function actualizarLogSeleccionado() {
   logSeleccionado = document.getElementById('logfile').value;
+  
+  // Si hay un log seleccionado, aplicar los filtros actuales
+  if (logSeleccionado) {
+    aplicarFiltrosUnificados();
+  }
 }
 function getLogParam() {
   if (!logSeleccionado) {
@@ -275,69 +342,20 @@ function getLogParam() {
 function verUltimos(n) {
   if (!getLogParam()) return;
   
-  const params = new URLSearchParams();
-  params.append('n', n);
+  // Actualizar el filtro de líneas
+  currentFilters.lines = n;
   
-  if (currentFilters.dateFrom) params.append('date_from', currentFilters.dateFrom);
-  if (currentFilters.dateTo) params.append('date_to', currentFilters.dateTo);
-  
-  // Agregar el parámetro de log_file si existe
-  if (logSeleccionado) {
-    params.append('log_file', logSeleccionado);
-  }
-  
-  const url = `/admin/logs/tail?${params.toString()}`;
-  
-  fetch(url)
-    .then(r => r.json())
-    .then(d => {
-      const output = document.getElementById('log-output');
-      output.textContent = d.logs.join('');
-      
-      // Actualizar información de filtros
-      if (d.total_lines !== undefined) {
-        const info = `Mostrando ${d.filtered_lines} de ${d.total_lines} líneas`;
-        if (d.filtered_lines === 0) {
-          output.textContent = 'No se encontraron registros que coincidan con los filtros actuales.';
-        }
-      }
-      
-      // Hacer scroll al final
-      output.scrollTop = output.scrollHeight;
-    })
-    .catch(error => {
-      console.error('Error al cargar los logs:', error);
-      document.getElementById('log-output').textContent = `Error al cargar los registros: ${error.message}`;
-    });
+  // Usar el sistema unificado de filtros
+  aplicarFiltrosUnificados();
 }
 function buscarLogs() {
   if (!getLogParam()) return;
   
   const keyword = document.getElementById('keyword').value;
-  if (!keyword) {
-    // Si no hay palabra clave, simplemente recargamos con los filtros actuales
-    verUltimos(currentFilters.lines || 50);
-    return;
-  }
+  currentFilters.keyword = keyword || '';
   
-  currentFilters.keyword = keyword;
-  updateFilterInfo();
-  
-  fetch(`/admin/logs/search${getLogParam()}&kw=${encodeURIComponent(keyword)}`)
-    .then(r => r.json())
-    .then(d => {
-      const output = document.getElementById('log-output');
-      if (d.logs && d.logs.length > 0) {
-        output.textContent = d.logs.join('');
-        output.scrollTop = output.scrollHeight;
-      } else {
-        output.textContent = 'No se encontraron coincidencias para la búsqueda actual.';
-      }
-    })
-    .catch(error => {
-      console.error('Error en la búsqueda:', error);
-      document.getElementById('log-output').textContent = `Error en la búsqueda: ${error.message}`;
-    });
+  // Usar el sistema unificado de filtros
+  aplicarFiltrosUnificados();
 }
 function descargarLog() {
   if (!getLogParam()) return;
@@ -345,29 +363,99 @@ function descargarLog() {
 }
 function mostrarModalTruncar() {
   if (!getLogParam()) return;
+  
+  // Mostrar el nombre del archivo seleccionado
+  const logFileName = document.getElementById('logFileName');
+  logFileName.textContent = logSeleccionado || 'Ninguno';
+  
   var modal = new bootstrap.Modal(document.getElementById('modalTruncar'));
   modal.show();
 }
 function truncarLog(event) {
   event.preventDefault();
   if (!getLogParam()) return;
+  
   const numLineas = document.getElementById('numLineas').value;
   const fechaCorte = document.getElementById('fechaCorte').value;
-  if (!numLineas && !fechaCorte) {
-    alert('Debes indicar número de líneas o fecha.');
+  const confirmTruncate = document.getElementById('confirmTruncate').checked;
+  
+  if (!confirmTruncate) {
+    mostrarMensajeTemporal('Debes confirmar que entiendes que la acción es irreversible', 'warning');
     return;
   }
+  
+  if (!numLineas && !fechaCorte) {
+    mostrarMensajeTemporal('Debes indicar número de líneas o fecha de corte', 'warning');
+    return;
+  }
+  
+  // Validación adicional para evitar truncados accidentales
+  if (numLineas && parseInt(numLineas) < 10) {
+    const confirmacion = confirm(`¿Estás seguro de que quieres mantener solo ${numLineas} líneas? Esto podría eliminar la mayor parte del archivo.`);
+    if (!confirmacion) {
+      return;
+    }
+  }
+  
+  if (fechaCorte) {
+    const fechaSeleccionada = new Date(fechaCorte);
+    const hoy = new Date();
+    const diffTime = Math.abs(hoy - fechaSeleccionada);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 7) {
+      const confirmacion = confirm(`¿Estás seguro de que quieres mantener solo las líneas desde ${fechaCorte}? Esto podría eliminar ${diffDays} días de logs.`);
+      if (!confirmacion) {
+        return;
+      }
+    }
+  }
+  
+  // Mostrar estado de carga
+  const btnTruncar = document.getElementById('btnTruncar');
+  const originalText = btnTruncar.innerHTML;
+  btnTruncar.disabled = true;
+  btnTruncar.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Procesando...';
+  
   const formData = new FormData();
   formData.append('log_file', logSeleccionado);
   if (numLineas) formData.append('lines', numLineas);
   if (fechaCorte) formData.append('date', fechaCorte);
+  
   fetch('/admin/logs/clear' + getLogParam(), {method:'POST', body:formData})
-    .then(r => r.text())
-    .then(() => {
-      alert('Log truncado correctamente');
-      var modal = bootstrap.Modal.getInstance(document.getElementById('modalTruncar'));
+    .then(r => {
+      if (!r.ok) {
+        throw new Error(`Error ${r.status}: ${r.statusText}`);
+      }
+      return r.json();
+    })
+    .then(data => {
+      // Cerrar modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalTruncar'));
       modal.hide();
-      verUltimos(20);
+      
+      // Mostrar mensaje de éxito con detalles
+      let mensaje = data.status;
+      if (data.lines_removed !== undefined) {
+        mensaje += ` (${data.lines_removed} líneas eliminadas, ${data.lines_kept} mantenidas)`;
+      }
+      mostrarMensajeTemporal(mensaje, 'success');
+      
+      // Limpiar formulario
+      document.getElementById('formTruncar').reset();
+      document.getElementById('btnTruncar').disabled = true;
+      
+      // Recargar logs con el sistema unificado
+      aplicarFiltrosUnificados();
+    })
+    .catch(error => {
+      console.error('Error al truncar log:', error);
+      mostrarMensajeTemporal(`Error al truncar el archivo: ${error.message}`, 'danger');
+    })
+    .finally(() => {
+      // Restaurar botón
+      btnTruncar.disabled = false;
+      btnTruncar.innerHTML = originalText;
     });
 }
 function verTamano() {
@@ -569,9 +657,119 @@ window.onload = function() {
   // Permitir usar Enter en el campo de búsqueda
   document.getElementById('keyword').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
-      buscarLogs();
+      aplicarFiltrosUnificados();
     }
   });
+  
+  // Aplicar filtros automáticamente cuando cambien los campos de fecha
+  document.getElementById('dateFrom').addEventListener('change', function() {
+    currentFilters.dateFrom = this.value || null;
+  });
+  
+  document.getElementById('dateTo').addEventListener('change', function() {
+    currentFilters.dateTo = this.value || null;
+  });
+  
+  // Aplicar filtros automáticamente cuando cambie el número de líneas
+  document.getElementById('linesCount').addEventListener('change', function() {
+    currentFilters.lines = parseInt(this.value) || 50;
+  });
+  
+  // Validación del modal de truncar
+  document.getElementById('confirmTruncate').addEventListener('change', function() {
+    const btnTruncar = document.getElementById('btnTruncar');
+    btnTruncar.disabled = !this.checked;
+  });
+  
+  // Limpiar formulario cuando se abra el modal
+  document.getElementById('modalTruncar').addEventListener('show.bs.modal', function() {
+    document.getElementById('formTruncar').reset();
+    document.getElementById('btnTruncar').disabled = true;
+  });
+  
+  // Función para mostrar vista previa del truncado
+  window.mostrarVistaPrevia = function() {
+    const numLineas = document.getElementById('numLineas').value;
+    const fechaCorte = document.getElementById('fechaCorte').value;
+    
+    if (!numLineas && !fechaCorte) {
+      mostrarMensajeTemporal('Debes indicar número de líneas o fecha de corte para ver la vista previa', 'warning');
+      return;
+    }
+    
+    // Crear un modal de vista previa
+    const previewModal = document.createElement('div');
+    previewModal.className = 'modal fade';
+    previewModal.id = 'previewModal';
+    previewModal.innerHTML = `
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-eye me-2"></i>Vista Previa del Truncado
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div id="previewContent">
+              <div class="text-center">
+                <div class="spinner-border" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Calculando vista previa...</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(previewModal);
+    const modal = new bootstrap.Modal(previewModal);
+    modal.show();
+    
+    // Simular la vista previa (en una implementación real, esto haría una llamada al backend)
+    setTimeout(() => {
+      const previewContent = document.getElementById('previewContent');
+      let previewText = '';
+      
+      if (numLineas) {
+        previewText = `
+          <div class="alert alert-info">
+            <strong>Truncado por líneas:</strong> Se mantendrán las últimas ${numLineas} líneas del archivo.
+          </div>
+          <p><strong>Resultado esperado:</strong></p>
+          <ul>
+            <li>Líneas a mantener: ${numLineas}</li>
+            <li>Líneas a eliminar: Todas las anteriores</li>
+            <li>Archivo resultante: Solo las últimas ${numLineas} líneas</li>
+          </ul>
+        `;
+      } else if (fechaCorte) {
+        previewText = `
+          <div class="alert alert-info">
+            <strong>Truncado por fecha:</strong> Se mantendrán las líneas desde ${fechaCorte} en adelante.
+          </div>
+          <p><strong>Resultado esperado:</strong></p>
+          <ul>
+            <li>Fecha de corte: ${fechaCorte}</li>
+            <li>Líneas a mantener: Todas desde ${fechaCorte} hasta hoy</li>
+            <li>Líneas a eliminar: Todas las anteriores a ${fechaCorte}</li>
+          </ul>
+        `;
+      }
+      
+      previewContent.innerHTML = previewText;
+    }, 1000);
+    
+    // Limpiar el modal cuando se cierre
+    previewModal.addEventListener('hidden.bs.modal', function() {
+      document.body.removeChild(previewModal);
+    });
+  };
 };
 
 // Limpiar interval al salir de la página
