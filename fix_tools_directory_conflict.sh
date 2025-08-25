@@ -106,14 +106,14 @@ create_optimized_spec() {
     echo "📝 Creando archivo .spec optimizado..."
     
     # Hacer backup del archivo actual
-    if [ -f "EDF_CatalogoDeTablas.spec" ]; then
-        backup_name="EDF_CatalogoDeTablas.spec.backup.$(date +%Y%m%d_%H%M%S)"
-        cp EDF_CatalogoDeTablas.spec "$backup_name"
+    if [ -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
+        backup_name="EDF_CatalogoDeTablas_Native_WebSockets.spec.backup.$(date +%Y%m%d_%H%M%S)"
+        cp EDF_CatalogoDeTablas_Native_WebSockets.spec "$backup_name"
         echo "  💾 Backup creado: $backup_name"
     fi
     
     # Crear un .spec que evite el conflicto específico
-    cat > EDF_CatalogoDeTablas.spec.optimized << 'EOF'
+    cat > EDF_CatalogoDeTablas_Native_WebSockets.spec.optimized << 'EOF'
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
@@ -256,7 +256,7 @@ app = BUNDLE(
 EOF
 
     # Reemplazar el archivo original
-    mv EDF_CatalogoDeTablas.spec.optimized EDF_CatalogoDeTablas.spec
+    mv EDF_CatalogoDeTablas_Native_WebSockets.spec.optimized EDF_CatalogoDeTablas_Native_WebSockets.spec
     echo "✅ Archivo .spec optimizado creado"
 }
 

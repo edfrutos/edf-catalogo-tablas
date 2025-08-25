@@ -10,20 +10,20 @@ echo "🔧 MODIFICANDO ARCHIVO .SPEC EXISTENTE..."
 
 # Función para modificar el archivo .spec
 fix_existing_spec() {
-    echo "📄 Modificando EDF_CatalogoDeTablas.spec existente..."
+    echo "📄 Modificando EDF_CatalogoDeTablas_Native_WebSockets.spec existente..."
     
-    if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
-        echo "❌ Error: No se encuentra EDF_CatalogoDeTablas.spec"
+    if [ ! -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
+        echo "❌ Error: No se encuentra EDF_CatalogoDeTablas_Native_WebSockets.spec"
         return 1
     fi
     
     # Hacer backup del archivo original
-    cp EDF_CatalogoDeTablas.spec EDF_CatalogoDeTablas.spec.backup
-    echo "📋 Backup creado: EDF_CatalogoDeTablas.spec.backup"
+    cp EDF_CatalogoDeTablas_Native_WebSockets.spec EDF_CatalogoDeTablas_Native_WebSockets.spec.backup
+    echo "📋 Backup creado: EDF_CatalogoDeTablas_Native_WebSockets.spec.backup"
     
     # Reemplazar todas las ocurrencias de 'app_tools' por 'app_utils'
     echo "🔄 Reemplazando 'app_tools' por 'app_utils'..."
-    sed -i '' 's/app_tools/app_utils/g' EDF_CatalogoDeTablas.spec
+    sed -i '' 's/app_tools/app_utils/g' EDF_CatalogoDeTablas_Native_WebSockets.spec
     
     echo "✅ Archivo .spec modificado exitosamente"
 }
@@ -32,13 +32,13 @@ fix_existing_spec() {
 verify_changes() {
     echo "🔍 Verificando cambios realizados..."
     
-    if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
+    if [ ! -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
         echo "❌ Error: No se encuentra el archivo .spec"
         return 1
     fi
     
     # Verificar que no hay referencias a 'app_tools'
-    if grep -q "app_tools" EDF_CatalogoDeTablas.spec; then
+    if grep -q "app_tools" EDF_CatalogoDeTablas_Native_WebSockets.spec; then
         echo "❌ Error: Aún existen referencias a 'app_tools'"
         return 1
     else
@@ -46,7 +46,7 @@ verify_changes() {
     fi
     
     # Verificar que se usan 'app_utils'
-    if grep -q "app_utils" EDF_CatalogoDeTablas.spec; then
+    if grep -q "app_utils" EDF_CatalogoDeTablas_Native_WebSockets.spec; then
         echo "✅ Se usan referencias seguras a 'app_utils'"
     else
         echo "❌ Error: No se encontraron referencias a 'app_utils'"
@@ -55,7 +55,7 @@ verify_changes() {
     
     # Mostrar algunas líneas modificadas
     echo "📋 Líneas modificadas (primeras 5):"
-    grep -n "app_utils" EDF_CatalogoDeTablas.spec | head -5
+    grep -n "app_utils" EDF_CatalogoDeTablas_Native_WebSockets.spec | head -5
     
     echo "✅ Verificación completada"
     return 0
@@ -70,7 +70,7 @@ show_change_info() {
     echo "   📁 ANTES: tools/ → app_tools/"
     echo "   📁 AHORA: tools/ → app_utils/"
     echo "   ✅ BENEFICIO: No hay conflicto de nombres"
-    echo "   📋 BACKUP: EDF_CatalogoDeTablas.spec.backup"
+    echo "   📋 BACKUP: EDF_CatalogoDeTablas_Native_WebSockets.spec.backup"
     echo ""
 }
 
@@ -84,7 +84,7 @@ main() {
     if verify_changes; then
         echo "✅ Archivo .spec modificado y verificado correctamente"
         echo "💡 Ahora puedes ejecutar el build sin conflictos"
-        echo "🚀 Comando recomendado: python -m PyInstaller EDF_CatalogoDeTablas.spec"
+        echo "🚀 Comando recomendado: python -m PyInstaller EDF_CatalogoDeTablas_Native_WebSockets.spec"
     else
         echo "❌ Error: No se pudo modificar o verificar el archivo .spec"
         exit 1

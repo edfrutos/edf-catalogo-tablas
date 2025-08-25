@@ -69,13 +69,13 @@ create_clean_spec() {
     echo "📝 Creando archivo .spec limpio..."
     
     # Hacer backup del archivo .spec actual
-    if [ -f "EDF_CatalogoDeTablas.spec" ]; then
-        cp EDF_CatalogoDeTablas.spec EDF_CatalogoDeTablas.spec.backup.$(date +%Y%m%d_%H%M%S)
-        echo "  💾 Backup creado: EDF_CatalogoDeTablas.spec.backup.$(date +%Y%m%d_%H%M%S)"
+    if [ -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
+        cp EDF_CatalogoDeTablas_Native_WebSockets.spec EDF_CatalogoDeTablas_Native_WebSockets.spec.backup.$(date +%Y%m%d_%H%M%S)
+        echo "  💾 Backup creado: EDF_CatalogoDeTablas_Native_WebSockets.spec.backup.$(date +%Y%m%d_%H%M%S)"
     fi
     
     # Crear un .spec optimizado que evite conflictos
-    cat > EDF_CatalogoDeTablas.spec.clean << 'EOF'
+    cat > EDF_CatalogoDeTablas_Native_WebSockets.spec.clean << 'EOF'
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
@@ -234,8 +234,8 @@ apply_solution() {
     create_clean_spec
     
     # Reemplazar el archivo .spec original
-    if [ -f "EDF_CatalogoDeTablas.spec.clean" ]; then
-        mv EDF_CatalogoDeTablas.spec.clean EDF_CatalogoDeTablas.spec
+    if [ -f "EDF_CatalogoDeTablas_Native_WebSockets.spec.clean" ]; then
+        mv EDF_CatalogoDeTablas_Native_WebSockets.spec.clean EDF_CatalogoDeTablas_Native_WebSockets.spec
         echo "✅ Archivo .spec actualizado"
     fi
     
@@ -246,11 +246,11 @@ apply_solution() {
 verify_solution() {
     echo "🔍 Verificando estado de la solución..."
     
-    if [ -f "EDF_CatalogoDeTablas.spec" ]; then
+    if [ -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
         echo "  ✅ Archivo .spec presente"
         
         # Verificar que no hay referencias problemáticas
-        if grep -q "tools/" EDF_CatalogoDeTablas.spec; then
+        if grep -q "tools/" EDF_CatalogoDeTablas_Native_WebSockets.spec; then
             echo "  ✅ Referencias a tools/ encontradas (correcto)"
         else
             echo "  ⚠️  No se encontraron referencias a tools/"

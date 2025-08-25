@@ -36,7 +36,7 @@ Verifica y crea el archivo requirements_python310.txt si no existe.
 ./verify_spec.sh
 ```
 
-Verifica y crea el archivo EDF_CatalogoDeTablas.spec si no existe.
+Verifica y crea el archivo EDF_CatalogoDeTablas_Native_WebSockets.spec si no existe.
 
 ### 5. **Push Seguro (Recomendado)**
 
@@ -58,7 +58,7 @@ El hook de pre-push se ejecuta automáticamente y verifica todo antes del push.
 
 ### **Archivos Críticos**
 
-- ✅ `EDF_CatalogoDeTablas.spec`
+- ✅ `EDF_CatalogoDeTablas_Native_WebSockets.spec`
 - ✅ `requirements_python310.txt`
 - ✅ `run_server.py`
 - ✅ `app/__init__.py`
@@ -144,7 +144,7 @@ El sistema detecta y bloquea archivos con extensiones sensibles:
 ### **Para Problemas de Archivo .SPEC:**
 
 1. Ejecutar `./verify_spec.sh` para verificar/crear el archivo
-2. Verificar que EDF_CatalogoDeTablas.spec existe y es válido
+2. Verificar que EDF_CatalogoDeTablas_Native_WebSockets.spec existe y es válido
 3. Si no existe, el script lo creará desde archivos de backup
 4. Hacer commit y push de los cambios
 

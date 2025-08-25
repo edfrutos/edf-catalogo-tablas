@@ -18,7 +18,7 @@ CRITICAL_FILES=(
 
 # Lista de archivos de backup para .spec
 SPEC_BACKUP_FILES=(
-    "EDF_CatalogoDeTablas.spec"
+    "EDF_CatalogoDeTablas_Native_WebSockets.spec"
     "EDF_CatalogoDeTablas_Native.spec"
     "EDF_CatalogoDeTablas_Web.spec"
 )

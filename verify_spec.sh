@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Script para verificar y crear EDF_CatalogoDeTablas.spec
+# Script para verificar y crear EDF_CatalogoDeTablas_Native_WebSockets.spec
 # Soluciona el problema del workflow de GitHub Actions
 
 echo "📋 VERIFICACIÓN DE ARCHIVO .SPEC"
 echo "================================"
 
 SPEC_FILE="EDF_CatalogoDeTablas_Native_WebSockets.spec"
-BACKUP_FILES=("EDF_CatalogoDeTablas.spec" "EDF_CatalogoDeTablas_Native.spec" "EDF_CatalogoDeTablas_Web.spec")
+BACKUP_FILES=("EDF_CatalogoDeTablas_Native_WebSockets.spec" "EDF_CatalogoDeTablas_Native.spec" "EDF_CatalogoDeTablas_Web.spec")
 
 echo "🔍 Verificando archivo $SPEC_FILE..."
 

@@ -68,9 +68,9 @@ if [ -d "$pyinstaller_cache" ]; then
 fi
 
 # Verificar si hay archivos .spec residuales
-if [ -f "EDF_CatalogoDeTablas.spec" ]; then
+if [ -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
     echo "🗑️ Eliminando archivo .spec residual..."
-    rm -f EDF_CatalogoDeTablas.spec
+    rm -f EDF_CatalogoDeTablas_Native_WebSockets.spec
 fi
 
 if [ "$conflicts_found" = true ]; then
