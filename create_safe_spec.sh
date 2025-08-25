@@ -10,57 +10,39 @@ echo "🔧 CREANDO ARCHIVO .SPEC SEGURO..."
 
 # Función para crear el archivo .spec seguro
 create_safe_spec() {
-    echo "📄 Creando EDF_CatalogoDeTablas.spec seguro..."
+    echo "📄 Creando EDF_CatalogoDeTablas_Native_WebSockets.spec seguro..."
     
-    cat > "EDF_CatalogoDeTablas.spec" << 'EOF'
+    cat > "EDF_CatalogoDeTablas_Native_WebSockets.spec" << 'EOF'
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
 
 a = Analysis(
-    ['run_server.py'],
+    ['launcher_native_websockets.py'],
     pathex=[],
     binaries=[],
     datas=[
-        ('app/templates', 'app/templates'),
-        ('app/static', 'app/static'),
-        ('app/routes', 'app/routes'),
-        # CAMBIO CRÍTICO: Usar 'app_utils' en lugar de 'app_tools' para evitar conflicto
-        ('tools/db_utils', 'app_utils/db_utils'),
-        ('tools/utils', 'app_utils/utils'),
-        ('tools/maintenance', 'app_utils/maintenance'),
-        ('tools/monitoring', 'app_utils/monitoring'),
-        ('tools/Admin Utils', 'app_utils/Admin Utils'),
-        ('tools/Scripts Principales', 'app_utils/Scripts Principales'),
-        ('tools/Users Tools', 'app_utils/Users Tools'),
-        ('tools/Test Scripts', 'app_utils/Test Scripts'),
-        ('tools/testing', 'app_utils/testing'),
-        ('tools/image_utils', 'app_utils/image_utils'),
-        ('tools/local', 'app_utils/local'),
-        ('tools/macOS', 'app_utils/macOS'),
-        ('tools/production', 'app_utils/production'),
-        ('tools/system', 'app_utils/system'),
-        ('tools/src', 'app_utils/src'),
-        ('config', 'config'),
-        ('requirements_python310.txt', '.'),
+        ('app', 'app'),
+        ('config.py', '.'),
+        ('wsgi.py', '.'),
         ('.env', '.'),
+        ('requirements.txt', '.'),
+        ('static', 'static'),
+        ('templates', 'templates'),
+        ('uploads', 'uploads'),
+        ('backups', 'backups'),
+        ('logs', 'logs'),
+        ('scripts', 'scripts'),
+        ('tools', 'tools'),
     ],
     hiddenimports=[
-        'flask',
-        'pymongo',
-        'boto3',
-        'pandas',
-        'openpyxl',
-        'dotenv',
-        'werkzeug',
-        'jinja2',
-        'markupsafe',
-        'itsdangerous',
-        'click',
-        'cryptography',
-        'PIL',
-        'psutil',
-        'pywebview',
+        'flask', 'flask_login', 'flask_session', 'pymongo', 'requests',
+        'webview', 'werkzeug', 'jinja2', 'markupsafe', 'itsdangerous',
+        'click', 'blinker', 'boto3', 'botocore', 's3transfer',
+        'jmespath', 'python_dateutil', 'urllib3', 'certifi',
+        'charset_normalizer', 'idna', 'six', 'websockets',
+        'asyncio', 'threading', 'tempfile', 'pathlib', 'datetime',
+        'json', 'os', 'sys', 'time',
     ],
     hookspath=[],
     hooksconfig={},
@@ -79,12 +61,12 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='EDF_CatalogoDeTablas',
+    name='EDF_CatalogoDeTablas_Web_Native',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -100,7 +82,27 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='EDF_CatalogoDeTablas',
+    name='EDF_CatalogoDeTablas_Web_Native',
+)
+
+app = BUNDLE(
+    coll,
+    name='EDF_CatalogoDeTablas_Web_Native.app',
+    icon=None,
+    bundle_identifier='com.edefrutos.catalogodetablas.websockets',
+    info_plist={
+        'CFBundleName': 'EDF Catálogo de Tablas WebSockets',
+        'CFBundleDisplayName': 'EDF Catálogo de Tablas',
+        'CFBundleVersion': '1.0.0',
+        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleExecutable': 'EDF_CatalogoDeTablas_Web_Native',
+        'CFBundlePackageType': 'APPL',
+        'CFBundleSignature': '????',
+        'LSMinimumSystemVersion': '10.13.0',
+        'NSHighResolutionCapable': True,
+        'NSRequiresAquaSystemAppearance': False,
+        'LSApplicationCategoryType': 'public.app-category.productivity',
+    },
 )
 EOF
 
@@ -111,27 +113,28 @@ EOF
 verify_spec_file() {
     echo "🔍 Verificando archivo .spec creado..."
     
-    if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
+    if [ ! -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
         echo "❌ Error: No se pudo crear el archivo .spec"
         return 1
     fi
     
-    echo "📄 Archivo creado: EDF_CatalogoDeTablas.spec"
-    echo "📏 Tamaño: $(du -sh EDF_CatalogoDeTablas.spec | cut -f1)"
-    echo "📊 Líneas: $(wc -l < EDF_CatalogoDeTablas.spec)"
+    echo "📄 Archivo creado: EDF_CatalogoDeTablas_Native_WebSockets.spec"
+    echo "📏 Tamaño: $(du -sh EDF_CatalogoDeTablas_Native_WebSockets.spec | cut -f1)"
+    echo "📊 Líneas: $(wc -l < EDF_CatalogoDeTablas_Native_WebSockets.spec)"
     
-    # Verificar que no hay referencias problemáticas
-    if grep -q "app_tools" EDF_CatalogoDeTablas.spec; then
-        echo "⚠️  Advertencia: Se encontraron referencias a 'app_tools'"
+    # Verificar que se incluye el directorio tools
+    if grep -q "tools" EDF_CatalogoDeTablas_Native_WebSockets.spec; then
+        echo "✅ Se incluye el directorio tools correctamente"
     else
-        echo "✅ No hay referencias problemáticas a 'app_tools'"
+        echo "❌ Error: No se encontró el directorio tools"
+        return 1
     fi
     
-    # Verificar que se usan 'app_utils'
-    if grep -q "app_utils" EDF_CatalogoDeTablas.spec; then
-        echo "✅ Se usan referencias seguras a 'app_utils'"
+    # Verificar que se incluye launcher_native_websockets.py
+    if grep -q "launcher_native_websockets.py" EDF_CatalogoDeTablas_Native_WebSockets.spec; then
+        echo "✅ Se incluye el launcher correcto"
     else
-        echo "❌ Error: No se encontraron referencias a 'app_utils'"
+        echo "❌ Error: No se encontró el launcher_native_websockets.py"
         return 1
     fi
     
@@ -143,11 +146,11 @@ verify_spec_file() {
 show_change_info() {
     echo ""
     echo "📋 INFORMACIÓN DEL CAMBIO:"
-    echo "   🔧 CAMBIO CRÍTICO: Se cambió 'app_tools' por 'app_utils'"
-    echo "   🎯 OBJETIVO: Evitar conflicto con el directorio 'tools'"
-    echo "   📁 ANTES: tools/ → app_tools/"
-    echo "   📁 AHORA: tools/ → app_utils/"
-    echo "   ✅ BENEFICIO: No hay conflicto de nombres"
+    echo "   🔧 CAMBIO CRÍTICO: Configurado para aplicación nativa con WebSockets"
+    echo "   🎯 OBJETIVO: Crear aplicación nativa de macOS con PyWebView"
+    echo "   📁 ENTRY POINT: launcher_native_websockets.py"
+    echo "   📱 SALIDA: EDF_CatalogoDeTablas_Web_Native.app"
+    echo "   ✅ BENEFICIO: Aplicación nativa sin dependencia de navegador"
     echo ""
 }
 
@@ -161,7 +164,7 @@ main() {
     if verify_spec_file; then
         echo "✅ Archivo .spec seguro creado y verificado correctamente"
         echo "💡 Ahora puedes ejecutar el build sin conflictos"
-        echo "🚀 Comando recomendado: python -m PyInstaller EDF_CatalogoDeTablas.spec"
+        echo "🚀 Comando recomendado: python -m PyInstaller EDF_CatalogoDeTablas_Native_WebSockets.spec"
     else
         echo "❌ Error: No se pudo crear o verificar el archivo .spec"
         exit 1
