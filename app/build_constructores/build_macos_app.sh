@@ -44,50 +44,15 @@ else
 block_cipher = None
 
 a = Analysis(
-    ['run_server.py'],
+    ['launcher_native_websockets.py'],
     pathex=[],
     binaries=[],
     datas=[
-        ('app/static', 'app/static'),
-        ('app/templates', 'app/templates'),
-        ('.env', '.'),
+        ('app', 'app'),
         ('config.py', '.'),
         ('wsgi.py', '.'),
-        ('app/__init__.py', 'app'),
-        ('app/routes', 'app/routes'),
-        ('app/models', 'app/models'),
-        ('app/utils', 'app/utils'),
-        ('app/extensions.py', 'app'),
-        ('app/logging_unified.py', 'app'),
-        ('app/security_middleware.py', 'app'),
-        ('scripts', 'scripts'),
-        ('tools/db_utils', 'app_tools/db_utils'),
-        ('tools/utils', 'app_tools/utils'),
-        ('tools/maintenance', 'app_tools/maintenance'),
-        ('tools/monitoring', 'app_tools/monitoring'),
-        ('tools/Admin Utils', 'app_tools/Admin Utils'),
-        ('tools/Scripts Principales', 'app_tools/Scripts Principales'),
-        ('tools/Users Tools', 'app_tools/Users Tools'),
-        ('tools/Test Scripts', 'app_tools/Test Scripts'),
-        ('tools/testing', 'app_tools/testing'),
-        ('tools/image_utils', 'app_tools/image_utils'),
-        ('tools/local', 'app_tools/local'),
-        ('tools/macOS', 'app_tools/macOS'),
-        ('tools/production', 'app_tools/production'),
-        ('tools/system', 'app_tools/system'),
-        ('tools/src', 'app_tools/src'),
-        ('docs', 'docs'),
-        ('backups', 'backups'),
-        ('backup_empty_files', 'backup_empty_files'),
-        ('uploads', 'uploads'),
-        ('static', 'static'),
-        ('flask_session', 'flask_session'),
-        ('instance', 'instance'),
-        ('spreadsheets', 'spreadsheets'),
-        ('exportados', 'exportados'),
-        ('imagenes', 'imagenes'),
-        ('app_data', 'app_data'),
-        ('logs', 'logs'),
+        ('.env', '.'),
+        ('requirements.txt', '.'),
     ],
     hiddenimports=[
         'flask',
@@ -140,12 +105,12 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='EDF_CatalogoDeTablas',
+    name='EDF_CatalogoDeTablas_Web_Native',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -161,7 +126,27 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='EDF_CatalogoDeTablas',
+    name='EDF_CatalogoDeTablas_Web_Native',
+)
+
+app = BUNDLE(
+    coll,
+    name='EDF_CatalogoDeTablas_Web_Native.app',
+    icon=None,
+    bundle_identifier='com.edefrutos.catalogodetablas.websockets',
+    info_plist={
+        'CFBundleName': 'EDF Catálogo de Tablas WebSockets',
+        'CFBundleDisplayName': 'EDF Catálogo de Tablas',
+        'CFBundleVersion': '1.0.0',
+        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleExecutable': 'EDF_CatalogoDeTablas_Web_Native',
+        'CFBundlePackageType': 'APPL',
+        'CFBundleSignature': '????',
+        'LSMinimumSystemVersion': '10.13.0',
+        'NSHighResolutionCapable': True,
+        'NSRequiresAquaSystemAppearance': False,
+        'LSApplicationCategoryType': 'public.app-category.productivity',
+    },
 )
 EOF
 fi
@@ -178,18 +163,18 @@ echo "🔨 Construyendo aplicación con PyInstaller..."
 pyinstaller --clean EDF_CatalogoDeTablas_Native_WebSockets.spec
 
 # Verificar que la aplicación se construyó correctamente
-if [ -d "dist/EDF_CatalogoDeTablas" ]; then
-    echo "✅ Aplicación construida exitosamente en dist/EDF_CatalogoDeTablas/"
+if [ -d "dist/EDF_CatalogoDeTablas_Web_Native.app" ]; then
+    echo "✅ Aplicación construida exitosamente en dist/EDF_CatalogoDeTablas_Web_Native.app/"
     
     # Mostrar información de la aplicación
     echo "📊 Información de la aplicación:"
-    du -sh dist/EDF_CatalogoDeTablas/
-    ls -la dist/EDF_CatalogoDeTablas/
+    du -sh dist/EDF_CatalogoDeTablas_Web_Native.app/
+    ls -la dist/EDF_CatalogoDeTablas_Web_Native.app/Contents/MacOS/
     
     echo ""
     echo "🎉 ¡Construcción completada!"
-    echo "📁 La aplicación está en: dist/EDF_CatalogoDeTablas/"
-    echo "🚀 Para ejecutar: ./dist/EDF_CatalogoDeTablas/EDF_CatalogoDeTablas"
+    echo "📁 La aplicación está en: dist/EDF_CatalogoDeTablas_Web_Native.app/"
+    echo "🚀 Para ejecutar: open dist/EDF_CatalogoDeTablas_Web_Native.app"
     
 else
     echo "❌ Error: La aplicación no se construyó correctamente"
