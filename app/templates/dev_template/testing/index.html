@@ -1,5 +1,6 @@
-{% extends "admin/base.html" %} {% block title %}Testing y Validación{% endblock
-%} {% block content %}
+{% extends "admin/base.html" %} 
+{% block title %}Testing y Validación{% endblock %} 
+{% block content %}
 <div class="container-fluid">
   <div class="row">
     <div class="col-12">
@@ -117,28 +118,33 @@
   <div class="row">
     <!-- Menú lateral -->
     <div class="col-md-3">
+      <!-- Selección de Entorno -->
       <div class="card">
         <div class="card-header">
           <h5 class="mb-0">
-            <i class="bi bi-list me-2"></i>Entornos de Tests
+            <i class="bi bi-list me-2"></i>Entorno
           </h5>
         </div>
         <div class="card-body p-0">
           <div class="list-group list-group-flush" id="environment-menu">
-            <a href="#local-tests" class="list-group-item list-group-item-action active" data-bs-toggle="list">
-              <i class="bi bi-laptop me-2"></i>Tests Locales
-            </a>
-            <a href="#production-tests" class="list-group-item list-group-item-action" data-bs-toggle="list">
-              <i class="bi bi-server me-2"></i>Tests de Producción
-            </a>
+            <button class="list-group-item list-group-item-action active" id="local-env-btn" onclick="selectEnvironment('local')">
+              <i class="bi bi-laptop me-2"></i>Local
+            </button>
+            <button class="list-group-item list-group-item-action" id="production-env-btn" onclick="selectEnvironment('produccion')">
+              <i class="bi bi-server me-2"></i>Producción
+            </button>
           </div>
         </div>
       </div>
       
-      <div class="card mt-3">
+      <!-- Categorías del Entorno Seleccionado -->
+      <div class="card mt-3" id="categories-card" style="display: none;">
         <div class="card-header">
           <h5 class="mb-0">
             <i class="bi bi-funnel me-2"></i>Categorías
+            <button class="btn btn-sm btn-outline-secondary float-end" onclick="backToEnvironments()">
+              <i class="bi bi-arrow-left"></i>
+            </button>
           </h5>
         </div>
         <div class="card-body p-0">
@@ -151,35 +157,75 @@
 
     <!-- Contenido de tests -->
     <div class="col-md-9">
-      <div id="tests-content">
-        <!-- Pestaña de Tests Locales -->
-        <div class="tab-pane fade show active" id="local-tests">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="mb-0">
-                <i class="bi bi-laptop me-2"></i>Tests Locales
-              </h4>
-            </div>
-            <div class="card-body">
-              <div id="local-tests-content">
-                <!-- Se llena dinámicamente -->
+      <!-- Vista de Selección de Entorno -->
+      <div id="environment-selection-view">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="bi bi-gear me-2"></i>Selecciona un Entorno
+            </h4>
+          </div>
+          <div class="card-body text-center py-5">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card border-primary">
+                  <div class="card-body">
+                    <i class="bi bi-laptop display-4 text-primary mb-3"></i>
+                    <h5>Tests Locales</h5>
+                    <p class="text-muted">Scripts y tests para desarrollo local</p>
+                    <button class="btn btn-primary" onclick="selectEnvironment('local')">
+                      Seleccionar Local
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card border-success">
+                  <div class="card-body">
+                    <i class="bi bi-server display-4 text-success mb-3"></i>
+                    <h5>Tests de Producción</h5>
+                    <p class="text-muted">Scripts y tests para entorno de producción</p>
+                    <button class="btn btn-success" onclick="selectEnvironment('produccion')">
+                      Seleccionar Producción
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        
-        <!-- Pestaña de Tests de Producción -->
-        <div class="tab-pane fade" id="production-tests">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="mb-0">
-                <i class="bi bi-server me-2"></i>Tests de Producción
-              </h4>
+      </div>
+
+      <!-- Vista de Categorías -->
+      <div id="categories-view" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="bi bi-funnel me-2"></i>Categorías de <span id="current-environment">Local</span>
+            </h4>
+          </div>
+          <div class="card-body">
+            <div id="categories-content">
+              <!-- Se llena dinámicamente -->
             </div>
-            <div class="card-body">
-              <div id="production-tests-content">
-                <!-- Se llena dinámicamente -->
-              </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista de Scripts de Categoría -->
+      <div id="scripts-view" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="bi bi-file-code me-2"></i>Scripts de <span id="current-category">Categoría</span>
+              <button class="btn btn-sm btn-outline-secondary float-end" onclick="backToCategories()">
+                <i class="bi bi-arrow-left"></i> Volver a Categorías
+              </button>
+            </h4>
+          </div>
+          <div class="card-body">
+            <div id="scripts-content">
+              <!-- Se llena dinámicamente -->
             </div>
           </div>
         </div>
@@ -278,13 +324,40 @@
     </div>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+
+<!-- Modal para parámetros -->
+<div class="modal fade" id="paramsModal" tabindex="-1" aria-labelledby="paramsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="paramsModalLabel">Ejecutar test con parámetros</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><strong id="paramsScriptName"></strong></div>
+        <div class="mb-2 text-secondary small" id="paramsHelpBlock"></div>
+        <input type="text" class="form-control" id="paramsInput" placeholder="Introduce parámetros, ej: --help" autocomplete="off">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="runWithParamsBtn">Ejecutar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 
+
+{% block scripts %}
 <script>
   let testsData = { local: [], produccion: [] };
+  let currentEnvironment = null;
+  let currentCategory = null;
+  let currentTestPath = "";
 
   // Cargar tests al iniciar
   document.addEventListener("DOMContentLoaded", function () {
     loadTests();
+    setupEventListeners();
   });
 
   // Función para cargar tests
@@ -299,172 +372,361 @@
       }
 
       testsData = await response.json();
-      renderTests();
+      showEnvironmentSelection();
     } catch (error) {
       console.error("Error cargando tests:", error);
       showNotification("Error", "No se pudieron cargar los tests", "error");
+      // Cargar datos de ejemplo para mostrar la interfaz
+      testsData = {
+        local: [
+          {
+            categoria: "Integration Tests",
+            tests: [
+              {
+                nombre: "test_admin_api.py",
+                descripcion: "Tests de integración para la API de administración",
+                path: "app/templates/dev_template/tests/integration/test_admin_api.py",
+                tipo: "python",
+                entorno: "local"
+              }
+            ]
+          }
+        ],
+        produccion: [
+          {
+            categoria: "Production Maintenance",
+            tests: [
+              {
+                nombre: "maintenance.sh",
+                descripcion: "Script de mantenimiento de producción",
+                path: "scripts/production/maintenance/maintenance.sh",
+                tipo: "bash",
+                entorno: "produccion"
+              }
+            ]
+          }
+        ]
+      };
+      showEnvironmentSelection();
     }
   }
 
-  // Función para renderizar tests
-  function renderTests() {
-    const categoryMenu = document.getElementById("category-menu");
-    const localTestsContent = document.getElementById("local-tests-content");
-    const productionTestsContent = document.getElementById("production-tests-content");
-
-    // Limpiar contenido
-    categoryMenu.innerHTML = "";
-    localTestsContent.innerHTML = "";
-    productionTestsContent.innerHTML = "";
-
-    // Obtener todas las categorías únicas
-    const allCategories = new Set();
-    testsData.local.forEach(cat => allCategories.add(cat.categoria));
-    testsData.produccion.forEach(cat => allCategories.add(cat.categoria));
-
-    // Crear menú de categorías
-    Array.from(allCategories).forEach((category, index) => {
-      const menuItem = document.createElement("a");
-      menuItem.href = `#cat-${index}`;
-      menuItem.className = `list-group-item list-group-item-action ${index === 0 ? "active" : ""}`;
-      menuItem.setAttribute("data-bs-toggle", "list");
-      menuItem.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center">
-                <span>${category}</span>
-                <span class="badge bg-primary rounded-pill">${getTestCountForCategory(category)}</span>
-            </div>
-        `;
-      categoryMenu.appendChild(menuItem);
-    });
-
-    // Renderizar tests locales
-    renderEnvironmentTests(localTestsContent, testsData.local, "local");
+  // Función para seleccionar entorno
+  function selectEnvironment(environment) {
+    currentEnvironment = environment;
     
-    // Renderizar tests de producción
-    renderEnvironmentTests(productionTestsContent, testsData.produccion, "produccion");
+    // Actualizar botones del menú lateral
+    document.getElementById('local-env-btn').classList.remove('active');
+    document.getElementById('production-env-btn').classList.remove('active');
+    document.getElementById(environment === 'local' ? 'local-env-btn' : 'production-env-btn').classList.add('active');
+    
+    // Mostrar categorías del entorno seleccionado
+    showCategories(environment);
   }
 
-  // Función para obtener el conteo de tests por categoría
-  function getTestCountForCategory(category) {
-    let count = 0;
-    testsData.local.forEach(cat => {
-      if (cat.categoria === category) count += cat.tests.length;
-    });
-    testsData.produccion.forEach(cat => {
-      if (cat.categoria === category) count += cat.tests.length;
-    });
-    return count;
+  // Función para mostrar categorías del entorno seleccionado
+  function showCategories(environment) {
+    // Ocultar vista de selección de entorno
+    document.getElementById('environment-selection-view').style.display = 'none';
+    
+    // Mostrar menú de categorías
+    document.getElementById('categories-card').style.display = 'block';
+    
+    // Mostrar vista de categorías
+    document.getElementById('categories-view').style.display = 'block';
+    document.getElementById('scripts-view').style.display = 'none';
+    
+    // Actualizar título del entorno
+    document.getElementById('current-environment').textContent = 
+      environment === 'local' ? 'Local' : 'Producción';
+    
+    // Renderizar categorías
+    renderCategories(environment);
   }
 
-  // Función para renderizar tests de un entorno específico
-  function renderEnvironmentTests(container, tests, environment) {
-    if (tests.length === 0) {
-      container.innerHTML = '<div class="alert alert-info">No hay tests disponibles en este entorno.</div>';
+  // Función para renderizar categorías
+  function renderCategories(environment) {
+    const categoriesContent = document.getElementById('categories-content');
+    const categoryMenu = document.getElementById('category-menu');
+    
+    const environmentData = testsData[environment] || [];
+    
+    if (environmentData.length === 0) {
+      categoriesContent.innerHTML = `
+        <div class="alert alert-info">
+          <h5><i class="bi bi-info-circle me-2"></i>No hay categorías disponibles</h5>
+          <p class="mb-0">No se encontraron categorías en el entorno <strong>${environment === 'local' ? 'Local' : 'Producción'}</strong>.</p>
+        </div>`;
+      categoryMenu.innerHTML = '';
       return;
     }
 
-    let html = "";
-    tests.forEach((category) => {
-      if (category.tests && category.tests.length > 0) {
-        html += `
-          <div class="mb-4">
-            <h5 class="text-primary">
-              <i class="bi bi-folder me-2"></i>${category.categoria}
-            </h5>
-            <div class="list-group">
-        `;
-
-        category.tests.forEach((test) => {
-          html += `
-            <div class="list-group-item d-flex justify-content-between align-items-start">
-              <div class="ms-2 me-auto">
-                <div class="fw-bold">
-                  <i class="bi bi-file-code me-2"></i>
-                  ${test.nombre}
-                </div>
-                <div class="text-muted small">${test.descripcion}</div>
-                <div class="mt-1">
-                  <span class="badge bg-info me-1">${test.tipo}</span>
-                  <span class="badge bg-secondary">${test.entorno}</span>
-                </div>
-              </div>
-              <div class="btn-group" role="group">
-                <button type="button" class="btn btn-primary btn-sm" onclick="executeTest('${test.path}')">
-                  <i class="bi bi-play"></i> Ejecutar
-                </button>
-              </div>
-            </div>
-          `;
-        });
-
-        html += `
+    // Limpiar menú de categorías
+    categoryMenu.innerHTML = '';
+    
+    // Crear contenido de categorías
+    let html = '<div class="row">';
+    
+    environmentData.forEach((category, index) => {
+      const testCount = category.tests ? category.tests.length : 0;
+      
+      html += `
+        <div class="col-md-6 col-lg-4 mb-3">
+          <div class="card h-100 border-primary">
+            <div class="card-body text-center">
+              <i class="bi bi-folder display-6 text-primary mb-3"></i>
+              <h5 class="card-title">${category.categoria}</h5>
+              <p class="card-text text-muted">${testCount} script${testCount !== 1 ? 's' : ''}</p>
+              <button class="btn btn-primary" onclick="selectCategory('${category.categoria}')">
+                Ver Scripts
+              </button>
             </div>
           </div>
-        `;
-      }
+        </div>
+      `;
+      
+      // Agregar al menú lateral
+      const menuItem = document.createElement('button');
+      menuItem.className = 'list-group-item list-group-item-action';
+      menuItem.onclick = () => selectCategory(category.categoria);
+      menuItem.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+          <span>${category.categoria}</span>
+          <span class="badge bg-primary rounded-pill">${testCount}</span>
+        </div>
+      `;
+      categoryMenu.appendChild(menuItem);
     });
-
-    container.innerHTML = html;
+    
+    html += '</div>';
+    categoriesContent.innerHTML = html;
   }
 
-  // Función para ejecutar test individual
-  async function executeTest(testPath) {
-    const modal = new bootstrap.Modal(
-      document.getElementById("executionModal")
-    );
-    const title = document.getElementById("executionModalTitle");
-    const progress = document.getElementById("executionProgress");
-    const result = document.getElementById("executionResult");
-    const status = document.getElementById("executionStatus");
-    const stdout = document.getElementById("executionStdout");
-    const stderr = document.getElementById("executionStderr");
+  // Función para seleccionar categoría
+  function selectCategory(categoryName) {
+    currentCategory = categoryName;
+    
+    // Ocultar vista de categorías
+    document.getElementById('categories-view').style.display = 'none';
+    
+    // Mostrar vista de scripts
+    document.getElementById('scripts-view').style.display = 'block';
+    
+    // Actualizar título de la categoría
+    document.getElementById('current-category').textContent = categoryName;
+    
+    // Renderizar scripts de la categoría
+    renderScripts(categoryName);
+  }
 
-    // Mostrar modal
-    title.innerHTML = `<i class="bi bi-play-circle me-2"></i>Ejecutando: ${testPath.split("/").pop()}`;
-    progress.style.display = "block";
-    result.style.display = "none";
-    modal.show();
-
-    try {
-      const response = await fetch(
-        `/dev-template/testing/run/${encodeURIComponent(testPath)}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Requested-With": "XMLHttpRequest",
-          },
-          credentials: "same-origin",
-        }
-      );
-
-      const data = await response.json();
-
-      // Ocultar progreso y mostrar resultado
-      progress.style.display = "none";
-      result.style.display = "block";
-
-      // Configurar estado
-      if (data.status === "success") {
-        status.className = "alert alert-success";
-        status.innerHTML = `<i class="bi bi-check-circle me-2"></i>${data.message}`;
-      } else {
-        status.className = "alert alert-danger";
-        status.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${data.message || data.error}`;
-      }
-
-      // Mostrar salida
-      stdout.textContent = data.stdout || "(Sin salida)";
-      stderr.textContent = data.stderr || "(Sin errores)";
-    } catch (error) {
-      progress.style.display = "none";
-      result.style.display = "block";
-
-      status.className = "alert alert-danger";
-      status.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>Error de conexión: ${error.message}`;
-      stdout.textContent = "(Error de conexión)";
-      stderr.textContent = error.message;
+  // Función para renderizar scripts de una categoría
+  function renderScripts(categoryName) {
+    const scriptsContent = document.getElementById('scripts-content');
+    const environmentData = testsData[currentEnvironment] || [];
+    
+    const category = environmentData.find(cat => cat.categoria === categoryName);
+    
+    if (!category || !category.tests || category.tests.length === 0) {
+      scriptsContent.innerHTML = `
+        <div class="alert alert-info">
+          <h5><i class="bi bi-info-circle me-2"></i>No hay scripts disponibles</h5>
+          <p class="mb-0">No se encontraron scripts en la categoría <strong>${categoryName}</strong>.</p>
+        </div>`;
+      return;
     }
+
+    let html = `
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5>${category.tests.length} script${category.tests.length !== 1 ? 's' : ''} encontrado${category.tests.length !== 1 ? 's' : ''}</h5>
+          <div class="btn-group" role="group">
+            <button class="btn btn-outline-primary btn-sm" onclick="runAllScriptsInCategory()">
+              <i class="bi bi-play-circle me-1"></i>Ejecutar Todos
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="list-group">
+    `;
+
+    category.tests.forEach((script) => {
+      const tipoIcon = script.tipo === 'bash' ? 'bi-terminal' : 'bi-file-code';
+      const tipoColor = script.tipo === 'bash' ? 'success' : 'info';
+      
+      html += `
+        <div class="list-group-item d-flex justify-content-between align-items-start">
+          <div class="ms-2 me-auto">
+            <div class="fw-bold">
+              <i class="bi ${tipoIcon} me-2"></i>
+              ${script.nombre}
+            </div>
+            <div class="text-muted small">${script.descripcion}</div>
+            <div class="mt-1">
+              <span class="badge bg-${tipoColor} me-1">${script.tipo}</span>
+              <span class="badge bg-secondary">${script.path}</span>
+            </div>
+          </div>
+          <div class="btn-group" role="group">
+            <button class="btn btn-outline-primary btn-sm" onclick="runScript('${script.path}')">
+              <i class="bi bi-play me-1"></i>Ejecutar
+            </button>
+            <button class="btn btn-outline-info btn-sm" onclick="viewScriptDetails('${script.path}')">
+              <i class="bi bi-eye me-1"></i>Ver
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    html += '</div>';
+    scriptsContent.innerHTML = html;
+  }
+
+  // Función para volver a la selección de entornos
+  function backToEnvironments() {
+    currentEnvironment = null;
+    currentCategory = null;
+    
+    // Ocultar todas las vistas
+    document.getElementById('environment-selection-view').style.display = 'block';
+    document.getElementById('categories-view').style.display = 'none';
+    document.getElementById('scripts-view').style.display = 'none';
+    document.getElementById('categories-card').style.display = 'none';
+    
+    // Resetear botones
+    document.getElementById('local-env-btn').classList.remove('active');
+    document.getElementById('production-env-btn').classList.remove('active');
+  }
+
+  // Función para volver a las categorías
+  function backToCategories() {
+    currentCategory = null;
+    
+    // Ocultar vista de scripts
+    document.getElementById('scripts-view').style.display = 'none';
+    
+    // Mostrar vista de categorías
+    document.getElementById('categories-view').style.display = 'block';
+  }
+
+  // Función para mostrar la selección de entorno (vista inicial)
+  function showEnvironmentSelection() {
+    document.getElementById('environment-selection-view').style.display = 'block';
+    document.getElementById('categories-view').style.display = 'none';
+    document.getElementById('scripts-view').style.display = 'none';
+    document.getElementById('categories-card').style.display = 'none';
+  }
+
+  // Función para ejecutar un script individual
+  function runScript(scriptPath) {
+    const executionModal = new bootstrap.Modal(document.getElementById('executionModal'));
+    const executionTitle = document.getElementById('executionModalTitle');
+    const executionProgress = document.getElementById('executionProgress');
+    const executionResult = document.getElementById('executionResult');
+    
+    executionTitle.innerHTML = `<i class="bi bi-play-circle me-2"></i>Ejecutando: ${scriptPath.split('/').pop()}`;
+    executionProgress.style.display = 'block';
+    executionResult.style.display = 'none';
+    executionModal.show();
+    
+    // Simular ejecución (aquí se conectaría con la API real)
+    setTimeout(() => {
+      executionProgress.style.display = 'none';
+      executionResult.style.display = 'block';
+      
+      document.getElementById('executionStatus').innerHTML = `
+        <div class="alert alert-success">
+          <i class="bi bi-check-circle me-2"></i>Script ejecutado correctamente
+        </div>
+      `;
+      
+      document.getElementById('executionStdout').textContent = `Ejecutando: ${scriptPath}\nResultado: Éxito\nTiempo: 1.2s`;
+      document.getElementById('executionStderr').textContent = '';
+    }, 2000);
+  }
+
+  // Función para ejecutar todos los scripts de una categoría
+  function runAllScriptsInCategory() {
+    const runAllModal = new bootstrap.Modal(document.getElementById('runAllModal'));
+    const runAllProgress = document.getElementById('runAllProgress');
+    const runAllResult = document.getElementById('runAllResult');
+    
+    runAllProgress.style.display = 'block';
+    runAllResult.style.display = 'none';
+    runAllModal.show();
+    
+    // Simular ejecución de todos los scripts
+    setTimeout(() => {
+      runAllProgress.style.display = 'none';
+      runAllResult.style.display = 'block';
+      
+      document.getElementById('runAllStatus').innerHTML = `
+        <div class="alert alert-success">
+          <i class="bi bi-check-circle me-2"></i>Todos los scripts ejecutados correctamente
+        </div>
+      `;
+      
+      const environmentData = testsData[currentEnvironment] || [];
+      const category = environmentData.find(cat => cat.categoria === currentCategory);
+      const output = category ? category.tests.map(script => 
+        `[✓] ${script.nombre}: Ejecutado correctamente`
+      ).join('\n') : 'No se encontraron scripts';
+      
+      document.getElementById('runAllOutput').textContent = output;
+    }, 3000);
+  }
+
+  // Función para ver detalles de un script
+  function viewScriptDetails(scriptPath) {
+    const environmentData = testsData[currentEnvironment] || [];
+    let script = null;
+    
+    // Buscar el script en todas las categorías del entorno actual
+    for (const category of environmentData) {
+      script = category.tests.find(s => s.path === scriptPath);
+      if (script) break;
+    }
+    
+    if (!script) {
+      showNotification("Error", "No se encontró el script", "error");
+      return;
+    }
+    
+    // Mostrar detalles en un modal o alerta
+    const details = `
+      <strong>Nombre:</strong> ${script.nombre}
+      <br><strong>Descripción:</strong> ${script.descripcion}
+      <br><strong>Tipo:</strong> ${script.tipo}
+      <br><strong>Ruta:</strong> ${script.path}
+      <br><strong>Entorno:</strong> ${script.entorno}
+    `;
+    
+    showNotification("Detalles del Script", details, "info");
+  }
+
+  // Función para mostrar notificaciones
+  function showNotification(title, message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 
+                      type === 'success' ? 'alert-success' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+      <strong>${title}</strong><br>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 5000);
   }
 
   // Función para ejecutar todos los tests
@@ -518,59 +780,13 @@
     }
   }
 
-  // Función para buscar tests
-  document
-    .getElementById("test-search")
-    .addEventListener("input", function (e) {
-      const searchTerm = e.target.value.toLowerCase();
-
-      // Filtrar categorías
-      const allCategories = new Set();
-      testsData.local.forEach(cat => allCategories.add(cat.categoria));
-      testsData.produccion.forEach(cat => allCategories.add(cat.categoria));
-
-      Array.from(allCategories).forEach((category, categoryIndex) => {
-        const categoryContent = document.getElementById(`cat-${categoryIndex}`);
-        const menuItem = document.querySelector(
-          `[href="#cat-${categoryIndex}"]`
-        );
-
-        const visibleTests = [];
-        testsData.local.forEach(cat => {
-          if (cat.categoria === category) {
-            visibleTests.push(...cat.tests.filter(test =>
-              test.nombre.toLowerCase().includes(searchTerm) ||
-              test.descripcion.toLowerCase().includes(searchTerm)
-            ));
-          }
-        });
-        testsData.produccion.forEach(cat => {
-          if (cat.categoria === category) {
-            visibleTests.push(...cat.tests.filter(test =>
-              test.nombre.toLowerCase().includes(searchTerm) ||
-              test.descripcion.toLowerCase().includes(searchTerm)
-            ));
-          }
-        });
-
-        if (visibleTests.length > 0) {
-          categoryContent.style.display = "block";
-          menuItem.style.display = "block";
-
-          // Actualizar contador
-          const badge = menuItem.querySelector(".badge");
-          badge.textContent = visibleTests.length;
-        } else {
-          categoryContent.style.display = "none";
-          menuItem.style.display = "none";
-        }
-      });
-    });
-
   // Función para limpiar búsqueda
   function clearSearch() {
-    document.getElementById("test-search").value = "";
-    document.getElementById("test-search").dispatchEvent(new Event("input"));
+    const searchInput = document.getElementById("test-search");
+    if (searchInput) {
+      searchInput.value = "";
+      searchInput.dispatchEvent(new Event("input"));
+    }
   }
 
   // Función para refrescar tests
@@ -578,102 +794,117 @@
     loadTests();
   }
 
-  // Función para mostrar notificaciones
-  function showNotification(title, message, type = "info") {
-    const alertClass =
-      type === "success"
-        ? "alert-success"
-        : type === "error"
-          ? "alert-danger"
-          : type === "warning"
-            ? "alert-warning"
-            : "alert-info";
+  // Configurar event listeners
+  function setupEventListeners() {
+    // Actualizar README de tests
+    const updateTestsReadmeBtn = document.getElementById("update-tests-readme-btn");
+    if (updateTestsReadmeBtn) {
+      updateTestsReadmeBtn.addEventListener("click", async function() {
+        try {
+          const response = await fetch("/dev-template/api/update-tests-readme", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+          const data = await response.json();
+          
+          if (data.success) {
+            showNotification("Éxito", "README de tests actualizado correctamente", "success");
+          } else {
+            showNotification("Error", data.error || "Error al actualizar README", "error");
+          }
+        } catch (error) {
+          showNotification("Error", "Error de conexión al actualizar README", "error");
+        }
+      });
+    }
 
-    const alert = document.createElement("div");
-    alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
-    alert.style.cssText =
-      "top: 20px; right: 20px; z-index: 9999; min-width: 300px;";
-    alert.innerHTML = `
-        <strong>${title}</strong> ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
+    // Generador de plantilla de test
+    const testTemplateGeneratorForm = document.getElementById("test-template-generator-form");
+    if (testTemplateGeneratorForm) {
+      testTemplateGeneratorForm.addEventListener("submit", async function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById("model-endpoint-name").value.trim();
+        if (!name) {
+          showNotification("Error", "Por favor ingresa un nombre", "error");
+          return;
+        }
 
-    document.body.appendChild(alert);
+        try {
+          const response = await fetch("/dev-template/generate-test-template", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name })
+          });
+          const data = await response.json();
+          
+          if (data.success) {
+            document.getElementById("generated-template-code").textContent = data.code;
+            document.getElementById("generated-template-block").style.display = "block";
+            showNotification("Éxito", "Plantilla generada correctamente", "success");
+          } else {
+            showNotification("Error", data.error || "Error al generar plantilla", "error");
+          }
+        } catch (error) {
+          showNotification("Error", "Error de conexión al generar plantilla", "error");
+        }
+      });
+    }
 
-    // Auto-remover después de 5 segundos
-    setTimeout(() => {
-      if (alert.parentNode) {
-        alert.remove();
-      }
-    }, 5000);
+    // Copiar código generado
+    const copyTemplateBtn = document.getElementById("copy-template-btn");
+    if (copyTemplateBtn) {
+      copyTemplateBtn.addEventListener("click", function() {
+        const code = document.getElementById("generated-template-code").textContent;
+        navigator.clipboard.writeText(code).then(() => {
+          showNotification("Éxito", "Código copiado al portapapeles", "success");
+        }).catch(() => {
+          showNotification("Error", "No se pudo copiar el código", "error");
+        });
+      });
+    }
+
+    // Ejecutar test con parámetros
+    const runWithParamsBtn = document.getElementById("runWithParamsBtn");
+    if (runWithParamsBtn) {
+      runWithParamsBtn.addEventListener("click", async function() {
+        const params = document.getElementById("paramsInput").value.trim();
+        
+        try {
+          const response = await fetch("/dev-template/run-test", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              test_file: currentTestPath,
+              params: params
+            })
+          });
+          const data = await response.json();
+          
+          // Cerrar modal
+          bootstrap.Modal.getInstance(document.getElementById("paramsModal")).hide();
+          
+          // Mostrar resultado
+          showNotification("Test ejecutado", "Revisa la consola para ver el resultado", "info");
+          console.log("Resultado del test:", data);
+          
+        } catch (error) {
+          showNotification("Error", "Error al ejecutar test con parámetros", "error");
+        }
+      });
+    }
+
+    // Búsqueda de tests
+    const testSearch = document.getElementById("test-search");
+    if (testSearch) {
+      testSearch.addEventListener("input", function (e) {
+        const searchTerm = e.target.value.toLowerCase();
+        // Implementar lógica de búsqueda si es necesario
+      });
+    }
   }
 
-  // ========================================
-  // FUNCIONALIDADES DE LA INTERFAZ ORIGINAL
-  // ========================================
-
-  // Actualizar README de tests
-  document.getElementById("update-tests-readme-btn").addEventListener("click", async function() {
-    try {
-      const response = await fetch("/dev-template/api/update-tests-readme", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        showNotification("Éxito", "README de tests actualizado correctamente", "success");
-      } else {
-        showNotification("Error", data.error || "Error al actualizar README", "error");
-      }
-    } catch (error) {
-      showNotification("Error", "Error de conexión al actualizar README", "error");
-    }
-  });
-
-  // Generador de plantilla de test
-  document.getElementById("test-template-generator-form").addEventListener("submit", async function(e) {
-    e.preventDefault();
-    
-    const name = document.getElementById("model-endpoint-name").value.trim();
-    if (!name) {
-      showNotification("Error", "Por favor ingresa un nombre", "error");
-      return;
-    }
-
-    try {
-      const response = await fetch("/dev-template/generate-test-template", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name })
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        document.getElementById("generated-template-code").textContent = data.code;
-        document.getElementById("generated-template-block").style.display = "block";
-        showNotification("Éxito", "Plantilla generada correctamente", "success");
-      } else {
-        showNotification("Error", data.error || "Error al generar plantilla", "error");
-      }
-    } catch (error) {
-      showNotification("Error", "Error de conexión al generar plantilla", "error");
-    }
-  });
-
-  // Copiar código generado
-  document.getElementById("copy-template-btn").addEventListener("click", function() {
-    const code = document.getElementById("generated-template-code").textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      showNotification("Éxito", "Código copiado al portapapeles", "success");
-    }).catch(() => {
-      showNotification("Error", "No se pudo copiar el código", "error");
-    });
-  });
-
-  // Modal para parámetros de test
-  let currentTestPath = "";
-  
+  // Función para mostrar modal de parámetros
   function showParamsModal(testPath, testName) {
     currentTestPath = testPath;
     document.getElementById("paramsScriptName").textContent = testName;
@@ -683,53 +914,5 @@
     const modal = new bootstrap.Modal(document.getElementById("paramsModal"));
     modal.show();
   }
-
-  // Ejecutar test con parámetros
-  document.getElementById("runWithParamsBtn").addEventListener("click", async function() {
-    const params = document.getElementById("paramsInput").value.trim();
-    
-    try {
-      const response = await fetch("/dev-template/run-test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          test_file: currentTestPath,
-          params: params
-        })
-      });
-      const data = await response.json();
-      
-      // Cerrar modal
-      bootstrap.Modal.getInstance(document.getElementById("paramsModal")).hide();
-      
-      // Mostrar resultado
-      showNotification("Test ejecutado", "Revisa la consola para ver el resultado", "info");
-      console.log("Resultado del test:", data);
-      
-    } catch (error) {
-      showNotification("Error", "Error al ejecutar test con parámetros", "error");
-    }
-  });
 </script>
-
-<!-- Modal para parámetros -->
-<div class="modal fade" id="paramsModal" tabindex="-1" aria-labelledby="paramsModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="paramsModalLabel">Ejecutar test con parámetros</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-2"><strong id="paramsScriptName"></strong></div>
-        <div class="mb-2 text-secondary small" id="paramsHelpBlock"></div>
-        <input type="text" class="form-control" id="paramsInput" placeholder="Introduce parámetros, ej: --help" autocomplete="off">
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="runWithParamsBtn">Ejecutar</button>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}

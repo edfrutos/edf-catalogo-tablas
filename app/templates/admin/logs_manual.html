@@ -171,13 +171,12 @@ function updateFilterInfo() {
   }
 }
 
-// Aplicar filtros
+// Aplicar filtros unificados
 function aplicarFiltros() {
   const lines = parseInt(document.getElementById('linesCount').value) || 50;
   currentFilters.lines = lines > 0 ? lines : null;
   
-  verUltimos(lines);
-  updateFilterInfo();
+  aplicarFiltrosUnificados();
 }
 
 // Aplicar filtro por fechas
@@ -188,8 +187,62 @@ function aplicarFiltroFechas() {
   currentFilters.dateFrom = dateFrom || null;
   currentFilters.dateTo = dateTo || null;
   
-  verUltimos(currentFilters.lines || 1000);
-  updateFilterInfo();
+  aplicarFiltrosUnificados();
+}
+
+// Función unificada para aplicar todos los filtros
+function aplicarFiltrosUnificados() {
+  if (!getLogParam()) return;
+  
+  const params = new URLSearchParams();
+  
+  // Parámetro de líneas
+  if (currentFilters.lines) {
+    params.append('n', currentFilters.lines);
+  }
+  
+  // Parámetros de fecha
+  if (currentFilters.dateFrom) {
+    params.append('date_from', currentFilters.dateFrom);
+  }
+  if (currentFilters.dateTo) {
+    params.append('date_to', currentFilters.dateTo);
+  }
+  
+  // Parámetro de archivo de log
+  if (logSeleccionado) {
+    params.append('log_file', logSeleccionado);
+  }
+  
+  // Parámetro de búsqueda por palabra clave
+  if (currentFilters.keyword) {
+    params.append('keyword', currentFilters.keyword);
+  }
+  
+  const url = `/admin/logs/tail?${params.toString()}`;
+  
+  fetch(url)
+    .then(r => r.json())
+    .then(d => {
+      const output = document.getElementById('log-output');
+      output.textContent = d.logs.join('');
+      
+      // Actualizar información de filtros
+      if (d.total_lines !== undefined) {
+        const info = `Mostrando ${d.filtered_lines} de ${d.total_lines} líneas`;
+        if (d.filtered_lines === 0) {
+          output.textContent = 'No se encontraron registros que coincidan con los filtros actuales.';
+        }
+      }
+      
+      // Hacer scroll al final
+      output.scrollTop = output.scrollHeight;
+      updateFilterInfo();
+    })
+    .catch(error => {
+      console.error('Error al cargar los logs:', error);
+      document.getElementById('log-output').textContent = `Error al cargar los registros: ${error.message}`;
+    });
 }
 
 // Resetear todos los filtros

@@ -10,13 +10,14 @@ import pytest
 from dotenv import load_dotenv
 
 # Añadir la raíz del proyecto al sys.path para que se pueda importar app.py
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/../'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../'))
+sys.path.insert(0, project_root)
 
 # Cargar variables de entorno del .env antes de crear la app
 load_dotenv()
 
 from app import create_app
-from app.database import get_mongo_client, get_mongo_db, initialize_db
+from app.models.database import get_mongo_db
 
 
 @pytest.fixture(scope="session")

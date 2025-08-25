@@ -473,7 +473,7 @@
       // Mostrar botón Ir Arriba al hacer scroll
       window.addEventListener("scroll", function () {
         const btn = document.getElementById("goTopBtn");
-        if (btn) {
+        if (btn && btn.parentNode) { // Verificar que el botón existe y está en el DOM
           if (window.scrollY > 200) {
             btn.style.display = "block";
           } else {
@@ -498,11 +498,13 @@
           
           // Verificar periódicamente si debe mostrarse
           setInterval(() => {
-            const currentTableRows = document.querySelectorAll('tbody tr');
-            if (currentTableRows.length > 10 || window.scrollY > 200) {
-              btn.style.display = "block";
-            } else if (window.scrollY <= 200) {
-              btn.style.display = "none";
+            if (btn && btn.parentNode) { // Verificar que el botón aún existe
+              const currentTableRows = document.querySelectorAll('tbody tr');
+              if (currentTableRows.length > 10 || window.scrollY > 200) {
+                btn.style.display = "block";
+              } else if (window.scrollY <= 200) {
+                btn.style.display = "none";
+              }
             }
           }, 1000);
         }

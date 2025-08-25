@@ -16,25 +16,21 @@ from flask import g
 from pymongo import MongoClient
 
 # Añadir la raíz del proyecto al sys.path para que se pueda importar app.py
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/../'))
-
-# Cargar variables de entorno del .env antes de crear la app
-load_dotenv()
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+sys.path.insert(0, project_root)
 
 from app import create_app
 from app.database import get_mongo_client, get_mongo_db, initialize_db
+
+load_dotenv()
 
 
 @pytest.fixture(scope="session")
 def mongo_client_ssl():
     """Cliente MongoDB robusto para integración, forzando TLS 1.2 y bundle certifi."""
-    mongo_uri = os.getenv('MONGO_URI')
+    mongo_uri = os.getenv("MONGO_URI")
     print("[DEBUG pytest] Creando cliente MongoClient...")
-    client = MongoClient(
-        mongo_uri,
-        tls=True,
-        tlsCAFile=certifi.where()
-    )
+    client = MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where())
     print("[DEBUG pytest] Cliente MongoClient creado. Intentando ping...")
     try:
         print(client.admin.command("ping"))
@@ -43,6 +39,7 @@ def mongo_client_ssl():
     yield client
     print("[DEBUG pytest] Cerrando cliente MongoClient...")
     client.close()
+
 
 @pytest.fixture
 def admin_user_mock(monkeypatch):
@@ -60,14 +57,17 @@ def admin_user_mock(monkeypatch):
 @pytest.fixture
 def app():
     """Fixture para crear la aplicación Flask de prueba."""
-    print("DEBUG: app fixture ejecutado, create_app path =", create_app.__code__.co_filename)
+    print(
+        "DEBUG: app fixture ejecutado, create_app path =",
+        create_app.__code__.co_filename,
+    )
     app = create_app()
-    app.config['TESTING'] = True
-    app.config['WTF_CSRF_ENABLED'] = False  # Si usas Flask-WTF
+    app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False  # Si usas Flask-WTF
 
     # La aplicación ya inicializa MongoDB en create_app(), pero nos aseguramos
     # de que esté correctamente inicializada para los tests
-    if not hasattr(app, 'mongo_client') or app.mongo_client is None:
+    if not hasattr(app, "mongo_client") or app.mongo_client is None:
         initialize_db(app=app)
         app.mongo = get_mongo_client()
         app.mongo_db = get_mongo_db()
@@ -79,6 +79,7 @@ def app():
 
     # No es necesario cerrar el cliente aquí ya que se maneja globalmente,
     # pero podríamos añadir limpieza adicional si fuera necesario
+
 
 @pytest.fixture
 def client(app):

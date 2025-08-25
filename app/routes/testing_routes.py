@@ -53,20 +53,19 @@ def tests_metadata():
 
     # Definir categorías de tests para LOCAL
     categorias_local = {
-        "Unit Tests": ["tests/local/unit"],
-        "Integration Tests": ["tests/local/integration"],
-        "Functional Tests": ["tests/local/functional"],
-        "Performance Tests": ["tests/local/performance"],
-        "Security Tests": ["tests/local/security"],
+        "Integration Tests": ["app/templates/dev_template/tests/integration"],
+        "Scripts Tests": ["tests/Scripts"],
+        "Maintenance Tests": ["scripts/local/maintenance"],
+        "Monitoring Tests": ["scripts/local/monitoring"],
+        "Admin Utils": ["scripts/local/admin_utils"],
+        "Utils": ["scripts/local/utils"],
     }
 
     # Definir categorías de tests para PRODUCCIÓN
     categorias_produccion = {
-        "Unit Tests": ["tests/production/unit"],
-        "Integration Tests": ["tests/production/integration"],
-        "Functional Tests": ["tests/production/functional"],
-        "Performance Tests": ["tests/production/performance"],
-        "Security Tests": ["tests/production/security"],
+        "Production Maintenance": ["scripts/production/maintenance"],
+        "Production Utils": ["scripts/production/utils"],
+        "Production Admin": ["scripts/production/admin_utils"],
     }
 
     # Procesar tests LOCALES
@@ -82,19 +81,23 @@ def tests_metadata():
                         fpath = os.path.join(dir_path, fname)
                         if (
                             os.path.isfile(fpath)
-                            and fname.startswith("test_")
-                            and fname.endswith(".py")
+                            and (fname.endswith(".py") or fname.endswith(".sh"))
+                            and not fname.startswith("__")
+                            and not fname.startswith(".")
                         ):
                             descripcion = extract_test_description(fpath)
                             if not descripcion:
-                                descripcion = "Test sin descripción"
+                                descripcion = "Script sin descripción"
+
+                            # Determinar el tipo de archivo
+                            tipo = "bash" if fname.endswith(".sh") else "python"
 
                             tests_categoria.append(
                                 {
                                     "nombre": fname,
                                     "descripcion": descripcion,
                                     "path": os.path.join(directorio, fname),
-                                    "tipo": "pytest",
+                                    "tipo": tipo,
                                     "entorno": "local",
                                 }
                             )
@@ -118,19 +121,23 @@ def tests_metadata():
                         fpath = os.path.join(dir_path, fname)
                         if (
                             os.path.isfile(fpath)
-                            and fname.startswith("test_")
-                            and fname.endswith(".py")
+                            and (fname.endswith(".py") or fname.endswith(".sh"))
+                            and not fname.startswith("__")
+                            and not fname.startswith(".")
                         ):
                             descripcion = extract_test_description(fpath)
                             if not descripcion:
-                                descripcion = "Test sin descripción"
+                                descripcion = "Script sin descripción"
+
+                            # Determinar el tipo de archivo
+                            tipo = "bash" if fname.endswith(".sh") else "python"
 
                             tests_categoria.append(
                                 {
                                     "nombre": fname,
                                     "descripcion": descripcion,
                                     "path": os.path.join(directorio, fname),
-                                    "tipo": "pytest",
+                                    "tipo": tipo,
                                     "entorno": "produccion",
                                 }
                             )
@@ -148,14 +155,23 @@ def tests_metadata():
 
 
 def extract_test_description(test_path):
-    """Extrae la descripción de un test desde sus comentarios."""
+    """Extrae la descripción de un script desde sus comentarios."""
     try:
         with open(test_path, encoding="utf-8") as f:
             for line in f:
+                # Buscar descripción en comentarios de Python
                 if line.strip().startswith("# Descripción:"):
                     return line.strip().replace("# Descripción:", "").strip()
                 if line.strip().startswith('"""') and "Descripción:" in line:
                     return line.strip().split("Descripción:")[1].split('"""')[0].strip()
+                # Buscar descripción en comentarios de bash
+                if line.strip().startswith("# Script:"):
+                    return line.strip().replace("# Script:", "").strip()
+                if line.strip().startswith("# Descripción:"):
+                    return line.strip().replace("# Descripción:", "").strip()
+                # Buscar en las primeras líneas del archivo
+                if line.strip().startswith("#") and len(line.strip()) > 10:
+                    return line.strip().replace("#", "").strip()
     except (OSError, UnicodeDecodeError) as e:
         print(f"Error al extraer descripción de {test_path}: {e}")
     return ""
@@ -169,21 +185,27 @@ def run_test(test_path):
         abs_test_path = get_test_path(test_path)
 
         if not os.path.exists(abs_test_path):
-            return jsonify(
-                {
-                    "error": f"Test no encontrado: {test_path}",
-                    "test": test_path,
-                }
-            ), 404
+            return (
+                jsonify(
+                    {
+                        "error": f"Test no encontrado: {test_path}",
+                        "test": test_path,
+                    }
+                ),
+                404,
+            )
 
         # Verificar que está dentro del directorio del proyecto
         if not abs_test_path.startswith(ROOT_DIR):
-            return jsonify(
-                {
-                    "error": f"Test fuera del directorio del proyecto: {abs_test_path}",
-                    "test": test_path,
-                }
-            ), 403
+            return (
+                jsonify(
+                    {
+                        "error": f"Test fuera del directorio del proyecto: {abs_test_path}",
+                        "test": test_path,
+                    }
+                ),
+                403,
+            )
 
         # Configurar el entorno de ejecución
         env = os.environ.copy()
@@ -224,21 +246,27 @@ def run_test(test_path):
         return jsonify(response)
 
     except subprocess.TimeoutExpired:
-        return jsonify(
-            {
-                "error": f"Test excedió el tiempo límite de ejecución: {test_path}",
-                "test": test_path,
-                "status": "timeout",
-            }
-        ), 408
+        return (
+            jsonify(
+                {
+                    "error": f"Test excedió el tiempo límite de ejecución: {test_path}",
+                    "test": test_path,
+                    "status": "timeout",
+                }
+            ),
+            408,
+        )
     except Exception as e:
-        return jsonify(
-            {
-                "error": f"Error al ejecutar test: {str(e)}",
-                "test": test_path,
-                "status": "error",
-            }
-        ), 500
+        return (
+            jsonify(
+                {
+                    "error": f"Error al ejecutar test: {str(e)}",
+                    "test": test_path,
+                    "status": "error",
+                }
+            ),
+            500,
+        )
 
 
 def get_test_path(test_path):
@@ -311,13 +339,17 @@ def run_all_tests():
         return jsonify(response)
 
     except subprocess.TimeoutExpired:
-        return jsonify(
-            {
-                "error": "Los tests excedieron el tiempo límite de ejecución",
-                "status": "timeout",
-            }
-        ), 408
+        return (
+            jsonify(
+                {
+                    "error": "Los tests excedieron el tiempo límite de ejecución",
+                    "status": "timeout",
+                }
+            ),
+            408,
+        )
     except Exception as e:
-        return jsonify(
-            {"error": f"Error al ejecutar tests: {str(e)}", "status": "error"}
-        ), 500
+        return (
+            jsonify({"error": f"Error al ejecutar tests: {str(e)}", "status": "error"}),
+            500,
+        )
