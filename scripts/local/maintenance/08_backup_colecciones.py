@@ -6,13 +6,12 @@
 # Variables de entorno: [si aplica]
 # Autor: [Tu nombre o equipo] - 2025-05-28
 
-import csv
-import json
 import os
-from datetime import datetime
-
 import certifi
 from pymongo import MongoClient
+import json
+import csv
+from datetime import datetime
 
 MONGO_URI = os.getenv('MONGO_URI')
 client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
@@ -55,4 +54,4 @@ for col in colecciones:
         print(f'✔ Backup CSV de {col} en {csv_path}')
     else:
         print(f'⚠️ Colección {col} vacía, no se genera CSV.')
-print('--- BACKUP COMPLETO ---')
+print('--- BACKUP COMPLETO ---') 

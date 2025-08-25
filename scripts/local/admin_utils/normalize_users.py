@@ -28,21 +28,16 @@ Autor: EDF Developer - 2025-06-09
 Versión: 1.0
 """
 
+import sys
 import os
 import pprint
-import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-# Cargar variables de entorno
-load_dotenv()
-
 # Agregar el directorio raíz del proyecto al path de Python
-project_root = Path(__file__).parent.parent.parent.parent
+project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.maintenance import backup_users_to_json, normalize_users_in_db
+from app.maintenance import normalize_users_in_db, backup_users_to_json
 from app.models import get_users_collection
 
 if __name__ == "__main__":

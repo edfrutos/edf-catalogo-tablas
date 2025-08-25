@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # scripts/maintenance/run_maintenance.py
 
-import argparse
-import logging
 import os
 import sys
+import logging
+import argparse
 from datetime import datetime
 from pathlib import Path
-
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde .env
@@ -52,7 +51,7 @@ def setup_logging():
 
 def clean_old_logs(logger, days=30):
     """Limpia los logs antiguos."""
-    from clean_old_logs import LogCleaner
+    from scripts.maintenance.clean_old_logs import LogCleaner
 
     logger.info(f"🔍 Iniciando limpieza de logs (retención: {days} días)")
     cleaner = LogCleaner(log_dir=str(LOG_DIR), retention_days=days, dry_run=False)
@@ -80,20 +79,9 @@ def check_mongodb_connection(logger):
         # Intenta obtener MONGO_URI desde config.py o variables de entorno
         mongo_uri = None
         try:
-            try:
-                from .config import config  # type: ignore
+            from config import MONGO_URI  # type: ignore
 
-                mongo_uri = config.MONGO_URI
-            except ImportError:
-                # Fallback para ejecución directa
-                import sys
-                from pathlib import Path
-
-                current_dir = Path(__file__).parent
-                sys.path.insert(0, str(current_dir))
-                from config import config
-
-                mongo_uri = config.MONGO_URI
+            mongo_uri = MONGO_URI
         except ImportError:
             mongo_uri = os.environ.get("MONGO_URI")
             if not mongo_uri:
@@ -146,9 +134,8 @@ def main():
         if args.task in ["all", "logs"]:
             # Si se pasan start/end, usar rango
             if args.start_datetime and args.end_datetime:
+                from scripts.maintenance.clean_old_logs import LogCleaner
                 from datetime import datetime
-
-                from clean_old_logs import LogCleaner
 
                 dt_start = datetime.fromisoformat(args.start_datetime)
                 dt_end = datetime.fromisoformat(args.end_datetime)
@@ -165,12 +152,11 @@ def main():
                 clean_old_logs(logger, args.days)
 
         if args.task in ["all", "disk"]:
-            import getpass
-            import json
             import platform
-            import time
-
+            import getpass
             import psutil
+            import json
+            import time
 
             # System info
             system_info = {
