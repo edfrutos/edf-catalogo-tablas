@@ -1711,6 +1711,9 @@ def notification_settings():
             return redirect(url_for("admin.notification_settings"))
 
         enabled = request.form.get("enable_notifications") == "on"
+        use_api = request.form.get("use_api") == "on"
+
+        # Configuración SMTP
         smtp_settings = {
             "server": request.form.get("smtp_server"),
             "port": int(request.form.get("smtp_port") or "587"),
@@ -1720,6 +1723,14 @@ def notification_settings():
         password = request.form.get("smtp_password")
         if password:
             smtp_settings["password"] = password
+
+        # Configuración API de Brevo
+        brevo_api_settings = {
+            "api_key": request.form.get("brevo_api_key"),
+            "sender_name": request.form.get("sender_name"),
+            "sender_email": request.form.get("sender_email"),
+        }
+
         recipients = [r for r in request.form.getlist("recipients") if r.strip()]
         thresholds = {
             "cpu": int(request.form.get("threshold_cpu") or "80"),
@@ -1728,9 +1739,12 @@ def notification_settings():
             "error_rate": int(request.form.get("threshold_error_rate") or "10"),
         }
         cooldown = int(request.form.get("cooldown") or "300")
+
         if notifications.update_settings(
             enabled=enabled,
+            use_api=use_api,
             smtp_settings=smtp_settings,
+            brevo_api_settings=brevo_api_settings,
             recipients=recipients,
             thresholds=thresholds,
             cooldown=cooldown,

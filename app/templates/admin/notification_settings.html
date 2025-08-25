@@ -20,8 +20,51 @@
                             <label class="form-check-label" for="enable_notifications">Activar notificaciones por email</label>
                         </div>
                         
-                        <div class="mb-3">
-                            <h5>Configuración SMTP</h5>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="use_api" name="use_api" {% if config.use_api %}checked{% endif %}>
+                            <label class="form-check-label" for="use_api">Usar API de Brevo (recomendado)</label>
+                            <div class="form-text">La API de Brevo es más confiable que SMTP</div>
+                        </div>
+                        
+                        <div class="mb-3" id="brevo-api-section" {% if not config.use_api %}style="display: none;"{% endif %}>
+                            <h5>Configuración API de Brevo</h5>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Ventajas de la API de Brevo:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Más confiable que SMTP</li>
+                                    <li>Mejor entrega de correos</li>
+                                    <li>Estadísticas detalladas</li>
+                                    <li>Sin problemas de autenticación</li>
+                                </ul>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label for="brevo_api_key" class="form-label">API Key de Brevo</label>
+                                    <input type="password" class="form-control" id="brevo_api_key" name="brevo_api_key" placeholder="{% if config.brevo_api.api_key %}••••••••{% else %}Ingresa tu API key de Brevo{% endif %}">
+                                    <div class="form-text">
+                                        <a href="https://app.brevo.com/settings/keys/api" target="_blank">
+                                            <i class="bi bi-box-arrow-up-right"></i> Obtener API key desde Brevo
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="sender_name" class="form-label">Nombre del remitente</label>
+                                    <input type="text" class="form-control" id="sender_name" name="sender_name" value="{{ config.brevo_api.sender_name }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="sender_email" class="form-label">Email del remitente</label>
+                                    <input type="email" class="form-control" id="sender_email" name="sender_email" value="{{ config.brevo_api.sender_email }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="smtp-section" {% if config.use_api %}style="display: none;"{% endif %}>
+                            <h5>Configuración SMTP (Legacy)</h5>
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>Nota:</strong> Se recomienda usar la API de Brevo en lugar de SMTP para mejor confiabilidad.
+                            </div>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="smtp_server" class="form-label">Servidor SMTP</label>
@@ -171,6 +214,23 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Manejar alternancia entre API de Brevo y SMTP
+    const useApiCheckbox = document.getElementById('use_api');
+    const brevoApiSection = document.getElementById('brevo-api-section');
+    const smtpSection = document.getElementById('smtp-section');
+    
+    function toggleSections() {
+        if (useApiCheckbox.checked) {
+            brevoApiSection.style.display = 'block';
+            smtpSection.style.display = 'none';
+        } else {
+            brevoApiSection.style.display = 'none';
+            smtpSection.style.display = 'block';
+        }
+    }
+    
+    useApiCheckbox.addEventListener('change', toggleSections);
+    
     // Añadir nuevo destinatario
     document.getElementById('add-recipient').addEventListener('click', function() {
         const container = document.querySelector('.recipients-container');

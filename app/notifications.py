@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import smtplib
+import requests
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -38,6 +39,12 @@ DEFAULT_CONFIG = {
         "password": "",
         "use_tls": True,
     },
+    "brevo_api": {
+        "api_key": "",
+        "sender_name": "Administrador",
+        "sender_email": "no-reply@edefrutos2025.xyz",
+    },
+    "use_api": True,  # Usar API de Brevo en lugar de SMTP
     "recipients": [],
     "thresholds": {"cpu": 85, "memory": 85, "disk": 85, "error_rate": 10},
     "cooldown_minutes": 60,  # Tiempo mínimo entre alertas del mismo tipo
@@ -74,10 +81,88 @@ def save_config(config):
 
 def send_email(subject, body_html, recipients=None):
     """
-    Envía un correo electrónico con el asunto y cuerpo especificados.
-    Usa las credenciales del archivo .env si están disponibles, de lo contrario usa la configuración guardada.
+    Envía un correo electrónico usando la API de Brevo o SMTP como fallback.
     """
     config = load_config()
+
+    # Verificar si usar API de Brevo
+    if config.get("use_api", True):
+        return send_email_via_brevo_api(subject, body_html, recipients, config)
+    else:
+        return send_email_via_smtp(subject, body_html, recipients, config)
+
+
+def send_email_via_brevo_api(subject, body_html, recipients=None, config=None):
+    """
+    Envía un correo electrónico usando la API de Brevo.
+    """
+    if config is None:
+        config = load_config()
+
+    # Obtener configuración de la API de Brevo
+    api_key = os.environ.get("BREVO_API_KEY") or config.get("brevo_api", {}).get(
+        "api_key"
+    )
+    sender_name = config.get("brevo_api", {}).get("sender_name", "Administrador")
+    sender_email = config.get("brevo_api", {}).get(
+        "sender_email", "no-reply@edefrutos2025.xyz"
+    )
+
+    if not api_key:
+        logger.error("No se encontró la API key de Brevo")
+        return False
+
+    if not recipients:
+        recipients = config.get("recipients", [])
+
+    if not recipients:
+        logger.warning("No hay destinatarios configurados para las notificaciones")
+        return False
+
+    # Preparar datos para la API de Brevo
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": api_key,
+    }
+
+    # Crear lista de destinatarios
+    to_emails = [{"email": email} for email in recipients]
+
+    data = {
+        "sender": {"name": sender_name, "email": sender_email},
+        "to": to_emails,
+        "subject": f"[edefrutos2025] {subject}",
+        "htmlContent": body_html,
+    }
+
+    try:
+        logger.info(
+            f"Enviando correo via API de Brevo a {len(recipients)} destinatarios"
+        )
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+
+        if response.status_code == 201:
+            logger.info("Correo enviado exitosamente via API de Brevo")
+            return True
+        else:
+            logger.error(
+                f"Error al enviar correo via API de Brevo: {response.status_code} - {response.text}"
+            )
+            return False
+
+    except Exception as e:
+        logger.error(f"Error inesperado al enviar correo via API de Brevo: {str(e)}")
+        return False
+
+
+def send_email_via_smtp(subject, body_html, recipients=None, config=None):
+    """
+    Envía un correo electrónico usando SMTP (método legacy).
+    """
+    if config is None:
+        config = load_config()
 
     # Intentar obtener configuración de correo desde variables de entorno
     mail_server = os.environ.get("MAIL_SERVER")
@@ -370,7 +455,13 @@ def check_and_alert(metrics):
 
 
 def update_settings(
-    enabled=None, smtp_settings=None, recipients=None, thresholds=None, cooldown=None
+    enabled=None,
+    use_api=None,
+    smtp_settings=None,
+    brevo_api_settings=None,
+    recipients=None,
+    thresholds=None,
+    cooldown=None,
 ):
     """
     Actualiza la configuración de notificaciones.
@@ -380,8 +471,16 @@ def update_settings(
     if enabled is not None:
         config["enabled"] = enabled
 
+    if use_api is not None:
+        config["use_api"] = use_api
+
     if smtp_settings:
         config["smtp"].update(smtp_settings)
+
+    if brevo_api_settings:
+        if "brevo_api" not in config:
+            config["brevo_api"] = {}
+        config["brevo_api"].update(brevo_api_settings)
 
     if recipients:
         config["recipients"] = recipients
@@ -436,7 +535,9 @@ def send_test_email(recipient):
         </div>
     </body>
     </html>
-    """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    """.format(
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
 
     return send_email(subject, html_content, [recipient])
 

@@ -1,12 +1,18 @@
 {
   "enabled": true,
   "smtp": {
-    "server": "smtp.gmail.com",
+    "server": "smtp-relay.brevo.com",
     "port": 587,
-    "username": "edfrutos@gmail.com",
-    "password": "augk nqxg yfog joto",
+    "username": "8e57cb001@smtp-brevo.com",
+    "password": "pswb4vRJz7c2FfIk",
     "use_tls": true
   },
+  "brevo_api": {
+    "api_key": "CONFIGURAR_API_KEY_DE_BREVO",
+    "sender_name": "Administrador",
+    "sender_email": "no-reply@edefrutos2025.xyz"
+  },
+  "use_api": true,
   "recipients": [
     "edfrutos@gmail.com",
     "edefrutos@me.com"
@@ -20,7 +26,7 @@
   "cooldown_minutes": 60,
   "last_alerts": {
     "memory": "2025-06-06 10:45:02",
-    "cpu": "2025-08-24 13:57:33",
+    "cpu": "2025-08-25 12:38:12",
     "database": "2025-06-16 12:33:30"
   }
 }
