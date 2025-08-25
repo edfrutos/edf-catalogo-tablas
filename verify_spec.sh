@@ -6,8 +6,8 @@
 echo "📋 VERIFICACIÓN DE ARCHIVO .SPEC"
 echo "================================"
 
-SPEC_FILE="EDF_CatalogoDeTablas.spec"
-BACKUP_FILES=("EDF_CatalogoDeTablas_Native.spec" "EDF_CatalogoDeTablas_Web.spec")
+SPEC_FILE="EDF_CatalogoDeTablas_Native_WebSockets.spec"
+BACKUP_FILES=("EDF_CatalogoDeTablas.spec" "EDF_CatalogoDeTablas_Native.spec" "EDF_CatalogoDeTablas_Web.spec")
 
 echo "🔍 Verificando archivo $SPEC_FILE..."
 

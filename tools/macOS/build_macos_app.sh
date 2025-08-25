@@ -41,7 +41,7 @@ mkdir -p logs
 
 # Construir la aplicación
 echo "🔨 Construyendo aplicación con PyInstaller..."
-python3.10 -m PyInstaller EDF_CatalogoDeTablas.spec --clean
+python3.10 -m PyInstaller EDF_CatalogoDeTablas_Native_WebSockets.spec --clean
 
 # Verificar que se creó la aplicación
 if [ -d "dist/EDF_CatalogoDeTablas.app" ]; then

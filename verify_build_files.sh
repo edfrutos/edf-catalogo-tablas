@@ -8,7 +8,7 @@ echo "======================================"
 
 # Lista de archivos críticos para el build
 CRITICAL_FILES=(
-    "EDF_CatalogoDeTablas.spec"
+    "EDF_CatalogoDeTablas_Native_WebSockets.spec"
     "requirements_python310.txt"
     "run_server.py"
     "app/__init__.py"
@@ -18,6 +18,7 @@ CRITICAL_FILES=(
 
 # Lista de archivos de backup para .spec
 SPEC_BACKUP_FILES=(
+    "EDF_CatalogoDeTablas.spec"
     "EDF_CatalogoDeTablas_Native.spec"
     "EDF_CatalogoDeTablas_Web.spec"
 )
@@ -42,7 +43,7 @@ for file in "${CRITICAL_FILES[@]}"; do
         echo "❌ $file - NO EXISTE"
         
         # Intentar crear archivo .spec si no existe
-        if [ "$file" = "EDF_CatalogoDeTablas.spec" ]; then
+        if [ "$file" = "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
             echo "🔧 Intentando crear $file desde archivos de backup..."
             created=false
             for backup_file in "${SPEC_BACKUP_FILES[@]}"; do

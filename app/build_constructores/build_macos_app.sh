@@ -33,12 +33,12 @@ echo "🔧 Resolviendo conflictos específicos de PyInstaller..."
 ./fix_pyinstaller_tools_conflict.sh
 
 # Verificar que existe el archivo .spec correcto
-if [ -f "EDF_CatalogoDeTablas.spec" ]; then
+if [ -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
     echo "✅ Archivo .spec existente encontrado, usando el existente..."
 else
-    echo "❌ Error: No se encuentra el archivo EDF_CatalogoDeTablas.spec"
+    echo "❌ Error: No se encuentra el archivo EDF_CatalogoDeTablas_Native_WebSockets.spec"
     echo "🔧 Creando archivo .spec básico..."
-    cat > EDF_CatalogoDeTablas.spec << 'EOF'
+    cat > EDF_CatalogoDeTablas_Native_WebSockets.spec << 'EOF'
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
@@ -175,7 +175,7 @@ fi
 
 # Construir la aplicación
 echo "🔨 Construyendo aplicación con PyInstaller..."
-pyinstaller --clean EDF_CatalogoDeTablas.spec
+pyinstaller --clean EDF_CatalogoDeTablas_Native_WebSockets.spec
 
 # Verificar que la aplicación se construyó correctamente
 if [ -d "dist/EDF_CatalogoDeTablas" ]; then

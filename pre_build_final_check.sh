@@ -74,8 +74,8 @@ fi
 
 # Verificar que el archivo .spec existe y es válido
 echo "🔧 Verificando archivo .spec..."
-if [ ! -f "EDF_CatalogoDeTablas.spec" ]; then
-    echo "❌ ERROR: EDF_CatalogoDeTablas.spec no encontrado"
+if [ ! -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
+    echo "❌ ERROR: EDF_CatalogoDeTablas_Native_WebSockets.spec no encontrado"
     exit 1
 fi
 
