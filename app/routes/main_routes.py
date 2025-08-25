@@ -84,7 +84,6 @@ def dashboard_user():
         flash("Debe iniciar sesión para acceder al dashboard de usuario", "warning")
         return redirect(url_for("auth.login", next=request.url))
     if session.get("role") == "admin":
-        flash("Eres administrador. Redirigido a tu panel de administración.", "info")
         return redirect(url_for("admin.dashboard_admin"))
 
     # =========================================================================
