@@ -27,13 +27,6 @@ a = Analysis(
         ('wsgi.py', '.'),
         ('.env', '.'),
         ('requirements.txt', '.'),
-        ('static', 'static'),
-        ('templates', 'templates'),
-        ('uploads', 'uploads'),
-        ('backups', 'backups'),
-        ('logs', 'logs'),
-        ('scripts', 'scripts'),
-        ('tools', 'tools'),
     ],
     hiddenimports=[
         'flask', 'flask_login', 'flask_session', 'pymongo', 'requests',
@@ -122,11 +115,11 @@ verify_spec_file() {
     echo "📏 Tamaño: $(du -sh EDF_CatalogoDeTablas_Native_WebSockets.spec | cut -f1)"
     echo "📊 Líneas: $(wc -l < EDF_CatalogoDeTablas_Native_WebSockets.spec)"
     
-    # Verificar que se incluye el directorio tools
-    if grep -q "tools" EDF_CatalogoDeTablas_Native_WebSockets.spec; then
-        echo "✅ Se incluye el directorio tools correctamente"
+    # Verificar que se incluye el directorio app
+    if grep -q "app" EDF_CatalogoDeTablas_Native_WebSockets.spec; then
+        echo "✅ Se incluye el directorio app correctamente"
     else
-        echo "❌ Error: No se encontró el directorio tools"
+        echo "❌ Error: No se encontró el directorio app"
         return 1
     fi
     
