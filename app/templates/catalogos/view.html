@@ -152,7 +152,7 @@
                     {% endfor %}
                     <td>
                         <!-- Usar imágenes procesadas por el backend -->
-                        {% if row.get('_imagenes') and row._imagenes %}
+                        {% if row is mapping and row.get('_imagenes') and row._imagenes %}
                             {% for img_url in row._imagenes %}
                                 {% if loop.index <= 3 %}
                                     <img src="{{ img_url }}" 

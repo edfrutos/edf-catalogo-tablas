@@ -117,7 +117,7 @@
                         </div>
                         
                         <!-- Mostrar imagen URL externa si existe -->
-                        {% if row.get('Imagen') and row.Imagen.startswith('http') %}
+                        {% if row is mapping and row.get('Imagen') and row.Imagen.startswith('http') %}
                         <div class="mb-3">
                             <label class="form-label">Imagen URL (Externa)</label>
                             <input type="url" class="form-control" name="imagen_url" value="{{ row.Imagen }}" placeholder="https://ejemplo.com/imagen.jpg">
@@ -129,7 +129,7 @@
                         {% endif %}
                         
                         <!-- Usar imágenes procesadas por el backend -->
-                        {% if row.get('_imagenes') and row._imagenes %}
+                        {% if row is mapping and row.get('_imagenes') and row._imagenes %}
                         <div class="mb-3">
                             <label class="form-label d-block">Imágenes actuales ({{ row._imagenes|length }})</label>
                             <div class="d-flex flex-wrap gap-3 align-items-center">

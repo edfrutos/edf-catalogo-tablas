@@ -20,7 +20,7 @@ case $choice in
     2)
         echo ""
         echo "🔨 Construyendo versión Nativa..."
-        ./build_native_websockets.sh
+        ./build_native_app.sh
         ;;
     3)
         echo ""
@@ -29,7 +29,7 @@ case $choice in
         ./build_web_app.sh
         echo ""
         echo "🖥️  Ahora la versión Nativa..."
-        ./build_native_websockets.sh
+        ./build_native_app.sh
         ;;
     4)
         echo "👋 ¡Hasta luego!"
@@ -48,8 +48,8 @@ echo "📁 Aplicaciones disponibles:"
 if [ -d "dist/EDF_CatalogoDeTablas_Web" ]; then
     echo "   🌐 Web: dist/EDF_CatalogoDeTablas_Web/EDF_CatalogoDeTablas_Web"
 fi
-if [ -d "dist/EDF_CatalogoDeTablas_Web_Native.app" ]; then
-    echo "   🖥️  Nativa: dist/EDF_CatalogoDeTablas_Web_Native.app"
+if [ -d "dist/EDF_CatalogoDeTablas_Native" ]; then
+    echo "   🖥️  Nativa: dist/EDF_CatalogoDeTablas_Native/EDF_CatalogoDeTablas_Native"
 fi
 echo ""
 echo "🚀 Para probar las aplicaciones:"

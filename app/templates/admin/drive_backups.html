@@ -161,7 +161,17 @@ endblock %} {% block content %}
       {% else %}
       <div class="alert alert-info d-flex align-items-center" role="alert">
         <i class="bi bi-info-circle me-2"></i>
-        <div>No hay respaldos en Google Drive.</div>
+        <div>
+          {% if backups and backups[0].is_placeholder and backups[0]._id == 'no-credentials' %}
+            <strong>Google Drive no configurado</strong><br>
+            Las credenciales de Google Drive no están configuradas. Contacta al administrador para configurar el acceso a Google Drive.
+          {% elif backups and backups[0].is_placeholder and backups[0]._id == 'error' %}
+            <strong>Error de configuración</strong><br>
+            {{ backups[0].error_message if backups[0].error_message else 'Error al acceder a Google Drive. Verifica la configuración.' }}
+          {% else %}
+            No hay respaldos en Google Drive.
+          {% endif %}
+        </div>
       </div>
       {% endif %}
     </div>

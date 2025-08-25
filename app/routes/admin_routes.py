@@ -5313,7 +5313,25 @@ def list_drive_backups():
             )
 
         flash("Error al cargar la lista de respaldos de Google Drive", "error")
-        return redirect(url_for("main.dashboard_user"))
+        # En lugar de redirigir, mostrar la página de Google Drive con un mensaje de error
+        return render_template(
+            "admin/drive_backups.html",
+            backups=[
+                {
+                    "_id": "error",
+                    "filename": "Error de configuración",
+                    "file_size": 0,
+                    "uploaded_at": "",
+                    "uploaded_by_name": "Sistema",
+                    "download_url": "",
+                    "web_view_url": "",
+                    "is_placeholder": True,
+                    "error_message": str(e),
+                }
+            ],
+            title="Respaldo en Google Drive",
+            active_page="drive_backups",
+        )
 
 
 @admin_bp.route("/truncate_log", methods=["POST"])

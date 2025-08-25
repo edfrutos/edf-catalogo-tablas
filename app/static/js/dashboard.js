@@ -1081,29 +1081,22 @@ $(function () {
         method: "POST",
         xhrFields: { withCredentials: true },
         success: function (response, status, xhr) {
-          // Crear enlace temporal para descarga
-          const blob = new Blob([response], { type: 'text/csv' });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-
-          // Obtener nombre del archivo del header Content-Disposition
-          const contentDisposition = xhr.getResponseHeader('Content-Disposition');
-          let filename = 'system_status.csv';
-          if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-            if (filenameMatch && filenameMatch[1]) {
-              filename = filenameMatch[1].replace(/['"]/g, '');
-            }
+          // Manejar respuesta JSON
+          if (response.success && response.download_url) {
+            // Crear enlace temporal para descarga
+            const link = document.createElement("a");
+            link.href = response.download_url;
+            link.download = response.filename || 'system_status.csv';
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showAlert("Archivo CSV exportado correctamente", "success");
+          } else {
+            showAlert("Error en la respuesta del servidor", "danger");
           }
-
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          showAlert("Archivo CSV exportado correctamente", "success");
         },
         error: function (xhr, status, error) {
           const errorMsg = xhr.responseJSON ? xhr.responseJSON.error : "Error al exportar CSV";

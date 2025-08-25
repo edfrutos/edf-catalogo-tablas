@@ -108,7 +108,7 @@
                     <div class="form-text">Puedes seleccionar múltiples imágenes | Máximo: 10MB por imagen</div>
                     
                     <!-- Mostrar imágenes actuales -->
-                    {% if row.get('images') %}
+                                            {% if row is mapping and row.get('images') %}
                         <div class="mt-3">
                             <small class="text-muted">Imágenes actuales:</small>
                             <div class="row mt-2">

@@ -139,9 +139,18 @@ endblock %} {% block content %}
           <th width="40">
             <input type="checkbox" id="selectAllHeader" class="form-check-input">
           </th>
-          <th><i class="bi bi-table"></i> Nombre</th>
-          <th><i class="bi bi-tag"></i> Tipo</th>
-          <th><i class="bi bi-calendar"></i> Fecha de creación</th>
+          <th class="sortable" data-column="1" style="cursor: pointer;">
+            <i class="bi bi-table"></i> Nombre
+            <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+          </th>
+          <th class="sortable" data-column="2" style="cursor: pointer;">
+            <i class="bi bi-tag"></i> Tipo
+            <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+          </th>
+          <th class="sortable" data-column="3" style="cursor: pointer;">
+            <i class="bi bi-calendar"></i> Fecha de creación
+            <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+          </th>
           <th><i class="bi bi-gear"></i> Acciones</th>
         </tr>
       </thead>
@@ -544,5 +553,88 @@ function changePerPage(value) {
     url.searchParams.set('page', '1'); // Volver a la primera página
     window.location.href = url.toString();
 }
+
+// Variables para ordenación
+let ordenActual = {
+    columna: null,
+    ascendente: true
+};
+
+// Función para ordenar tabla de catálogos
+function ordenarTablaCatalogs(columna) {
+    console.log(`🔄 Ordenando catálogos por columna ${columna}`);
+    
+    const tabla = document.getElementById('catalogsTable');
+    const tbody = tabla.querySelector('tbody');
+    const filas = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Si es la misma columna, cambiar dirección; si no, ascendente
+    if (ordenActual.columna === columna) {
+        ordenActual.ascendente = !ordenActual.ascendente;
+    } else {
+        ordenActual.columna = columna;
+        ordenActual.ascendente = true;
+    }
+    
+    // Ordenar las filas
+    filas.sort((a, b) => {
+        const celdaA = a.cells[columna]?.textContent?.trim() || '';
+        const celdaB = b.cells[columna]?.textContent?.trim() || '';
+        
+        let resultado;
+        
+        // Para fecha de creación (columna 3), intentar parsear como fecha
+        if (columna === 3) {
+            const fechaA = new Date(celdaA);
+            const fechaB = new Date(celdaB);
+            if (!isNaN(fechaA) && !isNaN(fechaB)) {
+                resultado = fechaA - fechaB;
+            } else {
+                resultado = celdaA.localeCompare(celdaB, 'es', { sensitivity: 'base' });
+            }
+        } else {
+            // Para texto normal
+            resultado = celdaA.localeCompare(celdaB, 'es', { sensitivity: 'base' });
+        }
+        
+        return ordenActual.ascendente ? resultado : -resultado;
+    });
+    
+    // Reemplazar las filas en el DOM
+    filas.forEach(fila => tbody.appendChild(fila));
+    
+    // Actualizar iconos de ordenamiento
+    actualizarIconosOrdenamientoCatalogs();
+}
+
+// Función para actualizar los iconos de ordenamiento
+function actualizarIconosOrdenamientoCatalogs() {
+    const headers = document.querySelectorAll('#catalogsTable .sortable');
+    headers.forEach((header) => {
+        const columna = parseInt(header.dataset.column);
+        const icon = header.querySelector('.sort-icon');
+        
+        if (columna === ordenActual.columna) {
+            icon.className = ordenActual.ascendente ? 
+                'bi bi-chevron-up sort-icon' : 
+                'bi bi-chevron-down sort-icon';
+            icon.style.opacity = '1';
+        } else {
+            icon.className = 'bi bi-chevron-expand sort-icon';
+            icon.style.opacity = '0.5';
+        }
+    });
+}
+
+// Agregar event listeners para ordenación
+document.addEventListener('DOMContentLoaded', function() {
+    // Event listeners para ordenación de catálogos
+    document.querySelectorAll('#catalogsTable .sortable').forEach(header => {
+        header.addEventListener('click', function() {
+            const columna = parseInt(this.dataset.column);
+            ordenarTablaCatalogs(columna);
+        });
+    });
+});
 </script>
 {% endblock %}

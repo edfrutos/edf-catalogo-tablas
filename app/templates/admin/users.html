@@ -61,14 +61,26 @@
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-striped">
+                        <table class="table table-striped" id="usersTable">
                             <thead>
                                 <tr>
-                                    <th>Email</th>
-                                    <th>Nombre</th>
-                                    <th>Rol</th>
+                                    <th class="sortable" data-column="0" style="cursor: pointer;">
+                                        Email
+                                        <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+                                    </th>
+                                    <th class="sortable" data-column="1" style="cursor: pointer;">
+                                        Nombre
+                                        <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+                                    </th>
+                                    <th class="sortable" data-column="2" style="cursor: pointer;">
+                                        Rol
+                                        <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+                                    </th>
                                     <th>Catálogos</th>
-                                    <th>Última Actualización</th>
+                                    <th class="sortable" data-column="4" style="cursor: pointer;">
+                                        Última Actualización
+                                        <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+                                    </th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -158,6 +170,78 @@
 
 {% block scripts %}
 <script>
+// Variables para ordenación de usuarios
+let ordenActualUsuarios = {
+    columna: null,
+    ascendente: true
+};
+
+// Función para ordenar tabla de usuarios
+function ordenarTablaUsuarios(columna) {
+    console.log(`🔄 Ordenando usuarios por columna ${columna}`);
+    
+    const tabla = document.getElementById('usersTable');
+    const tbody = tabla.querySelector('tbody');
+    const filas = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Si es la misma columna, cambiar dirección; si no, ascendente
+    if (ordenActualUsuarios.columna === columna) {
+        ordenActualUsuarios.ascendente = !ordenActualUsuarios.ascendente;
+    } else {
+        ordenActualUsuarios.columna = columna;
+        ordenActualUsuarios.ascendente = true;
+    }
+    
+    // Ordenar las filas
+    filas.sort((a, b) => {
+        const celdaA = a.cells[columna]?.textContent?.trim() || '';
+        const celdaB = b.cells[columna]?.textContent?.trim() || '';
+        
+        let resultado;
+        
+        // Para última actualización (columna 4), intentar parsear como fecha
+        if (columna === 4) {
+            const fechaA = new Date(celdaA);
+            const fechaB = new Date(celdaB);
+            if (!isNaN(fechaA) && !isNaN(fechaB)) {
+                resultado = fechaA - fechaB;
+            } else {
+                resultado = celdaA.localeCompare(celdaB, 'es', { sensitivity: 'base' });
+            }
+        } else {
+            // Para texto normal
+            resultado = celdaA.localeCompare(celdaB, 'es', { sensitivity: 'base' });
+        }
+        
+        return ordenActualUsuarios.ascendente ? resultado : -resultado;
+    });
+    
+    // Reemplazar las filas en el DOM
+    filas.forEach(fila => tbody.appendChild(fila));
+    
+    // Actualizar iconos de ordenamiento
+    actualizarIconosOrdenamientoUsuarios();
+}
+
+// Función para actualizar los iconos de ordenamiento de usuarios
+function actualizarIconosOrdenamientoUsuarios() {
+    const headers = document.querySelectorAll('#usersTable .sortable');
+    headers.forEach((header) => {
+        const columna = parseInt(header.dataset.column);
+        const icon = header.querySelector('.sort-icon');
+        
+        if (columna === ordenActualUsuarios.columna) {
+            icon.className = ordenActualUsuarios.ascendente ? 
+                'bi bi-chevron-up sort-icon' : 
+                'bi bi-chevron-down sort-icon';
+            icon.style.opacity = '1';
+        } else {
+            icon.className = 'bi bi-chevron-expand sort-icon';
+            icon.style.opacity = '0.5';
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Formatear fechas en la columna de última actualización (5ta columna)
     document.querySelectorAll('td:nth-child(5)').forEach(function(cell) {
@@ -168,6 +252,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 cell.textContent = date.toLocaleString('es-ES');
             }
         }
+    });
+    
+    // Event listeners para ordenación de usuarios
+    document.querySelectorAll('#usersTable .sortable').forEach(header => {
+        header.addEventListener('click', function() {
+            const columna = parseInt(this.dataset.column);
+            ordenarTablaUsuarios(columna);
+        });
     });
 });
 </script>

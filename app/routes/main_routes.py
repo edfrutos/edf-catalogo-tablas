@@ -921,21 +921,35 @@ def editar_fila(tabla_id, fila_index):
         return redirect(url_for("main.ver_tabla", table_id=tabla_id))
 
     # Obtener la fila específica del array de datos
-    data_length = len(table_info.get("data", []))
+    data = table_info.get("data", {})
+
+    # Verificar si data es un diccionario o una lista
+    if isinstance(data, dict):
+        # Si es un diccionario, usar la clave string
+        data_key = str(fila_index)
+        if data_key not in data:
+            current_app.logger.error(
+                f"[DEBUG] Fila no encontrada: clave {data_key} no existe en data"
+            )
+            flash("Fila no encontrada.", "error")
+            return redirect(url_for("main.ver_tabla", table_id=tabla_id))
+        fila = data[data_key]
+        data_length = len(data)
+    else:
+        # Si es una lista, usar el índice numérico
+        data_length = len(data)
+        if fila_index >= data_length:
+            current_app.logger.error(
+                f"[DEBUG] Fila no encontrada: índice {fila_index} >= longitud {data_length}"
+            )
+            flash("Fila no encontrada.", "error")
+            return redirect(url_for("main.ver_tabla", table_id=tabla_id))
+        fila = data[fila_index]
+
     current_app.logger.info(
-        f"[DEBUG] fila_index={fila_index}, data_length={data_length}, num_rows={table_info.get('num_rows', 'N/A')}"
+        f"[DEBUG] fila_index={fila_index}, data_length={data_length}, data_type={type(data)}"
     )
     current_app.logger.info(f"[DEBUG] table_info.keys(): {list(table_info.keys())}")
-
-    if not table_info.get("data") or fila_index >= data_length:
-        current_app.logger.error(
-            f"[DEBUG] Fila no encontrada: índice {fila_index} >= longitud {data_length}"
-        )
-        flash("Fila no encontrada.", "error")
-        return redirect(url_for("main.ver_tabla", table_id=tabla_id))
-
-    # Obtener la fila específica - usar "data" que tiene imágenes completas
-    fila = table_info["data"][fila_index]
     current_app.logger.info(
         f"[DEBUG_EDIT] Datos completos de fila {fila_index}: {fila}"
     )

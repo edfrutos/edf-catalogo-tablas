@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-Lanzador nativo mejorado para EDF Catálogo de Tablas
-Usa PyWebView para crear una aplicación de escritorio nativa
-con mejor manejo de cookies y sesiones
+Lanzador nativo para EDF Catálogo de Tablas
+Ejecuta la aplicación web Flask en una ventana nativa de macOS
+con soporte para WebSockets en tiempo real
 """
 
 import os
 import sys
 import tempfile
 from pathlib import Path
+import threading
+import time
+import requests
+import webview
 
 # Configurar directorios escribibles ANTES de cualquier importación
 if getattr(sys, "frozen", False):
@@ -16,25 +20,19 @@ if getattr(sys, "frozen", False):
     temp_dir = Path(tempfile.gettempdir()) / "edf_catalogo_logs"
     temp_dir.mkdir(exist_ok=True)
     os.environ["LOG_DIR"] = str(temp_dir)
-    # Forzar también las rutas específicas que podría usar Flask
     os.environ["FLASK_LOG_DIR"] = str(temp_dir)
     print(f"📝 Directorio de logs configurado: {temp_dir}")
 
-    # Configurar también el directorio de sesiones
+    # Configurar directorio de sesiones
     session_dir = temp_dir / "flask_session"
     session_dir.mkdir(exist_ok=True)
     os.environ["SESSION_FILE_DIR"] = str(session_dir)
     print(f"📝 Directorio de sesiones configurado: {session_dir}")
 
-    # Configurar entorno para que coincida más con producción
-    os.environ["FLASK_ENV"] = "production"  # Usar configuración de producción
-    os.environ["FLASK_DEBUG"] = "0"  # Deshabilitar debug
-    print(f"🔧 Configurado entorno de producción")
-
-import threading
-import time
-import requests
-import webview
+    # Configurar entorno de producción
+    os.environ["FLASK_ENV"] = "production"
+    os.environ["FLASK_DEBUG"] = "0"
+    print("🔧 Configurado entorno de producción")
 
 
 def start_flask_server():
@@ -42,7 +40,17 @@ def start_flask_server():
     try:
         from wsgi import app
 
-        app.run(debug=False, port=5001, host="127.0.0.1", use_reloader=False)
+        # Configuración específica para pywebview
+        app.config.update(
+            {
+                "SESSION_COOKIE_SECURE": False,  # HTTP para pywebview
+                "SESSION_COOKIE_HTTPONLY": False,  # Acceso desde JavaScript
+                "SESSION_COOKIE_SAMESITE": None,  # Sin SameSite
+                "SESSION_COOKIE_DOMAIN": None,  # Sin dominio específico
+            }
+        )
+
+        app.run(debug=False, port=5004, host="127.0.0.1", use_reloader=False)
     except Exception as e:
         print(f"❌ Error al iniciar el servidor Flask: {e}")
         sys.exit(1)
@@ -53,7 +61,7 @@ def wait_for_server():
     max_attempts = 30
     for attempt in range(max_attempts):
         try:
-            response = requests.get("http://127.0.0.1:5001", timeout=1)
+            response = requests.get("http://127.0.0.1:5004", timeout=1)
             if response.status_code in [200, 302]:
                 print(f"✅ Servidor Flask listo (intento {attempt + 1})")
                 return True
@@ -72,7 +80,8 @@ def wait_for_server():
 
 
 def main():
-    print("🚀 Iniciando EDF Catálogo de Tablas (Versión Nativa Mejorada)")
+    """Función principal de la aplicación"""
+    print("🚀 Iniciando EDF Catálogo de Tablas (Aplicación Nativa WebSockets)")
     print("=" * 60)
 
     # Iniciar el servidor Flask en un hilo separado
@@ -87,39 +96,32 @@ def main():
         sys.exit(1)
 
     try:
-        # Crear la ventana nativa con configuración mejorada
-        print("🖥️  Creando ventana nativa mejorada...")
-        
-        # Configuración mejorada para pywebview
+        # Crear la ventana nativa
+        print("🖥️  Creando ventana nativa...")
+
+        # Configuración básica para pywebview
         window_config = {
-            'title': 'EDF Catálogo de Tablas',
-            'url': 'http://127.0.0.1:5001',
-            'width': 1400,
-            'height': 900,
-            'resizable': True,
-            'min_size': (800, 600),
-            'text_select': True,
-            'confirm_close': True,
-            'frameless': False,  # Mantener frame nativo
-            'easy_drag': True,   # Facilitar arrastre de ventana
-            'fullscreen': False,
-            'on_top': False,     # No mantener siempre arriba
-            'background_color': '#FFFFFF',
-            'transparent': False,
-            'vsync': True,       # Sincronización vertical
-            'private_mode': False,  # Permitir cookies y sesiones
+            "title": "EDF Catálogo de Tablas - Aplicación Web Nativa",
+            "url": "http://127.0.0.1:5004",
+            "width": 1400,
+            "height": 900,
+            "resizable": True,
+            "min_size": (800, 600),
+            "text_select": True,
+            "confirm_close": True,
         }
-        
-        # Crear ventana con configuración mejorada
-        window = webview.create_window(**window_config)
-        
-        print("✅ Ventana nativa creada con configuración mejorada")
-        print("🖥️  Aplicación ejecutándose en ventana nativa")
+
+        # Crear la ventana nativa
+        webview.create_window(**window_config)
+
+        print("✅ Ventana nativa creada")
+        print("🖥️  Aplicación web ejecutándose en ventana nativa")
+        print("🌐 WebSockets habilitados para comunicación en tiempo real")
         print("🛑 Cierra la ventana para salir")
         print("-" * 60)
 
         # Iniciar la aplicación con configuración mejorada
-        webview.start(debug=False, gui='native')
+        webview.start(debug=True, gui="native")
 
     except Exception as e:
         print(f"❌ Error al crear la ventana nativa: {e}")
@@ -128,7 +130,7 @@ def main():
         # Fallback: abrir en navegador
         import webbrowser
 
-        webbrowser.open("http://127.0.0.1:5001")
+        webbrowser.open("http://127.0.0.1:5004")
 
         # Mantener el servidor corriendo
         try:

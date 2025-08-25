@@ -358,7 +358,18 @@ def login():
             return redirect(url_for("auth.login"))
 
     except Exception as e:
-        logger.error(f"Error en login: {str(e)}\n{traceback.format_exc()}")
+        import traceback
+
+        error_details = traceback.format_exc()
+        logger.error(f"=== ERROR DETALLADO EN LOGIN ===")
+        logger.error(f"Tipo de error: {type(e).__name__}")
+        logger.error(f"Mensaje: {str(e)}")
+        logger.error(f"Traceback completo:\n{error_details}")
+        logger.error(
+            f"Datos de formulario: {dict(request.form) if request.form else 'No hay datos'}"
+        )
+        logger.error(f"Headers: {dict(request.headers)}")
+        logger.error(f"=== FIN ERROR DETALLADO ===")
         flash("Ha ocurrido un error al procesar la solicitud.", "error")
         return render_template("login.html")
 

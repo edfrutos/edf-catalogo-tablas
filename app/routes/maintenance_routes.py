@@ -10,6 +10,7 @@ import io
 import json
 import os
 import platform
+import tempfile
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -1109,122 +1110,6 @@ def delete_drive_backup(file_id):
         return jsonify({"error": str(e)}), 500
 
 
-@maintenance_bp.route("/export/csv", methods=["POST"])
-@admin_required
-def export_system_status_csv():
-    """Exporta el estado del sistema a un archivo CSV."""
-    try:
-        # Obtener estado del sistema
-        system_status = get_system_status_data()
-
-        # Crear archivo CSV en memoria
-        output = io.StringIO()
-        writer = csv.writer(output)
-
-        # Escribir encabezados
-        writer.writerow(["Métrica", "Valor", "Unidad", "Timestamp"])
-
-        # Escribir datos del sistema
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # Información del sistema
-        if system_status.get("system_details"):
-            details = system_status["system_details"]
-            writer.writerow(
-                ["Sistema Operativo", details.get("os", "N/A"), "", timestamp]
-            )
-            writer.writerow(["Arquitectura", details.get("arch", "N/A"), "", timestamp])
-            writer.writerow(
-                ["Usuario del Sistema", details.get("user", "N/A"), "", timestamp]
-            )
-
-        # Información de memoria
-        if system_status.get("memory_usage"):
-            mem = system_status["memory_usage"]
-            writer.writerow(
-                ["Uso de Memoria", f"{mem.get('percent', 0):.1f}", "%", timestamp]
-            )
-            writer.writerow(
-                ["Memoria Total", f"{mem.get('total_gb', 0):.2f}", "GB", timestamp]
-            )
-            writer.writerow(
-                [
-                    "Memoria Disponible",
-                    f"{mem.get('available_gb', 0):.2f}",
-                    "GB",
-                    timestamp,
-                ]
-            )
-            writer.writerow(
-                ["Memoria Usada", f"{mem.get('used_gb', 0):.2f}", "GB", timestamp]
-            )
-
-        # Información de CPU
-        if "cpu_usage" in system_status:
-            writer.writerow(
-                ["Uso de CPU", f"{system_status['cpu_usage']:.1f}", "%", timestamp]
-            )
-
-        # Información de disco
-        if system_status.get("disk_usage"):
-            disk = system_status["disk_usage"]
-            writer.writerow(
-                ["Uso de Disco", f"{disk.get('percent', 0):.1f}", "%", timestamp]
-            )
-            writer.writerow(
-                ["Espacio Total", f"{disk.get('total_gb', 0):.2f}", "GB", timestamp]
-            )
-            writer.writerow(
-                ["Espacio Libre", f"{disk.get('free_gb', 0):.2f}", "GB", timestamp]
-            )
-            writer.writerow(
-                ["Espacio Usado", f"{disk.get('used_gb', 0):.2f}", "GB", timestamp]
-            )
-
-        # Información de red
-        if system_status.get("network_info"):
-            net = system_status["network_info"]
-            writer.writerow(
-                ["Bytes Enviados", str(net.get("bytes_sent", 0)), "bytes", timestamp]
-            )
-            writer.writerow(
-                ["Bytes Recibidos", str(net.get("bytes_recv", 0)), "bytes", timestamp]
-            )
-
-        # Información de procesos
-        if system_status.get("process_info"):
-            proc = system_status["process_info"]
-            writer.writerow(
-                [
-                    "Procesos Activos",
-                    str(proc.get("active_processes", 0)),
-                    "",
-                    timestamp,
-                ]
-            )
-            writer.writerow(
-                ["Procesos Totales", str(proc.get("total_processes", 0)), "", timestamp]
-            )
-
-        # Obtener contenido del CSV
-        csv_content = output.getvalue()
-        output.close()
-
-        # Crear respuesta con archivo CSV
-        filename = f"system_status_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-
-        return send_file(
-            io.BytesIO(csv_content.encode("utf-8")),
-            mimetype="text/csv",
-            as_attachment=True,
-            download_name=filename,
-        )
-
-    except Exception as e:
-        log_error(f"Error exportando CSV del estado del sistema: {str(e)}")
-        return jsonify({"error": f"Error al exportar CSV: {str(e)}"}), 500
-
-
 def get_system_status_data():
     """Obtiene los datos del estado del sistema."""
     try:
@@ -1282,6 +1167,153 @@ def get_system_status_data():
     except Exception as e:
         log_error(f"Error obteniendo datos del sistema: {str(e)}")
         return {}
+
+
+@maintenance_bp.route("/export/csv", methods=["POST"])
+@admin_required
+def export_system_status_csv():
+    """Exporta el estado del sistema a un archivo CSV."""
+    try:
+        # Obtener estado del sistema
+        system_status = get_system_status_data()
+
+        # Crear archivo temporal
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"system_status_{timestamp}.csv"
+
+        # Crear archivo temporal
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".csv", encoding="utf-8"
+        ) as temp_file:
+            writer = csv.writer(temp_file)
+
+            # Escribir encabezado
+            writer.writerow(["Métrica", "Valor", "Unidad", "Timestamp"])
+
+            # Información del sistema
+            writer.writerow(
+                [
+                    "Sistema Operativo",
+                    system_status.get("system_details", {}).get("os", "N/A"),
+                    "",
+                    timestamp,
+                ]
+            )
+            writer.writerow(
+                [
+                    "Arquitectura",
+                    system_status.get("system_details", {}).get("arch", "N/A"),
+                    "",
+                    timestamp,
+                ]
+            )
+            writer.writerow(
+                [
+                    "Usuario del Sistema",
+                    system_status.get("system_details", {}).get("user", "N/A"),
+                    "",
+                    timestamp,
+                ]
+            )
+
+            # Información de memoria
+            if system_status.get("memory_usage"):
+                mem = system_status["memory_usage"]
+                writer.writerow(
+                    ["Uso de Memoria", f"{mem.get('percent', 0):.1f}", "%", timestamp]
+                )
+                writer.writerow(
+                    ["Memoria Total", f"{mem.get('total_gb', 0):.2f}", "GB", timestamp]
+                )
+                writer.writerow(
+                    [
+                        "Memoria Disponible",
+                        f"{mem.get('available_gb', 0):.2f}",
+                        "GB",
+                        timestamp,
+                    ]
+                )
+                writer.writerow(
+                    ["Memoria Usada", f"{mem.get('used_gb', 0):.2f}", "GB", timestamp]
+                )
+
+            # Información de CPU
+            if "cpu_usage" in system_status:
+                writer.writerow(
+                    ["Uso de CPU", f"{system_status['cpu_usage']:.1f}", "%", timestamp]
+                )
+
+            # Información de disco
+            if system_status.get("disk_usage"):
+                disk = system_status["disk_usage"]
+                writer.writerow(
+                    ["Uso de Disco", f"{disk.get('percent', 0):.1f}", "%", timestamp]
+                )
+                writer.writerow(
+                    ["Espacio Total", f"{disk.get('total_gb', 0):.2f}", "GB", timestamp]
+                )
+                writer.writerow(
+                    ["Espacio Libre", f"{disk.get('free_gb', 0):.2f}", "GB", timestamp]
+                )
+                writer.writerow(
+                    ["Espacio Usado", f"{disk.get('used_gb', 0):.2f}", "GB", timestamp]
+                )
+
+            # Información de red
+            if system_status.get("network_info"):
+                net = system_status["network_info"]
+                writer.writerow(
+                    [
+                        "Bytes Enviados",
+                        str(net.get("bytes_sent", 0)),
+                        "bytes",
+                        timestamp,
+                    ]
+                )
+                writer.writerow(
+                    [
+                        "Bytes Recibidos",
+                        str(net.get("bytes_recv", 0)),
+                        "bytes",
+                        timestamp,
+                    ]
+                )
+
+            # Información de procesos
+            if system_status.get("process_info"):
+                proc = system_status["process_info"]
+                writer.writerow(
+                    [
+                        "Procesos Activos",
+                        str(proc.get("active_processes", 0)),
+                        "",
+                        timestamp,
+                    ]
+                )
+                writer.writerow(
+                    [
+                        "Procesos Totales",
+                        str(proc.get("total_processes", 0)),
+                        "",
+                        timestamp,
+                    ]
+                )
+
+            temp_file_path = temp_file.name
+
+        # Devolver respuesta JSON con la URL de descarga
+        return jsonify(
+            {
+                "success": True,
+                "message": "Archivo CSV generado correctamente",
+                "download_url": f"/admin/maintenance/download-csv/{os.path.basename(temp_file_path)}",
+                "filename": filename,
+            }
+        )
+
+    except Exception as e:
+        log_error(f"Error exportando CSV del estado del sistema: {str(e)}")
+        return jsonify({"error": f"Error al exportar CSV: {str(e)}"}), 500
 
 
 @maintenance_bp.route("/local-backups")
@@ -1458,3 +1490,34 @@ def register_maintenance_routes(app):
     app.register_blueprint(maintenance_api_bp)
     log_info("Rutas de mantenimiento reorganizadas registradas")
     log_info("Rutas de API de mantenimiento registradas")
+
+
+@maintenance_bp.route("/download-csv/<temp_filename>", methods=["GET"])
+@admin_required
+def download_csv_file(temp_filename):
+    """Descarga un archivo CSV temporal."""
+    try:
+        # Construir la ruta completa del archivo temporal
+        temp_dir = tempfile.gettempdir()
+        temp_file_path = os.path.join(temp_dir, temp_filename)
+
+        # Verificar que el archivo existe
+        if not os.path.exists(temp_file_path):
+            return jsonify({"error": "Archivo no encontrado"}), 404
+
+        # Generar nombre de archivo para descarga
+        download_filename = (
+            f"system_status_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        )
+
+        # Enviar archivo
+        return send_file(
+            temp_file_path,
+            as_attachment=True,
+            download_name=download_filename,
+            mimetype="text/csv",
+        )
+
+    except Exception as e:
+        log_error(f"Error descargando archivo CSV temporal: {str(e)}")
+        return jsonify({"error": str(e)}), 500
