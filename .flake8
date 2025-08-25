@@ -1,0 +1,46 @@
+[flake8]
+# Configuración de Flake8 para el proyecto EDF Catálogo de Tablas
+
+# Longitud máxima de línea (aumentado de 79 a 120 caracteres)
+max-line-length = 120
+
+# Excluir directorios y archivos
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    node_modules,
+    .mypy_cache,
+    .ruff_cache,
+    build,
+    dist,
+    *.egg-info,
+    backups,
+    logs,
+    uploads,
+    static/uploads,
+    imagenes,
+    exportados,
+    spreadsheets
+
+# Ignorar errores específicos
+ignore = 
+    E203,
+    W503,
+    E501,
+    F401,
+    F403,
+    F405,
+    E722,
+    W291,
+    W293
+
+# Estadísticas
+statistics = True
+count = True
+
+# Formato de salida
+format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
+
+# Mostrar códigos de error
+show-source = True

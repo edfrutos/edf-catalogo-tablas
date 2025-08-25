@@ -27,7 +27,7 @@ from werkzeug.utils import secure_filename
 from app import notifications
 from app.database import get_mongo_db
 from app.decorators import login_required  # type: ignore[attr-defined]
-from app.utils.image_utils import get_images_for_template, get_raw_images_for_edit
+from app.utils.image_utils import get_images_for_template
 
 main_bp = Blueprint("main", __name__)
 logger = logging.getLogger(__name__)
@@ -60,14 +60,52 @@ def contacto():
             flash("Todos los campos son obligatorios.", "error")
             return render_template("contacto.html")
 
-        # Aquí podrías enviar el email o guardar en base de datos
-        # Por ahora solo mostramos un mensaje de éxito
-        flash(
-            f"¡Gracias {nombre}! Tu mensaje ha sido enviado correctamente. Te contactaremos pronto.",
-            "success",
-        )
+        # Enviar email real usando el sistema de notificaciones
+        subject = f"[Contacto] {asunto}"
+        body_html = f"""
+        <h3>Nuevo mensaje de contacto recibido</h3>
+        <ul>
+            <li><strong>Nombre:</strong> {nombre}</li>
+            <li><strong>Email:</strong> {email}</li>
+            <li><strong>Asunto:</strong> {asunto}</li>
+        </ul>
+        <p><strong>Mensaje:</strong></p>
+        <div style='white-space: pre-line; border:1px solid #eee; 
+             padding:10px; background:#f9f9f9;'>{mensaje}</div>
+        <hr>
+        <small>Este mensaje fue enviado desde el formulario de contacto de la aplicación.</small>
+        """
+
+        # Destinatario: edfrutos@gmail.com
+        recipients = ["edfrutos@gmail.com"]
+
+        try:
+            from app import notifications
+
+            ok = notifications.send_email(subject, body_html, recipients)
+            if ok:
+                flash(
+                    f"¡Gracias {nombre}! Tu mensaje ha sido enviado correctamente. "
+                    "Te contactaremos pronto.",
+                    "success",
+                )
+            else:
+                flash(
+                    "Tu mensaje se ha recibido pero hubo un problema al enviarlo. "
+                    "Te contactaremos pronto.",
+                    "warning",
+                )
+        except Exception as e:
+            logger.error(f"Error enviando email de contacto: {str(e)}")
+            flash(
+                "Tu mensaje se ha recibido pero hubo un problema técnico. "
+                "Te contactaremos pronto.",
+                "warning",
+            )
+
         logger.info(
-            f"Formulario de contacto enviado - Nombre: {nombre}, Email: {email}, Asunto: {asunto}"
+            f"Formulario de contacto enviado - Nombre: {nombre}, "
+            f"Email: {email}, Asunto: {asunto}"
         )
 
         # Redirigir para evitar reenvío del formulario
@@ -2061,8 +2099,8 @@ def soporte():
         <hr>
         <small>Este mensaje fue enviado desde el formulario de soporte de la aplicación.</small>
         """
-        # Destinatario: el correo de soporte configurado
-        recipients = ["admin@edefrutos2025.xyz"]
+        # Destinatario: edfrutos@gmail.com
+        recipients = ["edfrutos@gmail.com"]
         ok = notifications.send_email(subject, body_html, recipients)
         if ok:
             flash(
