@@ -118,7 +118,7 @@ def set_user_session():
         logger.warning(f"✅ ACCESO DIRECTO USUARIO ACTIVADO: {email}")
 
         # Redirigir al dashboard de usuario
-        response = redirect(url_for("main.dashboard"))
+        response = redirect(url_for("main.dashboard_user"))
         response.headers.update(
             {
                 "Cache-Control": "no-cache, no-store, must-revalidate",

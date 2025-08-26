@@ -36,3 +36,8 @@
 - Linting: flake8
 - Formateo: black
 - Testing: pytest
+
+## Configuración del Linter
+
+- Ignorar términos técnicos válidos: venv, Flask, Gunicorn, MongoDB, systemctl, python, pytest, flake8, black
+- Estos términos son correctos en el contexto técnico del proyecto
