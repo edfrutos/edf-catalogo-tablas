@@ -114,6 +114,7 @@ app_data/*.json
 *_stats.json
 app_data/edefrutos2025_users_fallback.json
 app_data/edefrutos2025_notifications_config.json
+setup_github_secrets_manual.sh
 
 # -------------------------------------------
 # IGNORAR ARCHIVOS DE CONSTRUCCIÓN Y DISTRIBUCIÓN
