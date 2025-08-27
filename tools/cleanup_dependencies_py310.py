@@ -8,13 +8,13 @@ Fecha: 2025-08-27
 Python: 3.10+
 """
 
-import os
+import os  # pyright: ignore[reportUnusedImport]
 import sys
 import subprocess
 import json
-import shutil
+import shutil  # pyright: ignore[reportUnusedImport]
 from pathlib import Path
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple  # pyright: ignore[reportUnusedImport]
 import logging
 
 
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class DependencyCleaner:
     """Clase para limpiar dependencias del proyecto"""
 
-    def __init__(self):
+    def __init__(self):  # pyright: ignore[reportMissingSuperCall]
         self.project_root = Path.cwd()
         self.backup_dir = self.project_root / "backups"
         self.logs_dir = self.project_root / "logs"
@@ -166,7 +166,7 @@ class DependencyCleaner:
             "test_after": ["Flask", "pymongo", "boto3", "pandas", "pytest"],
         }
 
-        logger.info(f"📋 Plan de limpieza creado:")
+        logger.info("📋 Plan de limpieza creado:")
         logger.info(f"   - Eliminar: {len(plan['remove'])} paquetes")
         logger.info(f"   - Mantener: {len(plan['keep'])} dependencias críticas")
         logger.info(f"   - Probar: {len(plan['test_after'])} funcionalidades")
@@ -213,7 +213,7 @@ class DependencyCleaner:
         for package in packages:
             try:
                 logger.info(f"   - Eliminando {package}...")
-                subprocess.run(
+                subprocess.run(  # pyright: ignore[reportUnusedCallResult]
                     [sys.executable, "-m", "pip", "uninstall", "-y", package],
                     check=True,
                     capture_output=True,
@@ -234,7 +234,7 @@ class DependencyCleaner:
         for package in test_packages:
             try:
                 # Intentar importar el paquete
-                subprocess.run(
+                subprocess.run(  # pyright: ignore[reportUnusedCallResult]
                     [
                         sys.executable,
                         "-c",
@@ -299,11 +299,17 @@ class DependencyCleaner:
         essential_packages.sort()
 
         with open(clean_requirements, "w") as f:
-            f.write("# Requirements limpios para Python 3.10\n")
-            f.write("# Generado automáticamente por cleanup_dependencies_py310.py\n")
-            f.write(f"# Fecha: {timestamp}\n\n")
+            f.write(
+                "# Requirements limpios para Python 3.10\n"
+            )  # pyright: ignore[reportUnusedCallResult]
+            f.write(
+                "# Generado automáticamente por cleanup_dependencies_py310.py\n"
+            )  # pyright: ignore[reportUnusedCallResult]
+            f.write(
+                f"# Fecha: {timestamp}\n\n"
+            )  # pyright: ignore[reportUnusedCallResult]
             for package in essential_packages:
-                f.write(f"{package}\n")
+                f.write(f"{package}\n")  # pyright: ignore[reportUnusedCallResult]
 
         logger.info(f"📝 Archivo requirements limpio generado: {clean_requirements}")
         return str(clean_requirements)
@@ -336,7 +342,7 @@ class DependencyCleaner:
         plan = self.create_cleanup_plan(redundant_packages)
 
         # Confirmar con el usuario
-        print(f"\n📋 Plan de limpieza:")
+        print("\n📋 Plan de limpieza:")
         print(f"   - Paquetes a eliminar: {len(plan['remove'])}")
         print(f"   - Dependencias críticas a mantener: {len(plan['keep'])}")
         print(f"   - Backup creado en: {backup_file}")

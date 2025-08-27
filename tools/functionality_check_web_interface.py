@@ -19,7 +19,7 @@ from flask import (
     Flask,
     render_template,
     jsonify,
-    request,  # pyright: ignore[reportUnusedImport]
+    request,
     flash,
     redirect,
     url_for,
@@ -328,7 +328,7 @@ def create_templates():
             <h1>🔍 Verificación de Funcionalidad</h1>
             <p>EDF_CatalogoDeTablas - Sistema de Verificación Automática</p>
         </div>
-        
+
         <div class="content">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -341,7 +341,7 @@ def create_templates():
                     </div>
                 {% endif %}
             {% endwith %}
-            
+
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-number">7</div>
@@ -360,7 +360,7 @@ def create_templates():
                     <div class="stat-label">Tamaño Entorno</div>
                 </div>
             </div>
-            
+
             <div style="text-align: center; margin: 40px 0;">
                 <form method="POST" action="{{ url_for('run_check') }}">
                     <button type="submit" class="check-button" id="runCheckBtn">
@@ -368,14 +368,14 @@ def create_templates():
                     </button>
                 </form>
             </div>
-            
+
             <div class="nav-links">
                 <a href="{{ url_for('results') }}">📊 Ver Últimos Resultados</a>
                 <a href="{{ url_for('history') }}">📚 Historial de Verificaciones</a>
             </div>
         </div>
     </div>
-    
+
     <script>
         // Auto-refresh para verificar estado
         setInterval(function() {
@@ -635,7 +635,7 @@ def create_templates():
                         </div>
                     {% endfor %}
                 </div>
-                
+
                 {% if results.recommendations %}
                     <div class="recommendations">
                         <h3>💡 Recomendaciones</h3>
@@ -656,7 +656,6 @@ def create_templates():
                     </div>
                 </div>
             {% endif %}
-            
             <div class="nav-links">
                 <a href="{{ url_for('index') }}">🏠 Inicio</a>
                 <a href="{{ url_for('history') }}">📚 Historial</a>
@@ -664,7 +663,6 @@ def create_templates():
             </div>
         </div>
     </div>
-    
     <script>
         // Auto-refresh si no hay resultados
         {% if not results %}
@@ -680,10 +678,10 @@ def create_templates():
     with open(
         templates_dir / "functionality_check_index.html", "w", encoding="utf-8"
     ) as f:
-        f.write(index_html)
+        _ = f.write(index_html)
 
     with open(templates_dir / "functionality_results.html", "w", encoding="utf-8") as f:
-        f.write(results_html)
+        _ = f.write(results_html)
 
     # Template de verificación en progreso
     progress_html = """<!DOCTYPE html>
@@ -762,7 +760,7 @@ def create_templates():
         </div>
         <p>Esta página se actualizará automáticamente cuando termine la verificación.</p>
     </div>
-    
+
     <script>
         // Auto-refresh cada 3 segundos
         setInterval(function() {
@@ -779,7 +777,7 @@ def create_templates():
 </html>"""
 
     with open(templates_dir / "check_in_progress.html", "w", encoding="utf-8") as f:
-        f.write(progress_html)
+        f.write(progress_html)  # pyright: ignore[reportUnusedCallResult]
 
     # Template de historial
     history_html = """<!DOCTYPE html>
@@ -912,7 +910,7 @@ def create_templates():
         <div class="header">
             <h1>📚 Historial de Verificaciones</h1>
         </div>
-        
+
         <div class="content">
             {% if history %}
                 {% for item in history %}
@@ -946,7 +944,7 @@ def create_templates():
                     <p>Ejecuta tu primera verificación para crear historial.</p>
                 </div>
             {% endif %}
-            
+
             <div class="nav-links">
                 <a href="{{ url_for('index') }}">🏠 Inicio</a>
                 <a href="{{ url_for('run_check') }}">🚀 Nueva Verificación</a>
@@ -957,7 +955,7 @@ def create_templates():
 </html>"""
 
     with open(templates_dir / "check_history.html", "w", encoding="utf-8") as f:
-        f.write(history_html)
+        f.write(history_html)  # pyright: ignore[reportUnusedCallResult]
 
     # Template de error
     error_html = """<!DOCTYPE html>
@@ -1036,7 +1034,7 @@ def create_templates():
 </html>"""
 
     with open(templates_dir / "check_error.html", "w", encoding="utf-8") as f:
-        f.write(error_html)
+        f.write(error_html)  # pyright: ignore[reportUnusedCallResult]
 
     # Template de no historial
     no_history_html = """<!DOCTYPE html>
@@ -1109,7 +1107,7 @@ def create_templates():
 </html>"""
 
     with open(templates_dir / "no_history.html", "w", encoding="utf-8") as f:
-        f.write(no_history_html)
+        f.write(no_history_html)  # pyright: ignore[reportUnusedCallResult]
 
 
 if __name__ == "__main__":

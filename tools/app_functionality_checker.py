@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class AppFunctionalityChecker:
     """Clase para verificar la funcionalidad completa de la aplicación"""
 
-    def __init__(self):
+    def __init__(self):  # pyright: ignore[reportMissingSuperCall]
         self.project_root = Path.cwd()
         self.logs_dir = self.project_root / "logs"
         self.logs_dir.mkdir(exist_ok=True)
@@ -208,7 +208,7 @@ class AppFunctionalityChecker:
             import boto3
 
             # Intentar crear cliente S3
-            s3 = boto3.client("s3")
+            boto3.client("s3")  # pyright: ignore[reportUnusedCallResult]
 
             result = {"status": "✅", "working": True, "client_created": True}
 
@@ -438,13 +438,13 @@ class AppFunctionalityChecker:
         logger.info("🚀 Iniciando verificación completa de funcionalidad")
 
         # Ejecutar verificaciones
-        self.check_python_version()
-        self.check_dependencies()
-        self.check_flask_app_creation()
-        self.check_mongodb_connection()
-        self.check_aws_s3_connection()
-        self.check_package_count()
-        self.check_environment_size()
+        self.check_python_version()  # pyright: ignore[reportUnusedCallResult]
+        self.check_dependencies()  # pyright: ignore[reportUnusedCallResult]
+        self.check_flask_app_creation()  # pyright: ignore[reportUnusedCallResult]
+        self.check_mongodb_connection()  # pyright: ignore[reportUnusedCallResult]
+        self.check_aws_s3_connection()  # pyright: ignore[reportUnusedCallResult]
+        self.check_package_count()  # pyright: ignore[reportUnusedCallResult]
+        self.check_environment_size()  # pyright: ignore[reportUnusedCallResult]
 
         # Generar resumen y recomendaciones
         self.generate_summary()
@@ -466,7 +466,7 @@ def main():
 
         # Mostrar resumen en consola
         summary = results["results"]["summary"]
-        print(f"\n🎯 RESUMEN DE VERIFICACIÓN")
+        print("\n🎯 RESUMEN DE VERIFICACIÓN")
         print(f"   Estado general: {summary['overall_status']}")
         print(
             f"   Verificaciones exitosas: {summary['passed_checks']}/{summary['total_checks']}"
@@ -477,7 +477,7 @@ def main():
         # Mostrar recomendaciones
         recommendations = results["results"]["recommendations"]
         if recommendations:
-            print(f"\n💡 RECOMENDACIONES:")
+            print("\n💡 RECOMENDACIONES:")
             for rec in recommendations:
                 icon = (
                     "🔴"
@@ -495,4 +495,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pyright: ignore[reportUnusedCallResult]
