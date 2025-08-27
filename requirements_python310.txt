@@ -281,3 +281,6 @@ pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pyparsing==3.2.3
 zope.interface==7.2
+
+# PyInstaller para builds de aplicaciones nativas
+PyInstaller==6.15.0
