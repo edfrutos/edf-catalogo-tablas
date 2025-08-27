@@ -205,9 +205,8 @@ class AppFunctionalityChecker:
     def check_aws_s3_connection(self) -> Dict[str, Any]:
         """Verificar conexión a AWS S3"""
         try:
-            import boto3
+            import boto3  # pyright: ignore[reportMissingTypeStubs]
 
-            # Intentar crear cliente S3
             boto3.client("s3")  # pyright: ignore[reportUnusedCallResult]
 
             result = {"status": "✅", "working": True, "client_created": True}
