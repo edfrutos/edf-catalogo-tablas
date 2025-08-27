@@ -32,8 +32,8 @@ jobs:
             "smtp": {
               "server": "smtp-relay.brevo.com",
               "port": 587,
-              "username": "${{ secrets.BREVO_SMTP_USERNAME }}",
-              "password": "${{ secrets.BREVO_SMTP_PASSWORD }}",
+              "username": "${{ secrets.BREVO_SMTP_USERNAME || 'default_username' }}",
+              "password": "${{ secrets.BREVO_SMTP_PASSWORD || 'default_password' }}",
               "use_tls": true
             },
             "brevo_api": {

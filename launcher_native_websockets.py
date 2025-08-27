@@ -14,6 +14,17 @@ import time
 import requests
 import webview
 
+# Cargar variables de entorno desde .env
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(override=True)  # pyright: ignore[reportUnusedCallResult]
+    print("✅ Variables de entorno cargadas desde .env")
+except ImportError:
+    print("⚠️  python-dotenv no disponible, usando variables de entorno del sistema")
+except Exception as e:
+    print(f"⚠️  Error al cargar .env: {e}")
+
 # Configurar directorios escribibles ANTES de cualquier importación
 if getattr(sys, "frozen", False):
     # Estamos en una aplicación empaquetada
@@ -73,7 +84,7 @@ def wait_for_server():
         time.sleep(1)
         if attempt % 5 == 0:
             print(
-                f"⏳ Esperando servidor Flask... "
+                f"⏳ Esperando servidor Flask... "  # pyright: ignore[reportImplicitStringConcatenation]
                 f"(intento {attempt + 1}/{max_attempts})"
             )
 
@@ -114,7 +125,9 @@ def main():
         }
 
         # Crear la ventana nativa
-        webview.create_window(**window_config)
+        webview.create_window(
+            **window_config
+        )  # pyright: ignore[reportUnusedCallResult]
 
         print("✅ Ventana nativa creada")
         print("🖥️  Aplicación web ejecutándose en ventana nativa")
@@ -123,7 +136,7 @@ def main():
         print("-" * 60)
 
         # Iniciar la aplicación con configuración mejorada
-        webview.start(debug=True, gui="native")
+        webview.start(debug=True, gui="native")  # pyright: ignore[reportArgumentType]
 
     except Exception as e:
         print(f"❌ Error al crear la ventana nativa: {e}")
@@ -132,7 +145,9 @@ def main():
         # Fallback: abrir en navegador
         import webbrowser
 
-        webbrowser.open("http://127.0.0.1:5004")
+        webbrowser.open(
+            "http://127.0.0.1:5004"
+        )  # pyright: ignore[reportUnusedCallResult]
 
         # Mantener el servidor corriendo
         try:

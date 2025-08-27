@@ -37,7 +37,7 @@
                         {% elif header == 'Documentos' %}
                             <i class="fas fa-file-alt"></i> {{ header }}
                         {% else %}
-                            {{ header }}
+                        {{ header }}
                         {% endif %}
                         <span class="sort-icon" onclick="sortTable({{ loop.index }}, 'text')">
                             <i class="bi bi-chevron-expand" id="sort-icon-{{ loop.index }}"></i>

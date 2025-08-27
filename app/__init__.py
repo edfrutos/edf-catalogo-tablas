@@ -30,8 +30,8 @@ from .routes.scripts_routes import scripts_bp
 from .routes.scripts_tools_routes import scripts_tools_bp
 from .routes.usuarios_routes import usuarios_bp
 
-# Cargar variables de entorno desde .env
-_ = load_dotenv()
+# Cargar variables de entorno desde .env (sobrescribir existentes)
+_ = load_dotenv(override=True)
 
 # Configurar el cliente de S3 si está habilitado
 use_s3 = os.environ.get("USE_S3", "false").lower() == "true"

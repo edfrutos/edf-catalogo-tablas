@@ -19,7 +19,9 @@ from quick_spell_check import check_file
 
 
 class CompleteSpellCheckWorkflow:
-    def __init__(self, project_root: str = "."):
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
+        self, project_root: str = "."
+    ):
         self.project_root = Path(project_root)
         self.config_file = self.project_root / "pyproject.toml"
         self.dictionaries_dir = self.project_root / "config" / "dictionaries"
@@ -116,7 +118,7 @@ class CompleteSpellCheckWorkflow:
 
     def categorize_words(self, words: Set[str]) -> Dict[str, List[str]]:
         """Categorizar palabras según su tipo y origen"""
-        categories = {
+        categories: Dict[str, List[str]] = {
             "python_modules": [],
             "technical_terms": [],
             "english_words": [],
@@ -232,7 +234,11 @@ class CompleteSpellCheckWorkflow:
         self, categories: Dict[str, List[str]]
     ) -> Dict[str, List[str]]:
         """Sugerir palabras para agregar al diccionario"""
-        suggestions = {"auto_add": [], "review_needed": [], "ignore": []}
+        suggestions: Dict[str, List[str]] = {
+            "auto_add": [],
+            "review_needed": [],
+            "ignore": [],
+        }
 
         # Agregar automáticamente
         suggestions["auto_add"].extend(categories["python_modules"])

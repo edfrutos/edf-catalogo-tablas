@@ -66,7 +66,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='EDF_CatalogoDeTablas_Web_Native.app',
-    icon=None,
+    icon='edf_developer.icns',
     bundle_identifier='com.edefrutos.catalogodetablas.websockets',
     info_plist={
         'CFBundleName': 'EDF Catálogo de Tablas WebSockets',

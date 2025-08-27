@@ -81,7 +81,7 @@ S3_BUCKET_NAME=tu_bucket_name_aqui
 
     # Guardar archivo .env
     with open(".env", "w", encoding="utf-8") as f:
-        f.write(env_content)
+        f.write(env_content)  # pyright: ignore[reportUnusedCallResult]
 
     print("✅ Archivo .env recreado")
     return ".env"
@@ -152,7 +152,7 @@ echo "   No lo commits al repositorio."
 
     # Guardar script
     with open("setup_github_secrets_manual.sh", "w", encoding="utf-8") as f:
-        f.write(script_content)
+        f.write(script_content)  # pyright: ignore[reportUnusedCallResult]
 
     # Hacer ejecutable
     os.chmod("setup_github_secrets_manual.sh", 0o755)
@@ -168,9 +168,9 @@ def main():
 
     try:
         # Recrear archivos
-        recreate_notifications_config()
-        recreate_env_file()
-        recreate_github_secrets_script()
+        recreate_notifications_config()  # pyright: ignore[reportUnusedCallResult]
+        recreate_env_file()  # pyright: ignore[reportUnusedCallResult]
+        recreate_github_secrets_script()  # pyright: ignore[reportUnusedCallResult]
 
         print("\n✅ Todos los archivos sensibles han sido recreados")
         print("\n📋 Archivos creados:")
