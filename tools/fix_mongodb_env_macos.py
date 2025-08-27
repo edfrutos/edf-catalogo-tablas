@@ -6,8 +6,8 @@ Autor: EDF Developer - 2025
 
 import os
 import sys
-import shutil
-from pathlib import Path
+import shutil  # pyright: ignore[reportUnusedImport]
+from pathlib import Path  # pyright: ignore[reportUnusedImport]
 
 
 def check_env_loading():
@@ -130,11 +130,11 @@ from pathlib import Path
 def load_env_variables():
     \"\"\"Carga variables de entorno desde .env\"\"\"
     env_path = Path("{env_path}")
-    
+
     if not env_path.exists():
         print(f"❌ Archivo .env no encontrado: {{env_path}}")
         return False
-    
+
     try:
         with open(env_path, 'r') as f:
             for line in f:
@@ -142,10 +142,10 @@ def load_env_variables():
                 if line and not line.startswith('#') and '=' in line:
                     key, value = line.split('=', 1)
                     os.environ[key] = value
-        
+
         print("✅ Variables de entorno cargadas desde .env")
         return True
-        
+
     except Exception as e:
         print(f"❌ Error cargando variables de entorno: {{e}}")
         return False
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     python_init_path = os.path.join(app_path, "load_env.py")
     try:
         with open(python_init_path, "w") as f:
-            f.write(python_init_script)
+            f.write(python_init_script)  # pyright: ignore[reportUnusedCallResult]
 
         os.chmod(python_init_path, 0o755)
         print(f"✅ Script Python de carga creado: {python_init_path}")

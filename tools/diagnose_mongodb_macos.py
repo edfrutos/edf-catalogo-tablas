@@ -40,7 +40,7 @@ def check_environment():
     if os.path.exists(env_path):
         print("✅ Archivo .env encontrado")
         try:
-            with open(env_path) as f:
+            with open(env_path, "r") as f:
                 content = f.read()
                 if "MONGO_URI" in content:
                     print("✅ MONGO_URI encontrada en .env")
@@ -94,12 +94,10 @@ def test_mongodb_connection(mongo_uri):
 
         # Agregar configuración SSL si es necesario
         if mongo_uri.startswith("mongodb+srv://"):
-            config["tlsCAFile"] = certifi.where()  # pyright: ignore[reportArgumentType]
+            config["tlsCAFile"] = certifi.where()
             print("🔒 Configuración SSL habilitada para MongoDB Atlas")
 
-        client = pymongo.MongoClient(
-            mongo_uri, **config  # pyright: ignore[reportArgumentType]
-        )
+        client = pymongo.MongoClient(mongo_uri, **config)
 
         # Probar conexión con ping
         result = client.admin.command("ping")
