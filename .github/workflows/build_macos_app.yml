@@ -18,6 +18,56 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Configure secrets and environment
+        run: |
+          echo "🔧 Configurando secrets y variables de entorno..."
+          
+          # Crear directorio app_data si no existe
+          mkdir -p app_data
+          
+          # Crear archivo de configuración con secrets
+          cat > app_data/edefrutos2025_notifications_config.json << EOF
+          {
+            "enabled": true,
+            "smtp": {
+              "server": "smtp-relay.brevo.com",
+              "port": 587,
+              "username": "${{ secrets.BREVO_SMTP_USERNAME }}",
+              "password": "${{ secrets.BREVO_SMTP_PASSWORD }}",
+              "use_tls": true
+            },
+            "brevo_api": {
+              "api_key": "${{ secrets.BREVO_API_KEY }}",
+              "sender_name": "Administrador",
+              "sender_email": "no-reply@edefrutos2025.xyz"
+            },
+            "use_api": true,
+            "recipients": [
+              "${{ secrets.NOTIFICATION_EMAIL_1 }}",
+              "${{ secrets.NOTIFICATION_EMAIL_2 }}"
+            ],
+            "thresholds": {
+              "cpu": 80,
+              "memory": 90,
+              "disk": 85,
+              "error_rate": 5
+            },
+            "cooldown_minutes": 60,
+            "last_alerts": {}
+          }
+          EOF
+          
+          # Crear archivo .env con variables de entorno
+          cat > .env << EOF
+          MONGO_URI=${{ secrets.MONGO_URI }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
+          BREVO_SMTP_USERNAME=${{ secrets.BREVO_SMTP_USERNAME }}
+          BREVO_SMTP_PASSWORD=${{ secrets.BREVO_SMTP_PASSWORD }}
+          EOF
+          
+          echo "✅ Secrets y variables de entorno configurados"
+
       - name: Verify checkout
         run: |
           echo "🔍 Verificando checkout del código..."
