@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Verificaciones - EDF_CatalogoDeTablas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px;
+        }
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+        }
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .history-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .history-date {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .history-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .history-stat {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        .history-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .history-label {
+            color: #7f8c8d;
+            font-size: 0.8em;
+        }
+        .history-actions {
+            margin-top: 15px;
+            text-align: right;
+        }
+        .history-actions a {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        .history-actions a:hover {
+            background: #2980b9;
+        }
+        .nav-links {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .nav-links a {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 20px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        .nav-links a:hover {
+            background: #3498db;
+            color: white;
+        }
+        .no-history {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Historial de Verificaciones</h1>
+        </div>
+        
+        <div class="content">
+            {% if history %}
+                {% for item in history %}
+                    <div class="history-item">
+                        <div class="history-header">
+                            <div class="history-title">{{ item.filename }}</div>
+                            <div class="history-date">{{ item.timestamp[:19].replace('T', ' ') }}</div>
+                        </div>
+                        <div class="history-stats">
+                            <div class="history-stat">
+                                <div class="history-number">{{ item.summary.passed_checks }}/{{ item.summary.total_checks }}</div>
+                                <div class="history-label">Verificaciones</div>
+                            </div>
+                            <div class="history-stat">
+                                <div class="history-number">{{ item.summary.success_rate }}%</div>
+                                <div class="history-label">Éxito</div>
+                            </div>
+                            <div class="history-stat">
+                                <div class="history-number">{{ item.summary.overall_status }}</div>
+                                <div class="history-label">Estado</div>
+                            </div>
+                        </div>
+                        <div class="history-actions">
+                            <a href="{{ url_for('view_result', filename=item.filename) }}">📊 Ver Detalles</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-history">
+                    <h2>📭 No hay historial disponible</h2>
+                    <p>Ejecuta tu primera verificación para crear historial.</p>
+                </div>
+            {% endif %}
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}">🏠 Inicio</a>
+                <a href="{{ url_for('run_check') }}">🚀 Nueva Verificación</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
