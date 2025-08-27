@@ -1,0 +1,104 @@
+[2025-08-27 20:01:25] INFO in app: ✅ Sistema de logging unificado inicializado
+[2025-08-27 20:01:25] INFO in root: ✅ Logging unificado configurado - Directorio: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/logs
+[2025-08-27 20:01:25] INFO in app: 🔒 Middleware de seguridad inicializado
+[2025-08-27 20:01:25] INFO in app: Blueprint de API registrado correctamente
+[2025-08-27 20:01:25] INFO in app: Blueprint de testing registrado correctamente
+[2025-08-27 20:01:25] INFO in app: test_session_routes no encontrado - omitiendo registro
+[2025-08-27 20:01:26] INFO in app.routes.maintenance_routes: Rutas de mantenimiento reorganizadas registradas
+[2025-08-27 20:01:26] INFO in app.routes.maintenance_routes: Rutas de API de mantenimiento registradas
+[2025-08-27 20:01:26] INFO in app: Blueprints de mantenimiento y API registrados correctamente
+[2025-08-27 20:01:26] INFO in app: Blueprint de emergencia (emergency_bp) registrado correctamente.
+[2025-08-27 20:01:26] WARNING in app: Blueprints de administración adicionales deshabilitados temporalmente
+[2025-08-27 20:01:26] INFO in app.notifications: Sistema de notificaciones inicializado
+[2025-08-27 20:01:26] INFO in app.monitoring: Iniciando hilo de monitoreo
+[2025-08-27 20:01:26] INFO in app.monitoring: Inicializando sistema de monitoreo
+[2025-08-27 20:01:26] INFO in app.monitoring: Métricas iniciales: CPU=18.0%, Memoria=62.7%
+[2025-08-27 20:01:26] INFO in app: Sistema de monitoreo inicializado correctamente
+[2025-08-27 20:01:26] INFO in app: Blueprint de debug de usuario registrado (TEMPORAL)
+[2025-08-27 20:01:27] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:27] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:27] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:27] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:28] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:28] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:35] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:41] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:50] INFO in app.routes.auth_routes: === INICIO DE INTENTO DE LOGIN ===
+[2025-08-27 20:01:50] INFO in app.routes.auth_routes: Valor recibido en formulario (sin normalizar): 'edefrutos'
+[2025-08-27 20:01:50] INFO in app.routes.auth_routes: Datos recibidos - Email: edefrutos
+[2025-08-27 20:01:50] INFO in app.routes.auth_routes: Buscando usuario con identificador: edefrutos
+[2025-08-27 20:01:50] INFO in app.models.database: [find_user_by_email_or_email] INICIO - Buscando: 'edefrutos'
+[2025-08-27 20:01:50] INFO in app.models.database: [find_user_by_email_or_email] Identificador normalizado: 'edefrutos'
+[2025-08-27 20:01:50] INFO in app.models.database: Conectado a MongoDB: cluster0.abpvipa.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority&appName=Cluster0&tlsAllowInvalidCertificates=true
+[2025-08-27 20:01:50] INFO in app.models.database: [find_user_by_email_or_email] Colección obtenida: Collection(Database(MongoClient(host=['ac-rpgo9ti-shard-00-01.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-02.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-00.abpvipa.mongodb.net:27017'], document_class=dict, tz_aware=False, connect=True, retrywrites=True, w='majority', appname='Cluster0', tlsallowinvalidcertificates=True, authsource='admin', replicaset='atlas-y9z7tw-shard-0', tls=True, tlsdisableocspendpointcheck=True), 'app_catalogojoyero_nueva'), 'users')
+[2025-08-27 20:01:50] INFO in app.models.database: [find_user_by_email_or_email] Query exacta: {'$or': [{'email': {'$regex': '^edefrutos$', '$options': 'i'}}, {'username': {'$regex': '^edefrutos$', '$options': 'i'}}, {'nombre': {'$regex': '^edefrutos$', '$options': 'i'}}]}
+[2025-08-27 20:01:51] INFO in app.models.database: [find_user_by_email_or_email] Resultado query exacta: True
+[2025-08-27 20:01:51] INFO in app.models.database: [find_user_by_email_or_email] Usuario encontrado por username: edfrutos@gmail.com
+[2025-08-27 20:01:51] INFO in app.routes.auth_routes: Usuario encontrado: edfrutos@gmail.com
+[2025-08-27 20:01:51] INFO in app.routes.auth_routes: Usuario encontrado: edefrutos
+[2025-08-27 20:01:51] INFO in app.routes.auth_routes: Sesión iniciada exitosamente para edfrutos@gmail.com
+[2025-08-27 20:01:51] INFO in app.routes.auth_routes: Redirigiendo a panel de administración
+[2025-08-27 20:01:51] INFO in app.routes.auth_routes: Login exitoso para: edefrutos
+[2025-08-27 20:01:51] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:51] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
+[2025-08-27 20:01:51] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:01:51] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:02:08] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
+[2025-08-27 20:02:08] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:02:33] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:02:33] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:02:33] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:02:33] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:02:33] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:02:39] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
+[2025-08-27 20:02:39] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:03:23] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
+[2025-08-27 20:03:23] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:04] INFO in app: ✅ Sistema de logging unificado inicializado
+[2025-08-27 20:11:04] INFO in root: ✅ Logging unificado configurado - Directorio: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/logs
+[2025-08-27 20:11:04] INFO in app: 🔒 Middleware de seguridad inicializado
+[2025-08-27 20:11:04] INFO in app: Blueprint de API registrado correctamente
+[2025-08-27 20:11:04] INFO in app: Blueprint de testing registrado correctamente
+[2025-08-27 20:11:04] INFO in app: test_session_routes no encontrado - omitiendo registro
+[2025-08-27 20:11:04] INFO in app.routes.maintenance_routes: Rutas de mantenimiento reorganizadas registradas
+[2025-08-27 20:11:04] INFO in app.routes.maintenance_routes: Rutas de API de mantenimiento registradas
+[2025-08-27 20:11:04] INFO in app: Blueprints de mantenimiento y API registrados correctamente
+[2025-08-27 20:11:04] INFO in app: Blueprint de emergencia (emergency_bp) registrado correctamente.
+[2025-08-27 20:11:04] WARNING in app: Blueprints de administración adicionales deshabilitados temporalmente
+[2025-08-27 20:11:04] INFO in app.notifications: Sistema de notificaciones inicializado
+[2025-08-27 20:11:04] INFO in app.monitoring: Iniciando hilo de monitoreo
+[2025-08-27 20:11:04] INFO in app.monitoring: Inicializando sistema de monitoreo
+[2025-08-27 20:11:04] INFO in app.monitoring: Métricas iniciales: CPU=90.1%, Memoria=62.9%
+[2025-08-27 20:11:04] INFO in app: Sistema de monitoreo inicializado correctamente
+[2025-08-27 20:11:04] INFO in app: Blueprint de debug de usuario registrado (TEMPORAL)
+[2025-08-27 20:11:04] INFO in app.notifications: Enviando correo via API de Brevo a 2 destinatarios
+[2025-08-27 20:11:04] INFO in app.notifications: Correo enviado exitosamente via API de Brevo
+[2025-08-27 20:11:04] INFO in app.notifications: Se han enviado 1 alertas por correo
+[2025-08-27 20:11:05] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:05] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:05] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
+[2025-08-27 20:11:05] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:05] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:06] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:06] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:06] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
+[2025-08-27 20:11:06] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:06] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:10] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
+[2025-08-27 20:11:10] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:22] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:25] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:30] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:30] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:30] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:30] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:30] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:40] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:40] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:40] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
+[2025-08-27 20:11:41] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:11:41] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:12:56] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:12:56] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:13:57] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-27 20:13:57] INFO in app: [COOKIES] Set-Cookie enviada: None
