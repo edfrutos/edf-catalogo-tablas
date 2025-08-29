@@ -16,7 +16,14 @@ from typing import Any, Dict, List, Optional
 
 import psutil
 from bson import ObjectId
-from flask import Blueprint, flash, jsonify, redirect, request, send_file, url_for
+from flask import (
+    Blueprint,
+    flash,
+    jsonify,
+    redirect,
+    request,
+    url_for,
+)
 from pymongo import errors as pymongo_errors
 
 from app.database import get_mongo_db
@@ -1510,14 +1517,68 @@ def download_csv_file(temp_filename):
             f"system_status_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         )
 
-        # Enviar archivo
-        return send_file(
-            temp_file_path,
-            as_attachment=True,
-            download_name=download_filename,
-            mimetype="text/csv",
+        # Leer el contenido del archivo
+        with open(temp_file_path, "rb") as f:
+            file_content = f.read()
+
+        # GUARDAR ARCHIVO EN DOWNLOADS
+        downloads_path = os.path.expanduser("~/Downloads")
+        downloads_file_path = os.path.join(downloads_path, download_filename)
+
+        try:
+            with open(downloads_file_path, "wb") as f:
+                f.write(file_content)  # pyright: ignore[reportUnusedCallResult]
+            log_info(f"Archivo CSV guardado en Downloads: {downloads_file_path}")
+        except Exception as e:
+            log_error(f"Error guardando archivo en Downloads: {str(e)}")
+
+        # Crear respuesta con headers específicos para forzar descarga
+        from flask import Response
+
+        response = Response(
+            file_content,
+            mimetype="application/octet-stream",
+            headers={
+                "Content-Disposition": f'attachment; filename="{download_filename}"',
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+                "Content-Type": "application/octet-stream",
+                "X-Content-Type-Options": "nosniff",
+            },
         )
+
+        return response
 
     except Exception as e:
         log_error(f"Error descargando archivo CSV temporal: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@maintenance_bp.route("/open-downloads-folder", methods=["GET"])
+@admin_required
+def open_downloads_folder():
+    """Abre la carpeta de descargas en el Finder"""
+    try:
+        import subprocess
+        import os
+
+        # Obtener la carpeta de descargas del usuario
+        downloads_path = os.path.expanduser("~/Downloads")
+
+        # Abrir Finder en la carpeta de descargas
+        subprocess.run(
+            ["open", downloads_path], check=True
+        )  # pyright: ignore[reportUnusedCallResult]
+
+        log_info(f"Carpeta de descargas abierta: {downloads_path}")
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Carpeta de descargas abierta: {downloads_path}",
+            }
+        )
+
+    except Exception as e:
+        log_error(f"Error abriendo carpeta de descargas: {str(e)}")
         return jsonify({"error": str(e)}), 500

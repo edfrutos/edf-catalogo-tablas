@@ -7,11 +7,10 @@
 
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from bson import ObjectId
 from dotenv import load_dotenv
-from flask import current_app
 from pymongo import MongoClient
 
 # Cargar variables de entorno
@@ -26,17 +25,21 @@ db = None
 users_collection = None
 resets_collection = None
 
+
 def get_mongo_client():
     """Obtiene el cliente de MongoDB."""
     global client
     if client is None:
-        mongo_uri = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+        mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
         if not mongo_uri:
-            raise ValueError("No se ha configurado MONGO_URI en las variables de entorno")
+            raise ValueError(
+                "No se ha configurado MONGO_URI en las variables de entorno"
+            )
         # Usamos solo tlsAllowInvalidCertificates ya que es el más moderno y recomendado
         client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
         logger.info(f"Conectado a MongoDB: {mongo_uri.split('@')[-1]}")
     return client
+
 
 def get_mongo_db():
     """
@@ -44,8 +47,9 @@ def get_mongo_db():
     """
     global db
     client = get_mongo_client()
-    db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
+    db_name = os.getenv("MONGODB_DB", "app_catalogojoyero_nueva")
     return client[db_name]
+
 
 def get_users_collection():
     """Obtiene la colección de usuarios."""
@@ -55,6 +59,7 @@ def get_users_collection():
         users_collection = db.users
     return users_collection
 
+
 def get_resets_collection():
     """Obtiene la colección de reseteos de contraseña."""
     global resets_collection
@@ -62,6 +67,7 @@ def get_resets_collection():
         db = get_mongo_db()
         resets_collection = db.password_resets
     return resets_collection
+
 
 def find_user_by_email_or_email(identifier):
     """Busca un usuario por email, nombre de usuario o nombre real (insensible a mayúsculas y espacios)"""
@@ -73,7 +79,9 @@ def find_user_by_email_or_email(identifier):
 
     # Normalizar el identificador
     identifier = identifier.lower().strip()
-    logger.info(f"[find_user_by_email_or_email] Identificador normalizado: '{identifier}'")
+    logger.info(
+        f"[find_user_by_email_or_email] Identificador normalizado: '{identifier}'"
+    )
 
     collection = get_users_collection()
     logger.info(f"[find_user_by_email_or_email] Colección obtenida: {collection}")
@@ -94,7 +102,9 @@ def find_user_by_email_or_email(identifier):
     logger.info(f"[find_user_by_email_or_email] Query exacta: {query}")
 
     user = collection.find_one(query)
-    logger.info(f"[find_user_by_email_or_email] Resultado query exacta: {user is not None}")
+    logger.info(
+        f"[find_user_by_email_or_email] Resultado query exacta: {user is not None}"
+    )
 
     if user:
         # Log which field matched
@@ -121,7 +131,9 @@ def find_user_by_email_or_email(identifier):
         logger.info(f"[find_user_by_email_or_email] Query parcial: {query_partial}")
 
         user = collection.find_one(query_partial)
-        logger.info(f"[find_user_by_email_or_email] Resultado query parcial: {user is not None}")
+        logger.info(
+            f"[find_user_by_email_or_email] Resultado query parcial: {user is not None}"
+        )
 
         if user:
             logger.info(
@@ -142,7 +154,9 @@ def find_user_by_email_or_email(identifier):
         for domain in common_domains:
             email = f"{identifier}{domain}"
             query_domain = {"email": {"$regex": f"^{email}$", "$options": "i"}}
-            logger.info(f"[find_user_by_email_or_email] Probando dominio {domain}: {query_domain}")
+            logger.info(
+                f"[find_user_by_email_or_email] Probando dominio {domain}: {query_domain}"
+            )
 
             user = collection.find_one(query_domain)
             if user:
@@ -151,28 +165,35 @@ def find_user_by_email_or_email(identifier):
                 )
                 return user
 
-    logger.warning(f"[find_user_by_email_or_email] Usuario no encontrado con identificador: {identifier}")
+    logger.warning(
+        f"[find_user_by_email_or_email] Usuario no encontrado con identificador: {identifier}"
+    )
     return None
+
 
 def find_reset_token(token):
     """Busca un token de reseteo de contraseña."""
     resets = get_resets_collection()
-    return resets.find_one({"token": token, "used": False, "expires_at": {"$gt": datetime.utcnow()}})
+    return resets.find_one(
+        {"token": token, "used": False, "expires_at": {"$gt": datetime.utcnow()}}
+    )
+
 
 def update_user_password(user_id, new_password):
     """Actualiza la contraseña de un usuario."""
     users = get_users_collection()
     result = users.update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {"password": new_password, "updated_at": datetime.utcnow()}}
+        {"$set": {"password": new_password, "updated_at": datetime.utcnow()}},
     )
     return result.modified_count > 0
+
 
 def mark_token_as_used(token_id):
     """Marca un token como usado."""
     resets = get_resets_collection()
     result = resets.update_one(
         {"_id": ObjectId(token_id)},
-        {"$set": {"used": True, "used_at": datetime.utcnow()}}
+        {"$set": {"used": True, "used_at": datetime.utcnow()}},
     )
     return result.modified_count > 0

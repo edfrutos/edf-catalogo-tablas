@@ -1081,24 +1081,70 @@ $(function () {
         method: "POST",
         xhrFields: { withCredentials: true },
         success: function (response, status, xhr) {
+          console.log("📊 Respuesta CSV:", response);
+          
           // Manejar respuesta JSON
           if (response.success && response.download_url) {
-            // Crear enlace temporal para descarga
-            const link = document.createElement("a");
-            link.href = response.download_url;
-            link.download = response.filename || 'system_status.csv';
-            link.style.display = 'none';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showAlert("Archivo CSV exportado correctamente", "success");
+            // Usar fetch para descargar el archivo como blob
+            fetch(window.location.origin + response.download_url, {
+              method: 'GET',
+              credentials: 'include'
+            })
+            .then(response => response.blob())
+            .then(blob => {
+              // Crear URL del blob
+              const url = window.URL.createObjectURL(blob);
+              
+              // Crear enlace temporal
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = response.filename || 'system_status.csv';
+              link.style.display = 'none';
+              
+              // Forzar descarga
+              document.body.appendChild(link);
+              link.click();
+              
+              // Limpiar
+              setTimeout(() => {
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+              }, 100);
+              
+              // Mostrar notificación con ubicación
+              const filename = response.filename || 'system_status.csv';
+              showAlert(`✅ Archivo CSV exportado exitosamente: ${filename}<br><br>📁 Ubicación: Carpeta de Descargas`, "success");
+              
+              // Abrir carpeta de descargas automáticamente
+              setTimeout(() => {
+                // Llamar a la ruta del servidor para abrir la carpeta de descargas
+                fetch('/admin/maintenance/open-downloads-folder', {
+                  method: 'GET',
+                  credentials: 'include'
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.success) {
+                    showAlert(`📁 Carpeta de descargas abierta<br><br>El archivo ${filename} está disponible en Downloads`, "info");
+                  } else {
+                    showAlert(`📁 Para ver el archivo:<br><br>1. Abre Finder<br>2. Ve a "Descargas"<br>3. Busca: ${filename}`, "info");
+                  }
+                })
+                .catch(error => {
+                  showAlert(`📁 Para ver el archivo:<br><br>1. Abre Finder<br>2. Ve a "Descargas"<br>3. Busca: ${filename}`, "info");
+                });
+              }, 2000);
+            })
+            .catch(error => {
+              console.error("Error descargando archivo:", error);
+              showAlert("Error al descargar el archivo CSV", "danger");
+            });
           } else {
-            showAlert("Error en la respuesta del servidor", "danger");
+            showAlert("Error en la respuesta del servidor: " + (response.error || "Respuesta inválida"), "danger");
           }
         },
         error: function (xhr, status, error) {
+          console.error("❌ Error exportando CSV:", xhr);
           const errorMsg = xhr.responseJSON ? xhr.responseJSON.error : "Error al exportar CSV";
           showAlert(`Error al exportar CSV: ${errorMsg}`, "danger");
         },
@@ -1141,46 +1187,44 @@ $(function () {
     });
   }
 
-  // Función para cargar backups locales
+  // Función para cargar backups locales con manejo de errores mejorado
   function loadLocalBackups() {
-    console.log("🔄 Cargando backups locales... - SIMPLIFICADO");
-    console.log("🔍 Elementos del modal:", {
-      loading: $("#localBackupsLoading").length,
-      content: $("#localBackupsContent").length,
-      empty: $("#localBackupsEmpty").length,
-      error: $("#localBackupsError").length,
-      tableBody: $("#localBackupsTableBody").length
-    });
-
+    console.log("🔄 Cargando backups locales...");
+    
     $("#localBackupsLoading").show();
     $("#localBackupsContent").hide();
-    $("#localBackupsEmpty").hide();
-    $("#localBackupsError").hide();
-    $("#localBackupsTableBody").empty();
-
+    
     $.ajax({
       url: "/admin/maintenance/local-backups",
       method: "GET",
       xhrFields: { withCredentials: true },
-      success: function (response) {
-        console.log("📥 Respuesta de backups locales recibida:", response);
+      timeout: 10000,
+      success: function(response) {
+        console.log("✅ Backups locales cargados:", response);
         $("#localBackupsLoading").hide();
-
-        if (response.success && response.backups && response.backups.length > 0) {
+        $("#localBackupsContent").show();
+        
+        if (response.success && response.backups) {
           displayLocalBackups(response.backups);
-          $("#localBackupsContent").show();
-          // Inicializar acciones masivas después de mostrar los backups
-          initializeLocalBackupsMassiveActions();
         } else {
-          $("#localBackupsEmpty").show();
-          $("#localBackupsCount").text("0 backups");
+          showModalAlert("Error al cargar backups: " + (response.error || "Respuesta inválida"), "danger");
         }
       },
-      error: function (xhr, status, error) {
-        console.error("❌ Error cargando backups locales:", xhr.status, xhr.statusText, error);
+      error: function(xhr, status, error) {
+        console.error("❌ Error cargando backups locales:", xhr);
         $("#localBackupsLoading").hide();
-        $("#localBackupsError").show();
-        $("#localBackupsErrorMessage").text(`Error: ${xhr.statusText || "Error de conexión"}`);
+        $("#localBackupsContent").show();
+        
+        let errorMsg = "Error de conexión";
+        if (xhr.status === 401) {
+          errorMsg = "Sesión expirada. Por favor, recarga la página.";
+        } else if (xhr.status === 403) {
+          errorMsg = "Acceso denegado. Verifica tus permisos.";
+        } else if (xhr.responseJSON && xhr.responseJSON.error) {
+          errorMsg = xhr.responseJSON.error;
+        }
+        
+        showModalAlert("Error al cargar backups locales: " + errorMsg, "danger");
       }
     });
   }
@@ -1409,9 +1453,13 @@ $(function () {
 
             if (errorCount === 0) {
               showModalAlert(`✅ ${successCount} backup${successCount !== 1 ? 's' : ''} subido${successCount !== 1 ? 's' : ''} correctamente a Google Drive`, "success");
+              // REFRESCAR LA LISTA DESPUÉS DE SUBIDA MASIVA
+              loadLocalBackups();
             } else {
               const errorMsg = errors.join("\n");
               showModalAlert(`⚠️ Subida completada con errores:\n\n${errorMsg}`, "warning");
+              // REFRESCAR LA LISTA AUN CON ERRORES
+              loadLocalBackups();
             }
           }
         }
@@ -1513,6 +1561,8 @@ $(function () {
         console.log("✅ Respuesta de subida individual:", response);
         if (response.success) {
           showModalAlert(`✅ ${response.message}`, "success");
+          // REFRESCAR LA LISTA DESPUÉS DE SUBIR
+          loadLocalBackups();
         } else {
           showModalAlert(`❌ Error al subir: ${response.error}`, "danger");
         }

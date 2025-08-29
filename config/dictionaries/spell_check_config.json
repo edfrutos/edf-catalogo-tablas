@@ -1,0 +1,71 @@
+{
+  "version": "0.2",
+  "language": "en,es",
+  "words": [],
+  "ignoreWords": [],
+  "ignorePaths": [
+    "node_modules/**",
+    ".git/**",
+    "venv/**",
+    "__pycache__/**",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    "build/**",
+    "dist/**",
+    "*.egg-info/**"
+  ],
+  "fileTypes": {
+    "code": {
+      "extensions": [
+        ".py",
+        ".js",
+        ".ts",
+        ".java",
+        ".cpp",
+        ".c",
+        ".h"
+      ],
+      "ignoreSpelling": true,
+      "checkComments": true,
+      "checkStrings": false
+    },
+    "documentation": {
+      "extensions": [
+        ".md",
+        ".rst",
+        ".txt",
+        ".adoc"
+      ],
+      "ignoreSpelling": false,
+      "checkComments": true,
+      "checkStrings": true
+    },
+    "configuration": {
+      "extensions": [
+        ".toml",
+        ".yaml",
+        ".yml",
+        ".json",
+        ".ini",
+        ".cfg"
+      ],
+      "ignoreSpelling": true,
+      "checkComments": true,
+      "checkStrings": false
+    },
+    "web": {
+      "extensions": [
+        ".html",
+        ".htm",
+        ".xml",
+        ".css",
+        ".scss",
+        ".sass"
+      ],
+      "ignoreSpelling": false,
+      "checkComments": true,
+      "checkStrings": true
+    }
+  }
+}

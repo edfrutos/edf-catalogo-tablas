@@ -31,7 +31,7 @@ if getattr(sys, "frozen", False):
     # Configurar entorno de producción
     os.environ["FLASK_ENV"] = "production"
     os.environ["FLASK_DEBUG"] = "0"
-    print(f"🔧 Configurado entorno de producción")
+    print("🔧 Configurado entorno de producción")
 
 
 def start_flask_server():
@@ -110,7 +110,7 @@ def main():
         }
 
         # Crear ventana
-        window = webview.create_window(**window_config)
+        webview.create_window(**window_config)
 
         print("✅ Ventana nativa creada")
         print("🖥️  Aplicación ejecutándose en ventana nativa")

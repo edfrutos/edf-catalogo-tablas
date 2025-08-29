@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 
 from app import notifications
 from app.database import get_mongo_db
-from app.decorators import login_required  # type: ignore[attr-defined]
+from app.decorators import login_required
 from app.utils.image_utils import get_images_for_template
 
 main_bp = Blueprint("main", __name__)

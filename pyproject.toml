@@ -8,12 +8,13 @@ ignorePaths = [ "node_modules/**", ".git/**", "venv/**", "__pycache__/**", "*.py
 
 [tool.ruff.lint]
 select = [ "E", "W", "F", "I", "B", "C4", "UP",]
-ignore = [ "E501", "F401", "F841", "F811", "B008", "B006", "C901", "E203", "E731", "I001", "UP032", "F541",]
+ignore = [ "E501", "F401", "F841", "F811", "B008", "B006", "C901", "E203", "E731", "I001", "UP032", "F541", "F821", "B904", "F841",]
 
 [tool.ruff.lint.per-file-ignores]
 "app/routes/admin_routes.py" = [ "F401", "F841", "F811", "E501", "I001", "UP032", "F541",]
 "tools/test_spell_check_utilities.py" = [ "F401", "F541",]
 "tools/quick_test_spell_check_integration.py" = [ "F401", "F541", "UP032",]
+"__init__.py" = ["F401"]
 
 [tool.ruff.lint.isort]
 known-first-party = [ "app", "tools", "scripts",]

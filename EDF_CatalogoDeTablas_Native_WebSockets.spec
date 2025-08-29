@@ -3,7 +3,7 @@
 block_cipher = None
 
 a = Analysis(
-    ['launcher_native_websockets.py'],
+    ['launcher_native_websockets_fixed.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -12,6 +12,8 @@ a = Analysis(
         ('wsgi.py', '.'),
         ('.env', '.'),
         ('requirements.txt', '.'),
+        ('static', 'static'),
+        ('credentials.json', '.'),
     ],
     hiddenimports=[
         'flask', 'flask_login', 'flask_session', 'pymongo', 'requests',

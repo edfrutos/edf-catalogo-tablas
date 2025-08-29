@@ -1,0 +1,27 @@
+{
+  "enabled": true,
+  "smtp": {
+    "server": "smtp-relay.brevo.com",
+    "port": 587,
+    "username": "YOUR_BREVO_USERNAME",
+    "password": "YOUR_BREVO_PASSWORD",
+    "use_tls": true
+  },
+  "brevo_api": {
+    "api_key": "YOUR_BREVO_API_KEY",
+    "sender_name": "Administrador",
+    "sender_email": "no-reply@edefrutos2025.xyz"
+  },
+  "use_api": true,
+  "recipients": [
+    "your-email@example.com"
+  ],
+  "thresholds": {
+    "cpu": 85,
+    "memory": 85,
+    "disk": 85,
+    "error_rate": 10
+  },
+  "cooldown_minutes": 60,
+  "last_alerts": {}
+}

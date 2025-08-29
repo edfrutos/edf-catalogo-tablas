@@ -22,8 +22,10 @@ def check_native_app():
 
         # Verificar estructura
         contents_path = os.path.join(app_path, "Contents")
-        macos_path = os.path.join(contents_path, "MacOS")
-        resources_path = os.path.join(contents_path, "Resources")
+        macos_path = os.path.join(
+            contents_path, "MacOS"
+        resources_path = os.path.join(
+            contents_path, "Resources"
 
         if os.path.exists(contents_path):
             print("✅ Estructura de aplicación válida")

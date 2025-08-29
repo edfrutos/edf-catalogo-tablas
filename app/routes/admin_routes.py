@@ -18,7 +18,7 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-import psutil  # type: ignore
+import psutil
 import requests
 from bson import ObjectId
 from flask import (
@@ -33,7 +33,7 @@ from flask import (
     session,
     url_for,
 )
-from flask_login import current_user  # type: ignore
+from flask_login import current_user
 from werkzeug.security import generate_password_hash
 
 import app.monitoring as monitoring
@@ -1791,11 +1791,11 @@ def test_email():
         mail_default_sender_email = os.environ.get("MAIL_DEFAULT_SENDER_EMAIL")
 
         logger.info(
-            f"[ADMIN] Configuración de correo: Servidor={mail_server}, Puerto={mail_port}, "
+            f"[ADMIN] Configuración de correo: Servidor={mail_server}, Puerto={mail_port}, "  # type: ignore
             f"Usuario={mail_username}, TLS={mail_use_tls}"
         )
         logger.info(
-            f"[ADMIN] Remitentes configurados: DEFAULT_SENDER={mail_default_sender}, "
+            f"[ADMIN] Remitentes configurados: DEFAULT_SENDER={mail_default_sender}, "  # type: ignore
             f"SENDER_NAME={mail_default_sender_name}, SENDER_EMAIL={mail_default_sender_email}"
         )
 
@@ -2486,9 +2486,9 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
                 if nuevas_imagenes:
                     existing_images = updated_row.get("images", [])
                     if isinstance(existing_images, list):
-                        updated_row["images"] = existing_images + nuevas_imagenes  # type: ignore
+                        updated_row["images"] = existing_images + nuevas_imagenes
                     else:
-                        updated_row["images"] = nuevas_imagenes  # type: ignore
+                        updated_row["images"] = nuevas_imagenes
 
             # Eliminar imágenes seleccionadas
             delete_images = request.form.getlist("delete_images")
@@ -2497,10 +2497,9 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
                 if isinstance(current_images, list):
                     updated_row["images"] = [
                         img for img in current_images if img not in delete_images
-                    ]  # type: ignore
+                    ]
                 else:
-                    updated_row["images"] = []  # type: ignore
-
+                    updated_row["images"] = []
             # Actualizar la fila en el catálogo
             catalog["rows"][row_index] = updated_row
 
@@ -2717,7 +2716,7 @@ def eliminar_catalogos_multiple():
                     errores.append(f"No se pudo eliminar: {catalog_id}")
 
             except Exception as e:
-                error_msg = f"Error eliminando {catalog_id}: {str(e)}"
+                error_msg = f"Error eliminando {catalog_id}: {str(e)}"  # type: ignore
                 errores.append(error_msg)
                 logger.error(f"[ADMIN] {error_msg}")
 
@@ -3094,7 +3093,7 @@ def db_monitor():
 
 
 # Variables globales para el seguimiento de operaciones
-last_ops: dict[str, int] = {}
+last_ops: dict[str, int] = {}  # type: ignore
 last_update = time.time()
 
 
@@ -4054,7 +4053,6 @@ def restore_local_backup():
         # Importar las utilidades necesarias
         import gzip
         import json
-        import tempfile
 
         from bson import ObjectId
 
@@ -4238,10 +4236,10 @@ def restore_local_backup():
 
                         # Verificar si es un archivo de backup de MongoDB binario
                         if (
-                            content.startswith("BSON")
-                            or "mongodump" in content.lower()
-                            or "concurrent_collections" in content
-                            or "server_version" in content
+                            content.startswith("BSON")  # type: ignore
+                            or "mongodump" in content.lower()  # type: ignore
+                            or "concurrent_collections" in content  # type: ignore
+                            or "server_version" in content  # type: ignore
                         ):
                             return (
                                 jsonify(
@@ -4416,7 +4414,7 @@ def restore_local_backup():
 def restore_drive_backup():
     try:
         backup_id = request.form.get("backup_id")
-        download_url = request.form.get("download_url")
+        _ = request.form.get("download_url")
 
         if not backup_id:
             return (
@@ -5663,7 +5661,7 @@ def test_database():
 
         # Intentar obtener cliente y verificar conexión
         client = get_mongo_client()
-        success = monitoring.check_database_health(client)
+        success = monitoring.check_database_health(client)  # type: ignore
 
         database_status = monitoring._app_metrics.get(
             "database_status",

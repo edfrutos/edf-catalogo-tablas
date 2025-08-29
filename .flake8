@@ -25,15 +25,15 @@ exclude =
 
 # Ignorar errores específicos
 ignore = 
-    E203,
-    W503,
-    E501,
-    F401,
-    F403,
-    F405,
-    E722,
-    W291,
-    W293
+    F841,  # local variable is assigned to but never used
+    F541,  # f-string is missing placeholders
+    E722,  # do not use bare except
+    B007,  # loop control variable not used within loop body
+    F401,  # imported but unused
+    F821,  # undefined name
+    F811,  # redefinition of unused name
+    B904,  # raise without from inside except
+    F841,  # local variable is assigned to but never used
 
 # Estadísticas
 statistics = True

@@ -30,6 +30,7 @@ def create_app(testing=False):
 
     try:
         from app.database import get_mongo_client, get_mongo_db, initialize_db
+
         initialize_db(app)
         app.logger.info("✅ Conexión global a MongoDB inicializada (initialize_db)")
         client = get_mongo_client()
@@ -46,6 +47,7 @@ def create_app(testing=False):
         from flask import g
 
         from app.database import get_mongo_client, get_mongo_db
+
         client = get_mongo_client()
         db = get_mongo_db()
         g.mongo_client = client
@@ -81,15 +83,19 @@ def create_app(testing=False):
         return User(user_data)
 
     from app.filters import init_app as init_filters
+
     init_filters(app)
 
     from app.extensions import init_extensions
+
     init_extensions(app)
 
     from app.logging_unified import setup_unified_logging
+
     setup_unified_logging(app)
 
     from app.security_middleware import security_middleware
+
     security_middleware.init_app(app)
 
     # Registrar blueprints
@@ -122,7 +128,7 @@ def create_app(testing=False):
         (bp_dev_template, None),
         (testing_bp, None),
         (images_bp, None),
-        (emergency_bp, None)
+        (emergency_bp, None),
     ]
 
     for bp, prefix in blueprints:
@@ -139,13 +145,20 @@ def create_app(testing=False):
         return render_template("error/404.html"), 404
 
     # Logging
-    logs_dir = os.environ.get("LOG_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs"))
+    logs_dir = os.environ.get(
+        "LOG_DIR",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs"),
+    )
     os.makedirs(logs_dir, exist_ok=True)
     log_path = os.path.join(logs_dir, "flask_debug.log")
 
-    file_handler = RotatingFileHandler(log_path, maxBytes=5 * 1024 * 1024, backupCount=5)
+    file_handler = RotatingFileHandler(
+        log_path, maxBytes=5 * 1024 * 1024, backupCount=5
+    )
     file_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
+    formatter = logging.Formatter(
+        "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+    )
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
 
