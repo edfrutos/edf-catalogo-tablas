@@ -8,6 +8,7 @@ tests/original/
 *_Proyecto_backup/
 *_backup/
 backup_*/
+backup_completo_*/
 edf_catalogotablas_backup_*/
 edf_catalogotablas_OPTIMIZED_*/
 
@@ -42,10 +43,7 @@ __pycache__/
 # IGNORAR ENTORNOS IDE
 # -------------------------------------------
 .blackboxrules
-.cspell.json
 .eslintignore
-.flake8
-.markdownlint.json
 .prettierignore
 .prettierrc.json
 .spellright.dict
@@ -173,7 +171,6 @@ imagenes_subidas/
 spreadsheets/
 mi_config.json
 token.pickle
-*.json
 *.pickle
 tools/basura/
 mcp-server-demo/
@@ -187,8 +184,6 @@ node_modules/
 *.sublime-project
 *.sublime-workspace
 .windsurf-settings.json
-.cspell.json
-.markdownlint.json
 
 # -------------------------------------------
 # IGNORAR TEST OUTPUTS
@@ -225,11 +220,11 @@ app/static/uploads/
 app/static/imagenes_subidas/
 tools/image_utils/app/static/uploads/
 
-# Archivos de testeo y debug
-test_*.py
-debug_*.py
-*_test.*
-*_debug.*
+# Archivos de testeo y debug (ya incluidos en sección específica)
+# test_*.py
+# debug_*.py
+# *_test.*
+# *_debug.*
 test_*.js
 test_*.html
 test_*.json
@@ -337,10 +332,10 @@ setup.cfg.bak
 # -------------------------------------------
 # ARCHIVOS TEMPORALES DE DIAGNÓSTICO Y DEBUG
 # -------------------------------------------
-debug_*.py
-test_*.py
-*_debug.*
-*_test.*
+# debug_*.py (ya incluido en sección específica)
+# test_*.py (ya incluido en sección específica)
+# *_debug.* (ya incluido en sección específica)
+# *_test.* (ya incluido en sección específica)
 debug_*.html
 debug_*.js
 debug_*.json
@@ -409,3 +404,120 @@ gunicorn_*.log
 *reset_password*.py
 *temp_password*.py
 *_password_*.py
+
+# -------------------------------------------
+# ARCHIVOS SENSIBLES ADICIONALES IDENTIFICADOS
+# -------------------------------------------
+# Archivos de diagnóstico y reportes de MongoDB
+mongodb_diagnostic_report_*.json
+
+# Archivos de configuración de Cursor/VS Code
+.cspell.json
+pyrightconfig.json
+.flake8
+.markdownlint.json
+
+# Archivos de testeo y debug específicos
+test_*.py
+debug_*.py
+*_test.*
+*_debug.*
+check_*.py
+fix_*.py
+create_*.py
+update_*.py
+verify_*.py
+diagnose_*.py
+simulate_*.py
+recreate_*.py
+
+# Archivos de launcher y scripts de desarrollo
+launcher_*.py
+launch_*.sh
+init_*.sh
+build_*.sh
+clean_*.sh
+fix_*.sh
+verify_*.sh
+diagnose_*.sh
+
+# Archivos de configuración de PyInstaller
+*.spec
+*.dmg
+
+# Archivos de iconos y recursos grandes
+*.icns
+edf_developer.iconset/
+
+# Archivos de documentación de desarrollo
+COMPENDIO_FINAL_SOLUCIONES_ACTUALIZADO.md
+LIMPEZA_DOCUMENTACION_COMPLETADA.md
+SOLUCION_FINAL_ICONO_Y_LOGIN.md
+INSTRUCCIONES_USO.md
+situación crítica de seguridad.md
+SPELL_CHECK_*.md
+SECURITY_ALERT.md
+REPORTE_*.md
+ANALISIS_*.md
+EXTENSIONES_*.md
+FUNCTIONALITY_*.md
+DEPENDENCY_*.md
+ESTRUCTURA_COMPLETA_PROYECTO.md
+RECOVERY_GUIDE.md
+GITHUB_SECRETS_SETUP.md
+PASSWORD_TOGGLE_IMPROVEMENTS.md
+TODO.md
+WARP.md
+DEVELOPMENT_WORKFLOW.md
+DOSSIER_*.md
+INFORME_*.md
+MANUAL_*.md
+README_*.md
+
+# Archivos de configuración de entorno
+load_env.py
+start_app.py
+run_server.py
+
+# Archivos de configuración de base de datos
+config.py
+
+# Archivos de configuración de servicios
+setup_github_secrets_manual.sh
+setup_known_passwords.py
+
+# Archivos de configuración de desarrollo
+pyproject.toml
+requirements_*.txt
+!requirements.txt
+
+# Archivos de configuración de IDE
+.vscode/settings.json
+
+# Archivos de cache de Python
+.mypy_cache/
+
+# Archivos de logs específicos
+logs/flask_debug.log
+logs/app.log
+logs/*.backup.*
+logs/temp_passwords_*.txt
+logs/*.pid
+logs/cursor_extensions_*.json
+logs/functionality_check_*.json
+
+# Archivos de datos de aplicación
+app_data/edefrutos2025_*.json
+!app_data/edefrutos2025_notifications_config.example.json
+
+# Archivos de documentación de desarrollo
+docs/*.md
+docs/*.pdf
+!docs/README.md
+
+# Archivos de herramientas de desarrollo
+tools/*.py
+tools/*.sh
+tools/*.json
+tools/README_*.md
+tools/launch_*.sh

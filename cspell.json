@@ -88,7 +88,24 @@
     "xlsxwriter",
     "xml",
     "xyz",
-    "yscrollcommand"
+    "yscrollcommand",
+    "dockerignore",
+    "pycache",
+    "classpath",
+    "gitignore",
+    "toolstarget",
+    "vscode",
+    "dbmdl",
+    "jfm",
+    "docker",
+    "compose",
+    "Dockerfile",
+    "npm",
+    "debug",
+    "obj",
+    "secrets",
+    "values",
+    "LICENSE"
   ],
   "ignoreWords": [
     "pyc",
@@ -107,6 +124,9 @@
     "*.pyc",
     "build/**",
     "dist/**",
-    "*.egg-info/**"
+    "*.egg-info/**",
+    "backup_completo_*/**",
+    "*.dockerignore",
+    "*.blackboxrc"
   ]
 }

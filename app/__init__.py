@@ -104,7 +104,7 @@ def create_app(testing=False):
     # Inicializar Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = "auth.login"  # type: ignore
+    login_manager.login_view = "auth.login"
 
     # Función para asegurar que las colecciones estén disponibles en g
     def ensure_db():
@@ -253,7 +253,7 @@ def create_app(testing=False):
             if spec is not None:
                 # Solo importar si el módulo existe
                 try:
-                    from app.routes.test_session_routes import test_session_bp  # type: ignore
+                    from app.routes.test_session_routes import test_session_bp
 
                     app.register_blueprint(test_session_bp)
                     app.logger.info(
