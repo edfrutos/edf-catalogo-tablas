@@ -1,29 +1,45 @@
 #!/bin/bash
 
 # Script para crear DMG de la aplicación nativa con WebSockets
-# EDF Catálogo de Tablas - Aplicación Nativa WebSockets
+# EDF Catálogo de Tablas - Aplicación Nativa Finder
 
 set -e
 
-echo "💿 Creando DMG para aplicación nativa con WebSockets..."
-echo "=" * 60
+echo "💿 Creando DMG para aplicación nativa Finder..."
+echo "============================================================"
 
 # Variables
-APP_NAME="EDF_CatalogoDeTablas_Web_Native"
+APP_NAME="EDF_CatalogoDeTablas_Native_Finder"
 APP_PATH="dist/${APP_NAME}.app"
 DMG_NAME="${APP_NAME}.dmg"
 DMG_PATH="dist/${DMG_NAME}"
-VOLUME_NAME="EDF Catálogo de Tablas (Web Nativa)"
+VOLUME_NAME="EDF Catálogo de Tablas (Finder Nativo)"
 TEMP_DIR="/tmp/${APP_NAME}_dmg_temp"
 
 # Verificar que existe la aplicación
 if [ ! -d "$APP_PATH" ]; then
     echo "❌ Error: No se encontró la aplicación en $APP_PATH"
-    echo "Ejecuta primero: ./build_native_websockets.sh"
+    echo "Ejecuta primero: ./build_native_finder.sh"
     exit 1
 fi
 
 echo "✅ Aplicación encontrada: $APP_PATH"
+
+# Verificar que el icono esté incluido
+ICON_PATH="dist/${APP_NAME}.app/Contents/Resources/edf_developer.icns"
+if [ -f "$ICON_PATH" ]; then
+    echo "✅ Icono personalizado encontrado: $ICON_PATH"
+else
+    echo "⚠️  Advertencia: Icono personalizado no encontrado"
+fi
+
+# Verificar que el archivo .env esté incluido
+ENV_PATH="dist/${APP_NAME}.app/Contents/Resources/.env"
+if [ -f "$ENV_PATH" ]; then
+    echo "✅ Archivo .env encontrado: $ENV_PATH"
+else
+    echo "⚠️  Advertencia: Archivo .env no encontrado"
+fi
 
 # Limpiar directorio temporal si existe
 if [ -d "$TEMP_DIR" ]; then
@@ -46,16 +62,17 @@ ln -s /Applications "$TEMP_DIR/Aplicaciones"
 # Crear archivo de información
 echo "📄 Creando archivo de información..."
 cat > "$TEMP_DIR/INFORMACION.txt" << 'EOF'
-EDF Catálogo de Tablas - Aplicación Web Nativa
-==============================================
+EDF Catálogo de Tablas - Aplicación Nativa Finder
+=================================================
 
 🎯 DESCRIPCIÓN:
 Esta es una aplicación nativa de macOS que ejecuta tu aplicación
-web Flask completa en una ventana nativa sin navegador externo.
+web Flask completa en una ventana nativa tipo Finder sin navegador externo.
 
 🚀 CARACTERÍSTICAS:
 • Aplicación nativa de macOS (.app)
-• Icono personalizado de EDF
+• Icono personalizado de EDF Developer
+• Ventana nativa tipo Finder
 • Interfaz web completa en ventana nativa
 • Comunicación WebSockets en tiempo real
 • Sin dependencia de navegador externo
@@ -63,6 +80,7 @@ web Flask completa en una ventana nativa sin navegador externo.
 • Gestión completa de catálogos
 • Administración de usuarios
 • Herramientas de mantenimiento
+• Conexión a MongoDB Atlas
 
 📋 FUNCIONALIDADES:
 • Gestión de catálogos de productos
@@ -71,29 +89,48 @@ web Flask completa en una ventana nativa sin navegador externo.
 • Backup y restauración del sistema
 • Diagnóstico y logs
 • Configuración avanzada
+• Conexión a base de datos MongoDB Atlas
+• Sistema de autenticación completo
 
-🌐 INTERFAZ WEB NATIVA:
+🌐 INTERFAZ NATIVA:
 • Aplicación web Flask completa en ventana nativa
+• Ventana tipo Finder (no navegador)
 • Comunicación WebSockets en tiempo real
 • Actualizaciones automáticas
 • Sin dependencia de navegador externo
 • Misma experiencia que la aplicación web
+• Icono personalizado visible en todo el sistema
 
 💻 REQUISITOS DEL SISTEMA:
-• macOS 10.15 (Catalina) o superior
+• macOS 10.13 (High Sierra) o superior
 • 4GB RAM mínimo
 • 500MB espacio en disco
-• Conexión a internet para WebSockets
+• Conexión a internet para MongoDB Atlas y WebSockets
 
 📦 INSTALACIÓN:
 1. Arrastra la aplicación a la carpeta "Aplicaciones"
 2. Ejecuta la aplicación desde Finder
-3. La aplicación se conectará automáticamente via WebSockets
+3. La aplicación se conectará automáticamente a MongoDB Atlas
+4. Inicia sesión con tus credenciales
 
 🔧 CONFIGURACIÓN:
 • La aplicación se configura automáticamente
-• Los logs se guardan en ~/Library/Logs/
-• La configuración se guarda en ~/Library/Preferences/
+• Variables de entorno incluidas en el paquete
+• Conexión a MongoDB Atlas configurada
+• Los logs se guardan en directorio temporal
+• La configuración se guarda automáticamente
+
+🔐 AUTENTICACIÓN:
+• Sistema de login completo
+• Redirección automática según rol (admin/user)
+• Sesiones persistentes
+• Gestión de permisos
+
+📊 BASE DE DATOS:
+• Conexión a MongoDB Atlas
+• Configuración automática
+• Backup y restauración
+• Gestión de datos en la nube
 
 📞 SOPORTE:
 • Email: soporte@edf.com
@@ -105,8 +142,13 @@ web Flask completa en una ventana nativa sin navegador externo.
 • Se notifican nuevas versiones via WebSockets
 • Instalación con un clic desde la aplicación
 
-© 2025 EDF Catálogo de Tablas
-Versión: 1.0.0 (Web Nativa)
+🎨 ICONO PERSONALIZADO:
+• Icono de EDF Developer incluido
+• Visible en Finder, Dock, Launchpad y Spotlight
+• Configuración nativa de macOS
+
+© 2025 EDF Developer
+Versión: 1.0.0 (Finder Nativo)
 EOF
 
 # Crear DMG
@@ -136,6 +178,7 @@ else
     echo "⚠️  Advertencia: No se pudo verificar el DMG"
 fi
 
+# Mostrar información adicional
 echo ""
 echo "🎉 ¡DMG creado exitosamente!"
 echo "💿 Archivo: $DMG_PATH"
@@ -145,4 +188,13 @@ echo "   2. Arrastra la aplicación a la carpeta 'Aplicaciones'"
 echo "   3. Ejecuta la aplicación desde Finder"
 echo ""
 echo "🚀 La aplicación ejecutará tu aplicación web Flask completa"
-echo "   en una ventana nativa sin necesidad de navegador externo."
+echo "   en una ventana nativa tipo Finder sin necesidad de navegador externo."
+echo ""
+echo "🎨 Características especiales:"
+echo "   • Icono personalizado de EDF Developer"
+echo "   • Conexión automática a MongoDB Atlas"
+echo "   • Sistema de autenticación completo"
+echo "   • Ventana nativa tipo Finder"
+echo ""
+echo "🔧 Para probar la aplicación:"
+echo "   python test_native_app_env.py"

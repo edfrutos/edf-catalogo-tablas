@@ -1,0 +1,189 @@
+{
+  "timestamp": "2025-08-25T13:05:36.015991",
+  "bucket_name": "edf-catalogo-tablas",
+  "region": "eu-central-1",
+  "storage": {
+    "total_objects": 337,
+    "total_size_bytes": 288070692,
+    "total_size_gb": 0.27,
+    "average_object_size": 854809.18,
+    "file_types": {
+      ".jpg": {
+        "count": 299,
+        "size": 249382832
+      },
+      ".png": {
+        "count": 20,
+        "size": 23838272
+      },
+      ".jpeg": {
+        "count": 17,
+        "size": 14849588
+      },
+      "": {
+        "count": 1,
+        "size": 0
+      }
+    }
+  },
+  "objects": {
+    "total_objects": 337,
+    "old_objects": [
+      {
+        "key": "1741271468_efc93ea7_viaje_de_los_Reyes_Magos_de_Oriente_y_su_sequito.png",
+        "size": 3328248,
+        "last_modified": "2025-03-06T14:31:09",
+        "days_old": 171
+      },
+      {
+        "key": "1741271470_79b424b1_viaje_de_los_Reyes_Magos_de_Oriente_y_su_sequito.png",
+        "size": 3328248,
+        "last_modified": "2025-03-06T14:31:11",
+        "days_old": 171
+      },
+      {
+        "key": "1741271472_83f7fc09_20250216_151630506_iOS.jpg",
+        "size": 693096,
+        "last_modified": "2025-03-06T14:31:13",
+        "days_old": 171
+      },
+      {
+        "key": "1741271472_87963385_20250216_151655238_iOS.jpg",
+        "size": 883906,
+        "last_modified": "2025-03-06T14:31:13",
+        "days_old": 171
+      },
+      {
+        "key": "1741271472_c41a6b85_20250216_152438604_iOS.jpg",
+        "size": 817879,
+        "last_modified": "2025-03-06T14:31:14",
+        "days_old": 171
+      },
+      {
+        "key": "1741271474_26a7d14e_20250216_152438604_iOS.jpg",
+        "size": 817879,
+        "last_modified": "2025-03-06T14:31:15",
+        "days_old": 171
+      },
+      {
+        "key": "1741271474_eee2b2f4_20250216_152445428_iOS.jpg",
+        "size": 852232,
+        "last_modified": "2025-03-06T14:31:15",
+        "days_old": 171
+      },
+      {
+        "key": "1741271475_0bc5be2f_20250216_153054813_iOS.jpg",
+        "size": 659872,
+        "last_modified": "2025-03-06T14:31:16",
+        "days_old": 171
+      },
+      {
+        "key": "1741271475_8c2db57e_20250216_152707232_iOS.jpg",
+        "size": 689555,
+        "last_modified": "2025-03-06T14:31:16",
+        "days_old": 171
+      },
+      {
+        "key": "1741271475_de08d0f8_20250216_153102441_iOS.jpg",
+        "size": 547966,
+        "last_modified": "2025-03-06T14:31:16",
+        "days_old": 171
+      },
+      {
+        "key": "1741271476_29fbb142_20250216_153446905_iOS.jpg",
+        "size": 643947,
+        "last_modified": "2025-03-06T14:31:17",
+        "days_old": 171
+      },
+      {
+        "key": "1741271476_a226c1be_20250216_153446905_iOS.jpg",
+        "size": 643947,
+        "last_modified": "2025-03-06T14:31:17",
+        "days_old": 171
+      },
+      {
+        "key": "1741271476_ae18d368_20250216_153907398_iOS.jpg",
+        "size": 640325,
+        "last_modified": "2025-03-06T14:31:17",
+        "days_old": 171
+      },
+      {
+        "key": "1741271477_074882f1_20250216_181324016_iOS.jpg",
+        "size": 879936,
+        "last_modified": "2025-03-06T14:31:18",
+        "days_old": 171
+      },
+      {
+        "key": "1741271477_2f20d9b7_20250216_153913781_iOS.jpg",
+        "size": 608691,
+        "last_modified": "2025-03-06T14:31:18",
+        "days_old": 171
+      },
+      {
+        "key": "1741271477_c6551505_20250216_154010734_iOS.jpg",
+        "size": 670530,
+        "last_modified": "2025-03-06T14:31:18",
+        "days_old": 171
+      },
+      {
+        "key": "1741271478_33868075_20250216_151655238_iOS.jpg",
+        "size": 883906,
+        "last_modified": "2025-03-06T14:31:19",
+        "days_old": 171
+      },
+      {
+        "key": "1741271478_af7013b5_20250216_181354611_iOS.jpg",
+        "size": 514005,
+        "last_modified": "2025-03-06T14:31:19",
+        "days_old": 171
+      },
+      {
+        "key": "1741271478_ffb14856_20250216_151630506_iOS.jpg",
+        "size": 693096,
+        "last_modified": "2025-03-06T14:31:19",
+        "days_old": 171
+      },
+      {
+        "key": "1741271479_1388fb8b_20250216_152707232_iOS.jpg",
+        "size": 689555,
+        "last_modified": "2025-03-06T14:31:21",
+        "days_old": 171
+      }
+    ],
+    "large_objects": [
+      {
+        "key": "1741271485_7c537871_iStock-1415642723.jpg",
+        "size": 13108871,
+        "size_mb": 12.5,
+        "last_modified": "2025-03-06T14:31:26"
+      },
+      {
+        "key": "313427038b45413989295f85a80ebd4e.jpg",
+        "size": 13108871,
+        "size_mb": 12.5,
+        "last_modified": "2025-05-15T17:49:44"
+      },
+      {
+        "key": "test_import.xlsx_1_1005c259.jpg",
+        "size": 13108871,
+        "size_mb": 12.5,
+        "last_modified": "2025-08-10T18:49:02"
+      }
+    ],
+    "recent_objects": 33,
+    "objects_older_than_30_days": 138,
+    "objects_larger_than_10mb": 3
+  },
+  "costs": {
+    "storage_cost_usd": 0.01,
+    "request_cost_usd": 0.0,
+    "total_estimated_cost_usd": 0.01,
+    "region": "eu-central-1",
+    "prices_used": {
+      "storage": 0.023,
+      "requests": 0.0004,
+      "data_transfer": 0.09
+    }
+  },
+  "alerts": []
+}

@@ -43,8 +43,39 @@ function initPyWebViewCompatibility() {
         const form = e.target;
         const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) {
+            // Guardar el texto original del botón
+            const originalText = submitBtn.innerHTML;
+            const originalDisabled = submitBtn.disabled;
+            
+            // Deshabilitar botón y mostrar spinner
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
+            
+            // Restaurar botón después de 30 segundos (timeout de seguridad)
+            const timeoutId = setTimeout(() => {
+                console.log("🔧 Timeout de seguridad: restaurando botón");
+                submitBtn.disabled = originalDisabled;
+                submitBtn.innerHTML = originalText;
+            }, 30000);
+            
+            // Restaurar botón cuando la página se recarga o cambia
+            const restoreButton = () => {
+                clearTimeout(timeoutId);
+                submitBtn.disabled = originalDisabled;
+                submitBtn.innerHTML = originalText;
+            };
+            
+            // Eventos para restaurar el botón
+            window.addEventListener('beforeunload', restoreButton);
+            window.addEventListener('pagehide', restoreButton);
+            
+            // Restaurar después de 5 segundos si no hay respuesta (fallback)
+            setTimeout(() => {
+                if (submitBtn.innerHTML.includes('Procesando...')) {
+                    console.log("🔧 Fallback: restaurando botón después de 5 segundos");
+                    restoreButton();
+                }
+            }, 5000);
         }
         
         // Asegurar que los datos se envíen correctamente
@@ -126,6 +157,21 @@ function initPyWebViewCompatibility() {
     }
 }
 
+// Función para restaurar botones manualmente
+function restoreSubmitButtons() {
+    console.log("🔧 Restaurando botones de envío...");
+    const submitButtons = document.querySelectorAll('button[type="submit"]');
+    submitButtons.forEach(btn => {
+        if (btn.innerHTML.includes('Procesando...')) {
+            btn.disabled = false;
+            // Intentar restaurar texto original o usar texto por defecto
+            const originalText = btn.getAttribute('data-original-text') || 'Enviar';
+            btn.innerHTML = originalText;
+            console.log("🔧 Botón restaurado:", btn);
+        }
+    });
+}
+
 // Función para mejorar el manejo de alertas en pywebview
 function showPyWebViewAlert(message, type = 'info') {
     console.log(`🔧 showPyWebViewAlert: ${message} (${type})`);
@@ -155,6 +201,9 @@ function showPyWebViewAlert(message, type = 'info') {
 // Función para manejar errores específicos de pywebview
 function handlePyWebViewError(error) {
     console.error("🔧 Error en pywebview:", error);
+    
+    // Restaurar botones que puedan estar en estado "Procesando..."
+    restoreSubmitButtons();
     
     // Remover alertas de error existentes
     const existingAlerts = document.querySelectorAll('.alert-warning');
@@ -244,5 +293,6 @@ window.showPyWebViewAlert = showPyWebViewAlert;
 window.showPyWebViewConfirm = showPyWebViewConfirm;
 window.initPyWebViewCompatibility = initPyWebViewCompatibility;
 window.handlePyWebViewError = handlePyWebViewError;
+window.restoreSubmitButtons = restoreSubmitButtons; // Exportar la nueva función
 
 console.log("🔧 pywebview_compatibility.js inicializado completamente");

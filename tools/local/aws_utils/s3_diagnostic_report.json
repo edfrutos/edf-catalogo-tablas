@@ -1,0 +1,71 @@
+{
+  "timestamp": "2025-08-25T13:06:24.629170",
+  "tests": {
+    "credentials_existence": {
+      "status": "PASS",
+      "message": "Todas las credenciales est\u00e1n configuradas",
+      "details": null
+    },
+    "credentials_validity": {
+      "status": "PASS",
+      "message": "Credenciales v\u00e1lidas - Usuario: arn:aws:iam::732444625738:root",
+      "details": null
+    },
+    "s3_client_initialization": {
+      "status": "PASS",
+      "message": "Cliente S3 inicializado correctamente",
+      "details": null
+    },
+    "s3_list_buckets_permission": {
+      "status": "PASS",
+      "message": "Permiso de listar buckets OK - 17 buckets encontrados",
+      "details": {
+        "bucket_count": 17,
+        "bucket_names": [
+          "edefrutos2023-shop",
+          "edefrutos2023-xyz",
+          "edefrutosshop-local",
+          "edf-catalogo-tablas",
+          "edf-developer-eu",
+          "edf-stagings",
+          "mypleskbak",
+          "paginas-edfdivi-es",
+          "photos-imgix",
+          "plesk-edefrutos2020-com",
+          "plesk-edefrutos2023-shop",
+          "plesk-edefrutos2023-xyz",
+          "plesk-edfdivi-es",
+          "plesk-efjdefrutos-com",
+          "plesk-mainwp-edefrutos-me",
+          "plesk-s3backup-server-edf-familiaonline.208-76-221-20.plesk.pag",
+          "plesk-s3backup-server-pensive-kirch.208-76-221-20.plesk.page-8c"
+        ]
+      }
+    },
+    "bucket_access": {
+      "status": "PASS",
+      "message": "Acceso al bucket 'edf-catalogo-tablas' OK",
+      "details": null
+    },
+    "bucket_permissions": {
+      "status": "PASS",
+      "message": "Todos los permisos b\u00e1sicos OK: PUT, GET, DELETE",
+      "details": null
+    },
+    "bucket_policy": {
+      "status": "PASS",
+      "message": "Pol\u00edtica de bucket encontrada",
+      "details": null
+    }
+  },
+  "issues": [
+    {
+      "issue": "Bucket tiene acceso p\u00fablico de lectura",
+      "severity": "WARNING",
+      "timestamp": "2025-08-25T13:06:25.618668"
+    }
+  ],
+  "recommendations": [
+    "Considera restringir el acceso p\u00fablico si no es necesario"
+  ]
+}

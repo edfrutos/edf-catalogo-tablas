@@ -213,3 +213,235 @@
 [2025-08-27 20:30:42] INFO in app: [COOKIES] Set-Cookie enviada: None
 [2025-08-27 20:30:42] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, '_user_id': '6832023e45188f2e133bfcad', '_fresh': True, '_id': '9577640618b5d1fb9888ada355bd8cf2f6124e91097fb4013fc0872bbbca44c7f8bd15d71cdd704012717b4ea86ee65fed581c40e21d0ad09942c8d5773895f0', 'usuario': '6832023e45188f2e133bfcad', 'username': 'edefrutos', 'nombre': 'edefrutos', 'email': 'edfrutos@gmail.com', 'role': 'admin', 'user_id': '6832023e45188f2e133bfcad', 'logged_in': True}
 [2025-08-27 20:30:42] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:38:23] INFO in app: ✅ Sistema de logging unificado inicializado
+[2025-08-29 18:38:23] INFO in root: ✅ Logging unificado configurado - Directorio: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/logs
+[2025-08-29 18:38:23] INFO in app: 🔒 Middleware de seguridad inicializado
+[2025-08-29 18:38:23] INFO in app: Blueprint de API registrado correctamente
+[2025-08-29 18:38:23] INFO in app: Blueprint de testing registrado correctamente
+[2025-08-29 18:38:23] INFO in app: test_session_routes no encontrado - omitiendo registro
+[2025-08-29 18:38:24] INFO in app.routes.maintenance_routes: Rutas de mantenimiento reorganizadas registradas
+[2025-08-29 18:38:24] INFO in app.routes.maintenance_routes: Rutas de API de mantenimiento registradas
+[2025-08-29 18:38:24] INFO in app: Blueprints de mantenimiento y API registrados correctamente
+[2025-08-29 18:38:24] INFO in app: Blueprint de emergencia (emergency_bp) registrado correctamente.
+[2025-08-29 18:38:24] WARNING in app: Blueprints de administración adicionales deshabilitados temporalmente
+[2025-08-29 18:38:24] INFO in app.notifications: Sistema de notificaciones inicializado
+[2025-08-29 18:38:24] INFO in app.monitoring: Iniciando hilo de monitoreo
+[2025-08-29 18:38:24] INFO in app.monitoring: Inicializando sistema de monitoreo
+[2025-08-29 18:38:24] INFO in app.monitoring: Métricas iniciales: CPU=21.4%, Memoria=59.5%
+[2025-08-29 18:38:24] INFO in app: Sistema de monitoreo inicializado correctamente
+[2025-08-29 18:38:24] INFO in app: Blueprint de debug de usuario registrado (TEMPORAL)
+[2025-08-29 18:38:46] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {}
+[2025-08-29 18:38:46] WARNING in app.decorators: [ADMIN_REQUIRED] Usuario no autenticado intentando acceder a ruta admin: /admin/
+[2025-08-29 18:38:46] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:38:46] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:38:47] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:38:47] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:38:58] INFO in app.routes.auth_routes: Intento de login para: edefrutos
+[2025-08-29 18:38:58] INFO in app.models.database: [find_user_by_email_or_email] INICIO - Buscando: 'edefrutos'
+[2025-08-29 18:38:58] INFO in app.models.database: [find_user_by_email_or_email] Identificador normalizado: 'edefrutos'
+[2025-08-29 18:38:58] INFO in app.models.database: Conectado a MongoDB: cluster0.abpvipa.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority&appName=Cluster0&tlsAllowInvalidCertificates=true
+[2025-08-29 18:38:58] INFO in app.models.database: [find_user_by_email_or_email] Colección obtenida: Collection(Database(MongoClient(host=['ac-rpgo9ti-shard-00-01.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-02.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-00.abpvipa.mongodb.net:27017'], document_class=dict, tz_aware=False, connect=True, retrywrites=True, w='majority', appname='Cluster0', tlsallowinvalidcertificates=True, authsource='admin', replicaset='atlas-y9z7tw-shard-0', tls=True, tlsdisableocspendpointcheck=True), 'app_catalogojoyero_nueva'), 'users')
+[2025-08-29 18:38:58] INFO in app.models.database: [find_user_by_email_or_email] Query exacta: {'$or': [{'email': {'$regex': '^edefrutos$', '$options': 'i'}}, {'username': {'$regex': '^edefrutos$', '$options': 'i'}}, {'nombre': {'$regex': '^edefrutos$', '$options': 'i'}}]}
+[2025-08-29 18:38:59] INFO in app.models.database: [find_user_by_email_or_email] Resultado query exacta: True
+[2025-08-29 18:38:59] INFO in app.models.database: [find_user_by_email_or_email] Usuario encontrado por username: edefrutos@gmail.com
+[2025-08-29 18:38:59] INFO in app.routes.auth_routes: Login exitoso para: edefrutos
+[2025-08-29 18:38:59] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:38:59] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True}
+[2025-08-29 18:38:59] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:38:59] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:39:17] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:39:17] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 18:39:18] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:39:18] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:39:22] INFO in app.routes.auth_routes: Usuario cerró sesión: None (role: admin)
+[2025-08-29 18:39:22] INFO in app.routes.auth_routes: Logout completado correctamente para role: admin
+[2025-08-29 18:39:22] INFO in app: [COOKIES] Set-Cookie enviada: session=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/
+[2025-08-29 18:39:23] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:39:25] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:40:09] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:40:09] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:40:09] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:40:09] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:40:09] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:40:26] INFO in app.routes.auth_routes: Intento de login para: amelia
+[2025-08-29 18:40:26] INFO in app.models.database: [find_user_by_email_or_email] INICIO - Buscando: 'amelia'
+[2025-08-29 18:40:26] INFO in app.models.database: [find_user_by_email_or_email] Identificador normalizado: 'amelia'
+[2025-08-29 18:40:26] INFO in app.models.database: [find_user_by_email_or_email] Colección obtenida: Collection(Database(MongoClient(host=['ac-rpgo9ti-shard-00-01.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-02.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-00.abpvipa.mongodb.net:27017'], document_class=dict, tz_aware=False, connect=True, retrywrites=True, w='majority', appname='Cluster0', tlsallowinvalidcertificates=True, authsource='admin', replicaset='atlas-y9z7tw-shard-0', tls=True, tlsdisableocspendpointcheck=True), 'app_catalogojoyero_nueva'), 'users')
+[2025-08-29 18:40:26] INFO in app.models.database: [find_user_by_email_or_email] Query exacta: {'$or': [{'email': {'$regex': '^amelia$', '$options': 'i'}}, {'username': {'$regex': '^amelia$', '$options': 'i'}}, {'nombre': {'$regex': '^amelia$', '$options': 'i'}}]}
+[2025-08-29 18:40:26] INFO in app.models.database: [find_user_by_email_or_email] Resultado query exacta: True
+[2025-08-29 18:40:26] INFO in app.models.database: [find_user_by_email_or_email] Usuario encontrado por nombre: amelia@test.com
+[2025-08-29 18:40:26] INFO in app.routes.auth_routes: Login exitoso para: amelia
+[2025-08-29 18:40:26] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:40:26] INFO in app: [DEBUG_TABLAS] Procesando 0 tablas encontradas
+[2025-08-29 18:40:26] INFO in app: [DEBUG_REGISTROS] Total registros a enviar al template: 0
+[2025-08-29 18:40:26] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:50:36] INFO in app: ✅ Sistema de logging unificado inicializado
+[2025-08-29 18:50:36] INFO in root: ✅ Logging unificado configurado - Directorio: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/logs
+[2025-08-29 18:50:36] INFO in app: 🔒 Middleware de seguridad inicializado
+[2025-08-29 18:50:36] INFO in app: Blueprint de API registrado correctamente
+[2025-08-29 18:50:36] INFO in app: Blueprint de testing registrado correctamente
+[2025-08-29 18:50:36] INFO in app: test_session_routes no encontrado - omitiendo registro
+[2025-08-29 18:50:36] INFO in app.routes.maintenance_routes: Rutas de mantenimiento reorganizadas registradas
+[2025-08-29 18:50:36] INFO in app.routes.maintenance_routes: Rutas de API de mantenimiento registradas
+[2025-08-29 18:50:36] INFO in app: Blueprints de mantenimiento y API registrados correctamente
+[2025-08-29 18:50:36] INFO in app: Blueprint de emergencia (emergency_bp) registrado correctamente.
+[2025-08-29 18:50:36] WARNING in app: Blueprints de administración adicionales deshabilitados temporalmente
+[2025-08-29 18:50:36] INFO in app.notifications: Sistema de notificaciones inicializado
+[2025-08-29 18:50:36] INFO in app.monitoring: Iniciando hilo de monitoreo
+[2025-08-29 18:50:36] INFO in app.monitoring: Inicializando sistema de monitoreo
+[2025-08-29 18:50:37] INFO in app.monitoring: Métricas iniciales: CPU=14.8%, Memoria=66.9%
+[2025-08-29 18:50:37] INFO in app: Sistema de monitoreo inicializado correctamente
+[2025-08-29 18:50:37] INFO in app: Blueprint de debug de usuario registrado (TEMPORAL)
+[2025-08-29 18:51:17] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0467b1aedc57c0c805600', 'email': 'amelia@test.com', 'username': 'fix', 'nombre': 'Amelia', 'role': 'user', 'logged_in': True, '_fresh': False}
+[2025-08-29 18:51:17] WARNING in app.decorators: [ADMIN_REQUIRED] Usuario sin permisos de admin intentando acceder: fix (role: user)
+[2025-08-29 18:51:17] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:17] INFO in app.models.database: Conectado a MongoDB: cluster0.abpvipa.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority&appName=Cluster0&tlsAllowInvalidCertificates=true
+[2025-08-29 18:51:18] INFO in app: [DEBUG_TABLAS] Procesando 0 tablas encontradas
+[2025-08-29 18:51:18] INFO in app: [DEBUG_REGISTROS] Total registros a enviar al template: 0
+[2025-08-29 18:51:18] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:18] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:18] INFO in app: [DEBUG_TABLAS] Procesando 0 tablas encontradas
+[2025-08-29 18:51:18] INFO in app: [DEBUG_REGISTROS] Total registros a enviar al template: 0
+[2025-08-29 18:51:18] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:18] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:23] INFO in app.routes.auth_routes: Usuario cerró sesión: None (role: user)
+[2025-08-29 18:51:23] INFO in app.routes.auth_routes: Logout completado correctamente para role: user
+[2025-08-29 18:51:23] INFO in app: [COOKIES] Set-Cookie enviada: session=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/
+[2025-08-29 18:51:24] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:26] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:36] INFO in app.routes.auth_routes: Intento de login para: edefrutos
+[2025-08-29 18:51:36] INFO in app.models.database: [find_user_by_email_or_email] INICIO - Buscando: 'edefrutos'
+[2025-08-29 18:51:36] INFO in app.models.database: [find_user_by_email_or_email] Identificador normalizado: 'edefrutos'
+[2025-08-29 18:51:36] INFO in app.models.database: [find_user_by_email_or_email] Colección obtenida: Collection(Database(MongoClient(host=['ac-rpgo9ti-shard-00-00.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-01.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-02.abpvipa.mongodb.net:27017'], document_class=dict, tz_aware=False, connect=True, retrywrites=True, w='majority', appname='Cluster0', tlsallowinvalidcertificates=True, authsource='admin', replicaset='atlas-y9z7tw-shard-0', tls=True, tlsdisableocspendpointcheck=True), 'app_catalogojoyero_nueva'), 'users')
+[2025-08-29 18:51:36] INFO in app.models.database: [find_user_by_email_or_email] Query exacta: {'$or': [{'email': {'$regex': '^edefrutos$', '$options': 'i'}}, {'username': {'$regex': '^edefrutos$', '$options': 'i'}}, {'nombre': {'$regex': '^edefrutos$', '$options': 'i'}}]}
+[2025-08-29 18:51:37] INFO in app.models.database: [find_user_by_email_or_email] Resultado query exacta: True
+[2025-08-29 18:51:37] INFO in app.models.database: [find_user_by_email_or_email] Usuario encontrado por username: edefrutos@gmail.com
+[2025-08-29 18:51:37] INFO in app.routes.auth_routes: Login exitoso para: edefrutos
+[2025-08-29 18:51:37] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:37] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True}
+[2025-08-29 18:51:37] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 18:51:37] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:12] INFO in app: ✅ Sistema de logging unificado inicializado
+[2025-08-29 20:14:12] INFO in root: ✅ Logging unificado configurado - Directorio: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/logs
+[2025-08-29 20:14:12] INFO in app: 🔒 Middleware de seguridad inicializado
+[2025-08-29 20:14:12] INFO in app: Blueprint de API registrado correctamente
+[2025-08-29 20:14:12] INFO in app: Blueprint de testing registrado correctamente
+[2025-08-29 20:14:12] INFO in app: test_session_routes no encontrado - omitiendo registro
+[2025-08-29 20:14:12] INFO in app.routes.maintenance_routes: Rutas de mantenimiento reorganizadas registradas
+[2025-08-29 20:14:12] INFO in app.routes.maintenance_routes: Rutas de API de mantenimiento registradas
+[2025-08-29 20:14:12] INFO in app: Blueprints de mantenimiento y API registrados correctamente
+[2025-08-29 20:14:12] INFO in app: Blueprint de emergencia (emergency_bp) registrado correctamente.
+[2025-08-29 20:14:12] WARNING in app: Blueprints de administración adicionales deshabilitados temporalmente
+[2025-08-29 20:14:12] INFO in app.notifications: Sistema de notificaciones inicializado
+[2025-08-29 20:14:12] INFO in app.monitoring: Iniciando hilo de monitoreo
+[2025-08-29 20:14:12] INFO in app.monitoring: Inicializando sistema de monitoreo
+[2025-08-29 20:14:12] INFO in app.monitoring: Métricas iniciales: CPU=12.9%, Memoria=68.9%
+[2025-08-29 20:14:12] INFO in app: Sistema de monitoreo inicializado correctamente
+[2025-08-29 20:14:12] INFO in app: Blueprint de debug de usuario registrado (TEMPORAL)
+[2025-08-29 20:14:13] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:13] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:14] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:14] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:14] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:26] INFO in app.routes.auth_routes: Intento de login para: edefrutos
+[2025-08-29 20:14:26] INFO in app.models.database: [find_user_by_email_or_email] INICIO - Buscando: 'edefrutos'
+[2025-08-29 20:14:26] INFO in app.models.database: [find_user_by_email_or_email] Identificador normalizado: 'edefrutos'
+[2025-08-29 20:14:26] INFO in app.models.database: Conectado a MongoDB: cluster0.abpvipa.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority&appName=Cluster0&tlsAllowInvalidCertificates=true
+[2025-08-29 20:14:26] INFO in app.models.database: [find_user_by_email_or_email] Colección obtenida: Collection(Database(MongoClient(host=['ac-rpgo9ti-shard-00-01.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-02.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-00.abpvipa.mongodb.net:27017'], document_class=dict, tz_aware=False, connect=True, retrywrites=True, w='majority', appname='Cluster0', tlsallowinvalidcertificates=True, authsource='admin', replicaset='atlas-y9z7tw-shard-0', tls=True, tlsdisableocspendpointcheck=True), 'app_catalogojoyero_nueva'), 'users')
+[2025-08-29 20:14:26] INFO in app.models.database: [find_user_by_email_or_email] Query exacta: {'$or': [{'email': {'$regex': '^edefrutos$', '$options': 'i'}}, {'username': {'$regex': '^edefrutos$', '$options': 'i'}}, {'nombre': {'$regex': '^edefrutos$', '$options': 'i'}}]}
+[2025-08-29 20:14:27] INFO in app.models.database: [find_user_by_email_or_email] Resultado query exacta: True
+[2025-08-29 20:14:27] INFO in app.models.database: [find_user_by_email_or_email] Usuario encontrado por username: edefrutos@gmail.com
+[2025-08-29 20:14:27] INFO in app.routes.auth_routes: Login exitoso para: edefrutos
+[2025-08-29 20:14:27] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:27] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True}
+[2025-08-29 20:14:27] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:27] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:29] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/dashboard, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:14:29] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:29] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:29] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:14:29] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:33] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/backup-local, Método: POST, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:14:33] INFO in app.routes.maintenance_routes: Backup creado con 9 colecciones
+[2025-08-29 20:14:33] INFO in app.routes.maintenance_routes: Backup local creado exitosamente: backup_local_20250829_181433.json.gz
+[2025-08-29 20:14:33] INFO in app.routes.maintenance_routes: Ubicación: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/backups/backup_local_20250829_181433.json.gz
+[2025-08-29 20:14:33] INFO in app.routes.maintenance_routes: Tamaño: 51028 bytes
+[2025-08-29 20:14:33] INFO in app.routes.maintenance_routes: Colecciones: 9
+[2025-08-29 20:14:33] INFO in app.routes.maintenance_routes: Documentos: 340
+[2025-08-29 20:14:33] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:36] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/backup, Método: POST, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:14:37] INFO in app.routes.maintenance_routes: Backup creado con 9 colecciones
+[2025-08-29 20:14:37] INFO in googleapiclient.discovery_cache: file_cache is only supported with oauth2client<4.0.0
+[2025-08-29 20:14:40] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:42] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/drive/backups, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:14:42] INFO in googleapiclient.discovery_cache: file_cache is only supported with oauth2client<4.0.0
+[2025-08-29 20:14:43] INFO in app.routes.maintenance_routes: Listando 90 backups de Google Drive
+[2025-08-29 20:14:43] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:14:59] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:14:59] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:15:28] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/export/csv, Método: POST, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:15:29] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:15:29] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/download-csv/tmpz3ww6_n5.csv, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:15:29] INFO in app.routes.maintenance_routes: Archivo CSV guardado en Downloads: /Users/edefrutos/Downloads/system_status_20250829_201529.csv
+[2025-08-29 20:15:29] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:15:31] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/open-downloads-folder, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:15:31] INFO in app.routes.maintenance_routes: Carpeta de descargas abierta: /Users/edefrutos/Downloads
+[2025-08-29 20:15:31] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:15:53] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/drive/backups, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:15:53] INFO in googleapiclient.discovery_cache: file_cache is only supported with oauth2client<4.0.0
+[2025-08-29 20:15:54] INFO in app.routes.maintenance_routes: Listando 90 backups de Google Drive
+[2025-08-29 20:15:54] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:15:59] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:15:59] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:16:10] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/drive/delete/1nzXL6j1diAHlNmGjhXr-59MIFP0upCkK, Método: DELETE, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:16:10] INFO in googleapiclient.discovery_cache: file_cache is only supported with oauth2client<4.0.0
+[2025-08-29 20:16:11] INFO in app.routes.maintenance_routes: Archivo 1nzXL6j1diAHlNmGjhXr-59MIFP0upCkK eliminado exitosamente de Google Drive
+[2025-08-29 20:16:11] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:16:11] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/drive/backups, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:16:11] INFO in googleapiclient.discovery_cache: file_cache is only supported with oauth2client<4.0.0
+[2025-08-29 20:16:12] INFO in app.routes.maintenance_routes: Listando 89 backups de Google Drive
+[2025-08-29 20:16:12] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:52:59] INFO in app: ✅ Sistema de logging unificado inicializado
+[2025-08-29 20:52:59] INFO in root: ✅ Logging unificado configurado - Directorio: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/logs
+[2025-08-29 20:52:59] INFO in app: 🔒 Middleware de seguridad inicializado
+[2025-08-29 20:52:59] INFO in app: Blueprint de API registrado correctamente
+[2025-08-29 20:52:59] INFO in app: Blueprint de testing registrado correctamente
+[2025-08-29 20:52:59] INFO in app: test_session_routes no encontrado - omitiendo registro
+[2025-08-29 20:52:59] INFO in app.routes.maintenance_routes: Rutas de mantenimiento reorganizadas registradas
+[2025-08-29 20:52:59] INFO in app.routes.maintenance_routes: Rutas de API de mantenimiento registradas
+[2025-08-29 20:52:59] INFO in app: Blueprints de mantenimiento y API registrados correctamente
+[2025-08-29 20:52:59] INFO in app: Blueprint de emergencia (emergency_bp) registrado correctamente.
+[2025-08-29 20:52:59] WARNING in app: Blueprints de administración adicionales deshabilitados temporalmente
+[2025-08-29 20:52:59] INFO in app.notifications: Sistema de notificaciones inicializado
+[2025-08-29 20:52:59] INFO in app.monitoring: Iniciando hilo de monitoreo
+[2025-08-29 20:52:59] INFO in app.monitoring: Inicializando sistema de monitoreo
+[2025-08-29 20:52:59] INFO in app.monitoring: Métricas iniciales: CPU=31.7%, Memoria=69.3%
+[2025-08-29 20:52:59] INFO in app: Sistema de monitoreo inicializado correctamente
+[2025-08-29 20:52:59] INFO in app: Blueprint de debug de usuario registrado (TEMPORAL)
+[2025-08-29 20:53:00] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:00] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:00] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:00] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:00] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:11] INFO in app.routes.auth_routes: Intento de login para: edefrutos
+[2025-08-29 20:53:11] INFO in app.models.database: [find_user_by_email_or_email] INICIO - Buscando: 'edefrutos'
+[2025-08-29 20:53:11] INFO in app.models.database: [find_user_by_email_or_email] Identificador normalizado: 'edefrutos'
+[2025-08-29 20:53:11] INFO in app.models.database: Conectado a MongoDB: cluster0.abpvipa.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority&appName=Cluster0&tlsAllowInvalidCertificates=true
+[2025-08-29 20:53:11] INFO in app.models.database: [find_user_by_email_or_email] Colección obtenida: Collection(Database(MongoClient(host=['ac-rpgo9ti-shard-00-01.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-02.abpvipa.mongodb.net:27017', 'ac-rpgo9ti-shard-00-00.abpvipa.mongodb.net:27017'], document_class=dict, tz_aware=False, connect=True, retrywrites=True, w='majority', appname='Cluster0', tlsallowinvalidcertificates=True, authsource='admin', replicaset='atlas-y9z7tw-shard-0', tls=True, tlsdisableocspendpointcheck=True), 'app_catalogojoyero_nueva'), 'users')
+[2025-08-29 20:53:11] INFO in app.models.database: [find_user_by_email_or_email] Query exacta: {'$or': [{'email': {'$regex': '^edefrutos$', '$options': 'i'}}, {'username': {'$regex': '^edefrutos$', '$options': 'i'}}, {'nombre': {'$regex': '^edefrutos$', '$options': 'i'}}]}
+[2025-08-29 20:53:12] INFO in app.models.database: [find_user_by_email_or_email] Resultado query exacta: True
+[2025-08-29 20:53:12] INFO in app.models.database: [find_user_by_email_or_email] Usuario encontrado por username: edefrutos@gmail.com
+[2025-08-29 20:53:12] INFO in app.routes.auth_routes: Login exitoso para: edefrutos
+[2025-08-29 20:53:12] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:12] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True}
+[2025-08-29 20:53:12] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:12] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:14] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/dashboard, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:53:14] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:14] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:14] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/api/system_status, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:53:14] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-29 20:53:16] INFO in app.decorators: [ADMIN_REQUIRED] Ruta: /admin/maintenance/drive/backups, Método: GET, Sesión actual: {'_permanent': True, 'user_id': '68b0292c25470b54385c4738', 'email': 'edefrutos@gmail.com', 'username': 'edefrutos', 'nombre': 'edefrutos', 'role': 'admin', 'logged_in': True, '_fresh': False}
+[2025-08-29 20:53:16] INFO in googleapiclient.discovery_cache: file_cache is only supported with oauth2client<4.0.0
+[2025-08-29 20:53:17] INFO in app.routes.maintenance_routes: Listando 89 backups de Google Drive
+[2025-08-29 20:53:17] INFO in app: [COOKIES] Set-Cookie enviada: None

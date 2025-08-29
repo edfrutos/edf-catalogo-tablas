@@ -6,7 +6,12 @@ import os
 import uuid
 from functools import wraps
 
-import pandas as pd
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    pd = None
 from bson.objectid import ObjectId
 from flask import (
     Blueprint,
@@ -1377,6 +1382,11 @@ def import_catalog():
             current_app.logger.info(
                 f"Importando catálogo con usuario: {username}, email: {email}, nombre: {nombre}"
             )
+
+            # Verificar que pandas esté disponible
+            if not PANDAS_AVAILABLE:
+                flash("Funcionalidad de importación de archivos no disponible. pandas no está instalado.", "danger")
+                return redirect(request.url)
 
             # Procesar el archivo según su formato
             if file.filename and file.filename.endswith(".csv"):

@@ -7,7 +7,13 @@
 
 from functools import wraps
 
-import pandas as pd
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    pd = None
+
 from flask import flash, redirect, session, url_for
 
 from app.extensions import s3_client
@@ -31,11 +37,15 @@ def allowed_file(filename):
 
 
 def leer_datos_excel(filepath):
+    if not PANDAS_AVAILABLE:
+        raise ImportError("pandas no está disponible. Instálelo para usar funciones de Excel.")
     df = pd.read_excel(filepath)
     return df.to_dict(orient="records")
 
 
 def escribir_datos_excel(filepath, data):
+    if not PANDAS_AVAILABLE:
+        raise ImportError("pandas no está disponible. Instálelo para usar funciones de Excel.")
     df = pd.DataFrame(data)
     df.to_excel(filepath, index=False)
 
