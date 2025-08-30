@@ -100,7 +100,7 @@ dist/EDF_CatalogoDeTablas_Native_Finder.app/
 #### **Conexiones Verificadas:**
 ```
 ✅ Conexión global a MongoDB inicializada
-MONGO_URI usado: mongodb+srv://edfrutos:...@cluster0.abpvipa.mongodb.net/...
+MONGO_URI usado: [MONGO_URI_OCULTO]
 ✅ Encontrados 89 archivos en 'Backups_CatalogoTablas'
 ```
 
