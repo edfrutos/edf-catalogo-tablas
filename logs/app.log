@@ -445,3 +445,37 @@
 [2025-08-29 20:53:16] INFO in googleapiclient.discovery_cache: file_cache is only supported with oauth2client<4.0.0
 [2025-08-29 20:53:17] INFO in app.routes.maintenance_routes: Listando 89 backups de Google Drive
 [2025-08-29 20:53:17] INFO in app: [COOKIES] Set-Cookie enviada: None
+[2025-08-31 20:22:35] INFO in app: ✅ Sistema de logging unificado inicializado
+[2025-08-31 20:22:35] INFO in root: ✅ Logging unificado configurado - Directorio: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/logs
+[2025-08-31 20:22:35] INFO in app: 🔒 Middleware de seguridad inicializado
+[2025-08-31 20:22:35] INFO in app: Blueprint de API registrado correctamente
+[2025-08-31 20:22:35] INFO in app: Blueprint de testing registrado correctamente
+[2025-08-31 20:22:35] INFO in app: test_session_routes no encontrado - omitiendo registro
+[2025-08-31 20:22:35] INFO in app.routes.maintenance_routes: Rutas de mantenimiento reorganizadas registradas
+[2025-08-31 20:22:35] INFO in app.routes.maintenance_routes: Rutas de API de mantenimiento registradas
+[2025-08-31 20:22:35] INFO in app: Blueprints de mantenimiento y API registrados correctamente
+[2025-08-31 20:22:35] INFO in app: Blueprint de emergencia (emergency_bp) registrado correctamente.
+[2025-08-31 20:22:35] WARNING in app: Blueprints de administración adicionales deshabilitados temporalmente
+[2025-08-31 20:22:35] INFO in app.notifications: Sistema de notificaciones inicializado
+[2025-08-31 20:22:35] INFO in app.monitoring: Iniciando hilo de monitoreo
+[2025-08-31 20:22:35] INFO in app.monitoring: Inicializando sistema de monitoreo
+[2025-08-31 20:22:35] INFO in app.monitoring: Métricas iniciales: CPU=46.5%, Memoria=62.0%
+[2025-08-31 20:22:35] INFO in app: Sistema de monitoreo inicializado correctamente
+[2025-08-31 20:22:35] INFO in app: Blueprint de debug de usuario registrado (TEMPORAL)
+[2025-08-31 20:22:37] INFO in app: ✅ Sistema de logging unificado inicializado
+[2025-08-31 20:22:37] INFO in root: ✅ Logging unificado configurado - Directorio: /Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas/logs
+[2025-08-31 20:22:37] INFO in app: 🔒 Middleware de seguridad inicializado
+[2025-08-31 20:22:37] INFO in app: Blueprint de API registrado correctamente
+[2025-08-31 20:22:37] INFO in app: Blueprint de testing registrado correctamente
+[2025-08-31 20:22:37] INFO in app: test_session_routes no encontrado - omitiendo registro
+[2025-08-31 20:22:37] INFO in app.routes.maintenance_routes: Rutas de mantenimiento reorganizadas registradas
+[2025-08-31 20:22:37] INFO in app.routes.maintenance_routes: Rutas de API de mantenimiento registradas
+[2025-08-31 20:22:37] INFO in app: Blueprints de mantenimiento y API registrados correctamente
+[2025-08-31 20:22:37] INFO in app: Blueprint de emergencia (emergency_bp) registrado correctamente.
+[2025-08-31 20:22:37] WARNING in app: Blueprints de administración adicionales deshabilitados temporalmente
+[2025-08-31 20:22:37] INFO in app.notifications: Sistema de notificaciones inicializado
+[2025-08-31 20:22:37] INFO in app.monitoring: Iniciando hilo de monitoreo
+[2025-08-31 20:22:37] INFO in app.monitoring: Inicializando sistema de monitoreo
+[2025-08-31 20:22:38] INFO in app.monitoring: Métricas iniciales: CPU=46.3%, Memoria=62.4%
+[2025-08-31 20:22:38] INFO in app: Sistema de monitoreo inicializado correctamente
+[2025-08-31 20:22:38] INFO in app: Blueprint de debug de usuario registrado (TEMPORAL)

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # ==============================================
-# 🔍 SCRIPT: Verificar y Liberar Puerto 5001
+# 🔍 SCRIPT: Verificar y Liberar Puerto 5002
 # ==============================================
 
-PORT=5001
+PORT=5002
 APP_NAME="EDF_CatalogoDeTablas"
 
 echo "🔍 Verificando puerto $PORT..."
