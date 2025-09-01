@@ -33,7 +33,7 @@ from flask import (
     session,
     url_for,
 )
-from flask_login import current_user
+from flask_login import current_user  # type: ignore
 from werkzeug.security import generate_password_hash
 
 import app.monitoring as monitoring
@@ -355,15 +355,15 @@ def get_system_status_data(full: bool = False) -> Dict[str, Any]:
         uptime = datetime.now() - start_time
         uptime_str = str(uptime).split(".")[0]  # Formato HH:MM:SS
         # Obtener métricas de memoria
-        process = psutil.Process(os.getpid())
+        process = psutil.Process(os.getpid())  # type: ignore
         mem_info = process.memory_info()
         mem_percent = process.memory_percent()
         system_mem = psutil.virtual_memory()
-        swap_mem = psutil.swap_memory()
+        swap_mem = psutil.swap_memory()  # type: ignore
         # Top 5 procesos por consumo de memoria
         all_procs = [
             p
-            for p in psutil.process_iter(
+            for p in psutil.process_iter(  # type: ignore
                 ["pid", "name", "memory_info", "memory_percent"]
             )
             if p.info.get("memory_percent") is not None
@@ -960,6 +960,244 @@ def crear_usuario():
         return redirect(url_for("admin.lista_usuarios"))
 
     return render_template("admin/crear_usuario.html")
+
+
+@admin_bp.route("/usuarios/bulk_upload", methods=["GET", "POST"])
+@admin_required
+def bulk_upload_usuarios():
+    """Gestión de usuarios en masa mediante archivo CSV"""
+    try:
+        if request.method == "POST":
+            if "csv_file" not in request.files:
+                flash("No se seleccionó ningún archivo", "error")
+                return redirect(request.url)
+
+            file = request.files["csv_file"]
+            if file.filename == "":
+                flash("No se seleccionó ningún archivo", "error")
+                return redirect(request.url)
+
+            if not file.filename.endswith(  # pyright: ignore[reportOptionalMemberAccess]
+                ".csv"
+            ):  # pyright: ignore[reportOptionalMemberAccess]
+                flash("El archivo debe ser un CSV", "error")
+                return redirect(request.url)
+
+            # Procesar el archivo CSV
+            import csv
+            import io
+            import random
+            import string
+            from datetime import datetime
+
+            users_col = get_users_collection()
+            if users_col is None:
+                flash("Error: No se pudo acceder a la colección de usuarios", "error")
+                return redirect(request.url)
+
+            # Leer el archivo CSV con manejo de diferentes codificaciones
+            file_content = file.read()
+            csv_content = None
+
+            # Intentar diferentes codificaciones
+            encodings = [
+                "utf-8",
+                "utf-8-sig",
+                "latin-1",
+                "iso-8859-1",
+                "cp1252",
+                "windows-1252",
+            ]
+
+            for encoding in encodings:
+                try:
+                    csv_content = file_content.decode(encoding)
+                    break
+                except UnicodeDecodeError:
+                    continue
+
+            if csv_content is None:
+                flash(
+                    "Error: No se pudo leer el archivo CSV. Verifique que el archivo esté en una codificación válida (UTF-8, ISO-8859-1, etc.)",
+                    "error",
+                )
+                return redirect(request.url)
+
+            csv_reader = csv.DictReader(io.StringIO(csv_content))
+
+            # Validar que las columnas requeridas estén presentes
+            required_columns = ["username", "email"]
+            if not all(
+                col in (csv_reader.fieldnames or []) for col in required_columns
+            ):
+                flash(
+                    "El archivo CSV debe contener las columnas: username, email",
+                    "error",
+                )
+                return redirect(request.url)
+
+            # Procesar usuarios
+            usuarios_procesados = []
+            usuarios_exitosos = 0
+            usuarios_duplicados = 0
+            usuarios_error = 0
+
+            for row_num, row in enumerate(
+                csv_reader, start=2
+            ):  # Empezar en 2 porque la fila 1 es el encabezado
+                try:
+                    username = row["username"].strip()
+                    email = row["email"].strip()
+
+                    # Validaciones básicas
+                    if not username or not email:
+                        usuarios_error += 1
+                        usuarios_procesados.append(
+                            {
+                                "row": row_num,
+                                "username": username,
+                                "email": email,
+                                "status": "error",
+                                "message": "Username y email son obligatorios",
+                            }
+                        )
+                        continue
+
+                    # Verificar si el usuario ya existe
+                    existing_user = users_col.find_one(
+                        {"$or": [{"email": email}, {"username": username}]}
+                    )
+
+                    if existing_user:
+                        usuarios_duplicados += 1
+                        usuarios_procesados.append(
+                            {
+                                "row": row_num,
+                                "username": username,
+                                "email": email,
+                                "status": "duplicate",
+                                "message": "Usuario ya existe",
+                            }
+                        )
+                        continue
+
+                    # Generar contraseña temporal
+                    temp_password = "".join(
+                        random.choices(string.ascii_letters + string.digits, k=12)
+                    )
+
+                    # Crear el usuario
+                    new_user = {
+                        "username": username,
+                        "email": email,
+                        "password": generate_password_hash(
+                            temp_password, method="pbkdf2:sha256"
+                        ),
+                        "role": "user",
+                        "verified": True,
+                        "created_at": datetime.utcnow(),
+                        "temp_password": True,
+                        "must_change_password": True,
+                        "password_created_at": datetime.utcnow().isoformat(),
+                    }
+
+                    result = users_col.insert_one(new_user)
+
+                    if result.inserted_id:
+                        usuarios_exitosos += 1
+                        usuarios_procesados.append(
+                            {
+                                "row": row_num,
+                                "username": username,
+                                "email": email,
+                                "status": "success",
+                                "message": f"Usuario creado con contraseña temporal: {temp_password}",
+                                "temp_password": temp_password,
+                            }
+                        )
+                    else:
+                        usuarios_error += 1
+                        usuarios_procesados.append(
+                            {
+                                "row": row_num,
+                                "username": username,
+                                "email": email,
+                                "status": "error",
+                                "message": "Error al crear usuario en la base de datos",
+                            }
+                        )
+
+                except Exception as e:
+                    usuarios_error += 1
+                    usuarios_procesados.append(
+                        {
+                            "row": row_num,
+                            "username": row.get("username", "N/A"),
+                            "email": row.get("email", "N/A"),
+                            "status": "error",
+                            "message": f"Error de procesamiento: {str(e)}",
+                        }
+                    )
+
+            # Mostrar resultados
+            flash(
+                f"Procesamiento completado: {usuarios_exitosos} creados, {usuarios_duplicados} duplicados, {usuarios_error} errores",
+                "info",
+            )
+
+            return render_template(
+                "admin/bulk_upload_result.html",
+                usuarios_procesados=usuarios_procesados,
+                total_creados=usuarios_exitosos,
+                total_duplicados=usuarios_duplicados,
+                total_errores=usuarios_error,
+            )
+
+        return render_template("admin/bulk_upload.html")
+
+    except Exception as e:
+        logger.error(f"Error en bulk_upload_usuarios: {str(e)}", exc_info=True)
+        flash(f"Error al procesar la carga masiva: {str(e)}", "error")
+        return redirect(url_for("admin.lista_usuarios"))
+
+
+@admin_bp.route("/usuarios/download_template")
+@admin_required
+def download_csv_template():
+    """Descargar plantilla CSV para carga masiva de usuarios"""
+    try:
+        import csv
+        import io
+
+        # Crear el contenido del CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Escribir encabezados
+        writer.writerow(["username", "email"])
+
+        # Escribir algunos ejemplos
+        writer.writerow(["usuario1", "usuario1@ejemplo.com"])
+        writer.writerow(["usuario2", "usuario2@ejemplo.com"])
+        writer.writerow(["usuario3", "usuario3@ejemplo.com"])
+
+        # Preparar la respuesta
+        output.seek(0)
+
+        from flask import Response
+
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=usuarios_template.csv"
+            },
+        )
+
+    except Exception as e:
+        logger.error(f"Error al generar plantilla CSV: {str(e)}", exc_info=True)
+        flash(f"Error al generar la plantilla: {str(e)}", "error")
+        return redirect(url_for("admin.bulk_upload_usuarios"))
 
 
 @admin_bp.route("/backup/json")
@@ -2409,7 +2647,7 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
 
         if request.method == "POST":
             # Procesar campos normales y especiales
-            updated_row = {}
+            updated_row: Dict[str, Any] = {}
             for header in catalog["headers"]:
                 if header == "Multimedia":
                     # Manejar campo Multimedia
@@ -3847,7 +4085,7 @@ def logs_clear():
         return jsonify({"status": f"Archivo no encontrado: {log_file}"}), 404
 
     try:
-        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(log_path, encoding="utf-8", errors="ignore") as f:
             all_lines = f.readlines()
 
         if not all_lines:
@@ -5011,7 +5249,9 @@ def upload_backup_to_drive(filename: str):
         sys.path.insert(0, db_utils_path)
 
     try:
-        from google_drive_utils import upload_to_drive
+        from google_drive_utils import (
+            upload_file_to_drive as upload_to_drive,
+        )  # pyright: ignore[reportMissingModuleSource]
     except ImportError:
         # Si no se puede importar, Google Drive no estará disponible
         current_app.logger.warning(
@@ -5076,7 +5316,7 @@ def upload_backup_to_drive(filename: str):
         current_app.logger.info(f"Iniciando subida a Google Drive: {file_info}")
 
         # Subir a Google Drive
-        result = upload_to_drive(file_path)
+        result = upload_to_drive(file_path, "Backups_CatalogoTablas")
 
         if result.get("success"):
             # Obtener la URL de descarga directa

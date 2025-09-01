@@ -21,6 +21,14 @@
           <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Buscar</button>
         </form>
       </div>
+      <div class="col-md-6 text-end">
+        <a href="{{ url_for('admin.bulk_upload_usuarios') }}" class="btn btn-success">
+          <i class="bi bi-people-fill"></i> Carga Masiva
+        </a>
+        <a href="{{ url_for('admin.crear_usuario') }}" class="btn btn-primary">
+          <i class="bi bi-person-plus"></i> Crear Usuario
+        </a>
+      </div>
     </div>
     <div class="row">
         <div class="col-12">

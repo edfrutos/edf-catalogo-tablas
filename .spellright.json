@@ -25,7 +25,7 @@
     "**/app_data/**",
     "**/instance/**",
     "**/flask_session/**",
-    ".cursorrules",
+    "/.cursorrules",
     "cspell.json",
     ".spellright.json",
     "pyproject.toml",

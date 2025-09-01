@@ -5,35 +5,10 @@
 max-line-length = 120
 
 # Excluir directorios y archivos
-exclude = 
-    .git,
-    __pycache__,
-    .venv,
-    node_modules,
-    .mypy_cache,
-    .ruff_cache,
-    build,
-    dist,
-    *.egg-info,
-    backups,
-    logs,
-    uploads,
-    static/uploads,
-    imagenes,
-    exportados,
-    spreadsheets
+exclude = .git,__pycache__,.venv,node_modules,.mypy_cache,.ruff_cache,build,dist,*.egg-info,backups,logs,uploads,static/uploads,imagenes,exportados,spreadsheets,.cursorrules
 
 # Ignorar errores específicos
-ignore = 
-    F841,  # local variable is assigned to but never used
-    F541,  # f-string is missing placeholders
-    E722,  # do not use bare except
-    B007,  # loop control variable not used within loop body
-    F401,  # imported but unused
-    F821,  # undefined name
-    F811,  # redefinition of unused name
-    B904,  # raise without from inside except
-    F841,  # local variable is assigned to but never used
+ignore = F841,F541,E722,E501,B007,F401,F821,F811,B904,W503
 
 # Estadísticas
 statistics = True

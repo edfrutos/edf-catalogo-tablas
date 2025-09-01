@@ -176,7 +176,7 @@ class FileProcessor:
                         from bson import ObjectId
 
                         doc["_id"] = ObjectId(doc["_id"])
-                    except:
+                    except:  # noqa: E722
                         pass
                 collections[collection_name].append(doc)
 
@@ -204,7 +204,7 @@ class FileProcessor:
 class GoogleDriveManager:
     """Clase para manejar operaciones con Google Drive."""
 
-    def __init__(self):
+    def __init__(self):  # pyright: ignore[reportMissingSuperCall]
         self.storage_client = None
 
     def get_client(self):
@@ -271,8 +271,8 @@ class GoogleDriveManager:
             from google_drive_utils_v2 import download_file  # type: ignore
 
             # Descargar el archivo y devolver el contenido como bytes
-            content = download_file(file_id)
-            return content
+            content = download_file(file_id)  # pyright: ignore[reportUnknownMemberType]
+            return bytes(content) if content else b""
 
         except Exception as e:
             log_error(f"Error descargando archivo {filename}: {str(e)}")
@@ -298,7 +298,7 @@ class GoogleDriveManager:
             else:
                 log_warning(f"No se pudo eliminar el archivo {file_id} de Google Drive")
 
-            return success
+            return bool(success)
         except Exception as e:
             log_error(f"Error eliminando archivo {file_id}: {str(e)}")
             return False
@@ -332,7 +332,7 @@ class GoogleDriveManager:
                     log_info(
                         f"Archivo {filename} subido exitosamente a Google Drive con ID: {file_id}"
                     )
-                    return file_id
+                    return str(file_id) if file_id else ""
                 else:
                     error_msg = (
                         result.get("error", "Error desconocido")
@@ -371,7 +371,7 @@ def json_serializer(obj):
 class BackupManager:
     """Clase para manejar operaciones de backup y restauración."""
 
-    def __init__(self):
+    def __init__(self):  # pyright: ignore[reportMissingSuperCall]
         self.db = get_mongo_db()
 
     def create_backup(self) -> Dict[str, Any]:
@@ -438,7 +438,11 @@ class BackupManager:
                 raise ValueError("Estructura de backup inválida")
 
             collections = backup_data.get("collections", {})
-            results = {"restored_collections": [], "errors": [], "total_documents": 0}
+            results: Dict[str, Any] = {
+                "restored_collections": [],
+                "errors": [],
+                "total_documents": 0,
+            }
 
             for collection_name, documents in collections.items():
                 try:

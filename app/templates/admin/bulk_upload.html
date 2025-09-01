@@ -1,0 +1,153 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Carga Masiva de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="bi bi-people-fill"></i> Carga Masiva de Usuarios</h1>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i> Instrucciones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>📋 Formato del archivo CSV:</h6>
+                            <ul>
+                                <li>El archivo debe tener <strong>exactamente 2 columnas</strong></li>
+                                <li><strong>username</strong>: Nombre de usuario único</li>
+                                <li><strong>email</strong>: Correo electrónico válido</li>
+                                <li>La primera fila debe contener los encabezados</li>
+                                <li>No incluir espacios extra en los datos</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>🔐 Información importante:</h6>
+                            <ul>
+                                <li>Se generará una <strong>contraseña temporal</strong> para cada usuario</li>
+                                <li>Los usuarios deberán <strong>cambiar su contraseña</strong> en el primer acceso</li>
+                                <li>Se verificarán <strong>duplicados</strong> por email y username</li>
+                                <li>El rol por defecto será <strong>"user"</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-upload"></i> Subir archivo CSV
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <form method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="csv_file" class="form-label">Seleccionar archivo CSV:</label>
+                                    <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                                    <div class="form-text">Solo archivos CSV son permitidos</div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-upload"></i> Procesar Usuarios
+                                </button>
+                                <a href="{{ url_for('admin.lista_usuarios') }}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Volver
+                                </a>
+                            </form>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6><i class="bi bi-download"></i> Descargar Plantilla</h6>
+                                    <p class="small text-muted">Descarga un archivo CSV de ejemplo para usar como plantilla</p>
+                                    <a href="{{ url_for('admin.download_csv_template') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-file-earmark-arrow-down"></i> Descargar Plantilla
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-table"></i> Ejemplo de formato CSV
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>username</th>
+                                    <th>email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>usuario1</td>
+                                    <td>usuario1@ejemplo.com</td>
+                                </tr>
+                                <tr>
+                                    <td>usuario2</td>
+                                    <td>usuario2@ejemplo.com</td>
+                                </tr>
+                                <tr>
+                                    <td>usuario3</td>
+                                    <td>usuario3@ejemplo.com</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.btn {
+    border-radius: 0.375rem;
+}
+
+.form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>
+{% endblock %}
