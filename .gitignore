@@ -349,6 +349,15 @@ debug_*.json
 .vscode/extensions.json.bak
 
 # -------------------------------------------
+# EXTENSIONES DE CURSOR/VS CODE
+# -------------------------------------------
+backups/cursor_extensions/
+.vscode/extensions/
+.cursor/extensions/
+extensions/
+*.vsix
+
+# -------------------------------------------
 # ARCHIVOS DE CACHE Y TEMPORALES ADICIONALES
 # -------------------------------------------
 *.cache

@@ -70,7 +70,7 @@
                   <td>
                     {% if row.images and row.images|length > 0 %}
                     <div class="d-flex flex-wrap gap-2">
-                      {% for img in row.images %} {% if img.startswith('http')
+                      {% for img in row.images %} {% if img is string and img.startswith('http')
                       %}
                       <img
                         src="{{ img }}"
@@ -107,7 +107,7 @@
                     </div>
                     {% elif row.imagenes and row.imagenes|length > 0 %}
                     <div class="d-flex flex-wrap gap-2">
-                      {% for img in row.imagenes %} {% if img.startswith('http')
+                      {% for img in row.imagenes %} {% if img is string and img.startswith('http')
                       %}
                       <img
                         src="{{ img }}"
@@ -206,7 +206,7 @@
         ></button>
       </div>
       <div class="modal-body p-0">
-        <img src="" id="modalImage" class="img-fluid w-100" alt="imagen" />
+        <img src="/static/img/image-placeholder.png" id="modalImage" class="img-fluid w-100" alt="imagen" />
       </div>
     </div>
   </div>

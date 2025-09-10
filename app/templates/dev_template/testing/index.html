@@ -41,19 +41,22 @@
             <a class="btn btn-outline-secondary" href="/dev-template/readme">
               <i class="bi bi-file-earmark-text"></i> Ver README
             </a>
-            <button class="btn btn-outline-warning" id="update-tests-readme-btn">
+            <button class="btn btn-outline-warning" id="update-tests-readme-btn" title="Actualiza automáticamente la documentación de tests en README.md">
               <i class="bi bi-arrow-repeat"></i> Actualizar README de tests
             </button>
             <a class="btn btn-outline-info" href="/dev-template/report">
               <i class="bi bi-download"></i> Descargar último reporte HTML
             </a>
           </div>
+                  </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Generador de plantilla de test -->
+    <!-- Contenedor para alertas de actualización de README -->
+    <div id="update-readme-alert" style="display: none;"></div>
+
+    <!-- Generador de plantilla de test -->
   <div class="row mb-4">
     <div class="col-12">
       <div class="card">

@@ -27,7 +27,10 @@
         "dist",
         "build",
         "launcher_web.py",
-        "launcher_native.py"
+        "launcher_native.py",
+        "backups/cursor_extensions/**",
+        "**/extensions/**",
+        "**/*.vsix"
     ],
     "stubPath": "./typings",
     "ignore": [

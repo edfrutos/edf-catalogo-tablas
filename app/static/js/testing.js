@@ -121,29 +121,118 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 
-  // Botón para actualizar README de tests (solo admin)
+  // Botón para actualizar README de tests (solo admin) - MEJORADO
   const updateReadmeBtn = document.getElementById("update-tests-readme-btn");
   if (updateReadmeBtn) {
     updateReadmeBtn.addEventListener("click", async function() {
-      const alertDiv = document.getElementById("update-readme-alert");
-      if (!alertDiv) {
-        console.error("[update-tests-readme-btn] No se encontró el div de alerta (#update-readme-alert)");
-        return;
+      // Crear o encontrar el contenedor de alertas
+      let alertContainer = document.getElementById("update-readme-alert");
+      if (!alertContainer) {
+        alertContainer = document.createElement("div");
+        alertContainer.id = "update-readme-alert";
+        alertContainer.className = "mt-3";
+        updateReadmeBtn.parentNode.insertBefore(alertContainer, updateReadmeBtn.nextSibling);
       }
-      alertDiv.style.display = "block";
-      alertDiv.innerHTML = "<div class=\"alert alert-info mb-2\">Actualizando README de tests...</div>";
+      
+      // Deshabilitar botón y mostrar progreso
+      const originalText = updateReadmeBtn.innerHTML;
+      updateReadmeBtn.disabled = true;
+      updateReadmeBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Actualizando...';
+      
+      alertContainer.style.display = "block";
+      alertContainer.innerHTML = `
+        <div class="alert alert-info mb-2">
+          <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-2" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <div>
+              <strong>Actualizando README de tests...</strong>
+              <div class="small text-muted">Escaneando directorios y extrayendo documentación</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
       try {
-        const resp = await fetch("/dev-template/api/update-tests-readme", { method: "POST" });
+        const resp = await fetch("/dev-template/api/update-tests-readme", { 
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        });
+        
         const data = await resp.json();
+        
         if (data.success) {
-          alertDiv.innerHTML = "<div class=\"alert alert-success mb-2\">" + (data.message || "README actualizado.") + "</div>";
+          // Mostrar éxito con estadísticas
+          const stats = data.stats || {};
+          alertContainer.innerHTML = `
+            <div class="alert alert-success mb-2">
+              <div class="d-flex align-items-start">
+                <i class="bi bi-check-circle-fill me-2 mt-1"></i>
+                <div>
+                  <strong>✅ README actualizado correctamente</strong>
+                  <div class="small mt-1">
+                    ${data.message || "README de tests actualizado."}
+                  </div>
+                  ${stats.tests_found ? `<div class="small text-muted mt-1">
+                    📊 ${stats.tests_found} tests procesados
+                    ${stats.backup_created ? ' • 💾 Respaldo creado' : ''}
+                  </div>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
         } else {
-          alertDiv.innerHTML = "<div class=\"alert alert-danger mb-2\">" + (data.error || "Error actualizando README.") + "</div>";
+          // Mostrar error detallado
+          const errorDetails = data.missing_delimiters ? 
+            `<div class="small mt-1">
+              <strong>Delimitadores faltantes:</strong><br>
+              • START: ${data.missing_delimiters.start ? '❌' : '✅'}<br>
+              • END: ${data.missing_delimiters.end ? '❌' : '✅'}
+            </div>` : '';
+            
+          alertContainer.innerHTML = `
+            <div class="alert alert-danger mb-2">
+              <div class="d-flex align-items-start">
+                <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+                <div>
+                  <strong>❌ Error actualizando README</strong>
+                  <div class="small mt-1">${data.error || "Error desconocido"}</div>
+                  ${errorDetails}
+                  ${data.backup_available ? '<div class="small text-muted mt-1">💾 Respaldo disponible para restauración</div>' : ''}
+                </div>
+              </div>
+            </div>
+          `;
         }
-      } catch (_) { // eslint-disable-line no-unused-vars
-        alertDiv.innerHTML = "<div class=\"alert alert-danger mb-2\">Error de red o backend al actualizar README.</div>";
+      } catch (error) {
+        console.error("Error actualizando README:", error);
+        alertContainer.innerHTML = `
+          <div class="alert alert-danger mb-2">
+            <div class="d-flex align-items-start">
+              <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+              <div>
+                <strong>❌ Error de conexión</strong>
+                <div class="small mt-1">No se pudo conectar con el servidor. Verifica tu conexión.</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } finally {
+        // Restaurar botón
+        updateReadmeBtn.disabled = false;
+        updateReadmeBtn.innerHTML = originalText;
+        
+        // Auto-ocultar después de 8 segundos
+        setTimeout(() => { 
+          if (alertContainer) {
+            alertContainer.style.display = "none"; 
+          }
+        }, 8000);
       }
-      setTimeout(() => { alertDiv.style.display = "none"; }, 3500);
     });
   } else {
     console.warn("[update-tests-readme-btn] No se encontró el botón en el DOM");

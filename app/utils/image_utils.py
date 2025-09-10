@@ -60,7 +60,7 @@ def get_unified_image_urls(row_data: Dict[str, Any]) -> List[str]:
         if not img or img == "N/A":
             continue
 
-        if img.startswith("http"):
+        if isinstance(img, str) and img.startswith("http"):
             # URL externa - usar directamente
             image_urls.append(img)
         else:
@@ -84,8 +84,8 @@ def get_image_fallback_url(filename: str) -> str:
     if not filename or filename == "N/A":
         return "/static/img/image-error.svg"
 
-    # 1. Intentar S3 primero
-    s3_url = f"https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/{filename}"
+    # 1. Usar proxy S3 para evitar problemas CORS
+    s3_proxy_url = f"/admin/s3/{filename}"
 
     # 2. Fallback local
     local_url = f"/static/uploads/{filename}"
@@ -101,14 +101,14 @@ def get_image_fallback_url(filename: str) -> str:
             return local_url
         else:
             current_app.logger.debug(
-                f"[IMAGE] Archivo local no encontrado, probando S3: {filename}"
+                f"[IMAGE] Archivo local no encontrado, usando proxy S3: {filename}"
             )
-            return s3_url
+            return s3_proxy_url
     except Exception as e:
         current_app.logger.error(
             f"[IMAGE] Error verificando archivo local {filename}: {e}"
         )
-        return s3_url
+        return s3_proxy_url
 
 
 def get_images_for_template(row_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -149,7 +149,12 @@ def get_raw_images_for_edit(row_data: Dict[str, Any]) -> List[str]:
 
         if isinstance(value, list):
             for img in value:
-                if img and img != "N/A" and not img.startswith("http"):
+                if (
+                    img
+                    and img != "N/A"
+                    and isinstance(img, str)
+                    and not img.startswith("http")
+                ):
                     raw_images.append(img)
         elif (
             isinstance(value, str)

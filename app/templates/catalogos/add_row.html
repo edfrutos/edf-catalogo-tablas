@@ -31,24 +31,47 @@
                                     </div>
                                 </div>
                                 
-                            {% elif header in ['Documentos', 'Documentación'] %}
-                                <!-- Campo especial para Documentos/Documentación -->
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-file-alt"></i> {{ header }}
+            {% elif header in ['Documentos', 'Documentación'] %}
+                <!-- Campo especial para Documentos/Documentación - MÚLTIPLES DOCUMENTOS -->
+                <label class="form-label fw-bold">
+                    <i class="fas fa-file-alt"></i> {{ header }}
+                    <span class="badge bg-success ms-2">Múltiples</span>
+                </label>
+
+                <!-- URLs de Documentos -->
+                <div class="mb-3">
+                    <label class="form-label">URLs de Documentos (opcional)</label>
+                    <div id="urls-container-{{ loop.index0 }}">
+                        <div class="input-group mb-2">
+                            <input type="url" class="form-control" name="{{ header }}_url_{{ loop.index0 }}"
+                                   placeholder="https://ejemplo.com/documento.pdf">
+                            <button type="button" class="btn btn-outline-success" onclick="addUrlField('urls-container-{{ loop.index0 }}', '{{ header }}_url_{{ loop.index0 }}')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-text">Puedes agregar múltiples URLs de documentos externos</div>
+                </div>
+
+                <!-- Archivos de Documentos -->
+                <div class="mb-3">
+                    <label class="form-label">Subir Documentos</label>
+                    <input type="file" class="form-control" name="{{ header }}_file_{{ loop.index0 }}"
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.md" multiple>
+                    <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB cada uno | Puedes seleccionar múltiples archivos</div>
+                </div>
+                                
+                            {% elif header == 'Fecha' %}
+                                <!-- Campo especial para Fecha (columna inteligente) -->
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-alt"></i> {{ header }}
+                                    <span class="badge bg-info ms-2">Auto</span>
                                 </label>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-label">URL de Documento (opcional)</label>
-                                        <input type="url" class="form-control" name="{{ header }}_url" 
-                                               placeholder="https://ejemplo.com/documento.pdf">
-                                        <div class="form-text">Enlaza a un documento externo</div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Subir Documento</label>
-                                        <input type="file" class="form-control" name="{{ header }}_file" 
-                                               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.md">
-                                        <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB</div>
-                                    </div>
+                                <input type="date" class="form-control" name="{{ header }}" 
+                                       value="">
+                                <div class="form-text">
+                                    <i class="fas fa-magic"></i> <strong>Columna Inteligente:</strong> 
+                                    Esta fecha se asigna automáticamente. Puedes modificarla si es necesario.
                                 </div>
                                 
                             {% else %}
@@ -91,4 +114,40 @@
         </div>
     </div>
 </div>
+
+<script>
+// Establecer fecha actual automáticamente en campos de fecha
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInputs = document.querySelectorAll('input[type="date"]');
+    fechaInputs.forEach(function(input) {
+        if (!input.value) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            input.value = `${year}-${month}-${day}`;
+        }
+    });
+});
+
+// Función para agregar campos de URL dinámicamente
+function addUrlField(containerId, fieldName) {
+    const container = document.getElementById(containerId);
+    const newField = document.createElement('div');
+    newField.className = 'input-group mb-2';
+    newField.innerHTML = `
+        <input type="url" class="form-control" name="${fieldName}" 
+               placeholder="https://ejemplo.com/documento.pdf">
+        <button type="button" class="btn btn-outline-danger" onclick="removeUrlField(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(newField);
+}
+
+// Función para eliminar campos de URL
+function removeUrlField(button) {
+    button.parentElement.remove();
+}
+</script>
 {% endblock %}

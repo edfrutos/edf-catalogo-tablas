@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- eslint-disable -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -19,22 +20,155 @@
 <div class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ 'warning' if category=='error' else category }} alert-dismissible fade show mt-2" role="alert">
-            {{ message }}
+        {% set message_count = messages|length %}
+        {% if message_count > 3 %}
+          <!-- Mostrar solo los últimos 3 mensajes para evitar spam -->
+          {% set start_index = message_count - 3 %}
+          {% for category, message in messages %}
+            {% if loop.index > start_index %}
+              <div class="alert alert-{{ 'warning' if category=='error' else category }} alert-dismissible fade show mt-2" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+              </div>
+            {% endif %}
+          {% endfor %}
+          <div class="alert alert-info alert-dismissible fade show mt-2" role="alert">
+            <small>Se han omitido {{ message_count - 3 }} mensajes anteriores. <a href="#" onclick="clearAllMessages()" class="alert-link">Limpiar todos</a></small>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
           </div>
-        {% endfor %}
+        {% else %}
+          <!-- Mostrar todos los mensajes si son 3 o menos -->
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'warning' if category=='error' else category }} alert-dismissible fade show mt-2" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
       {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
 </div>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='js/pywebview_compatibility.js') }}"></script>
+        <!-- REACTIVADO: Script de modales necesario -->
+<script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}&t={{ range(1, 100000) | random }}&ts={{ range(1, 999999) | random }}&force={{ range(1000000, 9999999) | random }}"></script>
+
+<script>
+// Función para limpiar todos los mensajes flash
+function clearAllMessages() {
+    // Cerrar todos los alerts visibles
+    document.querySelectorAll('.alert').forEach(alert => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+    });
+    
+    // Limpiar mensajes flash del servidor
+    fetch('/clear-flash-messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then(response => response.json())
+      .then(data => {
+          console.log('Mensajes flash limpiados del servidor');
+      })
+      .catch(error => {
+          console.log('Error limpiando mensajes flash:', error);
+      });
+}
+
+// Auto-limpiar mensajes después de 5 segundos (TEMPORALMENTE DESHABILITADO PARA DEBUG)
+/*
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        // Solo cerrar alertas que están en contenedores de mensajes flash
+        document.querySelectorAll('.container .alert:not(.alert-info):not(.alert-success)').forEach(alert => {
+            // Verificar que no esté dentro de un preview de documento o multimedia
+            if (!alert.closest('.documento-preview') && !alert.closest('.multimedia-preview')) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        });
+    }, 5000);
+});
+*/
+</script>
+<!-- TEMPORALMENTE DESHABILITADO PARA DEBUG -->
+<!-- <script src="{{ url_for('static', filename='js/pywebview_compatibility.js') }}"></script> -->
 {% block scripts %}{% endblock %}
 <!-- Botón Ir Arriba -->
 <button type="button" id="goTopBtn" class="btn btn-primary btn-lg rounded-circle" style="position:fixed;bottom:32px;right:32px;z-index:1050;display:none;"><i class="bi bi-arrow-up"></i></button>
+
+<!-- Modal para Imágenes -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">
+                    <i class="bi bi-image"></i> Imagen
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" alt="Imagen">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="downloadImage()">
+                    <i class="fas fa-download"></i> Descargar
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Documentos -->
+<div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="documentModalLabel">
+                    <i class="fas fa-file"></i> Documento
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="documentContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="downloadDocument()">
+                    <i class="fas fa-download"></i> Descargar
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Multimedia -->
+<div class="modal fade" id="multimediaModal" tabindex="-1" aria-labelledby="multimediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="multimediaModalLabel">
+                    <i class="fas fa-video"></i> Multimedia
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="multimediaContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="downloadMultimedia()">
+                    <i class="fas fa-download"></i> Descargar
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal para resultados de scripts -->
 <div class="modal fade" id="scriptResultModal" tabindex="-1" aria-labelledby="scriptResultModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">

@@ -11,7 +11,7 @@ Este módulo proporciona herramientas para monitorear la salud de la aplicación
 y generar alertas cuando se detectan problemas.
 """
 
-import datetime  # type: ignore
+from datetime import datetime  # type: ignore
 import json
 import logging
 import os
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Métricas de la aplicación
 _app_metrics = {
-    "start_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     "database_status": {
         "last_checked": None,
         "is_available": False,
@@ -45,6 +45,17 @@ _app_metrics = {
     "request_stats": {"total_requests": 0, "error_count": 0, "avg_response_time_ms": 0},
     "temp_files": {"count": 0, "total_size_mb": 0, "files": []},
 }
+
+# Variables de estado para el monitoreo
+_monitoring_state = {
+    "last_disk_check": 0,
+    "last_db_check": 0,
+    "last_temp_check": 0,
+    "cache_update_count": 0,
+}
+
+# Contador para controlar la frecuencia de guardado
+_save_counter = 0
 
 # Ruta para el archivo de métricas (cambiado para evitar problemas de permisos)
 APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -77,8 +88,20 @@ def load_metrics():
 
 
 def check_database_health(db_client):
-    """Comprueba la salud de la conexión a la base de datos"""
+    """Comprueba la salud de la conexión a la base de datos (optimizada)"""
     start_time = time.time()
+
+    # Solo verificar base de datos cada 2 ciclos para reducir carga
+    current_time = time.time()
+    last_db_check = _monitoring_state["last_db_check"]
+
+    if current_time - last_db_check < 3600:  # 1 hora (2 ciclos de 30 min)
+        # Usar valores anteriores si están disponibles
+        db_status = _app_metrics.get("database_status", {})
+        if db_status and db_status.get("last_checked"):
+            return db_status.get("is_available", False)
+
+    _monitoring_state["last_db_check"] = int(current_time)
 
     # Si no hay cliente, intentar obtener uno nuevo
     if db_client is None:
@@ -92,7 +115,7 @@ def check_database_health(db_client):
     # Si aún no hay cliente, marcar como no disponible
     if db_client is None:
         _app_metrics["database_status"] = {
-            "last_checked": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "last_checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "is_available": False,
             "response_time_ms": 0,
             "error": "Cliente de MongoDB no disponible",
@@ -107,7 +130,7 @@ def check_database_health(db_client):
         response_time = (end_time - start_time) * 1000  # convertir a milisegundos
 
         _app_metrics["database_status"] = {
-            "last_checked": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "last_checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "is_available": True,
             "response_time_ms": round(response_time, 2),
             "error": None,
@@ -118,7 +141,7 @@ def check_database_health(db_client):
         response_time = (end_time - start_time) * 1000
 
         _app_metrics["database_status"] = {
-            "last_checked": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "last_checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "is_available": False,
             "response_time_ms": round(response_time, 2),
             "error": str(e),
@@ -128,13 +151,34 @@ def check_database_health(db_client):
 
 
 def check_system_health():
-    """Comprueba la salud del sistema"""
+    """Comprueba la salud del sistema (optimizada para reducir consumo de recursos)"""
     try:
-        # Usar intervalo de 0.1 segundos para obtener medición más precisa
-        # Si es la primera vez, psutil necesita un intervalo para medir
-        cpu_usage = psutil.cpu_percent(interval=0.1)
+        # Usar intervalo más corto (0.05 segundos) y solo cuando sea necesario
+        # Evitar mediciones innecesarias en cada ciclo
+        cpu_usage = psutil.cpu_percent(interval=0.05)
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage("/")
+
+        # Solo verificar disco cada 3 ciclos para reducir I/O
+        current_time = time.time()
+        last_disk_check = _monitoring_state["last_disk_check"]
+
+        if current_time - last_disk_check > 5400:  # 1.5 horas (3 ciclos de 30 min)
+            disk = psutil.disk_usage("/")
+            _monitoring_state["last_disk_check"] = (  # type: ignore[reportArgumentType]
+                current_time
+            )
+        else:
+            # Usar valores anteriores si están disponibles
+            disk_data = _app_metrics.get("system_status", {}).get("disk_usage", {})
+            disk = type(
+                "DiskUsage",
+                (),
+                {
+                    "percent": disk_data.get("percent", 0),
+                    "used": disk_data.get("used_gb", 0) * 1024 * 1024 * 1024,
+                    "total": disk_data.get("total_gb", 0) * 1024 * 1024 * 1024,
+                },
+            )()
 
         _app_metrics["system_status"] = {
             "cpu_usage": cpu_usage,
@@ -150,15 +194,17 @@ def check_system_health():
             },
         }
 
-        # Actualizar métricas de caché
-        update_cache_metrics()
+        # Solo actualizar métricas de caché cuando sea necesario
+        _monitoring_state["cache_update_count"] += 1
+        if _monitoring_state["cache_update_count"] % 3 == 0:  # Cada 3 ciclos
+            update_cache_metrics()
 
-        # Verificar si hay condiciones de alerta (umbrales ajustados para reducir alertas innecesarias)
-        if cpu_usage > 95:
+        # Umbrales más altos para reducir alertas innecesarias
+        if cpu_usage > 98:  # Solo alertar si CPU > 98%
             logger.warning(f"Alerta: Alto uso de CPU: {cpu_usage}%")
-        if memory.percent > 98:
+        if memory.percent > 99:  # Solo alertar si memoria > 99%
             logger.warning(f"Alerta: Alto uso de memoria: {memory.percent}%")
-        if disk.percent > 98:
+        if disk.percent > 99:  # Solo alertar si disco > 99%
             logger.warning(f"Alerta: Alto uso de disco: {disk.percent}%")
 
     except Exception as e:
@@ -172,8 +218,20 @@ def check_system_health():
 
 
 def check_temp_files():
-    """Verifica los archivos temporales de la aplicación"""
+    """Verifica los archivos temporales de la aplicación (optimizada para reducir I/O)"""
     try:
+        # Solo verificar archivos temporales cada 2 ciclos para reducir I/O
+        current_time = time.time()
+        last_temp_check = _monitoring_state["last_temp_check"]
+
+        if current_time - last_temp_check < 3600:  # 1 hora (2 ciclos de 30 min)
+            # Usar valores anteriores si están disponibles
+            temp_data = _app_metrics.get("temp_files", {})
+            if temp_data:
+                return
+
+        _monitoring_state["last_temp_check"] = int(current_time)
+
         # Comprobar archivos específicos de la aplicación en /tmp/
         app_files = [f for f in os.listdir("/tmp/") if f.startswith("edefrutos2025_")]
         total_size = 0
@@ -189,12 +247,12 @@ def check_temp_files():
             "files": app_files,
         }
 
-        # Alerta si hay demasiados archivos o si ocupan mucho espacio
-        if len(app_files) > 100:
+        # Umbrales más altos para reducir alertas innecesarias
+        if len(app_files) > 500:  # Solo alertar si hay más de 500 archivos
             logger.warning(
                 f"Alerta: Hay {len(app_files)} archivos temporales de la aplicación"
             )
-        if total_size > 100 * 1024 * 1024:  # 100 MB
+        if total_size > 500 * 1024 * 1024:  # Solo alertar si ocupan más de 500 MB
             logger.warning(
                 f"Alerta: Los archivos temporales ocupan {round(total_size / (1024 * 1024), 2)} MB"
             )
@@ -246,7 +304,7 @@ def record_request(response_time_ms, is_error=False):
 def get_health_status():
     """Devuelve un informe completo del estado de salud del sistema (solo lee métricas ya calculadas)"""
     # NO recalcula métricas costosas aquí
-    uptime = datetime.datetime.now() - datetime.datetime.strptime(
+    uptime = datetime.now() - datetime.strptime(
         _app_metrics["start_time"], "%Y-%m-%d %H:%M:%S"
     )
     health_report = {
@@ -254,7 +312,7 @@ def get_health_status():
         "uptime_seconds": uptime.total_seconds(),
         "uptime_human": str(uptime).split(".")[0],  # Formato HH:MM:SS
         "metrics": _app_metrics,
-        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
     # Determinar el estado general basado en criterios múltiples
@@ -332,7 +390,7 @@ def cleanup_old_temp_files(
         if count_removed > 0:
             logger.info(
                 f"Limpieza completada: {count_removed} archivos eliminados, "
-                f"{round(bytes_removed / (1024 * 1024), 2)} MB liberados"
+                + f"{round(bytes_removed / (1024 * 1024), 2)} MB liberados"
             )
 
         return {"files_removed": count_removed, "bytes_removed": bytes_removed}
@@ -343,46 +401,58 @@ def cleanup_old_temp_files(
 
 
 def start_monitoring_thread(app, mongo_client):
-    """Inicia un hilo para monitoreo periódico"""
+    """Inicia un hilo para monitoreo periódico (optimizado)"""
 
     def monitor_app():
         with app.app_context():
-            logger.info("Iniciando hilo de monitoreo")
+            logger.info("Iniciando hilo de monitoreo optimizado")
 
             # Cargar métricas existentes si las hay
             load_metrics()
 
             while True:
                 try:
-                    # Verificar salud de la base de datos
+                    # Verificar si el monitoreo está habilitado
+                    if os.environ.get("DISABLE_MONITORING", "false").lower() == "true":
+                        logger.info("Monitoreo deshabilitado por variable de entorno")
+                        time.sleep(
+                            1800
+                        )  # Esperar 30 minutos antes de verificar de nuevo
+                        continue
+
+                    # Verificar salud de la base de datos (cada 2 ciclos)
                     check_database_health(mongo_client)
 
-                    # Verificar salud del sistema
+                    # Verificar salud del sistema (cada ciclo, pero optimizada)
                     check_system_health()
 
-                    # Verificar archivos temporales
+                    # Verificar archivos temporales (cada 2 ciclos)
                     check_temp_files()
 
                     # Realizar limpieza periódica (cada 6 horas aproximadamente)
-                    current_hour = datetime.datetime.now().hour
+                    current_hour = datetime.now().hour
                     if current_hour % 6 == 0:  # A las 0, 6, 12, 18 horas
                         cleanup_old_temp_files()
 
-                        # Guardar métricas actualizadas
-                    save_metrics()
+                    # Guardar métricas actualizadas (cada 2 ciclos para reducir I/O)
+                    global _save_counter
+                    _save_counter += 1
+                    if _save_counter % 2 == 0:
+                        save_metrics()
 
-                    # Verificar si hay alertas que enviar
-                    try:
-                        health_status = get_health_status()
-                        notifications.check_and_alert(health_status["metrics"])
-                    except Exception as e:
-                        logger.error(f"Error al enviar notificaciones: {str(e)}")
+                    # Verificar si hay alertas que enviar (cada 3 ciclos para reducir spam)
+                    if _save_counter % 3 == 0:
+                        try:
+                            health_status = get_health_status()
+                            notifications.check_and_alert(health_status["metrics"])
+                        except Exception as e:
+                            logger.error(f"Error al enviar notificaciones: {str(e)}")
 
                 except Exception as e:
                     logger.error(f"Error en el hilo de monitoreo: {str(e)}")
 
-                # Esperar antes del siguiente ciclo (aumentado a 15 minutos para reducir carga)
-                time.sleep(900)
+                # Esperar antes del siguiente ciclo (30 minutos para reducir carga significativamente)
+                time.sleep(1800)
 
     # Crear e iniciar el hilo
     monitor_thread = threading.Thread(target=monitor_app, daemon=True)

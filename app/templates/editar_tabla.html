@@ -1,31 +1,385 @@
 {% extends "base.html" %}
 {% block title %}Editar tabla{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .btn-outline-primary, .btn-outline-success {
+        border-width: 2px;
+    }
+    .btn-outline-primary:hover, .btn-outline-success:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .preview-container {
+        transition: all 0.3s ease;
+    }
+    .preview-container:hover {
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-  <h2>Editar tabla</h2>
-  <form method="post">
+    <h2>Editar Catálogo/Tabla</h2>
+    <a href="{{ url_for('main.ver_tabla', table_id=table._id) }}" class="btn btn-secondary mb-3">&larr; Volver</a>
+    
+    <form method="POST" id="formEditarCatalogo" enctype="multipart/form-data">
     <div class="mb-3">
-      <label for="nombre" class="form-label">Nombre de la tabla</label>
+            <label for="name" class="form-label">Nombre</label>
       <input type="text" class="form-control" id="name" name="name" value="{{ table.name }}" required>
     </div>
+        
+        <!-- Input oculto para encabezados -->
+        <input type="hidden" id="headers" name="headers" value="{{ table.headers|join(', ') if table.headers else '' }}">
+        
+        <!-- Inputs ocultos para miniatura -->
+        <input type="hidden" id="miniatura" name="miniatura" value="{{ table.miniatura or '' }}">
+        <input type="file" id="miniatura_file" name="miniatura_file" accept="image/*" style="display: none;">
+        
     <div class="mb-3">
-      <label for="headers" class="form-label">Encabezados (separados por coma)</label>
-      <input type="text" class="form-control" id="headers" name="headers" value="{{ table.headers|join(', ') }}" required>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editHeadersModal">
+                <i class="bi bi-columns-gap"></i> Editar encabezados de columnas
+            </button>
+            <span id="headersPreview" class="ms-2 text-muted small">{{ table.headers|join(', ') if table.headers else '' }}</span>
     </div>
     
     <div class="mb-3">
-      <label for="miniatura" class="form-label">Imagen de miniatura (URL)</label>
-      <input type="text" class="form-control" id="miniatura" name="miniatura" value="{{ table.miniatura or '' }}" placeholder="https://ejemplo.com/imagen.jpg">
-      <small class="form-text text-muted">URL de la imagen que aparecerá como miniatura en el dashboard. Si se deja vacío, se usará automáticamente la primera imagen encontrada en las filas.</small>
+            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#editThumbnailModal">
+                <i class="bi bi-image"></i> Editar miniatura de catálogo
+            </button>
+            <span id="thumbnailPreview" class="ms-2 text-muted small">
       {% if table.miniatura %}
-        <div class="mt-2">
-          <img src="{{ table.miniatura }}" alt="Miniatura actual" style="width:60px; height:60px; object-fit:cover; border-radius:4px; border:1px solid #ddd;">
-          <small class="text-muted d-block">Miniatura actual</small>
+                    <img src="{{ table.miniatura }}" alt="Miniatura actual" style="width:30px; height:30px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" class="me-1">
+                    {{ table.miniatura[:50] }}{% if table.miniatura|length > 50 %}...{% endif %}
+                {% else %}
+                    Sin miniatura configurada
+                {% endif %}
+            </span>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+    </form>
+</div>
+
+<!-- Modal para editar encabezados de columnas -->
+<div class="modal fade" id="editHeadersModal" tabindex="-1" aria-labelledby="editHeadersModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form onsubmit="guardarEncabezados(event)">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editHeadersModalLabel">Editar encabezados de columnas</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <label for="headersInputModal" class="form-label">Encabezados (separados por coma):</label>
+          <input type="text" class="form-control" id="headersInputModal" placeholder="columna1, columna2, columna3">
+          <div class="form-text">
+            <strong>💡 Tip:</strong> Para agregar una columna de fecha automática, incluye "Fecha" en los encabezados.
+            La fecha se asignará automáticamente al crear nuevas filas.
+          </div>
+          <div class="alert alert-info mt-2">
+            <i class="bi bi-calendar-check"></i>
+            <strong>Columna Inteligente "Fecha":</strong> Si incluyes "Fecha" en los encabezados, 
+            esta columna se llenará automáticamente con la fecha actual cada vez que se cree una nueva fila.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar encabezados</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para editar miniatura de catálogo -->
+<div class="modal fade" id="editThumbnailModal" tabindex="-1" aria-labelledby="editThumbnailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editThumbnailModalLabel">Editar miniatura de catálogo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Pestañas para elegir método -->
+        <ul class="nav nav-pills nav-justified mb-3" id="thumbnailMethodTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="url-method-tab" data-bs-toggle="pill" data-bs-target="#url-method" type="button" role="tab">
+              <i class="bi bi-link-45deg"></i> URL
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="file-method-tab" data-bs-toggle="pill" data-bs-target="#file-method" type="button" role="tab">
+              <i class="bi bi-upload"></i> Subir archivo
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="auto-method-tab" data-bs-toggle="pill" data-bs-target="#auto-method" type="button" role="tab">
+              <i class="bi bi-magic"></i> Automática
+            </button>
+          </li>
+        </ul>
+        
+        <div class="tab-content" id="thumbnailMethodContent">
+          <!-- Panel de URL -->
+          <div class="tab-pane fade show active" id="url-method" role="tabpanel">
+            <div class="mb-3">
+              <label for="thumbnailUrlInput" class="form-label">URL de la imagen</label>
+              <input type="text" class="form-control" id="thumbnailUrlInput" placeholder="https://ejemplo.com/imagen.jpg">
+              <div class="form-text">Pega aquí la URL de la imagen que quieres usar como miniatura.</div>
+            </div>
+          </div>
+          
+          <!-- Panel de archivo -->
+          <div class="tab-pane fade" id="file-method" role="tabpanel">
+            <div class="mb-3">
+              <label for="thumbnailFileInput" class="form-label">Seleccionar archivo</label>
+              <input type="file" class="form-control" id="thumbnailFileInput" accept="image/*" onchange="previewThumbnailFile(this)">
+              <div class="form-text">Selecciona una imagen desde tu computadora (PNG, JPG, JPEG, GIF, WEBP - máx. 5MB).</div>
+            </div>
+            
+            <!-- Preview del archivo seleccionado -->
+            <div id="filePreviewContainer" class="mt-3" style="display: none;">
+              <div class="d-flex align-items-center gap-3 p-3 border rounded bg-light">
+                <img id="filePreviewImg" style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
+                <div>
+                  <div class="fw-bold text-success">Vista previa</div>
+                  <small class="text-muted" id="filePreviewName"></small>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Panel automático -->
+          <div class="tab-pane fade" id="auto-method" role="tabpanel">
+            <div class="mb-3">
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> 
+                Se buscará automáticamente la primera imagen disponible en las filas del catálogo.
+              </div>
+              <div id="autoThumbnailPreview"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Preview actual -->
+        <div class="mt-4">
+          <h6>Miniatura actual:</h6>
+          <div id="currentThumbnailDisplay" class="p-3 border rounded bg-light">
+            {% if table.miniatura %}
+              <div class="d-flex align-items-center gap-3">
+                <img src="{{ table.miniatura }}" alt="Miniatura actual" style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
+                <div>
+                  <div class="fw-bold">Miniatura configurada</div>
+                  <small class="text-muted">{{ table.miniatura }}</small>
+                </div>
+              </div>
+            {% else %}
+              <div class="text-muted text-center py-3">
+                <i class="bi bi-image-alt display-4"></i>
+                <div>Sin miniatura configurada</div>
         </div>
       {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-danger" onclick="clearThumbnail()">
+          <i class="bi bi-trash"></i> Eliminar miniatura
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" onclick="saveThumbnail()">
+          <i class="bi bi-check-lg"></i> Guardar miniatura
+        </button>
+      </div>
     </div>
-    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-    <a href="{{ url_for('main.ver_tabla', table_id=table._id) }}" class="btn btn-secondary">Cancelar</a>
-  </form>
+  </div>
 </div>
+
+<script>
+// Al abrir el modal, poner el valor actual de los encabezados
+const headersInputModal = document.getElementById('headersInputModal');
+document.getElementById('editHeadersModal').addEventListener('show.bs.modal', function () {
+    headersInputModal.value = document.getElementById('headers').value;
+});
+
+// Al guardar en el modal, actualizar el input oculto y el preview
+function guardarEncabezados(event) {
+    event.preventDefault();
+    const value = headersInputModal.value;
+    document.getElementById('headers').value = value;
+    document.getElementById('headersPreview').textContent = value;
+    // Cerrar el modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editHeadersModal'));
+    modal.hide();
+}
+
+// === FUNCIONES PARA MINIATURA ===
+
+// Al abrir el modal de miniatura, cargar datos actuales
+document.getElementById('editThumbnailModal').addEventListener('show.bs.modal', function () {
+    const currentThumbnail = document.getElementById('miniatura').value;
+    document.getElementById('thumbnailUrlInput').value = currentThumbnail;
+    
+    // Buscar imágenes automáticas al abrir
+    loadAutoThumbnails();
+});
+
+// Preview de archivo seleccionado
+function previewThumbnailFile(input) {
+    const previewContainer = document.getElementById('filePreviewContainer');
+    const previewImg = document.getElementById('filePreviewImg');
+    const previewName = document.getElementById('filePreviewName');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Validaciones
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor selecciona un archivo de imagen válido.');
+            input.value = '';
+            previewContainer.style.display = 'none';
+            return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            alert('El archivo es demasiado grande. Por favor selecciona una imagen menor a 5MB.');
+            input.value = '';
+            previewContainer.style.display = 'none';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewName.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+            previewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewContainer.style.display = 'none';
+    }
+}
+
+// Cargar miniaturas automáticas
+function loadAutoThumbnails() {
+    const autoPreview = document.getElementById('autoThumbnailPreview');
+    autoPreview.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Buscando imágenes...</div>';
+    
+    // Hacer petición AJAX para obtener imágenes del catálogo
+    fetch(`/admin/catalogo/{{ table._id }}/get-images`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.images && data.images.length > 0) {
+                let html = '<div class="row g-2">';
+                data.images.slice(0, 6).forEach((img, index) => {
+                    html += `
+                        <div class="col-4">
+                            <div class="card h-100" style="cursor: pointer;" onclick="selectAutoThumbnail('${img}')">
+                                <img src="${img}" class="card-img-top" style="height: 80px; object-fit: cover;">
+                                <div class="card-body p-2">
+                                    <small class="text-muted">Imagen ${index + 1}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                autoPreview.innerHTML = html;
+            } else {
+                autoPreview.innerHTML = '<div class="text-muted text-center py-3">No se encontraron imágenes en este catálogo.</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            autoPreview.innerHTML = '<div class="text-danger text-center py-3">Error al cargar las imágenes.</div>';
+        });
+}
+
+// Seleccionar miniatura automática
+function selectAutoThumbnail(imageUrl) {
+    document.getElementById('thumbnailUrlInput').value = imageUrl;
+    // Activar pestaña URL
+    const urlTab = new bootstrap.Tab(document.getElementById('url-method-tab'));
+    urlTab.show();
+}
+
+// Limpiar miniatura
+function clearThumbnail() {
+    document.getElementById('miniatura').value = '';
+    document.getElementById('miniatura_file').value = '';
+    document.getElementById('thumbnailUrlInput').value = '';
+    document.getElementById('filePreviewContainer').style.display = 'none';
+    
+    // Actualizar preview
+    updateThumbnailPreview('');
+    
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editThumbnailModal'));
+    modal.hide();
+}
+
+// Guardar miniatura
+function saveThumbnail() {
+    const activeTab = document.querySelector('#thumbnailMethodTabs .nav-link.active');
+    const activeTabId = activeTab.getAttribute('data-bs-target');
+    
+    let thumbnailValue = '';
+    let hasFile = false;
+    
+    if (activeTabId === '#url-method') {
+        thumbnailValue = document.getElementById('thumbnailUrlInput').value.trim();
+    } else if (activeTabId === '#file-method') {
+        const fileInput = document.getElementById('thumbnailFileInput');
+        if (fileInput.files && fileInput.files[0]) {
+            // Copiar archivo al input oculto
+            const hiddenFileInput = document.getElementById('miniatura_file');
+            hiddenFileInput.files = fileInput.files;
+            hasFile = true;
+        }
+    } else if (activeTabId === '#auto-method') {
+        thumbnailValue = document.getElementById('thumbnailUrlInput').value.trim();
+    }
+    
+    if (!hasFile) {
+        document.getElementById('miniatura').value = thumbnailValue;
+    }
+    
+    // Actualizar preview
+    updateThumbnailPreview(thumbnailValue, hasFile);
+    
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editThumbnailModal'));
+    modal.hide();
+}
+
+// Actualizar preview de miniatura
+function updateThumbnailPreview(url, hasFile = false) {
+    const preview = document.getElementById('thumbnailPreview');
+    
+    if (hasFile) {
+        const fileInput = document.getElementById('thumbnailFileInput');
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Nueva miniatura" style="width:30px; height:30px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" class="me-1">
+                    ${file.name} (archivo subido)
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+    } else if (url) {
+        preview.innerHTML = `
+            <img src="${url}" alt="Nueva miniatura" style="width:30px; height:30px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" class="me-1">
+            ${url.length > 50 ? url.substring(0, 50) + '...' : url}
+        `;
+    } else {
+        preview.innerHTML = 'Sin miniatura configurada';
+    }
+}
+</script>
 {% endblock %} 

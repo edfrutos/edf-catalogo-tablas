@@ -10,7 +10,7 @@ Módulo de auditoría para el registro de acciones de usuarios y sistema.
 Proporciona funciones para registrar eventos y consultar el historial de auditoría.
 """
 
-import datetime
+from datetime import datetime
 import logging
 from typing import Any, Dict, Optional
 
@@ -58,7 +58,7 @@ def log_event(event_type: str, user_id: Optional[str] = None, details: Optional[
 
         event = {
             "event_type": event_type,
-            "timestamp": datetime.datetime.utcnow(),
+            "timestamp": datetime.utcnow(),
             "success": success,
             "ip_address": ip_address,
         }

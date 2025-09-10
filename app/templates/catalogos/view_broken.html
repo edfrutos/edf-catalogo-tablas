@@ -1,0 +1,755 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ super() }}
+<style>
+    /* Estilos para miniaturas multimedia */
+    .multimedia-thumbnail {
+        width: 50px !important;
+        height: 38px !important;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    
+    .multimedia-thumbnail-container {
+        display: inline-block;
+        position: relative;
+    }
+    
+    .play-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.7);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+    
+    .play-overlay i {
+        font-size: 10px !important;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2>{{ catalog.name }}</h2>
+            <p class="text-muted">{{ catalog.row_count or (catalog.rows|length if catalog.rows else 0) }} filas</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('catalogs.add_row', catalog_id=catalog._id) }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Añadir Fila
+            </a>
+            <a href="{{ url_for('catalogs.edit', catalog_id=catalog._id) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar Catálogo
+            </a>
+            <a href="{{ url_for('catalogs.list') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla con funcionalidades mejoradas -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 60px;">
+                        #
+                        <span class="sort-icon" data-column="0" data-type="number" onclick="sortTable(this.dataset.column, this.dataset.type)">
+                            <i class="bi bi-chevron-expand" id="sort-icon-0"></i>
+                        </span>
+                    </th>
+                    {% for header in catalog.headers %}
+                    <th>
+                        {% if header == 'Multimedia' %}
+                            <i class="fas fa-video"></i> {{ header }}
+                        {% elif header == 'Documentos' %}
+                            <i class="fas fa-file-alt"></i> {{ header }}
+                        {% else %}
+                        {{ header }}
+                        {% endif %}
+                        <span class="sort-icon" data-column="{{ loop.index }}" data-type="text" onclick="sortTable(this.dataset.column, this.dataset.type)">
+                            <i class="bi bi-chevron-expand" id="sort-icon-{{ loop.index }}"></i>
+                        </span>
+                    </th>
+                    {% endfor %}
+                    <th style="width: 120px;">Imágenes</th>
+                    <th style="width: 160px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-body">
+                {% for row in catalog.rows %}
+                <tr id="fila-{{ loop.index }}">
+                    <td class="fw-bold text-primary">{{ loop.index }}</td>
+                    {% for header in catalog.headers %}
+                    <td>
+                        <!-- DEBUG: Header actual = "{{ header }}" -->
+                        <span style="color: red; font-size: 10px;">DEBUG: {{ header }}</span>
+                        {% if header == 'Multimedia' %}
+                            <!-- Columna Multimedia -->
+                            {% if row[header] %}
+                                {% set multimedia_data = row[header] %}
+                                {% if multimedia_data is string and multimedia_data.startswith('http') %}
+                                    <!-- URL externa o S3 -->
+                                    {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or multimedia_data.startswith('/admin/s3/') %}
+                                        <!-- Archivo en S3 -->
+                                        <div class="multimedia-preview">
+                                            {% if multimedia_data is string and multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
+                                                <img src="{{ multimedia_data }}" 
+                                                     alt="Multimedia" 
+                                                     class="img-thumbnail multimedia-thumbnail"
+                                                     onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}')">
+                                            {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
+                                                <div class="multimedia-thumbnail-container" 
+                                                     onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}')"
+                                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                                    <video class="multimedia-thumbnail" 
+                                                           style="pointer-events: none;">
+                                                        <source src="{{ multimedia_data }}" type="video/mp4">
+                                                        Tu navegador no soporta el elemento video.
+                                                    </video>
+                                                    <div class="play-overlay">
+                                                        <i class="fas fa-play text-white"></i>
+                                                    </div>
+                                                </div>
+                                            {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
+                                                <div class="multimedia-thumbnail-container" 
+                                                     onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}')"
+                                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                                    <audio class="multimedia-thumbnail" 
+                                                           style="pointer-events: none;">
+                                                        <source src="{{ multimedia_data }}" type="audio/mpeg">
+                                                        Tu navegador no soporta el elemento audio.
+                                                    </audio>
+                                                    <div class="play-overlay">
+                                                        <i class="fas fa-music text-white"></i>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <a href="#" 
+                                                   onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}'); return false;"
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-play"></i> Reproducir
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <!-- URL externa -->
+                                        <a href="{{ multimedia_data }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt"></i> Ver Multimedia
+                                        </a>
+                                    {% endif %}
+                                {% else %}
+                                    <!-- Archivo local -->
+                                    <div class="multimedia-preview">
+                                        {% if multimedia_data is string and multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
+                                <img src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" 
+                                     alt="Multimedia" 
+                                     class="img-thumbnail multimedia-thumbnail"
+                                     data-src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}"
+                                     data-title="{{ multimedia_data }}"
+                                     onclick="showMultimediaModal(this.dataset.src, this.dataset.title)">
+                                        {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
+                                <div class="multimedia-thumbnail-container" 
+                                     data-src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}"
+                                     data-title="{{ multimedia_data }}"
+                                     onclick="showMultimediaModal(this.dataset.src, this.dataset.title)"
+                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                    <video class="multimedia-thumbnail" 
+                                           style="pointer-events: none;">
+                                        <source src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" type="video/mp4">
+                                        Tu navegador no soporta el elemento video.
+                                    </video>
+                                                <div class="play-overlay">
+                                                    <i class="fas fa-play text-white"></i>
+                                                </div>
+                                            </div>
+                                        {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
+                                <div class="multimedia-thumbnail-container" 
+                                     data-src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}"
+                                     data-title="{{ multimedia_data }}"
+                                     onclick="showMultimediaModal(this.dataset.src, this.dataset.title)"
+                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                    <audio class="multimedia-thumbnail" 
+                                           style="pointer-events: none;">
+                                        <source src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" type="audio/mpeg">
+                                        Tu navegador no soporta el elemento audio.
+                                    </audio>
+                                                <div class="play-overlay">
+                                                    <i class="fas fa-music text-white"></i>
+                                                </div>
+                                            </div>
+                                                                    {% else %}
+                                <a href="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" 
+                                   target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-download"></i> Descargar
+                                </a>
+                            {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        {% elif header == 'Documentación' %}
+                            <!-- DEBUG: PROCESANDO COLUMNA DOCUMENTACIÓN -->
+                            <!-- Columna Documentos/Documentación - MÚLTIPLES DOCUMENTOS -->
+                            {% if row[header] %}
+                                <div class="documentos-container">
+                                    <!-- DETECCIÓN ESPECÍFICA: String que representa lista de URLs de S3 -->
+                                    {% if row[header] is string and "'https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/" in row[header] %}
+                                        <!-- Procesar string que representa lista de URLs de S3 -->
+                                        {% set doc_string = row[header] %}
+                                        {% set url_parts = doc_string.split("'https://") %}
+                                        {% for part in url_parts %}
+                                            {% if 'edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/' in part %}
+                                                <!-- Reconstruir la URL completa -->
+                                                {% set doc_url = 'https://' + part.split("'")[0] %}
+                                                <div class="documento-item mb-1">
+                                                    <!-- Archivo en S3 - usar proxy -->
+                                                    {% set doc_proxy = '/admin/s3/' + doc_url.split('/')[-1] %}
+                                                    <a href="#" 
+                                                       class="btn btn-sm btn-outline-info"
+                                                       onclick="
+                                                           event.preventDefault(); 
+                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                               showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_url.split('/')[-1] }}'); 
+                                                           } else { 
+                                                               showDocumentModal('{{ doc_proxy }}', '{{ doc_url.split('/')[-1] }}'); 
+                                                           }
+                                                       ">
+                                                        <i class="fas fa-external-link-alt"></i> {{ doc_url.split('/')[-1][:15] }}...
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <!-- Contenido normal -->
+                                        {{ row[header] }}
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        {% else %}
+                            <!-- DEBUG: Header = "{{ header }}" -->
+                            <!-- DEBUG: Header type = {{ header|type }} -->
+                            <!-- DEBUG: Header length = {{ header|length }} -->
+                            <!-- DEBUG: Header contains 'Documentación' = {{ 'Documentación' in header }} -->
+                            <!-- DEBUG: Header == 'Documentación' = {{ header == 'Documentación' }} -->
+                            {% if 'Documentación' in header %}
+                                <!-- DEBUG: PROCESANDO COLUMNA DOCUMENTACIÓN -->
+                            <!-- Columna Documentos/Documentación - MÚLTIPLES DOCUMENTOS -->
+                            {% if row[header] %}
+                                <div class="documentos-container">
+                                    <!-- DETECCIÓN ESPECÍFICA: String que representa lista de URLs de S3 -->
+                                    {% if row[header] is string and "'https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/" in row[header] %}
+                                        <!-- Procesar string que representa lista de URLs de S3 -->
+                                        {% set doc_string = row[header] %}
+                                        {% set url_parts = doc_string.split("'https://") %}
+                                        {% for part in url_parts %}
+                                            {% if 'edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/' in part %}
+                                                <!-- Reconstruir la URL completa -->
+                                                {% set doc_url = 'https://' + part.split("'")[0] %}
+                                                <div class="documento-item mb-1">
+                                                    <!-- Archivo en S3 - usar proxy -->
+                                                    {% set doc_proxy = '/admin/s3/' + doc_url.split('/')[-1] %}
+                                                    <a href="#" 
+                                                       class="btn btn-sm btn-outline-info"
+                                                       onclick="
+                                                           event.preventDefault(); 
+                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                               showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_url.split('/')[-1] }}'); 
+                                                           } else { 
+                                                               showDocumentModal('{{ doc_proxy }}', '{{ doc_url.split('/')[-1] }}'); 
+                                                           }
+                                                       ">
+                                                        <i class="fas fa-external-link-alt"></i> {{ doc_url.split('/')[-1][:15] }}...
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% elif row[header] is iterable and row[header] is not string %}
+                                        <!-- Múltiples documentos (formato nuevo) -->
+                                        {% for doc in row[header] %}
+                                            {% if doc %}
+                                                <div class="documento-item mb-1">
+                                                    {% if doc is string and doc.startswith('http') %}
+                                                        <!-- URL externa o S3 -->
+                                                        {% if doc.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
+                                                            <!-- Archivo en S3 - usar proxy -->
+                                                            {% set doc_proxy = '/admin/s3/' + doc.split('/')[-1] %}
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-info"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('{{ doc_proxy }}', '{{ doc.split('/')[-1] }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('{{ doc_proxy }}', '{{ doc.split('/')[-1] }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-external-link-alt"></i> {{ doc.split('/')[-1][:20] }}...
+                                                            </a>
+                                                        {% else %}
+                                                            <!-- URL externa real -->
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-info"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('{{ doc }}', '{{ doc.split('/')[-1] }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('{{ doc }}', '{{ doc.split('/')[-1] }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-external-link-alt"></i> {{ doc.split('/')[-1][:20] }}...
+                                                            </a>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <!-- Archivo local -->
+                                                        {% if doc is string and doc.lower().endswith('.pdf') %}
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-danger"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-file-pdf"></i> {{ doc[:20] }}...
+                                                            </a>
+                                                        {% elif doc is string and doc.lower().endswith(('.doc', '.docx')) %}
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-primary"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-file-word"></i> {{ doc[:20] }}...
+                                                            </a>
+                                                        {% elif doc is string and doc.lower().endswith(('.xls', '.xlsx')) %}
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-success"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-file-excel"></i> {{ doc[:20] }}...
+                                                            </a>
+                                                        {% elif doc is string and doc.lower().endswith('.txt') %}
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-secondary"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-file-alt"></i> {{ doc[:20] }}...
+                                                            </a>
+                                                        {% elif doc is string and doc.lower().endswith('.md') %}
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-info"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('/static/uploads/{{ doc }}', '{{ doc }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-file-code"></i> {{ doc[:20] }}...
+                                                            </a>
+                                                        {% else %}
+                                                            <a href="{{ url_for('uploaded_images.uploaded_images', filename=doc) }}" 
+                                                               target="_blank" class="btn btn-sm btn-outline-dark">
+                                                                <i class="fas fa-download"></i> {{ doc[:20] }}...
+                                                            </a>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <!-- Documento único (formato antiguo) o string que representa lista -->
+                                        {% set documento_data = row[header] %}
+                                        {% if documento_data is string and documento_data.startswith('[') and documento_data.endswith(']') %}
+                                            <!-- String que representa una lista - parsear manualmente -->
+                                            {% set doc_string = documento_data[1:-1] %}
+                                            {% set doc_urls = doc_string.split(',') %}
+                                            {% for doc_url in doc_urls %}
+                                                {% set doc_url = doc_url.strip().strip("'\"") %}
+                                                {% if doc_url %}
+                                                    <div class="documento-item mb-1">
+                                                        {% if doc_url.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
+                                                            <!-- Archivo en S3 - usar proxy -->
+                                                            {% set doc_proxy = '/admin/s3/' + doc_url.split('/')[-1] %}
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-info"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_url.split('/')[-1] }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('{{ doc_proxy }}', '{{ doc_url.split('/')[-1] }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-external-link-alt"></i> {{ doc_url.split('/')[-1][:20] }}...
+                                                            </a>
+                                                        {% else %}
+                                                            <!-- URL externa real -->
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-info"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('{{ doc_url }}', '{{ doc_url.split('/')[-1] }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('{{ doc_url }}', '{{ doc_url.split('/')[-1] }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-external-link-alt"></i> {{ doc_url.split('/')[-1][:20] }}...
+                                                            </a>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% elif documento_data is string and documento_data.startswith('http') %}
+                                            <!-- URL externa o S3 -->
+                                            {% if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
+                                                <!-- Archivo en S3 - usar proxy -->
+                                                {% set doc_proxy = '/admin/s3/' + documento_data.split('/')[-1] %}
+                                                <a href="#" 
+                                                   class="btn btn-sm btn-outline-info"
+                                                   onclick="
+                                                       event.preventDefault(); 
+                                                       if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                           showPyWebViewDocument('{{ doc_proxy }}', '{{ documento_data.split('/')[-1] }}'); 
+                                                       } else { 
+                                                           showDocumentModal('{{ doc_proxy }}', '{{ documento_data.split('/')[-1] }}'); 
+                                                       }
+                                                   ">
+                                                    <i class="fas fa-external-link-alt"></i> Ver Documento
+                                                </a>
+                                            {% else %}
+                                                <!-- URL externa real -->
+                                                <a href="#" 
+                                                   class="btn btn-sm btn-outline-info"
+                                                   onclick="
+                                                       event.preventDefault(); 
+                                                       if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                           showPyWebViewDocument('{{ documento_data }}', '{{ documento_data.split('/')[-1] }}'); 
+                                                       } else { 
+                                                           showDocumentModal('{{ documento_data }}', '{{ documento_data.split('/')[-1] }}'); 
+                                                       }
+                                                   ">
+                                                    <i class="fas fa-external-link-alt"></i> Ver Documento
+                                                </a>
+                                            {% endif %}
+                                        {% else %}
+                                            <!-- Archivo local -->
+                                            <div class="documento-preview">
+                                                {% if documento_data is string and documento_data.lower().endswith('.pdf') %}
+                                                    <a href="#" 
+                                                       class="btn btn-sm btn-outline-danger"
+                                                       onclick="
+                                                           event.preventDefault(); 
+                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                               showPyWebViewDocument('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           } else { 
+                                                               showDocumentModal('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           }
+                                                       ">
+                                                        <i class="fas fa-file-pdf"></i> Ver PDF
+                                                    </a>
+                                                {% elif documento_data is string and documento_data.lower().endswith(('.doc', '.docx')) %}
+                                                    <a href="#" 
+                                                       class="btn btn-sm btn-outline-primary"
+                                                       onclick="
+                                                           event.preventDefault(); 
+                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                               showPyWebViewDocument('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           } else { 
+                                                               showDocumentModal('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           }
+                                                       ">
+                                                        <i class="fas fa-file-word"></i> Ver Word
+                                                    </a>
+                                                {% elif documento_data is string and documento_data.lower().endswith(('.xls', '.xlsx')) %}
+                                                    <a href="#" 
+                                                       class="btn btn-sm btn-outline-success"
+                                                       onclick="
+                                                           event.preventDefault(); 
+                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                               showPyWebViewDocument('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           } else { 
+                                                               showDocumentModal('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           }
+                                                       ">
+                                                        <i class="fas fa-file-excel"></i> Ver Excel
+                                                    </a>
+                                                {% elif documento_data is string and documento_data.lower().endswith('.txt') %}
+                                                    <a href="#" 
+                                                       class="btn btn-sm btn-outline-secondary"
+                                                       onclick="
+                                                           event.preventDefault(); 
+                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                               showPyWebViewDocument('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           } else { 
+                                                               showDocumentModal('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           }
+                                                       ">
+                                                        <i class="fas fa-file-alt"></i> Ver Texto
+                                                    </a>
+                                                {% elif documento_data is string and documento_data.lower().endswith('.md') %}
+                                                    <a href="#" 
+                                                       class="btn btn-sm btn-outline-info"
+                                                       onclick="
+                                                           event.preventDefault(); 
+                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                               showPyWebViewDocument('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           } else { 
+                                                               showDocumentModal('/static/uploads/{{ documento_data }}', '{{ documento_data }}'); 
+                                                           }
+                                                       ">
+                                                        <i class="fas fa-file-code"></i> Ver Markdown
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('uploaded_images.uploaded_images', filename=documento_data) }}" 
+                                                       target="_blank" class="btn btn-sm btn-outline-dark">
+                                                        <i class="fas fa-download"></i> Descargar
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        {% else %}
+                            {{ row[header] or '-' }}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td>
+                        <!-- Usar imágenes procesadas por el backend -->
+                        {% if row is mapping and row.get('_imagenes') and row._imagenes %}
+                            {% for img_url in row._imagenes %}
+                                {% if loop.index <= 3 %}
+                                    <img src="{{ img_url }}" 
+                                         alt="Imagen {{ loop.index }}" 
+                                         class="img-thumbnail catalog-preview-img" 
+                                         style="width: 60px; height: 60px; object-fit: cover; margin-right: 4px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;"
+                                         onclick="showImageModal('{{ img_url }}', 'Imagen {{ loop.index }}')"
+                                         onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'"
+                                         loading="lazy">
+                                {% endif %}
+                            {% endfor %}
+                            {% if row._imagenes|length > 3 %}
+                                <small class="text-muted">+{{ row._imagenes|length - 3 }}</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('catalogs.edit_row', catalog_id=catalog._id, row_index=loop.index0) }}" 
+                           class="btn btn-sm btn-warning" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% if session.get('role') == 'admin' or catalog.owner == session.get('username') or catalog.owner_name == session.get('username') or catalog.created_by == session.get('username') %}
+                        <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=loop.index0) }}" 
+                              style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal for image preview -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg image-modal">
+    <div class="modal-content image-modal-content">
+      <div class="modal-header image-modal-header">
+        <h5 class="modal-title" id="imageModalLabel">
+          <i class="bi bi-image"></i> Vista Previa de Imagen
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body image-modal-body">
+        <div class="modal-image-container">
+          <div class="spinner-border text-primary image-loading-spinner" role="status" style="display: none;">
+            <span class="visually-hidden">Cargando imagen...</span>
+          </div>
+          <img src="/static/img/image-placeholder.png" id="modalImage" class="modal-image" alt="imagen del catálogo"
+               onload="this.classList.add('image-loaded'); this.previousElementSibling.style.display='none';"
+               onerror="this.src='/static/img/image-error.svg';">
+        </div>
+      </div>
+      <div class="modal-footer image-modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for multimedia preview -->
+<div class="modal fade" id="multimediaModal" tabindex="-1" aria-labelledby="multimediaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="multimediaModalLabel">
+          <i class="fas fa-video"></i> Vista Previa de Multimedia
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="multimediaContent">
+          <!-- El contenido multimedia se cargará aquí -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Documentos -->
+<div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="documentModalLabel">
+                    <i class="fas fa-file"></i> <span id="documentTitle">Documento</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="documentContent">
+                    <!-- El contenido del documento se cargará aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos para múltiples documentos -->
+<style>
+.documentos-container {
+    max-width: 200px;
+}
+
+.documento-item {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.documento-item .btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+</style>
+
+<!-- Scripts necesarios para el sistema unificado -->
+<!-- modal-functions-UNIFIED.js se carga desde base.html -->
+
+<script>
+// Función para ordenar tabla
+function sortTable(columnIndex, dataType) {
+    const table = document.getElementById('tabla-body');
+    const rows = Array.from(table.rows);
+    const icon = document.getElementById(`sort-icon-${columnIndex}`);
+    
+    // Determinar dirección de ordenación
+    const isAsc = !icon.classList.contains('bi-chevron-up');
+    
+    // Resetear todos los iconos
+    document.querySelectorAll('.sort-icon i').forEach(i => {
+        i.className = 'bi bi-chevron-expand';
+    });
+    
+    // Establecer icono actual
+    icon.className = isAsc ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+    
+    // Ordenar filas
+    rows.sort((a, b) => {
+        let aVal = a.cells[columnIndex].textContent.trim();
+        let bVal = b.cells[columnIndex].textContent.trim();
+        
+        if (dataType === 'number') {
+            aVal = parseInt(aVal) || 0;
+            bVal = parseInt(bVal) || 0;
+            return isAsc ? aVal - bVal : bVal - aVal;
+        } else {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+            return isAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+    });
+    
+    // Reorganizar tabla
+    rows.forEach(row => table.appendChild(row));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("[catalog-view] DOM loaded - Funcionalidades listas");
+    console.log("[VERSION] Template v1.2 - Cache busting");
+    
+    // Verificar que los elementos del modal existen
+    const modal = document.getElementById('documentModal');
+    const modalContent = document.getElementById('documentContent');
+    const modalTitle = document.getElementById('documentModalLabel');
+    
+    console.log('[DEBUG] Elementos del modal:', {
+        modal: !!modal,
+        modalContent: !!modalContent,
+        modalTitle: !!modalTitle
+    });
+    
+    // Forzar recarga de caché
+    console.log('[CACHE-BUST] Timestamp:', Date.now());
+});
+</script>
+{% endblock %}

@@ -204,7 +204,7 @@ endblock %} {% block content %}
                 class="btn btn-outline-success ms-2"
                 id="restoreDriveBtn"
                 data-bs-toggle="modal"
-                data-bs-target="#restoreDriveModal"
+                data-bs-target="#restoreDriveModalDashboard"
               >
                 <i class="bi bi-google"></i> Google Drive
               </button>
@@ -301,15 +301,15 @@ Cargando registros...</pre
     <!-- Modal para Google Drive Backups (independiente) -->
     <div
       class="modal fade"
-      id="restoreDriveModal"
+      id="restoreDriveModalDashboard"
       tabindex="-1"
-      aria-labelledby="restoreDriveModalLabel"
+      aria-labelledby="restoreDriveModalDashboardLabel"
       aria-hidden="true"
     >
-      <div class="modal-dialog modal-xl">
+      <div class="modal-dialog modal-xl" style="max-width: 95vw; width: 95vw;">
         <div class="modal-content">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="restoreDriveModalLabel">
+            <h5 class="modal-title" id="restoreDriveModalDashboardLabel">
               <i class="bi bi-google"></i> Restaurar desde Google Drive
             </h5>
             <button

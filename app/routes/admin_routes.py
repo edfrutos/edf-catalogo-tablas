@@ -48,10 +48,66 @@ from app.database import (
     get_reset_tokens_collection,
     get_users_collection,
 )
-from app.decorators import admin_required
+from app.decorators import admin_required, login_required
 from app.decorators import admin_required as admin_required_logs
 from app.routes.temp_files_utils import delete_temp_files, list_temp_files
 from tools.db_utils.google_drive_utils import list_files_in_folder, upload_to_drive
+from app.routes.s3_utils import get_s3_url
+import requests  # pyright: ignore[reportDuplicateImport]
+import tempfile
+import boto3
+from botocore.exceptions import ClientError
+
+
+def serve_s3_file(filename: str):
+    """
+    Sirve un archivo desde S3 como proxy para evitar problemas CORS.
+
+    Args:
+        filename (str): Nombre del archivo en S3
+
+    Returns:
+        Flask response: Archivo descargado desde S3
+    """
+    try:
+        # Configurar cliente S3
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=current_app.config.get("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=current_app.config.get("AWS_SECRET_ACCESS_KEY"),
+            region_name=current_app.config.get("AWS_DEFAULT_REGION", "eu-central-1"),
+        )
+
+        # Descargar archivo desde S3
+        response = s3_client.get_object(
+            Bucket=current_app.config.get("S3_BUCKET_NAME"), Key=filename
+        )
+
+        # Obtener contenido y metadata
+        file_content = response["Body"].read()
+        content_type = response.get("ContentType", "application/octet-stream")
+
+        # Crear respuesta Flask
+        from flask import Response
+
+        return Response(
+            file_content,
+            mimetype=content_type,
+            headers={
+                "Content-Disposition": f'inline; filename="{filename}"',
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "no-cache",
+            },
+        )
+
+    except ClientError as e:
+        current_app.logger.error(f"Error descargando archivo S3 {filename}: {e}")
+        return jsonify({"error": "Archivo no encontrado en S3"}), 404
+    except Exception as e:
+        current_app.logger.error(
+            f"Error inesperado sirviendo archivo S3 {filename}: {e}"
+        )
+        return jsonify({"error": "Error interno del servidor"}), 500
 
 
 def log_action(
@@ -103,7 +159,86 @@ def log_action(
 
 
 logger = logging.getLogger(__name__)
+
+
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+@admin_bp.route("/s3/<path:filename>")
+# @login_required  # Temporalmente deshabilitado para debug
+def serve_s3_proxy(filename):
+    """
+    Ruta para servir archivos S3 como proxy.
+    Evita problemas CORS al descargar archivos desde S3.
+    """
+    current_app.logger.info(f"[S3-PROXY] 🔍 Solicitud para archivo: {filename}")
+
+    try:
+        # Configuración S3 simplificada
+        import boto3
+        from botocore.exceptions import ClientError
+
+        # Log de configuración S3
+        aws_key = current_app.config.get("AWS_ACCESS_KEY_ID")
+        aws_secret = current_app.config.get("AWS_SECRET_ACCESS_KEY")
+        aws_region = current_app.config.get("AWS_REGION", "eu-central-1")
+        aws_bucket = current_app.config.get("S3_BUCKET_NAME")
+
+        current_app.logger.info(
+            f"[S3-PROXY] 🔧 Config S3 - Key: {'✅' if aws_key else '❌'}, Secret: {'✅' if aws_secret else '❌'}, Region: {aws_region}, Bucket: {aws_bucket}"
+        )
+
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=aws_key,
+            aws_secret_access_key=aws_secret,
+            region_name=aws_region,
+        )
+
+        # Descargar archivo desde S3
+        current_app.logger.info(
+            f"[S3-PROXY] 📥 Descargando archivo desde S3: Bucket={aws_bucket}, Key={filename}"
+        )
+
+        response = s3_client.get_object(Bucket=aws_bucket, Key=filename)
+
+        # Obtener contenido y metadata
+        file_content = response["Body"].read()
+        content_type = response.get("ContentType", "application/octet-stream")
+        
+        # Corregir Content-Type para PDFs
+        if filename.lower().endswith('.pdf'):
+            content_type = "application/pdf"
+        elif filename.lower().endswith('.txt'):
+            content_type = "text/plain"
+        elif filename.lower().endswith('.md'):
+            content_type = "text/markdown"
+
+        current_app.logger.info(
+            f"[S3-PROXY] ✅ Archivo descargado exitosamente - Tamaño: {len(file_content)} bytes, Tipo: {content_type}"
+        )
+
+        # Crear respuesta Flask
+        from flask import Response
+
+        return Response(
+            file_content,
+            mimetype=content_type,
+            headers={
+                "Content-Disposition": f'inline; filename="{filename}"',
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "no-cache",
+            },
+        )
+
+    except ClientError as e:
+        current_app.logger.error(f"Error descargando archivo S3 {filename}: {e}")
+        return jsonify({"error": "Archivo no encontrado en S3"}), 404
+    except Exception as e:
+        current_app.logger.error(
+            f"Error inesperado sirviendo archivo S3 {filename}: {e}"
+        )
+        return jsonify({"error": "Error interno del servidor"}), 500
 
 
 # @admin_bp.route("/scripts-tools")
@@ -2280,7 +2415,15 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
             flash("Error: No se pudo acceder a la base de datos", "error")
             return redirect(url_for("admin.dashboard_admin"))
         collection = db[collection_source]
-        catalog = collection.find_one({"_id": ObjectId(catalog_id)})
+        
+        # Validar si catalog_id es un ObjectId válido
+        try:
+            catalog = collection.find_one({"_id": ObjectId(catalog_id)})
+        except Exception as e:
+            logger.error(f"[ADMIN] Error al convertir catalog_id a ObjectId: {catalog_id}, error: {e}")
+            flash("ID de catálogo inválido", "error")
+            return redirect(url_for("admin.dashboard_admin"))
+            
         if not catalog:
             logger.warning(
                 f"[ADMIN] Catálogo no encontrado en {collection_source} para id={catalog_id}"
@@ -2331,63 +2474,74 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
         # Verificar si hay datos en el catálogo
         if "data" in catalog and catalog["data"]:
             for row in catalog["data"]:
-                # Procesar imágenes en el campo 'imagenes'
+                # Procesar imágenes - unificar campos 'images' e 'imagenes'
+                imagenes_a_procesar = []
+                
+                # Recopilar imágenes de ambos campos
+                if "images" in row and row["images"]:
+                    if isinstance(row["images"], list):
+                        imagenes_a_procesar.extend(row["images"])
+                    else:
+                        imagenes_a_procesar.append(row["images"])
+                
                 if "imagenes" in row and row["imagenes"]:
+                    if isinstance(row["imagenes"], list):
+                        imagenes_a_procesar.extend(row["imagenes"])
+                    else:
+                        imagenes_a_procesar.append(row["imagenes"])
+                
+                # Unificar en el campo 'images' para consistencia
+                if imagenes_a_procesar:
+                    row["images"] = imagenes_a_procesar
+                    # Eliminar el campo 'imagenes' para evitar duplicación
+                    if "imagenes" in row:
+                        del row["imagenes"]
+                
+                # Procesar todas las imágenes recopiladas
+                if imagenes_a_procesar:
                     # Crear un array con las URLs de las imágenes
                     row["imagen_urls"] = []
-                    for img in row["imagenes"]:
+                    for img in imagenes_a_procesar:
                         if (
                             img and len(img) > 5
                         ):  # Verificar que el nombre de la imagen es válido
-                            # Intentar obtener la URL de S3 primero
-                            s3_url = get_s3_url(img)
-                            if s3_url:
-                                row["imagen_urls"].append(s3_url)
+                            # Verificar si ya es una URL completa
+                            if img.startswith('/admin/s3/') or img.startswith('/static/uploads/') or img.startswith('/imagenes_subidas/'):
+                                # Ya es una URL completa, usar directamente
+                                row["imagen_urls"].append(img)
                                 logger.debug(
-                                    f"[ADMIN] Imagen S3 encontrada: {img} -> {s3_url}"
+                                    f"[ADMIN] URL completa detectada: {img}"
                                 )
                             else:
-                                # Si no está en S3, usar la URL local
-                                local_url = url_for("static", filename=f"uploads/{img}")
-                                row["imagen_urls"].append(local_url)
-                                logger.debug(
-                                    f"[ADMIN] Usando URL local para imagen: {img} -> {local_url}"
-                                )
+                                # Intentar obtener la URL de S3 primero
+                                s3_url = get_s3_url(img)
+                                if s3_url:
+                                    row["imagen_urls"].append(s3_url)
+                                    logger.debug(
+                                        f"[ADMIN] Imagen S3 encontrada: {img} -> {s3_url}"
+                                    )
+                                else:
+                                    # Si no está en S3, usar la URL local
+                                    local_url = url_for("static", filename=f"uploads/{img}")
+                                    row["imagen_urls"].append(local_url)
+                                    logger.debug(
+                                        f"[ADMIN] Usando URL local para imagen: {img} -> {local_url}"
+                                    )
 
                     # Asignar las URLs procesadas a _imagenes para la plantilla
                     if "imagen_urls" in row:
                         row["_imagenes"] = row["imagen_urls"]
+                        logger.info(f"[ADMIN] Procesadas {len(row['imagen_urls'])} imágenes para la fila")
+                
+                # Procesar campos de Documentación - crear campos individuales para el template
+                if "Documentación" in row and isinstance(row["Documentación"], list):
+                    for i, doc in enumerate(row["Documentación"]):
+                        if doc and doc.strip():  # Solo si el documento no está vacío
+                            row[f"Documentación_{i}"] = doc.strip()
+                            logger.debug(f"[ADMIN] Creado campo Documentación_{i} = {doc.strip()}")
 
-                # Procesar imágenes en el campo 'images' (compatibilidad)
-                elif "images" in row and row["images"]:
-                    # Crear un array con las URLs de las imágenes
-                    row["imagen_urls"] = []
-                    for img in row["images"]:
-                        if (
-                            img and len(img) > 5
-                        ):  # Verificar que el nombre de la imagen es válido
-                            # Intentar obtener la URL de S3 primero
-                            s3_url = get_s3_url(img)
-                            if s3_url:
-                                row["imagen_urls"].append(s3_url)
-                                logger.debug(
-                                    f"[ADMIN] Imagen S3 encontrada: {img} -> {s3_url}"
-                                )
-                            else:
-                                # Si no está en S3, usar la URL local
-                                local_url = url_for("static", filename=f"uploads/{img}")
-                                row["imagen_urls"].append(local_url)
-                                logger.debug(
-                                    f"[ADMIN] Usando URL local para imagen: {img} -> {local_url}"
-                                )
-
-                    # Para compatibilidad, copiar a 'imagenes'
-                    row["imagenes"] = row["images"]
-
-                # Asignar las URLs procesadas a _imagenes para la plantilla
-                if "imagen_urls" in row:
-                    row["_imagenes"] = row["imagen_urls"]
-
+            # Sincronizar catalog["rows"] con catalog["data"] procesado
+            catalog["rows"] = catalog["data"]
             logger.info(
                 f"[ADMIN] Procesadas {catalog['row_count']} filas con imágenes para el catálogo {catalog_id}"
             )
@@ -2640,6 +2794,78 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
             )
 
         row_data = catalog["rows"][row_index]
+        logger.info(f"[ADMIN_EDIT_ROW] 🔍 row_data obtenido: {row_data}")
+        logger.info(f"[ADMIN_EDIT_ROW] 📋 row_data tipo: {type(row_data)}")
+        logger.info(f"[ADMIN_EDIT_ROW] 📋 row_data keys: {list(row_data.keys()) if isinstance(row_data, dict) else 'No es dict'}")
+
+        # Procesar campos de Documentación - crear campos individuales para el template (igual que en ver_catalogo_unificado)
+        if "Documentación" in row_data and isinstance(row_data["Documentación"], list):
+            for i, doc in enumerate(row_data["Documentación"]):
+                if doc and doc.strip():  # Solo si el documento no está vacío
+                    row_data[f"Documentación_{i}"] = doc.strip()
+                    logger.debug(f"[ADMIN_EDIT_ROW] Creado campo Documentación_{i} = {doc.strip()}")
+
+        # Procesar imágenes - unificar campos 'images' e 'imagenes' (igual que en ver_catalogo_unificado)
+        from app.utils.s3_utils import get_s3_url
+        
+        # Procesar imágenes - unificar campos 'images' e 'imagenes'
+        imagenes_a_procesar = []
+        
+        # Recopilar imágenes de ambos campos
+        if "images" in row_data and row_data["images"]:
+            if isinstance(row_data["images"], list):
+                imagenes_a_procesar.extend(row_data["images"])
+            else:
+                imagenes_a_procesar.append(row_data["images"])
+        
+        if "imagenes" in row_data and row_data["imagenes"]:
+            if isinstance(row_data["imagenes"], list):
+                imagenes_a_procesar.extend(row_data["imagenes"])
+            else:
+                imagenes_a_procesar.append(row_data["imagenes"])
+        
+        # Unificar en el campo 'images' para consistencia
+        if imagenes_a_procesar:
+            row_data["images"] = imagenes_a_procesar
+            # Eliminar el campo 'imagenes' para evitar duplicación
+            if "imagenes" in row_data:
+                del row_data["imagenes"]
+        
+        # Procesar todas las imágenes recopiladas
+        if imagenes_a_procesar:
+            # Crear un array con las URLs de las imágenes
+            row_data["imagen_urls"] = []
+            for img in imagenes_a_procesar:
+                if (
+                    img and len(img) > 5
+                ):  # Verificar que el nombre de la imagen es válido
+                    # Verificar si ya es una URL completa
+                    if img.startswith('/admin/s3/') or img.startswith('/static/uploads/') or img.startswith('/imagenes_subidas/'):
+                        # Ya es una URL completa, usar directamente
+                        row_data["imagen_urls"].append(img)
+                        logger.debug(
+                            f"[ADMIN_EDIT_ROW] URL completa detectada: {img}"
+                        )
+                    else:
+                        # Intentar obtener la URL de S3 primero
+                        s3_url = get_s3_url(img)
+                        if s3_url:
+                            row_data["imagen_urls"].append(s3_url)
+                            logger.debug(
+                                f"[ADMIN_EDIT_ROW] Imagen S3 encontrada: {img} -> {s3_url}"
+                            )
+                        else:
+                            # Si no está en S3, usar la URL local
+                            local_url = url_for("static", filename=f"uploads/{img}")
+                            row_data["imagen_urls"].append(local_url)
+                            logger.debug(
+                                f"[ADMIN_EDIT_ROW] Usando URL local para imagen: {img} -> {local_url}"
+                            )
+
+            # Asignar las URLs procesadas a _imagenes para la plantilla
+            if "imagen_urls" in row_data:
+                row_data["_imagenes"] = row_data["imagen_urls"]
+                logger.info(f"[ADMIN_EDIT_ROW] Procesadas {len(row_data['imagen_urls'])} imágenes para la fila")
 
         # Añadir información sobre la colección de origen
         catalog["collection_source"] = collection_source
@@ -2647,15 +2873,20 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
 
         if request.method == "POST":
             # Procesar campos normales y especiales
-            updated_row: Dict[str, Any] = {}
+            # Inicializar updated_row con los datos existentes para preservar campos no modificados
+            updated_row: Dict[str, Any] = dict(row_data)
+            logger.info(f"[ADMIN_EDIT_ROW] 🔄 Inicializando updated_row con datos existentes: {updated_row}")
+            
             for header in catalog["headers"]:
                 if header == "Multimedia":
                     # Manejar campo Multimedia
                     multimedia_url = request.form.get(f"{header}_url", "").strip()
                     multimedia_file = request.files.get(f"{header}_file")
 
+                    # Solo actualizar si se proporciona un nuevo valor
                     if multimedia_url:
                         updated_row[header] = multimedia_url
+                        logger.info(f"[ADMIN_EDIT_ROW] Multimedia URL actualizada: {multimedia_url}")
                     elif multimedia_file and multimedia_file.filename:
                         # Procesar archivo multimedia
                         import uuid  # noqa: I001
@@ -2668,37 +2899,295 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
                         upload_dir = get_upload_dir()
                         file_path = os.path.join(upload_dir, filename)
                         multimedia_file.save(file_path)
-                        updated_row[header] = filename
+
+                        # Subir a S3 si está habilitado
+                        use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
+                        if use_s3:
+                            try:
+                                from app.utils.s3_utils import upload_file_to_s3_direct
+                                
+                                logger.info(f"Subiendo multimedia a S3: {filename}")
+                                # Leer el archivo y subirlo directamente a S3
+                                with open(file_path, 'rb') as file_obj:
+                                    from werkzeug.datastructures import FileStorage
+                                    file_storage = FileStorage(
+                                        stream=file_obj,
+                                        filename=filename,
+                                        content_type='application/octet-stream'
+                                    )
+                                    result = upload_file_to_s3_direct(file_storage, filename)
+                                
+                                if result["success"]:
+                                    logger.info(f"Multimedia subida a S3: {result['url']}")
+                                    # Eliminar el archivo local después de subirlo a S3
+                                    os.remove(file_path)
+                                    updated_row[header] = result["url"]
+                                else:
+                                    logger.error(f"Error subiendo multimedia a S3: {result['error']}")
+                                    # Si falla S3, mantener local
+                                    updated_row[header] = filename
+                            except Exception as e:
+                                logger.error(f"Error en proceso S3 para multimedia: {e}")
+                                # Si falla S3, mantener local
+                                updated_row[header] = filename
+                        else:
+                            # Almacenamiento local
+                            logger.info(f"Multimedia guardada localmente: {filename}")
+                            updated_row[header] = filename
+                        
+                        logger.info(f"[ADMIN_EDIT_ROW] Multimedia archivo actualizado: {updated_row[header]}")
                     else:
                         # Mantener valor existente si no hay cambios
-                        updated_row[header] = row_data.get(header, "")
+                        existing_multimedia = row_data.get(header, "")
+                        updated_row[header] = existing_multimedia
+                        logger.info(f"[ADMIN_EDIT_ROW] Multimedia existente preservado: {existing_multimedia}")
 
                 elif header in ["Documentos", "Documentación"]:
-                    # Manejar campo Documentos/Documentación
-                    documento_url = request.form.get(f"{header}_url", "").strip()
-                    documento_file = request.files.get(f"{header}_file")
+                    # Manejar múltiples documentos por fila
+                    documentos = []
+                    
+                    # Obtener documentos existentes (si los hay)
+                    logger.info(f"[ADMIN_EDIT_ROW] 🔍 Obteniendo documentos existentes para {header}")
+                    logger.info(f"[ADMIN_EDIT_ROW] 📋 row_data completo: {row_data}")
+                    documentos_existentes = row_data.get(header, [])
+                    logger.info(f"[ADMIN_EDIT_ROW] 📄 documentos_existentes inicial: {documentos_existentes} (tipo: {type(documentos_existentes)})")
+                    
+                    # Verificar el tipo de manera segura
+                    if isinstance(documentos_existentes, str):
+                        # Si es un string (formato antiguo), convertirlo a array
+                        documentos_existentes = [documentos_existentes] if documentos_existentes else []
+                        logger.info(f"[ADMIN_EDIT_ROW] 🔄 Convertido string a array: {documentos_existentes}")
+                    elif not hasattr(documentos_existentes, '__iter__') or isinstance(documentos_existentes, str):
+                        # Si no es iterable o es string, inicializar como lista vacía
+                        documentos_existentes = []
+                        logger.info(f"[ADMIN_EDIT_ROW] 🔄 Inicializado como lista vacía: {documentos_existentes}")
+                    
+                    logger.info(f"[ADMIN_EDIT_ROW] 📄 documentos_existentes final: {documentos_existentes}")
+                    
+                    # Obtener todos los documentos del formulario (URLs y archivos)
+                    # Buscar campos con el patrón header_url_INDEX y header_file_INDEX
+                    documento_urls = []
+                    documento_files = []
+                    
+                    # Buscar todos los campos que coincidan con el patrón
+                    for key, value in request.form.items():
+                        if key.startswith(f"{header}_url_") and value.strip():
+                            documento_urls.append(value.strip())
+                    
+                    for key, file in request.files.items():
+                        if key.startswith(f"{header}_file_") and file.filename:
+                            documento_files.append(file)
+                    
+                    # Procesar URLs de documentos
+                    for url in documento_urls:
+                        if url and url.strip():
+                            documentos.append(url.strip())
+                    
+                    # Procesar archivos de documentos
+                    for documento_file in documento_files:
+                        if documento_file and documento_file.filename:
+                            # Procesar archivo documento
+                            import uuid  # noqa: I001
+                            from werkzeug.utils import secure_filename
+                            from app.routes.catalogs_routes import get_upload_dir
 
-                    if documento_url:
-                        updated_row[header] = documento_url
-                    elif documento_file and documento_file.filename:
-                        # Procesar archivo documento
+                            filename = secure_filename(
+                                f"{uuid.uuid4().hex}_{documento_file.filename}"
+                            )
+                            upload_dir = get_upload_dir()
+                            file_path = os.path.join(upload_dir, filename)
+                            documento_file.save(file_path)
+
+                            # Subir a S3 si está habilitado
+                            use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
+                            if use_s3:
+                                try:
+                                    from app.utils.s3_utils import upload_file_to_s3_direct
+                                    
+                                    logger.info(f"Subiendo documento a S3: {filename}")
+                                    # Leer el archivo y subirlo directamente a S3
+                                    with open(file_path, 'rb') as file_obj:
+                                        from werkzeug.datastructures import FileStorage
+                                        file_storage = FileStorage(
+                                            stream=file_obj,
+                                            filename=filename,
+                                            content_type='application/octet-stream'
+                                        )
+                                        result = upload_file_to_s3_direct(file_storage, filename)
+                                    
+                                    if result["success"]:
+                                        logger.info(f"Documento subido a S3: {result['url']}")
+                                        # Eliminar el archivo local después de subirlo a S3
+                                        os.remove(file_path)
+                                        documentos.append(result["url"])
+                                    else:
+                                        logger.error(f"Error subiendo documento a S3: {result['error']}")
+                                        # Si falla S3, mantener local
+                                        documentos.append(filename)
+                                except Exception as e:
+                                    logger.error(f"Error en proceso S3 para documento: {e}")
+                                    # Si falla S3, mantener local
+                                    documentos.append(filename)
+                            else:
+                                # Almacenamiento local
+                                logger.info(f"Documento guardado localmente: {filename}")
+                                documentos.append(filename)
+                    
+                    # Combinar documentos existentes con los nuevos
+                    logger.info(f"[ADMIN_EDIT_ROW] {header} - Documentos existentes: {documentos_existentes}")
+                    logger.info(f"[ADMIN_EDIT_ROW] {header} - Documentos nuevos: {documentos}")
+                    
+                    if documentos_existentes and documentos:
+                        # Hay documentos existentes Y nuevos: combinar
+                        documentos = documentos_existentes + documentos
+                        logger.info(f"[ADMIN_EDIT_ROW] {header} - Combinando existentes + nuevos: {documentos}")
+                    elif documentos_existentes and not documentos:
+                        # Hay documentos existentes pero NO nuevos: preservar existentes
+                        documentos = documentos_existentes
+                        logger.info(f"[ADMIN_EDIT_ROW] {header} - Preservando existentes: {documentos}")
+                    else:
+                        logger.info(f"[ADMIN_EDIT_ROW] {header} - Sin documentos existentes ni nuevos: {documentos}")
+                    # Si no hay documentos existentes ni nuevos, mantener lista vacía
+                    
+                    # Almacenar como array de documentos con nombre único basado en el índice de la columna
+                    # Encontrar el índice de esta columna específica
+                    header_index = None
+                    for i, h in enumerate(catalog.get('headers', [])):
+                        if h == header:
+                            if header_index is None:
+                                header_index = i
+                            else:
+                                # Si ya encontramos una columna con este nombre, usar el índice actual
+                                header_index = i
+                                break
+                    
+                    # Usar el header original para mantener consistencia
+                    # El unique_header solo se usa internamente, pero almacenamos con el header original
+                    updated_row[header] = documentos
+                    logger.info(f"[ADMIN_EDIT_ROW] {header} documentos finales almacenados: {documentos}")
+                else:
+                    # Campo normal - verificar si es un campo de archivo
+                    field_value = request.form.get(header, "")
+                    
+                    # Verificar si hay un archivo nuevo para este campo
+                    file_field = request.files.get(f"{header}_file")
+                    
+                    if file_field and file_field.filename:
+                        # Hay un archivo nuevo, procesarlo
                         import uuid  # noqa: I001
                         from werkzeug.utils import secure_filename
                         from app.routes.catalogs_routes import get_upload_dir
 
                         filename = secure_filename(
-                            f"{uuid.uuid4().hex}_{documento_file.filename}"
+                            f"{uuid.uuid4().hex}_{file_field.filename}"
                         )
                         upload_dir = get_upload_dir()
                         file_path = os.path.join(upload_dir, filename)
-                        documento_file.save(file_path)
-                        updated_row[header] = filename
+                        file_field.save(file_path)
+
+                        # Subir a S3 si está habilitado
+                        use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
+                        if use_s3:
+                            try:
+                                from app.utils.s3_utils import upload_file_to_s3_direct
+                                
+                                logger.info(f"Subiendo archivo a S3: {filename}")
+                                # Leer el archivo y subirlo directamente a S3
+                                with open(file_path, 'rb') as file_obj:
+                                    from werkzeug.datastructures import FileStorage
+                                    file_storage = FileStorage(
+                                        stream=file_obj,
+                                        filename=filename,
+                                        content_type='image/jpeg' if header.lower() in ['imagen', 'imagenes'] else 'application/octet-stream'
+                                    )
+                                    result = upload_file_to_s3_direct(file_storage, filename)
+                                
+                                if result["success"]:
+                                    logger.info(f"Archivo subido a S3: {result['url']}")
+                                    # Eliminar el archivo local después de subirlo a S3
+                                    os.remove(file_path)
+                                    updated_row[header] = result["url"]
+                                else:
+                                    logger.error(f"Error subiendo archivo a S3: {result['error']}")
+                                    # Si falla S3, mantener local
+                                    updated_row[header] = filename
+                            except Exception as e:
+                                logger.error(f"Error en proceso S3 para archivo: {e}")
+                                # Si falla S3, mantener local
+                                updated_row[header] = filename
+                        else:
+                            # Almacenamiento local
+                            logger.info(f"Archivo guardado localmente: {filename}")
+                            updated_row[header] = filename
+                        
+                        logger.info(f"[ADMIN_EDIT_ROW] {header} archivo actualizado: {updated_row[header]}")
+                    elif field_value:
+                        # Hay un valor de URL/texto nuevo
+                        updated_row[header] = field_value
+                        logger.info(f"[ADMIN_EDIT_ROW] {header} valor actualizado: {field_value}")
                     else:
-                        # Mantener valor existente si no hay cambios
-                        updated_row[header] = row_data.get(header, "")
-                else:
-                    # Campo normal
-                    updated_row[header] = request.form.get(header, "")
+                        # No hay valor nuevo, preservar el existente
+                        existing_value = row_data.get(header, "")
+                        updated_row[header] = existing_value
+                        logger.info(f"[ADMIN_EDIT_ROW] {header} valor existente preservado: {existing_value}")
+
+            # Manejar eliminación de documentos y multimedia
+            deleted_documents = request.form.get("deleted_documents", "")
+            deleted_multimedia = request.form.get("deleted_multimedia", "")
+            
+            if deleted_documents:
+                try:
+                    import json
+                    deleted_docs = json.loads(deleted_documents)
+                    for deleted_doc in deleted_docs:
+                        header = deleted_doc.get("header")
+                        value = deleted_doc.get("value")
+                        logger.info(f"[ADMIN_EDIT_ROW] 🗑️ Procesando documento eliminado - Header: {header}, Value: {value}")
+                        logger.info(f"[ADMIN_EDIT_ROW] 📋 Estado actual de updated_row[{header}]: {updated_row.get(header)}")
+                        
+                        if header in updated_row and updated_row[header]:
+                            if hasattr(updated_row[header], '__iter__') and not isinstance(updated_row[header], str):
+                                # Es una lista/array, remover de la lista
+                                original_count = len(updated_row[header])
+                                updated_row[header] = [doc for doc in updated_row[header] if doc != value]
+                                new_count = len(updated_row[header])
+                                logger.info(f"[ADMIN_EDIT_ROW] ✅ Documento eliminado de lista - Original: {original_count}, Nuevo: {new_count}")
+                                # Si queda vacía, mantener como lista vacía
+                                if not updated_row[header]:
+                                    updated_row[header] = []
+                            else:
+                                # Si es un valor único, eliminar la clave
+                                if updated_row[header] == value:
+                                    updated_row[header] = ""
+                                    logger.info(f"[ADMIN_EDIT_ROW] ✅ Documento único eliminado: {header}")
+                                else:
+                                    logger.warning(f"[ADMIN_EDIT_ROW] ❌ No se pudo eliminar documento único - Valor no coincide: {updated_row[header]} != {value}")
+                        else:
+                            logger.warning(f"[ADMIN_EDIT_ROW] ❌ No se pudo eliminar documento - Header no encontrado o vacío: {header}")
+                    logger.info(f"[ADMIN_EDIT_ROW] Documentos eliminados: {deleted_docs}")
+                except Exception as e:
+                    logger.error(f"[ADMIN_EDIT_ROW] Error procesando documentos eliminados: {e}")
+            
+            if deleted_multimedia:
+                try:
+                    import json
+                    deleted_media = json.loads(deleted_multimedia)
+                    logger.info(f"[ADMIN_EDIT_ROW] 🗑️  Procesando multimedia eliminado: {deleted_media}")
+                    logger.info(f"[ADMIN_EDIT_ROW] 📋 Estado de updated_row antes de eliminar multimedia: {updated_row}")
+                    
+                    for deleted_item in deleted_media:
+                        header = deleted_item.get("header")
+                        value = deleted_item.get("value")
+                        logger.info(f"[ADMIN_EDIT_ROW] 🎯 Eliminando multimedia - Header: {header}, Value: {value}")
+                        if header in updated_row and updated_row[header] == value:
+                            updated_row[header] = ""
+                            logger.info(f"[ADMIN_EDIT_ROW] ✅ Multimedia eliminado correctamente: {header}")
+                        else:
+                            logger.warning(f"[ADMIN_EDIT_ROW] ❌ No se pudo eliminar multimedia - Header: {header}, Value: {value}, Current: {updated_row.get(header)}")
+                    
+                    logger.info(f"[ADMIN_EDIT_ROW] 📋 Estado de updated_row después de eliminar multimedia: {updated_row}")
+                except Exception as e:
+                    logger.error(f"[ADMIN_EDIT_ROW] ❌ Error procesando multimedia eliminado: {e}")
 
             # Manejo de imágenes (mantener compatibilidad)
             if "images" in request.files:
@@ -2720,7 +3209,40 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
                         )
                         file_path = os.path.join(upload_dir, filename)
                         file.save(file_path)
-                        nuevas_imagenes.append(filename)
+                        
+                        # Subir a S3 si está habilitado
+                        use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
+                        if use_s3:
+                            try:
+                                from app.utils.s3_utils import upload_file_to_s3_direct
+                                
+                                logger.info(f"Subiendo imagen a S3: {filename}")
+                                # Leer el archivo y subirlo directamente a S3
+                                with open(file_path, 'rb') as file_obj:
+                                    from werkzeug.datastructures import FileStorage
+                                    file_storage = FileStorage(
+                                        stream=file_obj,
+                                        filename=filename,
+                                        content_type='image/jpeg'
+                                    )
+                                    result = upload_file_to_s3_direct(file_storage, filename)
+                                
+                                if result["success"]:
+                                    logger.info(f"Imagen subida a S3: {result['url']}")
+                                    # Eliminar el archivo local después de subirlo a S3
+                                    os.remove(file_path)
+                                    nuevas_imagenes.append(result["url"])
+                                else:
+                                    logger.error(f"Error subiendo imagen a S3: {result['error']}")
+                                    # Si falla S3, mantener local
+                                    nuevas_imagenes.append(filename)
+                            except Exception as e:
+                                logger.error(f"Error en proceso S3 para imagen: {e}")
+                                # Si falla S3, mantener local
+                                nuevas_imagenes.append(filename)
+                        else:
+                            # Almacenamiento local
+                            nuevas_imagenes.append(filename)
                 if nuevas_imagenes:
                     existing_images = updated_row.get("images", [])
                     if isinstance(existing_images, list):
@@ -2783,9 +3305,15 @@ def get_catalog_images(catalog_id: str):
 
         for collection_name in collections_to_check:
             collection = db[collection_name]
-            catalog = collection.find_one({"_id": ObjectId(catalog_id)})
-            if catalog:
-                break
+            try:
+                catalog = collection.find_one({"_id": ObjectId(catalog_id)})
+                if catalog:
+                    break
+            except Exception as e:
+                current_app.logger.warning(
+                    f"Error buscando en colección {collection_name}: {str(e)}"
+                )
+                continue
 
         if not catalog:
             return jsonify({"error": "Catálogo no encontrado"}), 404
@@ -2837,7 +3365,10 @@ def get_catalog_images(catalog_id: str):
         current_app.logger.error(
             f"Error obteniendo imágenes del catálogo {catalog_id}: {str(e)}"
         )
-        return jsonify({"error": str(e)}), 500
+        import traceback
+
+        current_app.logger.error(f"Traceback completo: {traceback.format_exc()}")
+        return jsonify({"error": "Error interno del servidor", "details": str(e)}), 500
 
 
 @admin_bp.route("/catalogo/<collection_source>/<catalog_id>/eliminar", methods=["POST"])
@@ -5249,7 +5780,7 @@ def upload_backup_to_drive(filename: str):
         sys.path.insert(0, db_utils_path)
 
     try:
-        from google_drive_utils import (
+        from google_drive_utils import (  # pyright: ignore[reportMissingModuleSource]
             upload_file_to_drive as upload_to_drive,
         )  # pyright: ignore[reportMissingModuleSource]
     except ImportError:
@@ -6371,6 +6902,129 @@ def assign_temp_password(user_id):
     except Exception as e:
         logger.error(f"Error asignando contraseña temporal: {str(e)}", exc_info=True)
         return jsonify({"success": False, "error": f"Error interno: {str(e)}"})
+
+
+@admin_bp.route("/test-modal-functions")
+def test_modal_functions():
+    """
+    Página de test para verificar que las funciones de modal funcionen correctamente.
+    """
+    try:
+        return render_template("admin/test_modal_functions.html")
+    except Exception as e:
+        current_app.logger.error(f"Error en test_modal_functions: {e}")
+        return f"Error: {str(e)}", 500
+
+
+@admin_bp.route("/generate-presigned-url")
+def generate_presigned_url_route():
+    """
+    Genera una URL firmada para un archivo en S3.
+    """
+    try:
+        # Obtener parámetros de la request
+        file_url = request.args.get("file_url")
+        expiration = request.args.get(
+            "expiration", 3600, type=int
+        )  # 1 hora por defecto
+
+        if not file_url:
+            return jsonify({"error": "file_url es requerido"}), 400
+
+        # Extraer bucket y key de la URL de S3
+        # Ejemplo: https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/archivo.pdf
+        current_app.logger.info(f"[DEBUG] Validando URL: {file_url}")
+        current_app.logger.info(f"[DEBUG] Longitud de URL: {len(file_url)}")
+        current_app.logger.info(
+            f"[DEBUG] 's3.amazonaws.com' in file_url: {'s3.amazonaws.com' in file_url}"
+        )
+        current_app.logger.info(
+            f"[DEBUG] 'edf-catalogo-tablas.s3' in file_url: {'edf-catalogo-tablas.s3' in file_url}"
+        )
+        current_app.logger.info(
+            f"[DEBUG] URL starts with https://: {file_url.startswith('https://')}"
+        )
+        current_app.logger.info(f"[DEBUG] '.s3.' in file_url: {'.s3.' in file_url}")
+
+        # Validación más robusta para URLs de S3
+        # Verificar si es una URL de S3 válida
+        is_s3_url = (
+            "s3.amazonaws.com" in file_url
+            or "edf-catalogo-tablas.s3" in file_url
+            or file_url.startswith("https://")
+            and ".s3." in file_url
+        )
+
+        if is_s3_url:
+            # Extraer el nombre del archivo de la URL
+            file_name = file_url.split("/")[-1]
+            bucket_name = current_app.config.get(
+                "S3_BUCKET_NAME", "edf-catalogo-tablas"
+            )
+
+            current_app.logger.info(
+                f"[DEBUG] Archivo: {file_name}, Bucket: {bucket_name}"
+            )
+
+            # Generar URL firmada
+            presigned_url = get_s3_url(file_name, expiration)
+
+            if presigned_url:
+                current_app.logger.info(
+                    f"[DEBUG] URL firmada generada: {presigned_url[:100]}..."
+                )
+                return jsonify(
+                    {
+                        "success": True,
+                        "presigned_url": presigned_url,
+                        "expiration": expiration,
+                    }
+                )
+            else:
+                current_app.logger.error("[DEBUG] get_s3_url devolvió None")
+                return jsonify({"error": "No se pudo generar la URL firmada"}), 500
+        else:
+            current_app.logger.error(f"[DEBUG] URL no reconocida como S3: {file_url}")
+            return jsonify({"error": "URL no es de S3"}), 400
+
+    except Exception as e:
+        current_app.logger.error(f"Error generando URL firmada: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@admin_bp.route("/serve-local-file/<path:filename>")
+def serve_local_file(filename):
+    """
+    Sirve archivos locales desde el directorio de uploads.
+    """
+    try:
+        from app.routes.catalogs_routes import get_upload_dir
+
+        upload_dir = get_upload_dir()
+        file_path = os.path.join(upload_dir, filename)
+
+        if not os.path.exists(file_path):
+            return "Archivo no encontrado", 404
+
+        # Determinar MIME type basado en extensión
+        mime_type = "application/octet-stream"
+        if filename.lower().endswith(".pdf"):
+            mime_type = "application/pdf"
+        elif filename.lower().endswith((".md", ".markdown")):
+            mime_type = "text/markdown"
+        elif filename.lower().endswith(".txt"):
+            mime_type = "text/plain"
+        elif filename.lower().endswith((".doc", ".docx")):
+            mime_type = "application/msword"
+
+        return send_file(file_path, as_attachment=False, mimetype=mime_type)
+
+    except Exception as e:
+        current_app.logger.error(f"Error sirviendo archivo local: {e}")
+        return "Error sirviendo archivo", 500
+
+
+# Ruta temporal de PDF eliminada - ahora se usan archivos locales
 
 
 app = None

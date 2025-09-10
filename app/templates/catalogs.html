@@ -1,5 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Catálogos{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    /* Estilos para las miniaturas de catálogos */
+    .card-img-top {
+        transition: transform 0.3s ease-in-out;
+        padding: 10px;
+    }
+    
+    .card-img-top:hover {
+        transform: scale(1.02);
+    }
+    
+    /* Asegurar que las imágenes se muestren completas */
+    .card-img-top img {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+    
+    /* Mejorar la apariencia de las tarjetas */
+    .card {
+        transition: box-shadow 0.3s ease-in-out;
+        border: 1px solid #dee2e6;
+    }
+    
+    .card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Estilos para el placeholder cuando no hay miniatura */
+    .card-img-top .bg-light {
+        border-radius: 0.375rem 0.375rem 0 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <h1>Catálogos</h1>
@@ -47,7 +88,7 @@
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
                         {% if catalog.miniatura %}
-                            <img src="{{ catalog.miniatura }}" class="card-img-top" alt="Miniatura de {{ catalog.name }}" style="height: 200px; object-fit: cover;">
+                            <img src="{{ catalog.miniatura }}" class="card-img-top" alt="Miniatura de {{ catalog.name }}" style="height: 200px; object-fit: contain; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
                         {% else %}
                             <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
                                 <i class="fas fa-table fa-3x text-muted"></i>

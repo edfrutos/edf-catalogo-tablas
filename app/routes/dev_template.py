@@ -52,9 +52,10 @@ def admin_required(f):
                     logger.warning(
                         "[admin_required] Bloqueado por Flask-Login (no admin o no autenticado)"
                     )
-                    return jsonify(
-                        {"success": False, "error": "Solo administradores"}
-                    ), 403
+                    return (
+                        jsonify({"success": False, "error": "Solo administradores"}),
+                        403,
+                    )
         # 2. Fallback: session
         elif session.get("username") and session.get("role") == "admin":
             logger.debug(
@@ -145,8 +146,11 @@ _test_lock = threading.Lock()
 def update_tests_readme():
     """
     Escanea los tests y actualiza la sección autogenerada del README.
+    Incluye respaldo automático y mejor manejo de errores.
     """
     import re
+    import shutil
+    from datetime import datetime
 
     TESTS_DIR = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../..//dev_template/tests")
@@ -156,9 +160,73 @@ def update_tests_readme():
     )
     START = "<!-- TESTS-AUTO-START -->"
     END = "<!-- TESTS-AUTO-END -->"
+
+    # Crear respaldo del README antes de modificarlo
+    backup_path = f"{README_PATH}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+    # Función mejorada para extraer documentación
+    def extract_enhanced_description(script_path):
+        """Extrae descripción mejorada de un script Python."""
+        try:
+            with open(script_path, encoding="utf-8") as sf:
+                lines = sf.readlines()
+
+            # Buscar docstring de módulo
+            for i, line in enumerate(lines[:20]):  # Buscar en las primeras 20 líneas
+                line = line.strip()
+
+                # Docstring de módulo (""" o ''')
+                if line.startswith('"""') or line.startswith("'''"):
+                    # Docstring en una línea
+                    if line.endswith('"""') or line.endswith("'''"):
+                        desc = line.strip("\"'")
+                        if desc and len(desc) > 5:  # Evitar docstrings vacíos
+                            return desc
+                    # Docstring multilínea
+                    else:
+                        desc_lines = [line.strip("\"'")]
+                        for j in range(i + 1, min(i + 10, len(lines))):
+                            next_line = lines[j].strip()
+                            if next_line.endswith('"""') or next_line.endswith("'''"):
+                                desc_lines.append(next_line.strip("\"'"))
+                                break
+                            desc_lines.append(next_line)
+                        desc = " ".join(desc_lines).strip()
+                        if desc and len(desc) > 5:
+                            return desc
+
+                # Comentarios de descripción
+                if line.startswith("# Descripción:") or line.startswith("# Script:"):
+                    return (
+                        line.replace("# Descripción:", "")
+                        .replace("# Script:", "")
+                        .strip()
+                    )
+
+                # Comentarios generales (solo si son descriptivos)
+                if (
+                    line.startswith("#")
+                    and len(line) > 10
+                    and not line.startswith("#!")
+                ):
+                    comment = line.lstrip("#").strip()
+                    if not any(
+                        keyword in comment.lower()
+                        for keyword in ["import", "coding", "author", "date"]
+                    ):
+                        return comment
+
+        except Exception as e:
+            print(f"Error extrayendo descripción de {script_path}: {e}")
+
+        return ""
+
+    # Generar tabla mejorada
     table_lines = []
-    table_lines.append("| Ruta | Descripción |")
-    table_lines.append("|------|-------------|")
+    table_lines.append("| Ruta | Descripción | Tipo | Última Modificación |")
+    table_lines.append("|------|-------------|------|---------------------|")
+
+    test_count = 0
     for root, dirs, files in os.walk(TESTS_DIR):
         rel_dir = os.path.relpath(root, TESTS_DIR)
         for f in sorted(files):
@@ -167,64 +235,172 @@ def update_tests_readme():
                 rel_path = (
                     os.path.normpath(os.path.join(rel_dir, f)) if rel_dir != "." else f
                 )
-                desc = ""
+
+                # Extraer descripción mejorada
+                desc = extract_enhanced_description(script_path)
+                if not desc:
+                    desc = "Script de testing sin documentación"
+
+                # Obtener información del archivo
                 try:
-                    with open(script_path, encoding="utf-8") as sf:
-                        for _ in range(10):
-                            line = sf.readline()
-                            if not line:
-                                break  # noqa: E701
-                            l = line.strip()  # noqa: E741
-                            if l.startswith('"""') or l.startswith("'''"):
-                                desc = l.strip("\"'")
-                                break
-                            if l.startswith("#"):
-                                desc = l.lstrip("#").strip()
-                                break
-                except Exception:
-                    desc = ""
-                table_lines.append(f"| `{rel_path}` | {desc or '(sin docstring)'} |")
+                    stat = os.stat(script_path)
+                    mod_time = datetime.fromtimestamp(stat.st_mtime).strftime(
+                        "%Y-%m-%d %H:%M"
+                    )
+                except:
+                    mod_time = "N/A"
+
+                # Determinar tipo de test
+                test_type = "Test"
+                if "integration" in rel_path.lower():
+                    test_type = "Integration"
+                elif "unit" in rel_path.lower():
+                    test_type = "Unit"
+                elif "e2e" in rel_path.lower() or "end_to_end" in rel_path.lower():
+                    test_type = "E2E"
+
+                table_lines.append(
+                    f"| `{rel_path}` | {desc} | {test_type} | {mod_time} |"
+                )
+                test_count += 1
     table = "\n".join(table_lines)
     import logging
 
     logger = logging.getLogger("update_tests_readme")
+
     try:
+        # Verificar que el directorio de tests existe
+        if not os.path.exists(TESTS_DIR):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Directorio de tests no encontrado: {TESTS_DIR}",
+                    }
+                ),
+                404,
+            )
+
+        # Verificar que el README existe
+        if not os.path.exists(README_PATH):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"README.md no encontrado: {README_PATH}",
+                    }
+                ),
+                404,
+            )
+
+        # Crear respaldo del README
+        try:
+            shutil.copy2(README_PATH, backup_path)
+            logger.info(f"[update-tests-readme] Respaldo creado: {backup_path}")
+        except Exception as backup_error:
+            logger.warning(
+                f"[update-tests-readme] No se pudo crear respaldo: {backup_error}"
+            )
+
+        # Leer contenido actual
         with open(README_PATH, encoding="utf-8") as f:
             content = f.read()
+
         logger.info(
             f"[update-tests-readme] README.md leído correctamente: {README_PATH}"
         )
-        new_section = f"{START}\n{table}\n{END}"
+
+        # Crear nueva sección con estadísticas
+        stats_section = f"""
+## 📊 Estadísticas de Tests
+- **Total de tests encontrados**: {test_count}
+- **Última actualización**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+- **Directorio escaneado**: `{os.path.basename(TESTS_DIR)}`
+
+## 📋 Lista de Tests
+"""
+
+        new_section = f"{START}\n{stats_section}\n{table}\n{END}"
+
         # Verificar que ambos delimitadores existen
         if START not in content or END not in content:
             logger.error(
                 f"[update-tests-readme] Delimitadores no encontrados en README. START: {START in content}, END: {END in content}"
             )
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "No se encontraron los delimitadores de sección automática en README.md",
-                }
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "No se encontraron los delimitadores de sección automática en README.md. Asegúrate de que existan los comentarios: <!-- TESTS-AUTO-START --> y <!-- TESTS-AUTO-END -->",
+                        "missing_delimiters": {
+                            "start": START not in content,
+                            "end": END not in content,
+                        },
+                    }
+                ),
+                400,
+            )
+
         # Reemplazo seguro
         updated, n = re.subn(f"{START}.*?{END}", new_section, content, flags=re.DOTALL)
         if n == 0:
             logger.error(
                 "[update-tests-readme] El bloque delimitado no fue reemplazado. ¿Delimitadores corruptos?"
             )
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "No se pudo reemplazar el bloque delimitado en README.md",
-                }
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "No se pudo reemplazar el bloque delimitado en README.md. Verifica que los delimitadores estén correctamente formateados.",
+                    }
+                ),
+                400,
+            )
+
+        # Escribir archivo actualizado
         with open(README_PATH, "w", encoding="utf-8") as f:
             f.write(updated)
-        logger.info("[update-tests-readme] README.md actualizado correctamente.")
-        return jsonify({"success": True, "message": "README de tests actualizado."})
+
+        logger.info(
+            f"[update-tests-readme] README.md actualizado correctamente. Tests procesados: {test_count}"
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"README de tests actualizado correctamente. {test_count} tests procesados.",
+                "stats": {
+                    "tests_found": test_count,
+                    "backup_created": os.path.exists(backup_path),
+                    "backup_path": backup_path if os.path.exists(backup_path) else None,
+                    "last_updated": datetime.now().isoformat(),
+                },
+            }
+        )
+
     except Exception as e:
         logger.exception(f"[update-tests-readme] Error inesperado: {str(e)}")
-        return jsonify({"success": False, "error": str(e)})
+
+        # Intentar restaurar desde respaldo si existe
+        if os.path.exists(backup_path):
+            try:
+                shutil.copy2(backup_path, README_PATH)
+                logger.info(
+                    f"[update-tests-readme] README restaurado desde respaldo: {backup_path}"
+                )
+            except Exception as restore_error:
+                logger.error(
+                    f"[update-tests-readme] Error restaurando desde respaldo: {restore_error}"
+                )
+
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Error inesperado: {str(e)}",
+                "backup_available": os.path.exists(backup_path),
+                "backup_path": backup_path if os.path.exists(backup_path) else None,
+            }
+        )
 
 
 @bp_dev_template.route("/api/script-params-help", methods=["POST"])
@@ -354,9 +530,10 @@ def generate_test_template():
     data = request.get_json()
     name = (data or {}).get("name", "").strip()
     if not name:
-        return jsonify(
-            success=False, error="Falta el nombre del modelo o endpoint."
-        ), 400
+        return (
+            jsonify(success=False, error="Falta el nombre del modelo o endpoint."),
+            400,
+        )
     code = ""
     if name.startswith("/"):
         # Asume endpoint REST

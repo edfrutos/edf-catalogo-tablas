@@ -75,8 +75,27 @@ def register():
         username = request.form.get("username", "").strip()
         nombre = request.form.get("nombre", "").strip()
 
+        # Log para debugging
+        logger.info(
+            f"[REGISTER] Datos recibidos: email='{email}', username='{username}', nombre='{nombre}', password_length={len(password)}, confirm_length={len(confirm_password)}"
+        )
+        logger.info(f"[REGISTER] Form data completo: {dict(request.form)}")
+
         # Validaciones básicas
         if not all([email, password, confirm_password, username, nombre]):
+            missing_fields = []
+            if not email:
+                missing_fields.append("email")
+            if not password:
+                missing_fields.append("password")
+            if not confirm_password:
+                missing_fields.append("confirm_password")
+            if not username:
+                missing_fields.append("username")
+            if not nombre:
+                missing_fields.append("nombre")
+
+            logger.warning(f"[REGISTER] Campos faltantes: {missing_fields}")
             flash("Todos los campos son requeridos.", "error")
             return redirect(url_for("auth.register"))
 
@@ -104,7 +123,7 @@ def register():
             "email": email,
             "username": username,
             "nombre": nombre,
-            "password": generate_password_hash(password, method="scrypt"),
+            "password": generate_password_hash(password),
             "role": "user",
             "is_active": True,
             "active": True,
@@ -128,6 +147,10 @@ def register():
             # Si llegamos aquí, la autenticación fue exitosa
             session["user_id"] = str(result.inserted_id)
             session["email"] = nuevo_usuario["email"]
+            session["username"] = nuevo_usuario[
+                "username"
+            ]  # Agregar username a la sesión
+            session["nombre"] = nuevo_usuario["nombre"]  # Agregar nombre a la sesión
             session["logged_in"] = True
             session["role"] = nuevo_usuario.get("role", "user")
             session.permanent = True  # Hacer la sesión permanente
@@ -143,6 +166,9 @@ def register():
             )
 
             logger.info(f"Usuario {email} ha iniciado sesión exitosamente")
+            logger.info(
+                f"[REGISTER] Sesión creada: user_id={session.get('user_id')}, username={session.get('username')}, email={session.get('email')}, role={session.get('role')}"
+            )
 
             # Manejar redirección después de login
             next_page = request.args.get("next")
@@ -152,8 +178,14 @@ def register():
 
             # Redirigir según el rol si no hay página de destino
             if session.get("role") == "admin":
+                logger.info(
+                    f"[REGISTER] Redirigiendo admin a: {url_for('admin.dashboard_admin')}"
+                )
                 return redirect(url_for("admin.dashboard_admin"))
             else:
+                logger.info(
+                    f"[REGISTER] Redirigiendo usuario a: {url_for('main.dashboard_user')}"
+                )
                 return redirect(url_for("main.dashboard_user"))
 
         except Exception as e:

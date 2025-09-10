@@ -1,15 +1,194 @@
 {% extends "base.html" %}
+<!-- eslint-disable -->
 {% block title %}Editar Fila{% endblock %}
 {% block content %}
 <div class="container mt-4">
     <h1>Editar Fila de "{{ catalog.name }}"</h1>
+    
     <form method="post" enctype="multipart/form-data">
         {% for header in headers %}
-        {% if header != 'Imagen' %}
-        <div class="mb-3">
-            <label for="{{ header }}" class="form-label">{{ header }}</label>
-            <input type="text" class="form-control" id="{{ header }}" name="{{ header }}" value="{{ fila[header] }}">
-        </div>
+        {% if header == 'Multimedia' %}
+            <!-- Campo especial para Multimedia -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-video"></i> {{ header }}
+                </label>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">URL de Multimedia (opcional)</label>
+                        <input type="url" class="form-control" name="{{ header }}_url" 
+                               value="{{ fila[header] if fila[header] and fila[header] is string and fila[header].startswith('http') else '' }}"
+                               placeholder="https://ejemplo.com/video.mp4">
+                        <div class="form-text">Enlaza a un archivo multimedia externo</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Subir Archivo Multimedia</label>
+                        <input type="file" class="form-control" name="{{ header }}_file" 
+                               accept="video/*,audio/*,image/*">
+                        <div class="form-text">Videos: MP4, AVI, MOV | Audio: MP3, WAV | Imágenes: JPG, PNG, GIF | Máximo: 300MB</div>
+                    </div>
+                </div>
+                
+                <!-- Mostrar multimedia actual -->
+                {% if fila[header] %}
+                    <div class="mt-3">
+                        <label class="form-label">Multimedia Actual:</label>
+                        <div class="multimedia-preview">
+                            {% if fila[header] is string and fila[header].startswith('http') %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-external-link-alt"></i> URL Externa: 
+                                    <a href="{{ fila[header] }}" target="_blank">{{ fila[header] }}</a>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-file"></i> Archivo Local: {{ fila[header] }}
+                                    {% if fila[header] is string %}
+                                    <a href="{{ url_for('static', filename='uploads/' + fila[header]) }}" 
+                                       target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                        <i class="fas fa-download"></i> Descargar
+                                    </a>
+                                    {% else %}
+                                    <div class="mt-2">
+                                        {% for doc in fila[header] %}
+                                        <a href="{{ url_for('static', filename='uploads/' + doc) }}" 
+                                           target="_blank" class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="fas fa-download"></i> {{ doc[:20] }}...
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+        {% elif header == 'Documentación' %}
+            <!-- Campo especial para Documentos/Documentación -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-file-alt"></i> {{ header }} (Columna {{ loop.index }})
+                </label>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">URL de Documento (opcional)</label>
+                        <input type="url" class="form-control" name="{{ header }}_url_{{ loop.index0 }}" 
+                               value="{{ fila[header] if fila[header] and fila[header] is string and fila[header].startswith('http') else '' }}"
+                               placeholder="https://ejemplo.com/documento.pdf">
+                        <div class="form-text">Enlaza a un documento externo</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Subir Documento</label>
+                        <input type="file" class="form-control" name="{{ header }}_file_{{ loop.index0 }}" 
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.md">
+                        <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB</div>
+                    </div>
+                </div>
+                
+                <!-- Mostrar documento actual -->
+                {% set doc_data = fila[header] if fila[header] is defined else [] %}
+                {% if doc_data %}
+                    <div class="mt-3">
+                        <label class="form-label">Documentos Actuales:</label>
+                        <div class="documento-preview">
+                            {% if doc_data is iterable and doc_data is not string %}
+                                <!-- Múltiples documentos (formato nuevo) -->
+                                {% for doc in doc_data %}
+                                    {% if doc is string and doc.startswith('http') %}
+                                        <div class="alert alert-info mb-2 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-external-link-alt"></i> URL Externa: 
+                                                <a href="{{ doc }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-external-link-alt"></i> Ver Documento
+                                                </a>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    {% elif doc %}
+                                        <!-- Documento individual como string -->
+                                        <div class="alert alert-success mb-2 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-file"></i> Archivo: {{ doc }}
+                                                <div class="btn-group ms-2" role="group">
+                                                    {% if doc.startswith('http') %}
+                                                        <a href="{{ doc }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-download"></i> Descargar
+                                                        </a>
+                                                    {% else %}
+                                                        <a href="/s3/{{ doc }}" 
+                                                           download="{{ doc }}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-download"></i> Descargar
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% elif doc_data is string and doc_data.startswith('http') %}
+                                <!-- Documento único URL (formato antiguo) -->
+                                <div class="alert alert-info">
+                                    <i class="fas fa-external-link-alt"></i> URL Externa: 
+                                    <a href="{{ doc_data }}" target="_blank">{{ doc_data }}</a>
+                                </div>
+                            {% elif doc_data is string %}
+                                <!-- Documento único archivo (formato antiguo) -->
+                                <div class="alert alert-success">
+                                    <i class="fas fa-file"></i> Archivo: {{ doc_data }}
+                                    <div class="btn-group ms-2" role="group">
+                                        <a href="/s3/{{ doc_data }}" 
+                                           download="{{ doc_data }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-download"></i> Descargar
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                data-documento="{{ doc_data }}" data-columna="{{ loop.index0 }}"
+                                                onclick="confirmarEliminarDocumento(this.dataset.documento, parseInt(this.dataset.columna))">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="mt-3">
+                        <label class="form-label">Documento Actual:</label>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> No hay documento para esta columna
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+        {% elif header == 'Fecha' %}
+            <!-- Campo especial para Fecha (columna inteligente) -->
+            <div class="mb-3">
+                <label for="{{ header }}" class="form-label">
+                    <i class="fas fa-calendar-alt"></i> {{ header }}
+                    <span class="badge bg-info ms-2">Auto</span>
+                </label>
+                <input type="date" class="form-control" id="{{ header }}" name="{{ header }}" 
+                       value="{{ fila[header] if fila[header] else '' }}">
+                <div class="form-text">
+                    <i class="fas fa-magic"></i> <strong>Columna Inteligente:</strong> 
+                    Esta fecha se asigna automáticamente al crear la fila. Puedes modificarla si es necesario.
+                </div>
+            </div>
+            
+        {% elif header != 'Imagen' %}
+            <!-- Campo normal -->
+            <div class="mb-3">
+                <label for="{{ header }}" class="form-label">{{ header }}</label>
+                <input type="text" class="form-control" id="{{ header }}" name="{{ header }}" value="{{ fila[header] }}">
+            </div>
         {% endif %}
         {% endfor %}
         
@@ -29,12 +208,12 @@
         <!-- DEBUG_SIMPLE: NO hay imagen externa, _imagen_externa = {{ fila._imagen_externa }} -->
         {% endif %}
         <div class="mb-3">
-            <label for="imagenes" class="form-label">Imágenes (opcional)</label>
-            <input type="file" class="form-control" id="imagenes" name="imagenes" multiple accept="image/*">
+            <label for="images" class="form-label">Imágenes (opcional)</label>
+            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
             <div class="form-text">Puede seleccionar múltiples imágenes. Las nuevas imágenes se añadirán a las existentes.</div>
         </div>
         <!-- 🔥🔥🔥 USAR IMÁGENES PROCESADAS POR EL BACKEND 🔥🔥🔥 -->
-        {% set imagenes_procesadas = fila._imagenes_unificadas if fila._imagenes_unificadas else [] %}
+        {% set imagenes_procesadas = fila.images if fila.images else [] %}
         {% set imagen_externa = fila._imagen_externa if fila._imagen_externa else None %}
         
         <!-- DEBUG - VERSIÓN SEGURA CONTRA ERRORES DE GENERADOR -->
@@ -49,11 +228,11 @@
                 {% for img in imagenes_procesadas %}
                 <div class="position-relative">
                     <!-- Usar fallback S3 → Local → Error -->
-                    <a href="#" onclick="mostrarImagenModal('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/{{ img }}'); return false;">
-                        <img src="https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.src='/static/uploads/{{ img }}'; this.onerror=function(){this.src='/static/img/image-error.svg'};">
+                    <a href="#" onclick="mostrarImagenModal('/admin/s3/{{ img }}'); return false;">
+                        <img src="/admin/s3/{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.src='/imagenes_subidas/{{ img }}'; this.onerror=function(){this.src='/static/img/image-error.svg'};">
                     </a>
                     <div class="mt-1 text-center">
-                        <button type="button" class="btn btn-sm btn-danger" onclick="confirmarEliminarImagen('{{ img|e }}', {{ loop.index0 }})">Eliminar</button>
+                        <button type="button" class="btn btn-sm btn-danger" data-imagen="{{ img|e }}" data-index="{{ loop.index0 }}" onclick="confirmarEliminarImagen(this.dataset.imagen, this.dataset.index)">Eliminar</button>
                     </div>
                 </div>
                 {% endfor %}
@@ -73,6 +252,7 @@
             <input type="hidden" id="imagenes_a_eliminar" name="imagenes_a_eliminar" value="">
         </div>
         {% endif %}
+        <input type="hidden" id="documentos_a_eliminar" name="documentos_a_eliminar" value="">
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         <a href="{{ url_for('main.ver_tabla', table_id=catalog._id|string) }}?page={{ ((fila_index // 10) + 1) }}" class="btn btn-secondary">Cancelar</a>
     </form>
@@ -113,6 +293,30 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación para eliminar documento -->
+<div class="modal fade" id="eliminarDocumentoModal" tabindex="-1" aria-labelledby="eliminarDocumentoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eliminarDocumentoModalLabel">Confirmar Eliminación de Documento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Está seguro que desea eliminar este documento?</p>
+        <div class="alert alert-warning">
+          <strong>Documento:</strong> <span id="documentoAEliminar"></span><br>
+          <strong>Columna:</strong> <span id="columnaAEliminar"></span>
+        </div>
+        <p class="text-muted">Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmarEliminarDocumento">Eliminar</button>
       </div>
     </div>
   </div>
@@ -169,11 +373,19 @@ function verificarImagenAlternativaEdit(imagenUrlOriginal, modalImg, modalElemen
     
     if (imagenUrlOriginal.includes('amazonaws.com')) {
         console.log('🔄 Intentando versión local en editar...');
-        const urlLocal = `/static/uploads/${nombreArchivo}`;
+        const urlLocal = `/imagenes_subidas/${nombreArchivo}`;
         probarImagenEdit(urlLocal, modalImg, modalElement);
     } else if (imagenUrlOriginal.includes('/static/uploads/')) {
         console.log('🔄 Intentando versión S3 en editar...');
-        const urlS3 = `https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/${nombreArchivo}`;
+        const urlS3 = `/admin/s3/${nombreArchivo}`;
+        probarImagenEdit(urlS3, modalImg, modalElement);
+    } else if (imagenUrlOriginal.includes('/admin/s3/')) {
+        console.log('🔄 Intentando versión local en editar (desde S3)...');
+        const urlLocal = `/imagenes_subidas/${nombreArchivo}`;
+        probarImagenEdit(urlLocal, modalImg, modalElement);
+    } else if (imagenUrlOriginal.includes('/imagenes_subidas/')) {
+        console.log('🔄 Intentando versión S3 en editar (desde local)...');
+        const urlS3 = `/admin/s3/${nombreArchivo}`;
         probarImagenEdit(urlS3, modalImg, modalElement);
     } else {
         mostrarImagenErrorEdit(modalImg, modalElement);
@@ -211,10 +423,24 @@ function confirmarEliminarImagen(imagen, indice) {
   
   // Mostrar la imagen en el modal de confirmación
   let rutaImagen;
+  console.log('🔍 Imagen recibida:', imagen);
+  console.log('🔍 Tipo de imagen:', typeof imagen);
+  console.log('🔍 Longitud de imagen:', imagen.length);
+  console.log('🔍 Imagen startsWith /admin/s3/:', imagen.startsWith('/admin/s3/'));
+  console.log('🔍 Imagen startsWith /s3/:', imagen.startsWith('/s3/'));
+  console.log('🔍 Imagen includes /s3/:', imagen.includes('/s3/'));
+  console.log('🔍 Imagen includes /admin/s3/:', imagen.includes('/admin/s3/'));
+  
   if (imagen.startsWith('http')) {
     rutaImagen = imagen;
+    console.log('✅ URL HTTP detectada:', rutaImagen);
+  } else if (imagen.startsWith('/admin/s3/') || imagen.startsWith('/s3/') || imagen.includes('/s3/') || imagen.includes('/admin/s3/')) {
+    // URL de S3, usar directamente
+    rutaImagen = imagen;
+    console.log('✅ URL S3 detectada:', rutaImagen);
   } else {
     rutaImagen = "/imagenes_subidas/" + imagen;
+    console.log('⚠️  URL local generada:', rutaImagen);
   }
   document.getElementById('imagenAEliminar').src = rutaImagen;
   
@@ -244,5 +470,47 @@ function eliminarImagen(imagen, indice) {
     contenedorImagen.style.display = 'none';
   }
 }
+
+// ============================================================================
+// FUNCIONES PARA ELIMINAR DOCUMENTOS
+// ============================================================================
+
+// Array para almacenar documentos a eliminar
+let documentosAEliminar = [];
+
+function confirmarEliminarDocumento(documento, columnIndex) {
+  // Configurar el modal de confirmación
+  document.getElementById('documentoAEliminar').textContent = documento;
+  document.getElementById('columnaAEliminar').textContent = columnIndex + 1;
+  
+  // Configurar el botón de confirmación
+  document.getElementById('btnConfirmarEliminarDocumento').onclick = function() {
+    eliminarDocumento(documento, columnIndex);
+    bootstrap.Modal.getInstance(document.getElementById('eliminarDocumentoModal')).hide();
+  };
+  
+  // Mostrar el modal
+  const modal = new bootstrap.Modal(document.getElementById('eliminarDocumentoModal'));
+  modal.show();
+}
+
+function eliminarDocumento(documento, columnIndex) {
+  // Agregar el documento al array de documentos a eliminar
+  if (!documentosAEliminar.includes(documento)) {
+    documentosAEliminar.push(documento);
+  }
+  
+  // Actualizar el campo oculto con los documentos a eliminar
+  document.getElementById('documentos_a_eliminar').value = JSON.stringify(documentosAEliminar);
+  
+  // Ocultar visualmente el documento eliminado
+  const documentoPreview = document.querySelectorAll('.documento-preview')[columnIndex];
+  if (documentoPreview) {
+    documentoPreview.style.display = 'none';
+  }
+  
+  console.log('Documento marcado para eliminación:', documento);
+}
+
 </script>
 {% endblock %}

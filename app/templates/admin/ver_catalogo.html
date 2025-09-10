@@ -1,4 +1,5 @@
 {% extends "admin/base.html" %}
+<!-- eslint-disable -->
 
 {% block title %}Detalle del Catálogo{% endblock %}
 
@@ -35,7 +36,7 @@
                                 <th>
                                     {% if header == 'Multimedia' %}
                                         <i class="fas fa-video"></i> {{ header }}
-                                    {% elif header in ['Documentos', 'Documentación'] %}
+                                    {% elif header in ['Documentos', 'Documentación'] or header.startswith('Documentación') %}
                                         <i class="fas fa-file-alt"></i> {{ header }}
                                     {% else %}
                                         {{ header }}
@@ -53,35 +54,110 @@
                                     <td class="fw-bold text-primary">{{ loop.index }}</td>
                                     {% for header in catalog.headers %}
                                         <td>
+                                            {% if header.startswith('Documentación') %}
+                                                {% set header_key = header %}
+                                            {% else %}
+                                                {% set header_key = header + '_' + (loop.index0)|string if header in ['Documentos', 'Documentación'] else header %}
+                                            {% endif %}
+                                            <!-- Debug: {{ header_key }} -->
                                             {% if header == 'Multimedia' %}
                                                 <!-- Columna Multimedia -->
                                                 {% if row[header] %}
-                                                    {% set multimedia_data = row[header] %}
-                                                    {% if multimedia_data.startswith('http') %}
-                                                        <!-- URL externa -->
-                                                        <a href="{{ multimedia_data }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-external-link-alt"></i> Ver Multimedia
-                                                        </a>
+                                                    {% if row[header] is iterable and row[header] is not string %}
+                                                        {% set multimedia_data = row[header][0] if row[header] else '' %}
+                                                    {% else %}
+                                                        {% set multimedia_data = row[header] %}
+                                                    {% endif %}
+                                                    {% if multimedia_data and multimedia_data.startswith('/admin/s3/') %}
+                                                        {% set multimedia_data = multimedia_data %}
+                                                    {% endif %}
+                                                    {% if multimedia_data is string and (multimedia_data.startswith('http') or multimedia_data.startswith('/admin/s3/') or multimedia_data.startswith('/s3/')) %}
+                                                        <!-- URL externa o S3 -->
+                                                        {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or multimedia_data.startswith('/admin/s3/') or multimedia_data.startswith('/s3/') %}
+                                                            <!-- Archivo en S3 -->
+                                                            <div class="multimedia-preview">
+                                                                {% if multimedia_data is string and multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
+                                                                    <img src="{{ multimedia_data }}" 
+                                                                         alt="Multimedia" 
+                                                                         class="img-thumbnail multimedia-thumbnail"
+                                                                         onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}')">
+                                                                {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
+                                                                    <div class="multimedia-thumbnail-container" 
+                                                                         onclick="if (typeof showPyWebViewVideo !== 'undefined') { showPyWebViewVideo('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}'); } else { showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}'); }"
+                                                                         style="cursor: pointer; position: relative; display: inline-block;">
+                                                                        <video class="multimedia-thumbnail" 
+                                                                               style="pointer-events: none;">
+                                                                            <source src="{{ multimedia_data }}" type="video/mp4">
+                                                                            Tu navegador no soporta el elemento video.
+                                                                        </video>
+                                                                        <div class="play-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                                                            <i class="fas fa-play text-white" style="font-size: 12px;"></i>
+                                                                        </div>
+                                                                    </div>
+                                                                {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
+                                                                    <div class="multimedia-thumbnail-container" 
+                                                                         data-multimedia-url="{{ multimedia_data }}"
+                                                                         data-multimedia-title="{{ multimedia_data.split('/')[-1] }}"
+                                                                         style="cursor: pointer; position: relative; display: inline-block;"
+                                                                         onclick="showMultimediaModal(this.dataset.multimediaUrl, this.dataset.multimediaTitle)">
+                                                                        <audio class="multimedia-thumbnail" 
+                                                                               style="pointer-events: none;">
+                                                                            <source src="{{ multimedia_data }}" type="audio/mpeg">
+                                                                            Tu navegador no soporta el elemento audio.
+                                                                        </audio>
+                                                                        <div class="play-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                                                            <i class="fas fa-music text-white" style="font-size: 12px;"></i>
+                                                                        </div>
+                                                                    </div>
+                                                                {% else %}
+                                                                    <a href="{{ multimedia_data }}" 
+                                                                       target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                                        <i class="fas fa-download"></i> Descargar
+                                                                    </a>
+                                                                {% endif %}
+                                                            </div>
+                                                        {% else %}
+                                                            <!-- URL externa -->
+                                                            <a href="{{ multimedia_data }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                <i class="fas fa-external-link-alt"></i> Ver Multimedia
+                                                            </a>
+                                                        {% endif %}
                                                     {% else %}
                                                         <!-- Archivo local -->
                                                         <div class="multimedia-preview">
-                                                            {% if multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                                                                <img src="{{ url_for('static', filename='uploads/' + multimedia_data) }}" 
-                                                                     alt="Multimedia" 
-                                                                     class="img-thumbnail multimedia-thumbnail"
-                                                                     onclick="showMultimediaModal('{{ url_for('static', filename='uploads/' + multimedia_data) }}', '{{ multimedia_data }}')">
-                                                            {% elif multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
-                                                                <video class="multimedia-thumbnail" controls>
-                                                                    <source src="{{ url_for('static', filename='uploads/' + multimedia_data) }}" type="video/mp4">
-                                                                    Tu navegador no soporta el elemento video.
-                                                                </video>
-                                                            {% elif multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                                                                <audio controls class="multimedia-thumbnail">
-                                                                    <source src="{{ url_for('static', filename='uploads/' + multimedia_data) }}" type="audio/mpeg">
-                                                                    Tu navegador no soporta el elemento audio.
-                                                                </audio>
+                                                            {% if multimedia_data is string and multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
+                                                                                                <img src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" 
+                                     alt="Multimedia" 
+                                     class="img-thumbnail multimedia-thumbnail"
+                                     onclick="showMultimediaModal('{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}', '{{ multimedia_data }}')">
+                                                            {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv', '.webm')) %}
+                                                                <div class="multimedia-thumbnail-container" 
+                                                                     onclick="if (typeof showPyWebViewVideo !== 'undefined') { showPyWebViewVideo('{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}', '{{ multimedia_data }}'); } else { showMultimediaModal('{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}', '{{ multimedia_data }}'); }"
+                                                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                                                    <video class="multimedia-thumbnail" 
+                                                                           style="pointer-events: none;">
+                                                                        <source src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" type="video/mp4">
+                                                                        Tu navegador no soporta el elemento video.
+                                                                    </video>
+                                                                    <div class="play-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                                                        <i class="fas fa-play text-white" style="font-size: 12px;"></i>
+                                                                    </div>
+                                                                </div>
+                                                            {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
+                                                                <div class="multimedia-thumbnail-container" 
+                                                                     onclick='showMultimediaModal("{{ url_for("uploaded_images.uploaded_images", filename=multimedia_data) }}", "{{ multimedia_data }}")'
+                                                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                                                    <audio class="multimedia-thumbnail" 
+                                                                           style="pointer-events: none;">
+                                                                        <source src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" type="audio/mpeg">
+                                                                        Tu navegador no soporta el elemento audio.
+                                                                    </audio>
+                                                                    <div class="play-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                                                        <i class="fas fa-music text-white" style="font-size: 12px;"></i>
+                                                                    </div>
+                                                                </div>
                                                             {% else %}
-                                                                <a href="{{ url_for('static', filename='uploads/' + multimedia_data) }}" 
+                                                                <a href="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" 
                                                                    target="_blank" class="btn btn-sm btn-outline-secondary">
                                                                     <i class="fas fa-download"></i> Descargar
                                                                 </a>
@@ -91,61 +167,185 @@
                                                 {% else %}
                                                     <span class="text-muted">-</span>
                                                 {% endif %}
-                                            {% elif header in ['Documentos', 'Documentación'] %}
+                                            {% elif header in ['Documentos', 'Documentación'] or header.startswith('Documentación') %}
                                                 <!-- Columna Documentos/Documentación -->
-                                                {% if row[header] %}
-                                                    {% set documento_data = row[header] %}
-                                                    {% if documento_data.startswith('http') %}
-                                                        <!-- URL externa -->
-                                                        <a href="{{ documento_data }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                                            <i class="fas fa-external-link-alt"></i> Ver Documento
-                                                        </a>
+                                                <!-- Debug: row[header_key] = {{ row[header_key] }} -->
+                                                {% if row[header_key] %}
+                                                    {% set documento_data = row[header_key] %}
+                                                    
+                                                    <!-- Manejar múltiples documentos -->
+                                                    {% if documento_data is iterable and documento_data is not string %}
+                                                        <!-- Array de documentos -->
+                                                        <div class="documentos-list">
+                                                            {% for doc in documento_data %}
+                                                                {% if doc %}
+                                                                    {% set clean_doc = doc %}
+                                                                    {% if doc.startswith('/admin/s3/') %}
+                                                                        {% set clean_doc = doc %}
+                                                                    {% endif %}
+                                                                    {% if clean_doc is string and (clean_doc.startswith('http') or clean_doc.startswith('/admin/s3/') or clean_doc.startswith('/s3/')) %}
+                                                                        <!-- URL externa o S3 -->
+                                                                        {% if clean_doc.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or clean_doc.startswith('/admin/s3/') or clean_doc.startswith('/s3/') %}
+                                                                            <!-- Archivo en S3 -->
+                                                                            {% if clean_doc.lower().endswith('.pdf') %}
+                                                                                <a href="#" 
+                                                                                   class="btn btn-sm btn-outline-danger mb-1"
+                                                                                   onclick='event.preventDefault(); if (typeof showPyWebViewDocument !== "undefined") { showPyWebViewDocument("{{ clean_doc }}", "{{ clean_doc.split("/")[-1] }}"); } else { showDocumentModal("{{ clean_doc }}", "{{ clean_doc.split("/")[-1] }}"); }'>
+                                                                                    <i class="fas fa-file-pdf"></i> Ver PDF
+                                                                                </a>
+                                                                            {% elif clean_doc.lower().endswith('.md') %}
+                                                                                <a href="#" 
+                                                                                   class="btn btn-sm btn-outline-info mb-1"
+                                                                                   onclick='event.preventDefault(); if (typeof showPyWebViewDocument !== "undefined") { showPyWebViewDocument("{{ clean_doc }}", "{{ clean_doc.split("/")[-1] }}"); } else { showDocumentModal("{{ clean_doc }}", "{{ clean_doc.split("/")[-1] }}"); }'>
+                                                                                    <i class="fas fa-file-code"></i> Ver Markdown
+                                                                                </a>
+                                                                            {% else %}
+                                                                                <a href="{{ clean_doc }}" 
+                                                                                   target="_blank" class="btn btn-sm btn-outline-dark mb-1">
+                                                                                    <i class="fas fa-download"></i> Descargar
+                                                                                </a>
+                                                                            {% endif %}
+                                                                        {% else %}
+                                                                            <!-- URL externa -->
+                                                                            <a href="#" 
+                                                                               class="btn btn-sm btn-outline-info mb-1"
+                                                                               onclick='event.preventDefault(); if (typeof showPyWebViewDocument !== "undefined") { showPyWebViewDocument("{{ clean_doc }}", "{{ clean_doc.split("/")[-1] }}"); } else { showDocumentModal("{{ clean_doc }}", "{{ clean_doc.split("/")[-1] }}"); }'>
+                                                                                <i class="fas fa-external-link-alt"></i> Ver Documento
+                                                                            </a>
+                                                                        {% endif %}
+                                                                    {% else %}
+                                                                        <!-- Archivo local (legacy) -->
+                                                                        {% if doc.lower().endswith('.pdf') %}
+                                                                            <a href="#" 
+                                                                               class="btn btn-sm btn-outline-danger mb-1"
+                                                                               onclick="event.preventDefault(); if (typeof showPyWebViewDocument !== 'undefined') { showPyWebViewDocument('{{ url_for('uploaded_images.uploaded_images', filename=doc) }}', '{{ doc }}'); } else { showDocumentModal('{{ url_for('uploaded_images.uploaded_images', filename=doc) }}', '{{ doc }}'); }"
+                                                                                <i class="fas fa-file-pdf"></i> Ver PDF
+                                                                            </a>
+                                                                        {% elif doc.lower().endswith('.md') %}
+                                                                            <a href="#" 
+                                                                               class="btn btn-sm btn-outline-info mb-1"
+                                                                               onclick="event.preventDefault(); if (typeof showPyWebViewDocument !== 'undefined') { showPyWebViewDocument('{{ url_for('uploaded_images.uploaded_images', filename=doc) }}', '{{ doc }}'); } else { showDocumentModal('{{ url_for('uploaded_images.uploaded_images', filename=doc) }}', '{{ doc }}'); }"
+                                                                                <i class="fas fa-file-code"></i> Ver Markdown
+                                                                            </a>
+                                                                        {% else %}
+                                                                            <a href="{{ url_for('uploaded_images.uploaded_images', filename=doc) }}" 
+                                                                               target="_blank" class="btn btn-sm btn-outline-dark mb-1">
+                                                                                <i class="fas fa-download"></i> Descargar
+                                                                            </a>
+                                                                        {% endif %}
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </div>
+                                                    
+                                                    <!-- Documento único (fallback para compatibilidad) -->
+                                                    {% elif documento_data is string and (documento_data.startswith('http') or documento_data.startswith('/admin/s3/') or documento_data.startswith('/s3/')) %}
+                                                        <!-- URL externa o S3 -->
+                                                        {% if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or documento_data.startswith('/admin/s3/') or documento_data.startswith('/s3/') %}
+                                                            <!-- Archivo en S3 -->
+                                                            <div class="documento-preview">
+                                                                {% if documento_data is string and documento_data.lower().endswith('.pdf') %}
+                                                                    <a href="#" 
+                                                                       class="btn btn-sm btn-outline-danger"
+                                                                       onclick="
+                                                                           event.preventDefault(); 
+                                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                               showPyWebViewDocument('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           } else { 
+                                                                               showDocumentModal('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           }
+                                                                       ">
+                                                                        <i class="fas fa-file-pdf"></i> Ver PDF
+                                                                    </a>
+                                                                {% elif documento_data is string and documento_data.lower().endswith(('.doc', '.docx')) %}
+                                                                    <a href="#" 
+                                                                       class="btn btn-sm btn-outline-primary"
+                                                                       onclick="
+                                                                           event.preventDefault(); 
+                                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                               showPyWebViewDocument('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           } else { 
+                                                                               showDocumentModal('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           }
+                                                                       ">
+                                                                        <i class="fas fa-file-word"></i> Ver Word
+                                                                    </a>
+                                                                {% elif documento_data is string and documento_data.lower().endswith(('.xls', '.xlsx')) %}
+                                                                    <a href="#" 
+                                                                       class="btn btn-sm btn-outline-success"
+                                                                       onclick="
+                                                                           event.preventDefault(); 
+                                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                               showPyWebViewDocument('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           } else { 
+                                                                               showDocumentModal('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           }
+                                                                       ">
+                                                                        <i class="fas fa-file-excel"></i> Ver Excel
+                                                                    </a>
+                                                                {% elif documento_data is string and documento_data.lower().endswith('.txt') %}
+                                                                    <a href="#" 
+                                                                       class="btn btn-sm btn-outline-secondary"
+                                                                       onclick="
+                                                                           event.preventDefault(); 
+                                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                               showPyWebViewDocument('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           } else { 
+                                                                               showDocumentModal('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           }
+                                                                       ">
+                                                                        <i class="fas fa-file-alt"></i> Ver Texto
+                                                                    </a>
+                                                                {% elif documento_data is string and documento_data.lower().endswith('.md') %}
+                                                                    <a href="#" 
+                                                                       class="btn btn-sm btn-outline-secondary"
+                                                                       onclick="
+                                                                           console.log('[DEBUG] Click en Markdown:', '{{ documento_data }}'); 
+                                                                           event.preventDefault(); 
+                                                                           if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                               showPyWebViewDocument('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           } else { 
+                                                                               showDocumentModal('{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}', '{{ documento_data }}'); 
+                                                                           }
+                                                                       ">
+                                                                        <i class="fas fa-file-alt"></i> Ver Markdown
+                                                                    </a>
+                                                                {% else %}
+                                                                    <a href="{{ documento_data }}" 
+                                                                       target="_blank" class="btn btn-sm btn-outline-dark">
+                                                                        <i class="fas fa-download"></i> Descargar
+                                                                    </a>
+                                                                {% endif %}
+                                                            </div>
+                                                        {% else %}
+                                                            <!-- URL externa -->
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-info"
+                                                               onclick="
+                                                                   event.preventDefault(); 
+                                                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                                                       showPyWebViewDocument('{{ documento_data }}', '{{ documento_data.split('/')[-1] }}'); 
+                                                                   } else { 
+                                                                       showDocumentModal('{{ documento_data }}', '{{ documento_data.split('/')[-1] }}'); 
+                                                                   }
+                                                               ">
+                                                                <i class="fas fa-external-link-alt"></i> Ver Documento
+                                                            </a>
+                                                        {% endif %}
                                                     {% else %}
-                                                        <!-- Archivo local -->
+                                                        <!-- Archivo local (legacy) -->
                                                         <div class="documento-preview">
-                                                                                                    {% if documento_data.lower().endswith('.pdf') %}
-                                            <a href="{{ url_for('static', filename='uploads/' + documento_data) }}" 
-                                               target="_blank" class="btn btn-sm btn-outline-danger"
-                                               onclick="showDocumentModal('{{ url_for('static', filename='uploads/' + documento_data) }}', '{{ documento_data }}')">
-                                                <i class="fas fa-file-pdf"></i> Ver PDF
-                                            </a>
-                                        {% elif documento_data.lower().endswith(('.doc', '.docx')) %}
-                                            <a href="{{ url_for('static', filename='uploads/' + documento_data) }}" 
-                                               target="_blank" class="btn btn-sm btn-outline-primary"
-                                               onclick="showDocumentModal('{{ url_for('static', filename='uploads/' + documento_data) }}', '{{ documento_data }}')">
-                                                <i class="fas fa-file-word"></i> Ver Word
-                                            </a>
-                                        {% elif documento_data.lower().endswith(('.xls', '.xlsx')) %}
-                                            <a href="{{ url_for('static', filename='uploads/' + documento_data) }}" 
-                                               target="_blank" class="btn btn-sm btn-outline-success"
-                                               onclick="showDocumentModal('{{ url_for('static', filename='uploads/' + documento_data) }}', '{{ documento_data }}')">
-                                                <i class="fas fa-file-excel"></i> Ver Excel
-                                            </a>
-                                                                                 {% elif documento_data.lower().endswith('.txt') %}
-                                             <a href="{{ url_for('static', filename='uploads/' + documento_data) }}" 
-                                                target="_blank" class="btn btn-sm btn-outline-secondary"
-                                                onclick="showDocumentModal('{{ url_for('static', filename='uploads/' + documento_data) }}', '{{ documento_data }}')">
-                                                 <i class="fas fa-file-alt"></i> Ver Texto
-                                             </a>
-                                         {% elif documento_data.lower().endswith('.md') %}
-                                             <a href="#" 
-                                                class="btn btn-sm btn-outline-info"
-                                                onclick="console.log('[DEBUG] Click en Markdown:', '{{ documento_data }}'); event.preventDefault(); showDocumentModal('{{ url_for('static', filename='uploads/' + documento_data) }}', '{{ documento_data }}')">
-                                                 <i class="fas fa-file-code"></i> Ver Markdown
-                                             </a>
-                                        {% else %}
-                                            <a href="{{ url_for('static', filename='uploads/' + documento_data) }}" 
-                                               target="_blank" class="btn btn-sm btn-outline-dark">
-                                                <i class="fas fa-download"></i> Descargar
-                                            </a>
-                                        {% endif %}
+                                                            <a href="{{ '/admin/s3/' + documento_data.split('/')[-1] if documento_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') else url_for('uploaded_images.uploaded_images', filename=documento_data) }}" 
+                                                               target="_blank" class="btn btn-sm btn-outline-dark">
+                                                                <i class="fas fa-download"></i> Descargar
+                                                            </a>
                                                         </div>
                                                     {% endif %}
                                                 {% else %}
                                                     <span class="text-muted">-</span>
                                                 {% endif %}
                                             {% else %}
-                                                {{ row[header] or '-' }}
+                                                {{ row[header_key] or '-' }}
                                             {% endif %}
                                         </td>
                                     {% endfor %}
@@ -158,8 +358,8 @@
                                                          alt="Imagen {{ loop.index }}" 
                                                          class="img-thumbnail catalog-preview-img" 
                                                          style="width: 60px; height: 60px; object-fit: cover; margin-right: 4px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;"
-                                                         onclick="showImageModal('{{ img_url }}', 'Imagen {{ loop.index }}')"
-                                                         onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'"
+                                                         onclick='showImageModal("{{ img_url }}", "Imagen {{ loop.index }}")'
+                                                         onerror="if(typeof handleImageError === 'function') { handleImageError(this); } else { this.src='{{ url_for('static', filename='img/image-error.svg') }}'; }"
                                                          loading="lazy">
                                                 {% endif %}
                                             {% endfor %}
@@ -171,16 +371,24 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{{ url_for('admin.editar_fila_admin', collection_source=catalog.collection_source, catalog_id=catalog._id, row_index=loop.index0) }}" class="btn btn-warning">
-                                            <i class="bi bi-pencil-square"></i> Editar
-                                        </a>
-                                        {% if session.get('role') == 'admin' or catalog.owner == session.get('username') or catalog.owner_name == session.get('username') or catalog.created_by == session.get('username') %}
-                                        <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=loop.index0) }}" style="display:inline;" onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
-                                            <button type="submit" class="btn btn-danger btn-sm">
-                                                <i class="bi bi-trash"></i> Eliminar
-                                            </button>
-                                        </form>
-                                        {% endif %}
+                                        <div class="btn-group-vertical btn-group-sm d-flex flex-column flex-md-row" role="group">
+                                            <a href="{{ url_for('admin.editar_fila_admin', collection_source=catalog.collection_source, catalog_id=catalog._id, row_index=loop.index0) }}" 
+                                               class="btn btn-warning btn-sm mb-1 mb-md-0 me-md-1" 
+                                               title="Editar fila">
+                                                <i class="bi bi-pencil-square"></i> 
+                                                <span class="d-none d-sm-inline">Editar</span>
+                                            </a>
+                                            {% if session.get('role') == 'admin' or catalog.owner == session.get('username') or catalog.owner_name == session.get('username') or catalog.created_by == session.get('username') %}
+                                            <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id, row_index=loop.index0) }}" 
+                                                  style="display:inline;" 
+                                                  onsubmit="return confirm('¿Seguro que quieres eliminar esta fila?');">
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Eliminar fila">
+                                                    <i class="bi bi-trash"></i> 
+                                                    <span class="d-none d-sm-inline">Eliminar</span>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -211,15 +419,15 @@
           <div class="spinner-border text-primary image-loading-spinner" role="status" style="display: none;">
             <span class="visually-hidden">Cargando imagen...</span>
           </div>
-          <img src="" id="modalImage" class="modal-image" alt="imagen del catálogo"
-               onload="hideImageLoadingSpinner()" onerror="handleImageError()">
+          <img src="/static/img/image-placeholder.png" id="modalImage" class="modal-image" alt="imagen del catálogo"
+               onload="hideImageLoadingSpinner()" onerror="if(typeof handleImageError === 'function') { handleImageError(this); } else { this.src='{{ url_for('static', filename='img/image-error.svg') }}'; }">
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           <i class="fas fa-times"></i> Cerrar
         </button>
-        <button type="button" class="btn btn-primary" onclick="downloadImage()">
+        <button type="button" class="btn btn-primary" onclick='downloadImage()'>
           <i class="fas fa-download"></i> Descargar
         </button>
       </div>
@@ -246,7 +454,7 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           <i class="fas fa-times"></i> Cerrar
         </button>
-        <button type="button" class="btn btn-primary" onclick="downloadMultimedia()">
+        <button type="button" class="btn btn-primary" onclick='downloadMultimedia()'>
           <i class="fas fa-download"></i> Descargar
         </button>
       </div>
@@ -269,411 +477,21 @@
           <!-- El contenido del documento se cargará aquí -->
         </div>
       </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" onclick='downloadDocument()'>
+          <i class="fas fa-download"></i> Descargar
+        </button>
+      </div>
     </div>
   </div>
 </div>
 {% endblock %}
 
-{# El bloque content termina aquí. El bloque head comienza después del bloque content. #}
 {% block head %}
 {{ super() }}
-<script>
-// Funciones para manejo de modales de imágenes y multimedia
-function showImageModal(imageSrc, imageTitle) {
-    const modal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    const modalTitle = document.getElementById('imageModalLabel');
-    
-    // Verificar que los elementos existen
-    if (!modal || !modalImage || !modalTitle) {
-        console.error('[DEBUG] Elementos del modal de imagen no encontrados:', {
-            modal: !!modal,
-            modalImage: !!modalImage,
-            modalTitle: !!modalTitle
-        });
-        alert('Error: No se pudo abrir el modal de imagen');
-        return;
-    }
-    
-    // Almacenar la URL para descarga
-    currentImageUrl = imageSrc;
-    
-    // Mostrar spinner de carga
-    const spinner = modal.querySelector('.image-loading-spinner');
-    if (spinner) spinner.style.display = 'block';
-    if (modalImage) modalImage.style.display = 'none';
-    
-    // Configurar la imagen
-    modalImage.src = imageSrc;
-    modalTitle.innerHTML = `<i class="bi bi-image"></i> ${imageTitle}`;
-    
-    // Mostrar el modal
-    const bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
-}
-
-function hideImageLoadingSpinner() {
-    const spinner = document.querySelector('.image-loading-spinner');
-    const modalImage = document.getElementById('modalImage');
-    
-    if (spinner) spinner.style.display = 'none';
-    if (modalImage) modalImage.style.display = 'block';
-}
-
-function handleImageError() {
-    const modalImage = document.getElementById('modalImage');
-    const spinner = document.querySelector('.image-loading-spinner');
-    
-    if (spinner) spinner.style.display = 'none';
-    if (modalImage) {
-        modalImage.style.display = 'block';
-        modalImage.src = '{{ url_for("static", filename="img/image-error.svg") }}';
-    }
-}
-
-function showMultimediaModal(multimediaSrc, multimediaTitle) {
-    const modal = document.getElementById('multimediaModal');
-    const modalContent = document.getElementById('multimediaContent');
-    const modalTitle = document.getElementById('multimediaModalLabel');
-    
-    // Verificar que los elementos existen
-    if (!modal || !modalContent || !modalTitle) {
-        console.error('[DEBUG] Elementos del modal de multimedia no encontrados:', {
-            modal: !!modal,
-            modalContent: !!modalContent,
-            modalTitle: !!modalTitle
-        });
-        alert('Error: No se pudo abrir el modal de multimedia');
-        return;
-    }
-    
-    // Almacenar la URL para descarga
-    currentMultimediaUrl = multimediaSrc;
-    
-    // Configurar el título
-    modalTitle.innerHTML = `<i class="fas fa-video"></i> ${multimediaTitle}`;
-    
-    // Determinar el tipo de multimedia y crear el contenido apropiado
-    const fileExtension = multimediaSrc.split('.').pop().toLowerCase();
-    
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
-        // Imagen
-        modalContent.innerHTML = `
-            <img src="${multimediaSrc}" alt="${multimediaTitle}" 
-                 class="img-fluid" style="max-height: 70vh;">
-        `;
-    } else if (['mp4', 'avi', 'mov', 'wmv'].includes(fileExtension)) {
-        // Video
-        modalContent.innerHTML = `
-            <video controls style="max-width: 100%; max-height: 70vh;">
-                <source src="${multimediaSrc}" type="video/mp4">
-                Tu navegador no soporta el elemento video.
-            </video>
-        `;
-    } else if (['mp3', 'wav', 'ogg'].includes(fileExtension)) {
-        // Audio
-        modalContent.innerHTML = `
-            <audio controls style="width: 100%;">
-                <source src="${multimediaSrc}" type="audio/mpeg">
-                Tu navegador no soporta el elemento audio.
-            </audio>
-        `;
-    } else {
-        // Otros tipos de archivo
-        modalContent.innerHTML = `
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> 
-                Este tipo de archivo no se puede previsualizar directamente.
-                <br><br>
-                <a href="${multimediaSrc}" target="_blank" class="btn btn-primary">
-                    <i class="fas fa-download"></i> Descargar archivo
-                </a>
-            </div>
-        `;
-    }
-    
-    // Mostrar el modal
-    const bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
-}
-
-function showDocumentModal(documentSrc, documentTitle) {
-    console.log('[DEBUG] showDocumentModal llamado con:', { documentSrc, documentTitle });
-    console.log('[VERSION] PDF Modal v1.1 - Corregido auto-ejecución');
-    
-    // Verificar el estado del DOM antes de buscar elementos
-    console.log('[DEBUG] Estado del DOM antes de buscar elementos:');
-    console.log('- document.readyState:', document.readyState);
-    console.log('- document.body:', !!document.body);
-    
-    // Obtener elementos inmediatamente
-    const modal = document.getElementById('documentModal');
-    const modalContent = document.getElementById('documentContent');
-    const modalTitle = document.getElementById('documentModalLabel');
-    
-    console.log('[DEBUG] Elementos encontrados:', {
-        modal: !!modal,
-        modalContent: !!modalContent,
-        modalTitle: !!modalTitle
-    });
-    
-    // Verificar elementos específicos
-    console.log('[DEBUG] Elementos específicos:');
-    console.log('- modal:', modal);
-    console.log('- modalContent:', modalContent);
-    console.log('- modalTitle:', modalTitle);
-    
-    // Verificar que los elementos existen
-    if (!modal || !modalContent || !modalTitle) {
-        console.error('[DEBUG] Elementos del modal no encontrados:', {
-            modal: !!modal,
-            modalContent: !!modalContent,
-            modalTitle: !!modalTitle
-        });
-        
-        // Intentar buscar elementos de forma global
-        console.log('[DEBUG] Intentando búsqueda global de elementos:');
-        const globalModal = window.document.getElementById('documentModal');
-        const globalContent = window.document.getElementById('documentContent');
-        const globalTitle = window.document.getElementById('documentModalLabel');
-        
-        console.log('[DEBUG] Elementos globales:', {
-            globalModal: !!globalModal,
-            globalContent: !!globalContent,
-            globalTitle: !!globalTitle
-        });
-        
-        // Verificar si el problema es de scope
-        console.log('[DEBUG] Verificando scope:');
-        console.log('- this:', this);
-        console.log('- window:', !!window);
-        console.log('- document:', !!document);
-        
-        alert('Error: No se pudo abrir el modal de documento');
-        return;
-    }
-    
-    // Configurar el título
-    modalTitle.innerHTML = `<i class="fas fa-file-alt"></i> ${documentTitle}`;
-    
-    // Determinar el tipo de documento y crear el contenido apropiado
-    const fileExtension = documentSrc.split('.').pop().toLowerCase();
-    
-    if (fileExtension === 'pdf') {
-        // PDF - usar iframe para previsualización
-        modalContent.innerHTML = `
-            <div class="text-center mb-3">
-                <a href="${documentSrc}" target="_blank" class="btn btn-danger mb-2" onclick="event.preventDefault(); window.open('${documentSrc}', '_blank'); return false;">
-                    <i class="fas fa-external-link-alt"></i> Abrir PDF en nueva pestaña
-                </a>
-            </div>
-            <iframe src="${documentSrc}" 
-                    style="width: 100%; height: 70vh; border: 1px solid #ddd; border-radius: 4px;" 
-                    title="${documentTitle}">
-                <p>Tu navegador no soporta iframes. <a href="${documentSrc}" target="_blank">Haz clic aquí para abrir el PDF</a></p>
-            </iframe>
-        `;
-    } else if (['doc', 'docx'].includes(fileExtension)) {
-        // Word - mostrar mensaje y enlace de descarga
-        modalContent.innerHTML = `
-            <div class="text-center">
-                <i class="fas fa-file-word fa-3x text-primary mb-3"></i>
-                <p class="text-muted">Los archivos Word no se pueden previsualizar directamente</p>
-                <a href="${documentSrc}" target="_blank" class="btn btn-primary">
-                    <i class="fas fa-download"></i> Descargar documento Word
-                </a>
-            </div>
-        `;
-    } else if (['xls', 'xlsx'].includes(fileExtension)) {
-        // Excel - mostrar mensaje y enlace de descarga
-        modalContent.innerHTML = `
-            <div class="text-center">
-                <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
-                <p class="text-muted">Los archivos Excel no se pueden previsualizar directamente</p>
-                <a href="${documentSrc}" target="_blank" class="btn btn-success">
-                    <i class="fas fa-download"></i> Descargar documento Excel
-                </a>
-            </div>
-        `;
-    } else if (fileExtension === 'txt') {
-        // Texto - mostrar mensaje y enlace para abrir
-        modalContent.innerHTML = `
-            <div class="text-center">
-                <i class="fas fa-file-alt fa-3x text-secondary mb-3"></i>
-                <p class="text-muted">Los archivos de texto se abrirán en una nueva pestaña</p>
-                <a href="${documentSrc}" target="_blank" class="btn btn-secondary">
-                    <i class="fas fa-external-link-alt"></i> Abrir archivo de texto
-                </a>
-            </div>
-        `;
-    } else if (fileExtension === 'md') {
-        // Markdown - mostrar contenido formateado
-        modalContent.innerHTML = `
-            <div class="text-center mb-3">
-                <a href="${documentSrc.replace('/static/uploads/', '/catalogs/view_markdown/')}" target="_blank" class="btn btn-info mb-2">
-                    <i class="fas fa-external-link-alt"></i> Abrir Markdown en nueva pestaña
-                </a>
-                <a href="${documentSrc}" download class="btn btn-outline-info mb-2 ms-2">
-                    <i class="fas fa-download"></i> Descargar archivo
-                </a>
-            </div>
-            <div class="markdown-preview" style="max-height: 70vh; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 15px; background-color: #f8f9fa;">
-                <div id="markdown-content" style="font-family: 'Courier New', monospace; white-space: pre-wrap;">
-                    <div class="text-center">
-                        <div class="spinner-border text-info" role="status">
-                            <span class="visually-hidden">Cargando contenido Markdown...</span>
-                        </div>
-                        <p class="mt-2">Cargando contenido del archivo...</p>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Cargar el contenido del archivo Markdown usando la ruta específica
-        const markdownUrl = documentSrc.replace('/static/uploads/', '/catalogs/view_markdown/');
-        console.log('[DEBUG] URL original:', documentSrc);
-        console.log('[DEBUG] URL Markdown:', markdownUrl);
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', markdownUrl, true);
-        xhr.responseType = 'text';
-        
-        xhr.onload = function() {
-            console.log('[DEBUG] XHR Status:', xhr.status);
-            console.log('[DEBUG] XHR Response length:', xhr.responseText.length);
-            const markdownContent = document.getElementById('markdown-content');
-            if (markdownContent && xhr.status === 200) {
-                const content = xhr.responseText;
-                console.log('[DEBUG] Content loaded successfully, length:', content.length);
-                markdownContent.innerHTML = `<pre style="margin: 0; font-family: 'Courier New', monospace; white-space: pre-wrap; background-color: #ffffff; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef;">${content}</pre>`;
-            } else {
-                markdownContent.innerHTML = `
-                    <div class="text-center text-danger">
-                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                        <p>Error al cargar el archivo Markdown</p>
-                        <a href="${documentSrc}" target="_blank" class="btn btn-outline-danger">
-                            <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
-                        </a>
-                    </div>
-                `;
-            }
-        };
-        
-        xhr.onerror = function() {
-            const markdownContent = document.getElementById('markdown-content');
-            if (markdownContent) {
-                markdownContent.innerHTML = `
-                    <div class="text-center text-danger">
-                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                        <p>Error al cargar el archivo Markdown</p>
-                        <a href="${documentSrc}" target="_blank" class="btn btn-outline-danger">
-                            <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
-                        </a>
-                    </div>
-                `;
-            }
-        };
-        
-        xhr.send();
-    } else {
-        // Otros tipos de archivo
-        modalContent.innerHTML = `
-            <div class="text-center">
-                <i class="fas fa-file fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Tipo de documento no compatible para vista previa</p>
-                <a href="${documentSrc}" target="_blank" class="btn btn-dark">
-                    <i class="fas fa-download"></i> Descargar documento
-                </a>
-            </div>
-        `;
-    }
-    
-    // Mostrar el modal
-    console.log('[DEBUG] Intentando mostrar modal...');
-    const bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
-    console.log('[DEBUG] Modal mostrado correctamente');
-}
-
-// Variables globales para almacenar las URLs de descarga
-let currentImageUrl = '';
-let currentMultimediaUrl = '';
-
-// Función para descargar imagen
-function downloadImage() {
-    if (currentImageUrl) {
-        const link = document.createElement('a');
-        link.href = currentImageUrl;
-        link.download = currentImageUrl.split('/').pop();
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-}
-
-// Función para descargar multimedia
-function downloadMultimedia() {
-    if (currentMultimediaUrl) {
-        const link = document.createElement('a');
-        link.href = currentMultimediaUrl;
-        link.download = currentMultimediaUrl.split('/').pop();
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-}
-
-// Asegurar que el DOM esté cargado antes de ejecutar funciones
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('[DEBUG] DOM cargado - Todos los modales listos');
-    
-    // Verificar que los elementos de todos los modales existen
-    const documentModal = document.getElementById('documentModal');
-    const documentContent = document.getElementById('documentContent');
-    const documentTitle = document.getElementById('documentModalLabel');
-    
-    const imageModal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    const imageTitle = document.getElementById('imageModalLabel');
-    
-    const multimediaModal = document.getElementById('multimediaModal');
-    const multimediaContent = document.getElementById('multimediaContent');
-    const multimediaTitle = document.getElementById('multimediaModalLabel');
-    
-    console.log('[DEBUG] Elementos de modales:', {
-        documentModal: !!documentModal,
-        documentContent: !!documentContent,
-        documentTitle: !!documentTitle,
-        imageModal: !!imageModal,
-        modalImage: !!modalImage,
-        imageTitle: !!imageTitle,
-        multimediaModal: !!multimediaModal,
-        multimediaContent: !!multimediaContent,
-        multimediaTitle: !!multimediaTitle
-    });
-    
-    // Verificar elementos específicos del modal de documento
-    console.log('[DEBUG] Elementos específicos del modal de documento:');
-    console.log('- documentModal:', documentModal);
-    console.log('- documentContent:', documentContent);
-    console.log('- documentTitle:', documentTitle);
-    
-    // Verificar si los elementos existen en el DOM
-    console.log('[DEBUG] Verificación en DOM:');
-    console.log('- document.getElementById("documentModal"):', document.getElementById('documentModal'));
-    console.log('- document.getElementById("documentContent"):', document.getElementById('documentContent'));
-    console.log('- document.getElementById("documentModalLabel"):', document.getElementById('documentModalLabel'));
-    
-    // Verificar el HTML completo para buscar los modales
-    console.log('[DEBUG] Verificando HTML del body:');
-    console.log('- document.body.innerHTML contiene "documentModal":', document.body.innerHTML.includes('documentModal'));
-    console.log('- document.body.innerHTML contiene "imageModal":', document.body.innerHTML.includes('imageModal'));
-    console.log('- document.body.innerHTML contiene "multimediaModal":', document.body.innerHTML.includes('multimediaModal'));
-    
-    // Buscar todos los elementos con ID que contengan "Modal"
-    const allModals = document.querySelectorAll('[id*="Modal"]');
-    console.log('[DEBUG] Todos los elementos con ID que contengan "Modal":', allModals);
-});
-</script>
 <style>
     .image-container {
         position: relative;
@@ -871,91 +689,61 @@ document.addEventListener('DOMContentLoaded', function() {
         border-radius: 4px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+    
+    /* Mejoras de responsividad para la tabla */
+    .table-responsive {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        white-space: nowrap;
+        min-width: 120px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        word-wrap: break-word;
+        max-width: 200px;
+    }
+    
+    /* Columna de acciones - mantener ancho fijo */
+    .table td:last-child {
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
+    }
+    
+    /* Columna de imágenes - mantener ancho fijo */
+    .table td:nth-last-child(2) {
+        width: 120px;
+        min-width: 120px;
+        max-width: 120px;
+    }
+    
+    /* Botones responsivos */
+    .btn-group-vertical .btn {
+        white-space: nowrap;
+    }
+    
+    @media (max-width: 768px) {
+        .table td {
+            max-width: 150px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-group-vertical .btn {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
 </style>
 {% endblock %}
 
-{# El bloque head termina aquí. El bloque scripts comienza después del bloque head. #}
 {% block scripts %}
-<script>
-function mostrarImagenModal(imagenUrl) {
-    // Crear el modal si no existe
-    if (!document.getElementById('imagenModal')) {
-        const modalHTML = `
-        <div class="modal fade" id="imagenModal" tabindex="-1" aria-labelledby="imagenModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="imagenModalLabel">Visualizar Imagen</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <div class="modal-image-container">
-                            <div class="spinner-border text-primary position-absolute" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <img id="imagenModalSrc" src="" alt="Imagen" 
-                                 onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                 onerror="this.src='/static/img/image-error.svg'; this.style.opacity='1'; this.previousElementSibling.style.display='none';">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        `;
-        const modalContainer = document.createElement('div');
-        modalContainer.innerHTML = modalHTML;
-        document.body.appendChild(modalContainer.firstElementChild);
-    }
-    
-    // Restablecer el spinner y la opacidad antes de cargar la nueva imagen
-    const spinner = document.querySelector('#imagenModal .spinner-border');
-    const modalImg = document.getElementById('imagenModalSrc');
-    if (spinner) spinner.style.display = 'block';
-    if (modalImg) {
-        modalImg.style.opacity = '0';
-        modalImg.src = imagenUrl;
-    }
-    
-    // Mostrar el modal
-    const modal = new bootstrap.Modal(document.getElementById('imagenModal'));
-    modal.show();
-}
-
-// Función para manejar errores de carga de imágenes
-document.addEventListener('DOMContentLoaded', function() {
-    // Crear una imagen de error por defecto si no existe
-    const errorImgPath = "/static/img/image-error.svg";
-    fetch(errorImgPath)
-        .catch(() => {
-            // Si la imagen de error no existe, crear un canvas con un icono de error
-            const canvas = document.createElement('canvas');
-            canvas.width = 80;
-            canvas.height = 80;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#f8d7da';
-            ctx.fillRect(0, 0, 80, 80);
-            ctx.font = '40px Arial';
-            ctx.fillStyle = '#721c24';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('!', 40, 40);
-            
-            // Convertir el canvas a una imagen base64
-            const dataUrl = canvas.toDataURL('image/png');
-            
-            // Reemplazar todas las referencias a la imagen de error
-            document.querySelectorAll('img[onerror]').forEach(img => {
-                img.onerror = function() {
-                    this.src = dataUrl;
-                    this.style.opacity = '1';
-                    const spinner = this.previousElementSibling;
-                    if (spinner) spinner.style.display = 'none';
-                };
-            });
-        });
-});
-</script>
+<!-- Incluir funciones de modal unificadas -->
+<script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}&t={{ range(1, 100000) | random }}&ts={{ range(1, 999999) | random }}"></script>
 {% endblock %}

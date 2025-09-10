@@ -2,7 +2,39 @@
 console.log("🔧 pywebview_compatibility.js cargado - Timestamp:", new Date().toISOString());
 
 // Detectar si estamos en pywebview
-window.isPyWebView = typeof pywebview !== 'undefined';
+window.isPyWebView = typeof pywebview !== 'undefined' || 
+                     window.location.hostname === '127.0.0.1' || 
+                     window.location.hostname === 'localhost' ||
+                     window.location.protocol === 'file:';
+
+// Función de fallback global para handleImageError (evita errores de timing)
+window.handleImageError = function() {
+    try {
+        const modalImage = document.getElementById('modalImage');
+        const spinner = document.querySelector('.image-loading-spinner');
+        
+        if (spinner) spinner.style.display = 'none';
+        if (modalImage) {
+            modalImage.style.display = 'block';
+            modalImage.src = '/static/img/image-error.svg';
+        }
+    } catch (error) {
+        console.warn('[PYWEBVIEW] handleImageError fallback: Error manejando imagen:', error);
+    }
+};
+
+// Función de fallback global para hideImageLoadingSpinner
+window.hideImageLoadingSpinner = function() {
+    try {
+        const spinner = document.querySelector('.image-loading-spinner');
+        const modalImage = document.getElementById('modalImage');
+        
+        if (spinner) spinner.style.display = 'none';
+        if (modalImage) modalImage.style.display = 'block';
+    } catch (error) {
+        console.warn('[PYWEBVIEW] hideImageLoadingSpinner fallback: Error ocultando spinner:', error);
+    }
+};
 
 // Función para inicializar compatibilidad con pywebview
 function initPyWebViewCompatibility() {

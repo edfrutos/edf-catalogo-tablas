@@ -46,57 +46,6 @@
     .documento-item {
         margin-bottom: 4px;
     }
-    
-    /* Mejoras de responsividad para la tabla */
-    .table-responsive {
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .table th {
-        background-color: #f8f9fa;
-        border-top: none;
-        font-weight: 600;
-        white-space: nowrap;
-        min-width: 120px;
-    }
-    
-    .table td {
-        vertical-align: middle;
-        word-wrap: break-word;
-        max-width: 200px;
-    }
-    
-    /* Columna de acciones - mantener ancho fijo */
-    .table td:last-child {
-        width: 140px;
-        min-width: 140px;
-        max-width: 140px;
-    }
-    
-    /* Columna de imágenes - mantener ancho fijo */
-    .table td:nth-last-child(2) {
-        width: 120px;
-        min-width: 120px;
-        max-width: 120px;
-    }
-    
-    /* Botones responsivos */
-    .btn-group-vertical .btn {
-        white-space: nowrap;
-    }
-    
-    @media (max-width: 768px) {
-        .table td {
-            max-width: 150px;
-            font-size: 0.9rem;
-        }
-        
-        .btn-group-vertical .btn {
-            font-size: 0.8rem;
-            padding: 0.25rem 0.5rem;
-        }
-    }
 </style>
 {% endblock %}
 
@@ -209,164 +158,89 @@
                                 {% else %}
                                     <!-- Archivo local -->
                                     <div class="multimedia-preview">
-                                        <!-- Determinar si es URL S3 o archivo local -->
-                                        {% if multimedia_data is string and multimedia_data.startswith('http') %}
-                                          <!-- URL S3 o externa -->
-                                          {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                                            <!-- Archivo en S3 - usar proxy -->
-                                            {% set media_proxy = '/admin/s3/' + multimedia_data.split('/')[-1] %}
-                                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                                          {% else %}
-                                            <!-- URL externa real -->
-                                            {% set media_proxy = multimedia_data %}
-                                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                                          {% endif %}
-                                        {% else %}
-                                          <!-- Archivo local -->
-                                          {% set media_proxy = '/admin/s3/' + multimedia_data %}
-                                          {% set media_filename = multimedia_data %}
-                                        {% endif %}
-                                        
-                                        <!-- Mostrar miniatura según tipo de archivo -->
-                                        {% if media_filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                                          <!-- Imagen -->
-                                          <img src="{{ media_proxy }}" 
-                                               alt="Multimedia" 
-                                               style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                                               onclick="showImageModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
-                                               onmouseover="this.style.opacity='0.8'"
-                                               onmouseout="this.style.opacity='1'">
-                                        {% elif media_filename.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
-                                          <!-- Video -->
-                                          <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
-                                            <video 
-                                              src="{{ media_proxy }}" 
-                                              style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                                              onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
-                                              onmouseover="this.style.opacity='0.8'"
-                                              onmouseout="this.style.opacity='1'"
-                                              preload="metadata">
-                                            </video>
-                                            <div class="play-button-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                                              <i class="fas fa-play" style="font-size: 10px;"></i>
+                                        {% if multimedia_data is string and multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
+                                <img src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" 
+                                     alt="Multimedia" 
+                                     class="img-thumbnail multimedia-thumbnail"
+                                     data-src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}"
+                                     data-title="{{ multimedia_data }}"
+                                     onclick="showMultimediaModal(this.dataset.src, this.dataset.title)">
+                                        {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
+                                <div class="multimedia-thumbnail-container" 
+                                     data-src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}"
+                                     data-title="{{ multimedia_data }}"
+                                     onclick="showMultimediaModal(this.dataset.src, this.dataset.title)"
+                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                    <video class="multimedia-thumbnail" 
+                                           style="pointer-events: none;">
+                                        <source src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" type="video/mp4">
+                                        Tu navegador no soporta el elemento video.
+                                    </video>
+                                                <div class="play-overlay">
+                                                    <i class="fas fa-play text-white"></i>
+                                                </div>
                                             </div>
-                                          </div>
-                                        {% elif media_filename.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                                          <!-- Audio -->
-                                          <div class="audio-thumbnail" style="display: inline-block; text-align: center;">
-                                            <div style="width: 80px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;">
-                                              <i class="fas fa-music" style="color: white; font-size: 18px;"></i>
+                                        {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
+                                <div class="multimedia-thumbnail-container" 
+                                     data-src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}"
+                                     data-title="{{ multimedia_data }}"
+                                     onclick="showMultimediaModal(this.dataset.src, this.dataset.title)"
+                                     style="cursor: pointer; position: relative; display: inline-block;">
+                                    <audio class="multimedia-thumbnail" 
+                                           style="pointer-events: none;">
+                                        <source src="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" type="audio/mpeg">
+                                        Tu navegador no soporta el elemento audio.
+                                    </audio>
+                                                <div class="play-overlay">
+                                                    <i class="fas fa-music text-white"></i>
+                                                </div>
                                             </div>
-                                            <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
-                                          </div>
-                                        {% else %}
-                                          <!-- Otro tipo de archivo -->
-                                          <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary">
-                                            <i class="fas fa-file"></i> Ver Archivo
-                                          </a>
-                                        {% endif %}
+                                                                    {% else %}
+                                <a href="{{ url_for('uploaded_images.uploaded_images', filename=multimedia_data) }}" 
+                                   target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-download"></i> Descargar
+                                </a>
                                     </div>
                                 {% endif %}
                             {% else %}
                                 <span class="text-muted">-</span>
                             {% endif %}
-                        {% elif header in ['Documentos', 'Documentación'] or header.startswith('Documentación') %}
-                            <!-- Columna Documentos/Documentación - manejar diferentes formatos -->
-                            {% if header.startswith('Documentación') %}
-                                <!-- Headers como Documentación_1, Documentación_2, etc. -->
-                                {% set doc_data = row[header] if row[header] is defined else '' %}
-                            {% else %}
-                                <!-- Headers como Documentos, Documentación -->
-                                {% set field_name = header + '_' + loop.index0|string %}
-                                {% set doc_data = row[field_name] if row[field_name] is defined else '' %}
-                            {% endif %}
+                        {% elif header in ['Documentos', 'Documentación'] %}
+                            <!-- Columna Documentos/Documentación - usar nombres de campo únicos -->
+                            {% set field_name = header + '_' + loop.index0|string %}
+                            {% set doc_data = row[field_name] if row[field_name] is defined else '' %}
                             {% if doc_data %}
                               <div class="documento-item mb-1">
-                                {% if doc_data is iterable and doc_data is not string %}
-                                  <!-- Múltiples documentos (formato nuevo) -->
-                                  {% for doc in doc_data %}
-                                    {% if doc %}
-                                      <!-- Determinar si es URL S3 o archivo local -->
-                                      {% if doc is string and doc.startswith('http') %}
-                                        <!-- URL S3 o externa -->
-                                        {% if doc.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                                          <!-- Archivo en S3 - usar proxy -->
-                                          {% set doc_proxy = '/admin/s3/' + doc.split('/')[-1] %}
-                                          {% set doc_filename = doc.split('/')[-1] %}
-                                        {% else %}
-                                          <!-- URL externa real -->
-                                          {% set doc_proxy = doc %}
-                                          {% set doc_filename = doc.split('/')[-1] %}
-                                        {% endif %}
-                                      {% else %}
-                                        <!-- Archivo local -->
-                                        {% set doc_proxy = '/admin/s3/' + doc %}
-                                        {% set doc_filename = doc %}
-                                      {% endif %}
-                                      
-                                      {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
-                                      {% if file_extension == 'pdf' %}
-                                          {% set doc_type = 'PDF' %}
-                                      {% elif file_extension == 'txt' %}
-                                          {% set doc_type = 'TXT' %}
-                                      {% elif file_extension == 'md' %}
-                                          {% set doc_type = 'MD' %}
-                                      {% elif file_extension in ['doc', 'docx'] %}
-                                          {% set doc_type = 'WORD' %}
-                                      {% elif file_extension in ['xls', 'xlsx'] %}
-                                          {% set doc_type = 'EXCEL' %}
-                                      {% elif file_extension == 'rtf' %}
-                                          {% set doc_type = 'RTF' %}
-                                      {% else %}
-                                          {% set doc_type = file_extension.upper() %}
-                                      {% endif %}
-                                      <a href="#" 
-                                         class="btn btn-sm btn-outline-info"
-                                         onclick="
-                                             event.preventDefault(); 
-                                             if (typeof showPyWebViewDocument !== 'undefined') { 
-                                                 showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                             } else { 
-                                                 showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                             }
-                                         ">
-                                          <i class="fas fa-external-link-alt"></i> {{ doc_type }}
-                                      </a>
-                                    {% endif %}
-                                  {% endfor %}
+                                <!-- Archivo en S3 - usar proxy -->
+                                {% set doc_proxy = '/admin/s3/' + doc_data %}
+                                {% set file_extension = doc_data.split('.')[-1].lower() if '.' in doc_data else 'unknown' %}
+                                {% if file_extension == 'pdf' %}
+                                    {% set doc_type = 'PDF' %}
+                                {% elif file_extension == 'txt' %}
+                                    {% set doc_type = 'TXT' %}
+                                {% elif file_extension == 'md' %}
+                                    {% set doc_type = 'MD' %}
+                                {% elif file_extension in ['doc', 'docx'] %}
+                                    {% set doc_type = 'WORD' %}
+                                {% elif file_extension in ['xls', 'xlsx'] %}
+                                    {% set doc_type = 'EXCEL' %}
+                                {% elif file_extension == 'rtf' %}
+                                    {% set doc_type = 'RTF' %}
                                 {% else %}
-                                  <!-- Documento único (formato antiguo) -->
-                                  <!-- Archivo en S3 - usar proxy -->
-                                  {% set doc_proxy = '/admin/s3/' + doc_data %}
-                                  {% set file_extension = doc_data.split('.')[-1].lower() if '.' in doc_data else 'unknown' %}
-                                  {% if file_extension == 'pdf' %}
-                                      {% set doc_type = 'PDF' %}
-                                  {% elif file_extension == 'txt' %}
-                                      {% set doc_type = 'TXT' %}
-                                  {% elif file_extension == 'md' %}
-                                      {% set doc_type = 'MD' %}
-                                  {% elif file_extension in ['doc', 'docx'] %}
-                                      {% set doc_type = 'WORD' %}
-                                  {% elif file_extension in ['xls', 'xlsx'] %}
-                                      {% set doc_type = 'EXCEL' %}
-                                  {% elif file_extension == 'rtf' %}
-                                      {% set doc_type = 'RTF' %}
-                                  {% else %}
-                                      {% set doc_type = file_extension.upper() %}
-                                  {% endif %}
-                                  <a href="#" 
-                                     class="btn btn-sm btn-outline-info"
-                                     onclick="
-                                         event.preventDefault(); 
-                                         if (typeof showPyWebViewDocument !== 'undefined') { 
-                                             showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_data }}'); 
-                                         } else { 
-                                             showDocumentModal('{{ doc_proxy }}', '{{ doc_data }}'); 
-                                         }
-                                     ">
-                                      <i class="fas fa-external-link-alt"></i> {{ doc_type }}
-                                  </a>
+                                    {% set doc_type = file_extension.upper() %}
                                 {% endif %}
+                                <a href="#" 
+                                   class="btn btn-sm btn-outline-info"
+                                   onclick="
+                                       event.preventDefault(); 
+                                       if (typeof showPyWebViewDocument !== 'undefined') { 
+                                           showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_data }}'); 
+                                       } else { 
+                                           showDocumentModal('{{ doc_proxy }}', '{{ doc_data }}'); 
+                                       }
+                                   ">
+                                    <i class="fas fa-external-link-alt"></i> {{ doc_type }}
+                                </a>
                               </div>
                             {% else %}
                               <span class="text-muted">-</span>
@@ -400,19 +274,14 @@
                         {% endif %}
                     </td>
                     <td>
-                        <div class="btn-group-vertical btn-group-sm d-flex flex-column flex-md-row" role="group">
+                        <div class="btn-group" role="group">
                             <a href="{{ url_for('catalogs.edit_row', catalog_id=catalog._id, row_index=loop.index0) }}" 
-                               class="btn btn-sm btn-outline-primary mb-1 mb-md-0 me-md-1" 
-                               title="Editar fila">
+                               class="btn btn-sm btn-outline-primary" title="Editar fila">
                                 <i class="fas fa-edit"></i>
-                                <span class="d-none d-sm-inline">Editar</span>
                             </a>
                             <button type="button" class="btn btn-sm btn-outline-danger" 
-                                    data-catalog-id="{{ catalog._id }}" data-row-index="{{ loop.index0 }}"
-                                    onclick="confirmDeleteRow(this.dataset.catalogId, parseInt(this.dataset.rowIndex))" 
-                                    title="Eliminar fila">
+                                    onclick="confirmDeleteRow('{{ catalog._id }}', {{ loop.index0 }})" title="Eliminar fila">
                                 <i class="fas fa-trash"></i>
-                                <span class="d-none d-sm-inline">Eliminar</span>
                             </button>
                         </div>
                     </td>
@@ -505,7 +374,7 @@ function confirmDeleteRow(catalogId, rowIndex) {
         // Crear formulario para enviar POST
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `{{ url_for('catalogs.delete_row', catalog_id='PLACEHOLDER', row_index=0) }}`.replace('PLACEHOLDER', catalogId).replace('0', rowIndex);
+        form.action = `{{ url_for('catalogs.delete_row', catalog_id='') }}${catalogId}/${rowIndex}`;
         
         // Agregar token CSRF si existe
         const csrfToken = document.querySelector('meta[name=csrf-token]');

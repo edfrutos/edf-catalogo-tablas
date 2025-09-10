@@ -594,14 +594,15 @@ $(function () {
   window.initializeGoogleDriveEvents = function () {
     console.log("✅ Inicializando eventos de Google Drive...");
 
-    $("#restoreDriveModal").off("show.bs.modal").on("show.bs.modal", function () {
-      console.log("🔵 [EVENT] show.bs.modal - Modal va a abrirse");
-    });
+    // DESHABILITADO: Estos eventos interfieren con el modal de db_backup.html
+    // $("#restoreDriveModal").off("show.bs.modal").on("show.bs.modal", function () {
+    //   console.log("🔵 [EVENT] show.bs.modal - Modal va a abrirse");
+    // });
 
-    $("#restoreDriveModal").off("shown.bs.modal").on("shown.bs.modal", function () {
-      console.log("✅ [EVENT] shown.bs.modal - Modal abierto exitosamente");
-      loadDriveBackups();
-    });
+    // $("#restoreDriveModal").off("shown.bs.modal").on("shown.bs.modal", function () {
+    //   console.log("✅ [EVENT] shown.bs.modal - Modal abierto exitosamente");
+    //   loadDriveBackups();
+    // });
 
     // ✅ PRESERVADO: El botón principal sigue funcionando
     $("#restoreDriveBtn").off("click").on("click", function () {
@@ -1029,14 +1030,14 @@ $(function () {
     loadDriveBackups();
   });
 
-  // Evento cuando se abre el modal de Google Drive
-  $("#restoreDriveModal").off("shown.bs.modal").on("shown.bs.modal", function () {
-    console.log("🔧 Modal de Google Drive abierto, inicializando...");
-    // Cargar backups si no se han cargado aún
-    if (allBackups.length === 0) {
-      loadDriveBackups();
-    }
-  });
+  // DESHABILITADO: Evento que interfiere con el modal de db_backup.html
+  // $("#restoreDriveModal").off("shown.bs.modal").on("shown.bs.modal", function () {
+  //   console.log("🔧 Modal de Google Drive abierto, inicializando...");
+  //   // Cargar backups si no se han cargado aún
+  //   if (allBackups.length === 0) {
+  //     loadDriveBackups();
+  //   }
+  // });
 
   // Inicializar botones de tareas
   function initializeTaskButtons() {

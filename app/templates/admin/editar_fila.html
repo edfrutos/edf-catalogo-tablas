@@ -29,7 +29,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label">URL de Multimedia (opcional)</label>
                                     <input type="url" class="form-control" name="{{ header }}_url" 
-                                           value="{{ row[header] if row[header] and row[header].startswith('http') else '' }}"
+                                           value="{{ row[header] if row[header] and row[header] is string and row[header].startswith('http') else '' }}"
                                            placeholder="https://ejemplo.com/video.mp4">
                                     <div class="form-text">Enlaza a un video, audio o imagen externa</div>
                                 </div>
@@ -43,50 +43,158 @@
                             
                             <!-- Mostrar multimedia actual -->
                             {% if row[header] %}
-                                <div class="mt-2">
-                                    <small class="text-muted">Multimedia actual:</small>
-                                    {% if row[header].startswith('http') %}
-                                        <a href="{{ row[header] }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-external-link-alt"></i> Ver Multimedia
-                                        </a>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ row[header] }}</span>
-                                    {% endif %}
+                                <div class="mt-3">
+                                    <label class="form-label">Multimedia Actual:</label>
+                                    <div class="multimedia-preview">
+                                        {% if row[header] is string and row[header].startswith('http') %}
+                                            <div class="alert alert-info d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-external-link-alt"></i> URL Externa: 
+                                                    <a href="{{ row[header] }}" target="_blank">{{ row[header] }}</a>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="removeMultimedia('{{ header }}', '{{ row[header] }}', this)">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                        {% else %}
+                                            <div class="alert alert-success d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-file"></i> Archivo Local: {{ row[header] }}
+                                                    <a href="{% if row[header] is string and (row[header].startswith('http') or row[header].startswith('/admin/s3/') or row[header].startswith('/s3/') or '/admin/s3/' in row[header] or '/s3/' in row[header]) %}{{ row[header] }}{% else %}{{ url_for('uploaded_images.uploaded_images', filename=row[header]) }}{% endif %}" 
+                                                       target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                                        <i class="fas fa-download"></i> Descargar
+                                                    </a>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="removeMultimedia('{{ header }}', '{{ row[header] }}', this)">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             {% endif %}
                             
-                        {% elif header in ['Documentos', 'Documentación'] %}
-                            <!-- Campo especial para Documentos/Documentación -->
+                        {% elif header in ['Documentos', 'Documentación'] or header.startswith('Documentación') %}
+                            <!-- Campo especial para Documentos/Documentación - MÚLTIPLES DOCUMENTOS -->
                             <label class="form-label fw-bold">
                                 <i class="fas fa-file-alt"></i> {{ header }}
+                                <span class="badge bg-success ms-2">Múltiples</span>
                             </label>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">URL de Documento (opcional)</label>
-                                    <input type="url" class="form-control" name="{{ header }}_url" 
-                                           value="{{ row[header] if row[header] and row[header].startswith('http') else '' }}"
-                                           placeholder="https://ejemplo.com/documento.pdf">
-                                    <div class="form-text">Enlaza a un documento externo</div>
+                            
+                            <!-- URLs de Documentos -->
+                            <div class="mb-3">
+                                <label class="form-label">URLs de Documentos (opcional)</label>
+                                <div id="urls-container-{{ loop.index0 }}">
+                                    {% if row[header] and row[header] is iterable and row[header] is not string %}
+                                        <!-- Mostrar URLs existentes -->
+                                        {% for doc in row[header] %}
+                                            {% if doc is string and doc.startswith('http') %}
+                                                <div class="input-group mb-2">
+                                                    <input type="url" class="form-control" name="{{ header }}_url_{{ loop.index0 }}" 
+                                                           value="{{ doc }}" placeholder="https://ejemplo.com/documento.pdf">
+                                                    <button type="button" class="btn btn-outline-danger" onclick="removeUrlField(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% elif row[header] and row[header] is string and row[header].startswith('http') %}
+                                        <!-- Documento único existente (formato antiguo) -->
+                                        <div class="input-group mb-2">
+                                            <input type="url" class="form-control" name="{{ header }}_url_{{ loop.index0 }}" 
+                                                   value="{{ row[header] }}" placeholder="https://ejemplo.com/documento.pdf">
+                                            <button type="button" class="btn btn-outline-danger" onclick="removeUrlField(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    {% else %}
+                                        <!-- Campo vacío inicial -->
+                                        <div class="input-group mb-2">
+                                            <input type="url" class="form-control" name="{{ header }}_url_{{ loop.index0 }}" 
+                                                   placeholder="https://ejemplo.com/documento.pdf">
+                                            <button type="button" class="btn btn-outline-success" onclick="addUrlField('urls-container-{{ loop.index0 }}', '{{ header }}_url_{{ loop.index0 }}')">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    {% endif %}
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Subir Documento</label>
-                                    <input type="file" class="form-control" name="{{ header }}_file" 
-                                           accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.md">
-                                    <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB</div>
-                                </div>
+                                <div class="form-text">Puedes agregar múltiples URLs de documentos externos</div>
                             </div>
                             
-                            <!-- Mostrar documento actual -->
+                            <!-- Archivos de Documentos -->
+                            <div class="mb-3">
+                                <label class="form-label">Subir Documentos</label>
+                                    <input type="file" class="form-control" name="{{ header }}_file_{{ loop.index0 }}" 
+                                           accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.md" multiple>
+                                <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB cada uno | Puedes seleccionar múltiples archivos</div>
+                            </div>
+                            
+                            <!-- Mostrar documentos actuales -->
                             {% if row[header] %}
-                                <div class="mt-2">
-                                    <small class="text-muted">Documento actual:</small>
-                                    {% if row[header].startswith('http') %}
-                                        <a href="{{ row[header] }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-external-link-alt"></i> Ver Documento
-                                        </a>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ row[header] }}</span>
-                                    {% endif %}
+                                <div class="mt-3">
+                                    <label class="form-label">Documentos Actuales:</label>
+                                    <div class="documentos-preview">
+                                        {% if row[header] is iterable and row[header] is not string %}
+                                            <!-- Múltiples documentos (formato nuevo) -->
+                                            {% for doc in row[header] %}
+                                                {% if doc is string and doc.startswith('http') %}
+                                                    <div class="alert alert-info mb-2 d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="fas fa-external-link-alt"></i> URL Externa: 
+                                                            <a href="{{ doc }}" target="_blank">{{ doc }}</a>
+                                                        </div>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                                onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
+                                                            <i class="fas fa-trash"></i> Eliminar
+                                                        </button>
+                                                    </div>
+                                                {% elif doc %}
+                                                    <div class="alert alert-success mb-2 d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="fas fa-file"></i> Archivo Local: {{ doc }}
+                                                            <a href="{% if doc is string and (doc.startswith('http') or doc.startswith('/admin/s3/') or doc.startswith('/s3/') or '/admin/s3/' in doc or '/s3/' in doc) %}{{ doc }}{% else %}{{ url_for('uploaded_images.uploaded_images', filename=doc) }}{% endif %}" 
+                                                               target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                                                <i class="fas fa-download"></i> Descargar
+                                                            </a>
+                                                        </div>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                                onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
+                                                            <i class="fas fa-trash"></i> Eliminar
+                                                        </button>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% elif row[header] is string and row[header].startswith('http') %}
+                                            <!-- Documento único URL (formato antiguo) -->
+                                            <div class="alert alert-info d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-external-link-alt"></i> URL Externa: 
+                                                    <a href="{{ row[header] }}" target="_blank">{{ row[header] }}</a>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="removeDocument('{{ header }}', '{{ row[header] }}', this)">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                        {% elif row[header] %}
+                                            <!-- Documento único archivo (formato antiguo) -->
+                                            <div class="alert alert-success d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-file"></i> Archivo Local: {{ row[header] }}
+                                                    <a href="{% if row[header] is string and (row[header].startswith('http') or row[header].startswith('/admin/s3/') or row[header].startswith('/s3/') or '/admin/s3/' in row[header] or '/s3/' in row[header]) %}{{ row[header] }}{% else %}{{ url_for('uploaded_images.uploaded_images', filename=row[header]) }}{% endif %}" 
+                                                       target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                                        <i class="fas fa-download"></i> Descargar
+                                                    </a>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="removeDocument('{{ header }}', '{{ row[header] }}', this)">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             {% endif %}
                             
@@ -115,10 +223,21 @@
                                 {% for img in row.images %}
                                     <div class="col-md-2 mb-2">
                                         <div class="position-relative">
-                                            <img src="{{ url_for('static', filename='uploads/' + img) }}" 
-                                                 alt="Imagen {{ loop.index }}" 
-                                                 class="img-thumbnail" 
-                                                 style="width: 100px; height: 100px; object-fit: cover;">
+                                            {% if img is string and (img.startswith('http') or img.startswith('/admin/s3/') or img.startswith('/s3/') or '/admin/s3/' in img or '/s3/' in img) %}
+                                                <!-- URL externa o S3 -->
+                                                <img src="{{ img }}" 
+                                                     alt="Imagen {{ loop.index }}" 
+                                                     class="img-thumbnail" 
+                                                     style="width: 100px; height: 100px; object-fit: cover;"
+                                                     onerror="this.src='/imagenes_subidas/{{ img.split('/')[-1] }}'; this.onerror=function(){this.src='/static/img/image-error.svg'};">
+                                            {% else %}
+                                                <!-- Archivo local -->
+                                                <img src="{{ url_for('uploaded_images.uploaded_images', filename=img) }}" 
+                                                     alt="Imagen {{ loop.index }}" 
+                                                     class="img-thumbnail" 
+                                                     style="width: 100px; height: 100px; object-fit: cover;"
+                                                     onerror="this.src='/static/img/image-error.svg';">
+                                            {% endif %}
                                             <div class="form-check position-absolute top-0 start-0">
                                                 <input class="form-check-input" type="checkbox" 
                                                        name="delete_images" value="{{ img }}" 
@@ -134,6 +253,10 @@
                         </div>
                     {% endif %}
                 </div>
+                
+                <!-- Campos ocultos para elementos a eliminar -->
+                <input type="hidden" name="deleted_documents" id="deleted_documents" value="">
+                <input type="hidden" name="deleted_multimedia" id="deleted_multimedia" value="">
                 
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('admin.ver_catalogo_unificado', collection_source=catalog.collection_source, catalog_id=catalog._id) }}" 
@@ -183,4 +306,129 @@
         border-color: #dc3545;
     }
 </style>
+
+<script>
+// Función para agregar campos de URL dinámicamente
+function addUrlField(containerId, fieldName) {
+    const container = document.getElementById(containerId);
+    const newField = document.createElement('div');
+    newField.className = 'input-group mb-2';
+    newField.innerHTML = `
+        <input type="url" class="form-control" name="${fieldName}" 
+               placeholder="https://ejemplo.com/documento.pdf">
+        <button type="button" class="btn btn-outline-danger" onclick="removeUrlField(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(newField);
+}
+
+// Función para eliminar campos de URL
+function removeUrlField(button) {
+    button.parentElement.remove();
+}
+
+// Función para eliminar documentos
+function removeDocument(header, documentValue, button) {
+    if (confirm('¿Estás seguro de que quieres eliminar este documento?')) {
+        // Agregar a la lista de documentos eliminados
+        const deletedField = document.getElementById('deleted_documents');
+        const currentDeleted = deletedField.value ? JSON.parse(deletedField.value) : [];
+        currentDeleted.push({
+            header: header,
+            value: documentValue
+        });
+        deletedField.value = JSON.stringify(currentDeleted);
+        
+        // Remover visualmente el elemento
+        button.closest('.alert').remove();
+        
+        // Mostrar mensaje de confirmación
+        showNotification('Documento marcado para eliminación', 'warning');
+    }
+}
+
+// Función para eliminar multimedia
+function removeMultimedia(header, multimediaValue, button) {
+    if (confirm('¿Estás seguro de que quieres eliminar este multimedia?')) {
+        // Agregar a la lista de multimedia eliminado
+        const deletedField = document.getElementById('deleted_multimedia');
+        const currentDeleted = deletedField.value ? JSON.parse(deletedField.value) : [];
+        currentDeleted.push({
+            header: header,
+            value: multimediaValue
+        });
+        deletedField.value = JSON.stringify(currentDeleted);
+        
+        // Remover visualmente el elemento
+        button.closest('.alert').remove();
+        
+        // Mostrar mensaje de confirmación
+        showNotification('Multimedia marcado para eliminación', 'warning');
+    }
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'info') {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Agregar al body
+    document.body.appendChild(notification);
+    
+    // Auto-remover después de 3 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Script para proteger imágenes de interferencia de extensiones del navegador
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[IMG-PROTECTION] 🛡️ Iniciando protección de imágenes...');
+    
+    const protectImages = () => {
+        const images = document.querySelectorAll('img');
+        let correctedCount = 0;
+        
+        images.forEach(img => {
+            // Si la imagen tiene una URL incorrecta, corregirla
+            if (img.src && img.src.includes('/static/uploads/')) {
+                let newSrc = img.src;
+                
+                // Corregir URLs malformadas
+                if (img.src.includes('/static/uploads//admin/s3/')) {
+                    newSrc = img.src.replace('/static/uploads//admin/s3/', '/admin/s3/');
+                } else if (img.src.includes('/static/uploads/')) {
+                    // Extraer el nombre del archivo
+                    const filename = img.src.split('/').pop();
+                    // Usar la ruta correcta para archivos locales
+                    newSrc = `/imagenes_subidas/${filename}`;
+                }
+                
+                console.log('[IMG-PROTECTION] 🔧 Corrigiendo URL:', img.src, '→', newSrc);
+                img.src = newSrc;
+                correctedCount++;
+            }
+        });
+        
+        if (correctedCount > 0) {
+            console.log(`[IMG-PROTECTION] ✅ ${correctedCount} imágenes corregidas`);
+        }
+    };
+    
+    // Ejecutar protección inmediatamente
+    protectImages();
+    
+    // Re-ejecutar cada 2 segundos para nuevas imágenes o cambios por extensiones
+    setInterval(protectImages, 2000);
+});
+</script>
 {% endblock %}

@@ -77,7 +77,6 @@ def forgot():
         getattr(g, "users_collection", None),
     )
     users_collection = getattr(g, "users_collection", None)
-    print("[DEBUG][FORGOT] session:", dict(session))
     if request.method == "POST":
         if users_collection is None:
             flash("Error de conexión a la base de datos.", "danger")
@@ -98,7 +97,6 @@ def edit():
         getattr(g, "users_collection", None),
     )
     users_collection = getattr(g, "users_collection", None)
-    print("[DEBUG][EDIT] session:", dict(session))
     if "user_id" not in session:
         flash("Debes iniciar sesión.", "warning")
         return redirect(url_for("auth.login"))
@@ -125,21 +123,17 @@ def edit():
 # NUEVO ENDPOINT: Forzar cambio de contraseña
 @usuarios_bp.route("/force_password_change", methods=["GET", "POST"])
 def force_password_change():
-    print("[DEBUG][FORCE_PASSWORD_CHANGE] session:", dict(session))
     user_id = session.get("force_password_user_id")
     if not user_id:
         flash("No hay usuario para cambio de contraseña.", "danger")
         return redirect(url_for("auth.login"))
     try:
         users_collection = getattr(g, "users_collection", None)
-        print("[DEBUG][FORCE_PASSWORD_CHANGE] users_collection:", users_collection)
         if users_collection is None:
             flash("Error de conexión a la base de datos.", "danger")
             return redirect(url_for("auth.login"))
         user = users_collection.find_one({"_id": ObjectId(user_id)})
-        print("[DEBUG][FORCE_PASSWORD_CHANGE] user:", user)
     except Exception as e:
-        print("[DEBUG][FORCE_PASSWORD_CHANGE] Exception:", e)
         flash("ID de usuario inválido.", "danger")
         session.pop("force_password_user_id", None)
         return redirect(url_for("auth.login"))
