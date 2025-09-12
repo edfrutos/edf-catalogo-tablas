@@ -3,17 +3,17 @@ Utilidades unificadas para manejo de imágenes
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from flask import current_app
 
 
 def get_unified_image_urls(row_data: Dict[str, Any]) -> List[str]:
     """
-    Función unificada para obtener todas las URLs de imágenes de una fila.
+    Función unificada optimizada para obtener todas las URLs de imágenes de una fila.
 
     Busca en todos los campos posibles: images, imagenes, imagen_data, Imagen
-    Implementa fallback: S3 → Local → Error image
+    Implementa fallback optimizado: Local → S3 → None
 
     Args:
         row_data: Diccionario con los datos de la fila
@@ -55,7 +55,7 @@ def get_unified_image_urls(row_data: Dict[str, Any]) -> List[str]:
     # Eliminar duplicados manteniendo orden
     unique_images = list(dict.fromkeys(all_images))
 
-    # Procesar cada imagen con fallback
+    # Procesar cada imagen con fallback optimizado
     for img in unique_images:
         if not img or img == "N/A":
             continue
@@ -64,51 +64,92 @@ def get_unified_image_urls(row_data: Dict[str, Any]) -> List[str]:
             # URL externa - usar directamente
             image_urls.append(img)
         else:
-            # Archivo local - implementar fallback S3 → Local → Error
+            # Archivo local - implementar fallback optimizado Local → S3 → None
             processed_url = get_image_fallback_url(img)
-            image_urls.append(processed_url)
+            if processed_url:  # Solo agregar si la URL es válida
+                image_urls.append(processed_url)
 
     return image_urls
 
 
-def get_image_fallback_url(filename: str) -> str:
+def clear_s3_cache(filename: Optional[str] = None):
     """
-    Implementa fallback para archivos de imagen: S3 → Local → Error
+    Limpia el cache de S3 para un archivo específico o todo el cache
+    
+    Args:
+        filename: Nombre del archivo específico a limpiar, o None para limpiar todo
+    """
+    if hasattr(current_app, 's3_cache'):
+        if filename:
+            cache_key = f"s3_exists_{filename}"
+            if cache_key in current_app.s3_cache:
+                del current_app.s3_cache[cache_key]
+                current_app.logger.debug(f"Cache S3 limpiado para: {filename}")
+        else:
+            current_app.s3_cache.clear()
+            current_app.logger.debug("Cache S3 completamente limpiado")
+
+
+def get_image_fallback_url(filename: str) -> Optional[str]:
+    """
+    Implementa fallback optimizado para archivos de imagen: Local → S3 → None
 
     Args:
         filename: Nombre del archivo de imagen
 
     Returns:
-        URL válida para mostrar la imagen
+        URL válida para mostrar la imagen, o None si no existe
     """
     if not filename or filename == "N/A":
-        return "/static/img/image-error.svg"
+        return None  # No devolver URL para archivos vacíos
 
-    # 1. Usar proxy S3 para evitar problemas CORS
-    s3_proxy_url = f"/admin/s3/{filename}"
-
-    # 2. Fallback local
-    local_url = f"/static/uploads/{filename}"
-
-    # 3. Error image
-    error_url = "/static/img/image-error.svg"
-
-    # Verificar si existe localmente (para decidir el fallback)
+    # 1. Verificar si existe localmente (más rápido)
     try:
         local_path = os.path.join(current_app.root_path, "static", "uploads", filename)
         if os.path.exists(local_path):
             current_app.logger.debug(f"[IMAGE] Archivo local encontrado: {filename}")
-            return local_url
-        else:
-            current_app.logger.debug(
-                f"[IMAGE] Archivo local no encontrado, usando proxy S3: {filename}"
-            )
-            return s3_proxy_url
+            return f"/static/uploads/{filename}"
     except Exception as e:
         current_app.logger.error(
             f"[IMAGE] Error verificando archivo local {filename}: {e}"
         )
-        return s3_proxy_url
+
+    # 2. Solo verificar S3 si no existe localmente (evitar verificaciones dobles)
+    # Usar verificación rápida sin reintentos para evitar lentitud
+    try:
+        from app.utils.s3_utils import check_s3_file_exists_fast
+        if hasattr(current_app, 's3_cache'):
+            # Usar cache si está disponible
+            cache_key = f"s3_exists_{filename}"
+            if cache_key in current_app.s3_cache:
+                if current_app.s3_cache[cache_key]:
+                    return f"/admin/s3/{filename}"
+                else:
+                    return None
+        
+        # Verificación rápida de S3 (sin reintentos)
+        s3_exists = check_s3_file_exists_fast(filename)
+        if s3_exists:
+            # Cachear resultado positivo
+            if not hasattr(current_app, 's3_cache'):
+                current_app.s3_cache = {}
+            current_app.s3_cache[f"s3_exists_{filename}"] = True
+            current_app.logger.debug(f"[IMAGE] Archivo S3 encontrado: {filename}")
+            return f"/admin/s3/{filename}"
+        else:
+            # Cachear resultado negativo
+            if not hasattr(current_app, 's3_cache'):
+                current_app.s3_cache = {}
+            current_app.s3_cache[f"s3_exists_{filename}"] = False
+            
+    except Exception as e:
+        current_app.logger.error(
+            f"[IMAGE] Error verificando archivo S3 {filename}: {e}"
+        )
+
+    # 3. Si no existe en ningún lado, no devolver URL
+    current_app.logger.debug(f"[IMAGE] Archivo no encontrado: {filename}")
+    return None
 
 
 def get_images_for_template(row_data: Dict[str, Any]) -> Dict[str, Any]:

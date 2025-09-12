@@ -1,0 +1,273 @@
+{
+  "metadata": {
+    "generated_at": "2025-09-12T12:07:05.368240",
+    "version": "1.0",
+    "purpose": "Verificación manual de unificación admin/usuario"
+  },
+  "urls_to_test": {
+    "admin_principal": "http://localhost:5001/admin/catalogo/spreadsheets/68bdbf6ece7fe626f3d9d4df",
+    "usuario_normal": "http://localhost:5001/ver_tabla/68bdbf6ece7fe626f3d9d4df",
+    "admin_alternativa": "http://localhost:5001/catalogs/68bdbf6ece7fe626f3d9d4df"
+  },
+  "test_categories": {
+    "1_visual_consistency": {
+      "title": "🎨 CONSISTENCIA VISUAL",
+      "tests": [
+        {
+          "id": "VC001",
+          "description": "Verificar que ambas URLs muestran el mismo nombre de catálogo",
+          "expected": "Documentos y tutoriales de bricolaje",
+          "steps": [
+            "1. Abrir URL admin en una pestaña",
+            "2. Abrir URL usuario en otra pestaña",
+            "3. Comparar el título del catálogo en ambas"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "VC002",
+          "description": "Verificar que las estadísticas son idénticas",
+          "expected": "Columnas: 8, Filas: 1",
+          "steps": [
+            "1. Verificar estadísticas en URL admin",
+            "2. Verificar estadísticas en URL usuario",
+            "3. Confirmar que son exactamente iguales"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "VC003",
+          "description": "Verificar que los datos de la tabla son idénticos",
+          "expected": "Misma fecha, títulos, documentos, multimedia",
+          "steps": [
+            "1. Comparar fila por fila en ambas interfaces",
+            "2. Verificar que todos los campos coinciden",
+            "3. Confirmar mismo número de documentos y archivos"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    "2_functional_consistency": {
+      "title": "⚙️ CONSISTENCIA FUNCIONAL",
+      "tests": [
+        {
+          "id": "FC001",
+          "description": "Verificar botones de documentos (TXT, MD, PDF)",
+          "expected": "Todos los botones funcionan y abren documentos",
+          "steps": [
+            "1. Hacer clic en botón TXT en ambas interfaces",
+            "2. Hacer clic en botón MD en ambas interfaces",
+            "3. Hacer clic en botón PDF en ambas interfaces",
+            "4. Verificar que todos abren correctamente"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "FC002",
+          "description": "Verificar funcionalidad de multimedia",
+          "expected": "Videos/audio se reproducen correctamente",
+          "steps": [
+            "1. Hacer clic en miniaturas de video en ambas interfaces",
+            "2. Verificar que se abren modales de multimedia",
+            "3. Confirmar que el contenido es el mismo"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "FC003",
+          "description": "Verificar funcionalidad de imágenes",
+          "expected": "Imágenes se muestran y amplían correctamente",
+          "steps": [
+            "1. Hacer clic en miniaturas de imágenes",
+            "2. Verificar que se abren modales de imagen",
+            "3. Confirmar que las imágenes son las mismas"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "FC004",
+          "description": "Verificar botones de acción (Editar/Eliminar)",
+          "expected": "Botones presentes y funcionales en ambas interfaces",
+          "steps": [
+            "1. Verificar presencia de botones Editar en ambas",
+            "2. Verificar presencia de botones Eliminar en ambas",
+            "3. Confirmar que tienen el mismo estilo y posición"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "FC005",
+          "description": "Verificar funcionalidad de búsqueda",
+          "expected": "Barra de búsqueda funciona en ambas interfaces",
+          "steps": [
+            "1. Escribir texto en barra de búsqueda (admin)",
+            "2. Escribir mismo texto en barra de búsqueda (usuario)",
+            "3. Verificar que los resultados son idénticos"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    "3_cross_browser_compatibility": {
+      "title": "🌐 COMPATIBILIDAD CROSS-BROWSER",
+      "tests": [
+        {
+          "id": "CB001",
+          "description": "Verificar en Chrome",
+          "expected": "Ambas URLs funcionan correctamente en Chrome",
+          "steps": [
+            "1. Abrir ambas URLs en Chrome",
+            "2. Verificar que el contenido se muestra correctamente",
+            "3. Probar funcionalidad básica (documentos, imágenes)"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "CB002",
+          "description": "Verificar en Firefox",
+          "expected": "Ambas URLs funcionan correctamente en Firefox",
+          "steps": [
+            "1. Abrir ambas URLs en Firefox",
+            "2. Verificar que el contenido se muestra correctamente",
+            "3. Probar funcionalidad básica (documentos, imágenes)"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "CB003",
+          "description": "Verificar en Safari (si disponible)",
+          "expected": "Ambas URLs funcionan correctamente en Safari",
+          "steps": [
+            "1. Abrir ambas URLs en Safari",
+            "2. Verificar que el contenido se muestra correctamente",
+            "3. Probar funcionalidad básica (documentos, imágenes)"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    "4_responsive_design": {
+      "title": "📱 DISEÑO RESPONSIVE",
+      "tests": [
+        {
+          "id": "RD001",
+          "description": "Verificar en resolución desktop (1920x1080)",
+          "expected": "Ambas interfaces se ven correctamente en desktop",
+          "steps": [
+            "1. Configurar navegador a 1920x1080",
+            "2. Abrir ambas URLs",
+            "3. Verificar que la tabla se muestra completa"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "RD002",
+          "description": "Verificar en resolución tablet (768x1024)",
+          "expected": "Ambas interfaces son responsive en tablet",
+          "steps": [
+            "1. Configurar navegador a 768x1024",
+            "2. Abrir ambas URLs",
+            "3. Verificar scroll horizontal si es necesario"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "RD003",
+          "description": "Verificar en resolución móvil (375x667)",
+          "expected": "Ambas interfaces son usables en móvil",
+          "steps": [
+            "1. Configurar navegador a 375x667",
+            "2. Abrir ambas URLs",
+            "3. Verificar que los botones son accesibles"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    "5_edge_cases": {
+      "title": "🔍 CASOS EDGE",
+      "tests": [
+        {
+          "id": "EC001",
+          "description": "Verificar comportamiento con archivos S3 no disponibles",
+          "expected": "Manejo graceful de errores de archivos",
+          "steps": [
+            "1. Identificar si hay archivos S3 en el catálogo",
+            "2. Verificar que se muestran correctamente",
+            "3. Si hay errores, verificar que son consistentes"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "EC002",
+          "description": "Verificar rendimiento con catálogo actual",
+          "expected": "Carga rápida en ambas interfaces",
+          "steps": [
+            "1. Medir tiempo de carga de URL admin",
+            "2. Medir tiempo de carga de URL usuario",
+            "3. Verificar que ambos cargan en <3 segundos"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "EC003",
+          "description": "Verificar comportamiento al recargar página",
+          "expected": "Ambas páginas se recargan correctamente",
+          "steps": [
+            "1. Recargar URL admin (F5)",
+            "2. Recargar URL usuario (F5)",
+            "3. Verificar que el contenido se mantiene"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    "6_security_access": {
+      "title": "🔒 SEGURIDAD Y ACCESO",
+      "tests": [
+        {
+          "id": "SA001",
+          "description": "Verificar que admin puede acceder a ambas URLs",
+          "expected": "Usuario admin ve contenido en ambas URLs",
+          "steps": [
+            "1. Iniciar sesión como administrador",
+            "2. Acceder a URL admin",
+            "3. Acceder a URL usuario",
+            "4. Verificar acceso completo a ambas"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "SA002",
+          "description": "Verificar que usuario normal puede acceder a su URL",
+          "expected": "Usuario normal ve contenido en URL usuario",
+          "steps": [
+            "1. Iniciar sesión como usuario normal",
+            "2. Acceder a URL usuario",
+            "3. Verificar que ve el contenido completo"
+          ],
+          "status": "pending"
+        },
+        {
+          "id": "SA003",
+          "description": "Verificar restricciones de acceso admin",
+          "expected": "Usuario normal NO puede acceder a URL admin",
+          "steps": [
+            "1. Iniciar sesión como usuario normal",
+            "2. Intentar acceder a URL admin",
+            "3. Verificar que es redirigido o ve error de permisos"
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  },
+  "completion_summary": {
+    "total_tests": 20,
+    "completed_tests": 0,
+    "passed_tests": 0,
+    "failed_tests": 0,
+    "success_rate": 0.0
+  }
+}

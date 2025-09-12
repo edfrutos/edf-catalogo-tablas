@@ -587,6 +587,10 @@ def ver_tabla(table_id):
                 if key.startswith('Documentación_'):
                     current_app.logger.info(f"[DEBUG][VISIONADO] Campo {key}: {value}")
 
+            # Limpiar cache de S3 al cargar la página para evitar imágenes fantasma
+            from app.utils.image_utils import clear_s3_cache
+            clear_s3_cache()  # Limpiar todo el cache
+            
             # Usar función unificada para obtener URLs de imágenes
             image_data = get_images_for_template(row)
             row.update(image_data)  # Añade imagen_urls, num_imagenes, tiene_imagenes
@@ -597,6 +601,88 @@ def ver_tabla(table_id):
             current_app.logger.info(
                 f"[DEBUG][VISIONADO] Total de imágenes en fila {i}: {len(row.get('imagen_urls', []))}"
             )
+
+            # Procesar campos de Documentación - crear URLs correctas para documentos
+            from app.utils.s3_utils import get_s3_url
+            for key, value in row.items():
+                if key.startswith('Documentación_') and value:
+                    current_app.logger.info(f"[DEBUG][VISIONADO] Procesando documento {key}: {value}")
+                    
+                    # Verificar si ya es una URL completa
+                    if isinstance(value, str) and (value.startswith('/admin/s3/') or value.startswith('/static/uploads/') or value.startswith('/imagenes_subidas/') or value.startswith('http')):
+                        # Ya es una URL completa, usar directamente
+                        current_app.logger.info(f"[DEBUG][VISIONADO] URL completa detectada para {key}: {value}")
+                        continue
+                    
+                    # Si es solo un nombre de archivo, intentar obtener la URL de S3 primero
+                    if isinstance(value, str) and len(value) > 5:
+                        s3_url = get_s3_url(value)
+                        if s3_url:
+                            # Convertir URL S3 a proxy local
+                            filename = value.split('/')[-1] if '/' in value else value
+                            proxy_url = f"/admin/s3/{filename}"
+                            row[key] = proxy_url
+                            current_app.logger.info(f"[DEBUG][VISIONADO] Documento S3 encontrado: {value} -> {proxy_url}")
+                        else:
+                            # Si no está en S3, usar la URL local
+                            # Verificar si ya contiene una ruta para evitar concatenación incorrecta
+                            if value.startswith('/admin/s3/') or value.startswith('/static/uploads/') or value.startswith('/imagenes_subidas/'):
+                                local_url = value
+                            else:
+                                local_url = f"/static/uploads/{value}"
+                            row[key] = local_url
+                            current_app.logger.info(f"[DEBUG][VISIONADO] Usando URL local para documento: {value} -> {local_url}")
+                    elif isinstance(value, list):
+                        # Si es una lista de documentos, procesar cada uno
+                        processed_docs = []
+                        for doc in value:
+                            if isinstance(doc, str) and len(doc) > 5:
+                                s3_url = get_s3_url(doc)
+                                if s3_url:
+                                    filename = doc.split('/')[-1] if '/' in doc else doc
+                                    proxy_url = f"/admin/s3/{filename}"
+                                    processed_docs.append(proxy_url)
+                                    current_app.logger.info(f"[DEBUG][VISIONADO] Documento S3 en lista: {doc} -> {proxy_url}")
+                                else:
+                                    # Verificar si ya contiene una ruta para evitar concatenación incorrecta
+                                    if doc.startswith('/admin/s3/') or doc.startswith('/static/uploads/') or doc.startswith('/imagenes_subidas/'):
+                                        local_url = doc
+                                    else:
+                                        local_url = f"/static/uploads/{doc}"
+                                    processed_docs.append(local_url)
+                                    current_app.logger.info(f"[DEBUG][VISIONADO] Documento local en lista: {doc} -> {local_url}")
+                            else:
+                                processed_docs.append(doc)
+                        row[key] = processed_docs
+
+            # Procesar campo Multimedia - crear URL correcta
+            if 'Multimedia' in row and row['Multimedia']:
+                multimedia_value = row['Multimedia']
+                current_app.logger.info(f"[DEBUG][VISIONADO] Procesando multimedia: {multimedia_value}")
+                
+                # Verificar si ya es una URL completa
+                if isinstance(multimedia_value, str) and (multimedia_value.startswith('/admin/s3/') or multimedia_value.startswith('/static/uploads/') or multimedia_value.startswith('/imagenes_subidas/') or multimedia_value.startswith('http')):
+                    # Ya es una URL completa, usar directamente
+                    current_app.logger.info(f"[DEBUG][VISIONADO] URL multimedia completa detectada: {multimedia_value}")
+                elif isinstance(multimedia_value, str) and len(multimedia_value) > 5:
+                    # Si es solo un nombre de archivo, intentar obtener la URL de S3 primero
+                    s3_url = get_s3_url(multimedia_value)
+                    if s3_url:
+                        # Convertir URL S3 a proxy local
+                        filename = multimedia_value.split('/')[-1] if '/' in multimedia_value else multimedia_value
+                        proxy_url = f"/admin/s3/{filename}"
+                        row['Multimedia'] = proxy_url
+                        current_app.logger.info(f"[DEBUG][VISIONADO] Multimedia S3 encontrado: {multimedia_value} -> {proxy_url}")
+                    else:
+                        # Si no está en S3, usar la URL local directamente
+                        # No usar proxy S3 para archivos locales
+                        # Verificar si ya contiene una ruta para evitar concatenación incorrecta
+                        if multimedia_value.startswith('/admin/s3/') or multimedia_value.startswith('/static/uploads/') or multimedia_value.startswith('/imagenes_subidas/'):
+                            local_url = multimedia_value
+                        else:
+                            local_url = f"/static/uploads/{multimedia_value}"
+                        row['Multimedia'] = local_url
+                        current_app.logger.info(f"[DEBUG][VISIONADO] Usando URL local para multimedia: {multimedia_value} -> {local_url}")
 
         return render_template("ver_tabla.html", table=table)
     except BuildError as e:
@@ -1045,24 +1131,33 @@ def editar_fila(tabla_id, fila_index):
         f"[DEBUG_EDIT] Campos de imagen disponibles: imagenes={fila.get('imagenes')}, imagen_data={fila.get('imagen_data')}, images={fila.get('images')}"
     )
 
-    # 🔥🔥🔥 PROCESAMIENTO SIMPLIFICADO DE IMÁGENES UNIFICADAS 🔥🔥🔥
-    imagenes_unificadas = []
-
-    # Recopilar de fila.images
-    if fila.get("images") and isinstance(fila["images"], list):
-        imagenes_unificadas.extend([img for img in fila["images"] if img and img != "N/A" and not img.startswith("http")])
-
-    # Recopilar de fila.imagenes (compatibilidad)
-    if fila.get("imagenes") and isinstance(fila["imagenes"], list):
-        imagenes_unificadas.extend([img for img in fila["imagenes"] if img and img != "N/A" and not img.startswith("http")])
-
-    # Recopilar de fila.imagen_data (compatibilidad)
-    if fila.get("imagen_data") and isinstance(fila["imagen_data"], list):
-        imagenes_unificadas.extend([img for img in fila["imagen_data"] if img and img != "N/A" and not img.startswith("http")])
+    # 🔥🔥🔥 USAR LA MISMA LÓGICA QUE VER_TABLA CON CACHE 🔥🔥🔥
+    # Limpiar cache de S3 al cargar la página para evitar imágenes fantasma
+    from app.utils.image_utils import clear_s3_cache
+    clear_s3_cache()  # Limpiar todo el cache
     
-    # Unificar en el campo 'images' para consistencia
-    if imagenes_unificadas:
-        fila["images"] = imagenes_unificadas
+    # Optimización: Limpiar cache de S3 solo si es necesario
+    current_app.logger.info("[DEBUG_EDIT] Cache S3 limpiado para evitar imágenes fantasma")
+    
+    # Usar función unificada para obtener URLs de imágenes (filtra las que no existen)
+    image_data = get_images_for_template(fila)
+    fila.update(image_data)  # Añade imagen_urls, num_imagenes, tiene_imagenes
+    
+    # Para editar, necesitamos los nombres de archivo originales (no URLs)
+    # pero solo los que realmente existen
+    imagenes_existentes = []
+    for img_url in image_data.get("imagen_urls", []):
+        # Extraer nombre de archivo de la URL
+        if "/static/uploads/" in img_url:
+            filename = img_url.split("/static/uploads/")[-1]
+            imagenes_existentes.append(filename)
+        elif "/admin/s3/" in img_url:
+            filename = img_url.split("/admin/s3/")[-1]
+            imagenes_existentes.append(filename)
+    
+    # Actualizar campos para consistencia
+    if imagenes_existentes:
+        fila["images"] = imagenes_existentes
         # Eliminar campos duplicados para evitar confusión
         if "imagenes" in fila:
             del fila["imagenes"]
@@ -1083,8 +1178,8 @@ def editar_fila(tabla_id, fila_index):
         # Las imágenes externas (Unsplash) no se pueden eliminar, pero necesitamos mostrarlas
         # Para eso, creamos un campo especial para mostrar sin opción de eliminar
 
-    # Preparar contexto para el template con imágenes unificadas
-    fila["_imagenes_unificadas"] = imagenes_unificadas
+    # Preparar contexto para el template con imágenes unificadas (solo las que existen)
+    fila["_imagenes_unificadas"] = imagenes_existentes
     fila["_imagen_externa"] = (
         imagen_individual
         if imagen_individual
@@ -1092,8 +1187,8 @@ def editar_fila(tabla_id, fila_index):
         and imagen_individual.startswith("http")
         else None
     )
-    current_app.logger.error(
-        f"[DEBUG_EDIT] IMÁGENES UNIFICADAS: {len(imagenes_unificadas)} → {imagenes_unificadas}"
+    current_app.logger.info(
+        f"[DEBUG_EDIT] IMÁGENES EXISTENTES: {len(imagenes_existentes)} → {imagenes_existentes}"
     )
     current_app.logger.error(
         f"[DEBUG_EDIT] TEMPLATE CONTEXT: Todos los keys de fila = {list(fila.keys())}"
@@ -1111,10 +1206,28 @@ def editar_fila(tabla_id, fila_index):
         try:
             for key, file in request.files.items():
                 current_app.logger.info(f"[DEBUG_EDIT] Procesando archivo: {key}")
-                if key.startswith("Documentación_file_") and file.filename:
+                # Detectar archivos de documentos con formato Documentación_X_file_Y
+                is_document_file = (
+                    key.startswith("Documentación_file_") or
+                    (key.startswith("Documentación_") and "_file_" in key)
+                )
+                current_app.logger.info(f"[DEBUG_EDIT] ¿Es archivo de documento? {is_document_file} para {key}")
+                if is_document_file and file.filename:
                     current_app.logger.info(f"[DEBUG_EDIT] Archivo de documentación encontrado: {file.filename}")
                     # Extraer el índice del nombre del campo
-                    index_str = key.replace("Documentación_file_", "")
+                    if key.startswith("Documentación_file_"):
+                        # Formato: Documentación_file_X
+                        index_str = key.replace("Documentación_file_", "")
+                    else:
+                        # Formato: Documentación_X_file_Y
+                        # Extraer el número después de Documentación_ y antes de _file_
+                        parts = key.split("_")
+                        if len(parts) >= 3 and parts[0] == "Documentación":
+                            index_str = parts[1]
+                        else:
+                            current_app.logger.error(f"[DEBUG_EDIT] No se pudo extraer índice de {key}")
+                            continue
+                    
                     try:
                         column_index = int(index_str)
                         current_app.logger.info(f"[DEBUG_EDIT] Índice de columna: {column_index}")
@@ -1152,13 +1265,10 @@ def editar_fila(tabla_id, fila_index):
                         else:
                             campo_valor = filename
                         
-                        # Guardar en el array Documentación
-                        data_key = f"data.{fila_index}"
-                        if data_key not in update_data:
-                            update_data[data_key] = {}
-                        if "Documentación" not in update_data[data_key]:
-                            update_data[data_key]["Documentación"] = []
-                        update_data[data_key]["Documentación"].append(campo_valor)
+                        # Guardar en el campo específico Documentación_X
+                        header_name = f"Documentación_{column_index}"
+                        update_data[f"data.{fila_index}.{header_name}"] = campo_valor
+                        current_app.logger.info(f"[DEBUG_EDIT] Documento guardado en {header_name}: {campo_valor}")
                     
                     except ValueError:
                         current_app.logger.error(f"Índice inválido en campo de documento: {key}")
@@ -1173,13 +1283,10 @@ def editar_fila(tabla_id, fila_index):
                 try:
                     column_index = int(index_str)
                     
-                    # Guardar en el array Documentación
-                    data_key = f"data.{fila_index}"
-                    if data_key not in update_data:
-                        update_data[data_key] = {}
-                    if "Documentación" not in update_data[data_key]:
-                        update_data[data_key]["Documentación"] = []
-                    update_data[data_key]["Documentación"].append(value.strip())
+                    # Guardar en el campo específico Documentación_X
+                    header_name = f"Documentación_{column_index}"
+                    update_data[f"data.{fila_index}.{header_name}"] = value.strip()
+                    current_app.logger.info(f"[DEBUG_EDIT] URL de documento guardada en {header_name}: {value.strip()}")
                     
                 except ValueError:
                     current_app.logger.error(f"Índice inválido en campo de documento: {key}")
@@ -1220,8 +1327,24 @@ def editar_fila(tabla_id, fila_index):
                 else:
                     campo_valor = fecha_valor
             elif header != "Número" and header != "Imagenes":
-                # Campo normal
-                campo_valor = request.form.get(header, "").strip()
+                # Campo normal - PRESERVAR valores existentes si no se proporcionan nuevos
+                # PERO NO sobrescribir campos de Documentación que ya fueron procesados
+                if header.startswith("Documentación_"):
+                    # Verificar si ya se procesó este campo de Documentación
+                    document_key = f"data.{fila_index}.{header}"
+                    if document_key in update_data:
+                        # Ya se procesó, no sobrescribir
+                        current_app.logger.info(f"[DEBUG_EDIT] Campo {header} ya procesado, saltando preservación")
+                        continue
+                
+                form_value = request.form.get(header, "").strip()
+                if form_value:
+                    # Si hay un valor en el formulario, usarlo
+                    campo_valor = form_value
+                else:
+                    # Si no hay valor en el formulario, preservar el valor existente
+                    campo_valor = fila.get(header, "")
+                    current_app.logger.info(f"[DEBUG_EDIT] Preservando valor existente para {header}: {campo_valor}")
 
             # Usamos notación de diccionario para manejar campos con espacios
             # En lugar de usar dot notation directamente en la clave
@@ -1304,9 +1427,14 @@ def editar_fila(tabla_id, fila_index):
                             ruta_img = os.path.join(ruta_uploads, img_a_eliminar)
                             if os.path.exists(ruta_img):
                                 os.remove(ruta_img)
-                                logger.info(
-                                    f"Imagen eliminada del servidor local: {img_a_eliminar}"
-                                )
+                            
+                            # Limpiar cache de S3 para esta imagen
+                            from app.utils.image_utils import clear_s3_cache
+                            clear_s3_cache(img_a_eliminar)
+                            
+                            logger.info(
+                                f"Imagen eliminada del servidor local: {img_a_eliminar}"
+                            )
                         except Exception as e:
                             logger.error(
                                 f"Error al eliminar imagen: {str(e)}", exc_info=True
@@ -1343,46 +1471,95 @@ def editar_fila(tabla_id, fila_index):
 
         # Procesar documentos a eliminar
         documentos_a_eliminar = request.form.get("documentos_a_eliminar", "")
-        if documentos_a_eliminar:
+        if documentos_a_eliminar and documentos_a_eliminar.strip():
             try:
                 import json
                 documentos_a_eliminar = json.loads(documentos_a_eliminar)
-                logger.info(f"Documentos a eliminar: {documentos_a_eliminar}")
+                # Solo procesar si realmente hay documentos para eliminar
+                if documentos_a_eliminar and len(documentos_a_eliminar) > 0:
+                    logger.info(f"Documentos a eliminar: {documentos_a_eliminar}")
 
-                # Eliminar los documentos de S3
-                use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
-                if use_s3:
-                    from app.utils.s3_utils import delete_file_from_s3
+                    # Eliminar los documentos de S3
+                    use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
+                    if use_s3:
+                        from app.utils.s3_utils import delete_file_from_s3
+                        
+                        for doc_a_eliminar in documentos_a_eliminar:
+                            try:
+                                delete_file_from_s3(doc_a_eliminar)
+                                logger.info(f"Documento eliminado de S3: {doc_a_eliminar}")
+                            except Exception as e:
+                                logger.error(f"Error eliminando documento de S3 {doc_a_eliminar}: {e}")
+
+                    # Actualizar los documentos individuales en la fila
+                    # Buscar campos Documentación_0, Documentación_1, Documentación_2, etc.
+                    for key, value in fila.items():
+                        if key.startswith("Documentación_") and isinstance(value, str):
+                            if value in documentos_a_eliminar:
+                                update_data[f"data.{fila_index}.{key}"] = ""
+                                logger.info(f"Documento eliminado del campo {key}: {value}")
                     
-                    for doc_a_eliminar in documentos_a_eliminar:
-                        try:
-                            delete_file_from_s3(doc_a_eliminar)
-                            logger.info(f"Documento eliminado de S3: {doc_a_eliminar}")
-                        except Exception as e:
-                            logger.error(f"Error eliminando documento de S3 {doc_a_eliminar}: {e}")
-
-                # Actualizar los documentos individuales en la fila
-                # Buscar campos Documentación_0, Documentación_1, Documentación_2, etc.
-                for key, value in fila.items():
-                    if key.startswith("Documentación_") and isinstance(value, str):
-                        if value in documentos_a_eliminar:
-                            update_data[f"data.{fila_index}.{key}"] = ""
-                            logger.info(f"Documento eliminado del campo {key}: {value}")
-                
-                # También manejar el campo Documentación original si existe
-                if "Documentación" in fila and isinstance(fila["Documentación"], list):
-                    documentos_actualizados = [
-                        doc
-                        for doc in fila["Documentación"]
-                        if doc not in documentos_a_eliminar
-                    ]
-                    update_data[f"data.{fila_index}.Documentación"] = documentos_actualizados
-                    logger.info(f"Lista de documentos actualizada: {documentos_actualizados}")
+                    # También manejar el campo Documentación original si existe
+                    if "Documentación" in fila and isinstance(fila["Documentación"], list):
+                        documentos_actualizados = [
+                            doc
+                            for doc in fila["Documentación"]
+                            if doc not in documentos_a_eliminar
+                        ]
+                        update_data[f"data.{fila_index}.Documentación"] = documentos_actualizados
+                        logger.info(f"Lista de documentos actualizada: {documentos_actualizados}")
+                else:
+                    logger.info("Campo documentos_a_eliminar está vacío, no se eliminan documentos")
 
             except json.JSONDecodeError as e:
                 logger.error(f"Error decodificando documentos_a_eliminar: {e}")
             except Exception as e:
                 logger.error(f"Error procesando documentos a eliminar: {e}")
+        else:
+            logger.info("No se proporcionó campo documentos_a_eliminar o está vacío")
+
+        # Procesar multimedia a eliminar
+        multimedia_a_eliminar = request.form.get("multimedia_a_eliminar", "")
+        if multimedia_a_eliminar:
+            try:
+                import json
+                multimedia_a_eliminar = json.loads(multimedia_a_eliminar)
+                logger.info(f"Multimedia a eliminar: {multimedia_a_eliminar}")
+                
+                if isinstance(multimedia_a_eliminar, list):
+                    # Eliminar multimedia del servidor y de S3
+                    use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
+                    
+                    for media_a_eliminar in multimedia_a_eliminar:
+                        try:
+                            # Eliminar de S3 si está habilitado
+                            if use_s3:
+                                from app.utils.s3_utils import delete_file_from_s3
+                                delete_file_from_s3(media_a_eliminar)
+                                logger.info(f"Multimedia eliminado de S3: {media_a_eliminar}")
+                            
+                            # Limpiar cache de S3 para este multimedia
+                            from app.utils.image_utils import clear_s3_cache
+                            clear_s3_cache(media_a_eliminar)
+                            
+                            # Eliminar del servidor local
+                            if current_app.static_folder:
+                                ruta_uploads = os.path.join(current_app.static_folder, "uploads")
+                                ruta_media = os.path.join(ruta_uploads, media_a_eliminar)
+                                if os.path.exists(ruta_media):
+                                    os.remove(ruta_media)
+                                    logger.info(f"Multimedia eliminado del servidor local: {media_a_eliminar}")
+                        except Exception as e:
+                            logger.error(f"Error al eliminar multimedia: {str(e)}", exc_info=True)
+                    
+                    # Limpiar el campo multimedia en la fila
+                    update_data[f"data.{fila_index}.Multimedia"] = ""
+                    logger.info("Campo multimedia limpiado")
+                    
+            except json.JSONDecodeError as e:
+                logger.error(f"Error decodificando multimedia_a_eliminar: {e}")
+            except Exception as e:
+                logger.error(f"Error procesando multimedia a eliminar: {e}")
 
         # Procesar nuevas imágenes si existen
         nuevas_imagenes = []
@@ -1550,6 +1727,8 @@ def agregar_fila(tabla_id):
     current_app.logger.info(
         f"[AGREGAR_FILA] Iniciando agregar_fila para tabla_id: {tabla_id}, método: {request.method}"
     )
+    print(f"[AGREGAR_FILA] PRINT: Iniciando agregar_fila para tabla_id: {tabla_id}, método: {request.method}")
+    print(f"[AGREGAR_FILA] PRINT: FUNCIÓN AGREGAR_FILA EJECUTÁNDOSE")
 
     # Verificar sesión
     if not session.get("logged_in") or "username" not in session:
@@ -1609,16 +1788,45 @@ def agregar_fila(tabla_id):
                         current_app.logger.info(f"[AGREGAR_FILA] URL guardada: {field_name} = {value.strip()}")
             
             # Procesar archivos de documentos
+            current_app.logger.info(f"[AGREGAR_FILA] Procesando {len(request.files)} archivos")
+            current_app.logger.info(f"[AGREGAR_FILA] Archivos recibidos: {list(request.files.keys())}")
+            print(f"[AGREGAR_FILA] PRINT: Procesando {len(request.files)} archivos")
+            print(f"[AGREGAR_FILA] PRINT: Archivos recibidos: {list(request.files.keys())}")
+            
             for key, file in request.files.items():
-                if key.startswith("Documentación_file_") or key.startswith("Documentos_file_"):
+                current_app.logger.info(f"[AGREGAR_FILA] Procesando archivo: {key}, filename: {file.filename}")
+                # Detectar archivos de documentos con diferentes formatos
+                is_document_file = (
+                    key.startswith("Documentación_file_") or 
+                    key.startswith("Documentos_file_") or 
+                    (key.startswith("Documentación_") and key.endswith("_file"))
+                )
+                current_app.logger.info(f"[AGREGAR_FILA] ¿Es archivo de documento? {is_document_file} para {key}")
+                current_app.logger.info(f"[AGREGAR_FILA] DEBUG: key.startswith('Documentación_file_'): {key.startswith('Documentación_file_')}")
+                current_app.logger.info(f"[AGREGAR_FILA] DEBUG: key.startswith('Documentos_file_'): {key.startswith('Documentos_file_')}")
+                current_app.logger.info(f"[AGREGAR_FILA] DEBUG: key.startswith('Documentación_'): {key.startswith('Documentación_')}")
+                current_app.logger.info(f"[AGREGAR_FILA] DEBUG: key.endswith('_file'): {key.endswith('_file')}")
+                current_app.logger.info(f"[AGREGAR_FILA] DEBUG: key.startswith('Documentación_') and key.endswith('_file'): {key.startswith('Documentación_') and key.endswith('_file')}")
+                
+                if is_document_file:
                     if file and file.filename:
-                        # Extraer el índice de la columna
-                        if "Documentación_file_" in key:
+                        # Extraer el índice de la columna - manejar ambos formatos
+                        current_app.logger.info(f"[AGREGAR_FILA] Procesando documento: {key}")
+                        if key.startswith("Documentación_") and key.endswith("_file"):
+                            # Formato: Documentación_1_file, Documentación_2_file, etc.
+                            column_index = key.replace("Documentación_", "").replace("_file", "")
+                            header = "Documentación"
+                            current_app.logger.info(f"[AGREGAR_FILA] Formato 1: {key} -> {header}_{column_index}")
+                        elif "Documentación_file_" in key:
+                            # Formato: Documentación_file_1, Documentación_file_2, etc.
                             column_index = key.replace("Documentación_file_", "")
                             header = "Documentación"
+                            current_app.logger.info(f"[AGREGAR_FILA] Formato 2: {key} -> {header}_{column_index}")
                         else:
+                            # Formato: Documentos_file_1, Documentos_file_2, etc.
                             column_index = key.replace("Documentos_file_", "")
                             header = "Documentos"
+                            current_app.logger.info(f"[AGREGAR_FILA] Formato 3: {key} -> {header}_{column_index}")
                         
                         # Procesar archivo
                         filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
@@ -1646,6 +1854,7 @@ def agregar_fila(tabla_id):
                         field_name = f"{header}_{column_index}"
                         nueva_fila[field_name] = filename
                         current_app.logger.info(f"[AGREGAR_FILA] Documento guardado: {field_name} = {filename}")
+                        current_app.logger.info(f"[AGREGAR_FILA] nueva_fila actual: {nueva_fila}")
             
             # PROCESAMIENTO PRINCIPAL: Manejar otros campos
             for header in tabla.get("headers", []):
@@ -1674,9 +1883,16 @@ def agregar_fila(tabla_id):
                     else:
                         nueva_fila[header] = ""
                 elif header in ["Documentos", "Documentación"]:
-                    # Saltar procesamiento de Documentación - ya se procesó arriba
-                    continue
+                    # Saltar procesamiento de Documentación base - ya se procesó arriba
+                    # Pero NO saltar Documentación_1, Documentación_2, etc.
+                    if header == "Documentación" or header == "Documentos":
+                        continue
                 else:
+                    # NO sobrescribir campos de Documentación que ya tienen valores
+                    if header.startswith("Documentación_") and header in nueva_fila and nueva_fila[header]:
+                        # Ya tiene un valor de documento, no sobrescribir
+                        current_app.logger.info(f"[AGREGAR_FILA] Manteniendo valor existente para {header}: {nueva_fila[header]}")
+                        continue
                     nueva_fila[header] = request.form.get(header, "")
 
             # Procesar imágenes si existen
@@ -1756,6 +1972,7 @@ def agregar_fila(tabla_id):
                 nueva_fila["num_imagenes"] = len(imagenes)
 
             # Agregar la fila a la tabla (actualizar tanto data como rows para compatibilidad)
+            current_app.logger.info(f"[AGREGAR_FILA] Guardando nueva fila en BD: {nueva_fila}")
             result = g.spreadsheets_collection.update_one(
                 {"_id": ObjectId(tabla_id)},
                 {

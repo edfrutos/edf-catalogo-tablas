@@ -40,23 +40,42 @@
                                     <a href="{{ fila[header] }}" target="_blank">{{ fila[header] }}</a>
                                 </div>
                             {% else %}
-                                <div class="alert alert-success">
-                                    <i class="fas fa-file"></i> Archivo Local: {{ fila[header] }}
-                                    {% if fila[header] is string %}
-                                    <a href="{{ url_for('static', filename='uploads/' + fila[header]) }}" 
-                                       target="_blank" class="btn btn-sm btn-outline-primary ms-2">
-                                        <i class="fas fa-download"></i> Descargar
-                                    </a>
-                                    {% else %}
-                                    <div class="mt-2">
-                                        {% for doc in fila[header] %}
-                                        <a href="{{ url_for('static', filename='uploads/' + doc) }}" 
-                                           target="_blank" class="btn btn-sm btn-outline-primary me-2">
-                                            <i class="fas fa-download"></i> {{ doc[:20] }}...
-                                        </a>
-                                        {% endfor %}
+                                <div class="alert alert-success d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-file"></i> Archivo: {{ fila[header] }}
+                                        <div class="btn-group ms-2" role="group">
+                                            {% if fila[header] is string %}
+                                                {% if fila[header].startswith('http') %}
+                                                    <a href="{{ fila[header] }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-download"></i> Descargar
+                                                    </a>
+                                                {% else %}
+                                                    <a href="/admin/s3/{{ fila[header] }}" 
+                                                       download="{{ fila[header] }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-download"></i> Descargar
+                                                    </a>
+                                                {% endif %}
+                                            {% else %}
+                                                {% for doc in fila[header] %}
+                                                    {% if doc.startswith('http') %}
+                                                        <a href="{{ doc }}" target="_blank" class="btn btn-sm btn-outline-primary me-2">
+                                                            <i class="fas fa-download"></i> {{ doc[:20] }}...
+                                                        </a>
+                                                    {% else %}
+                                                        <a href="/admin/s3/{{ doc }}" 
+                                                           download="{{ doc }}" class="btn btn-sm btn-outline-primary me-2">
+                                                            <i class="fas fa-download"></i> {{ doc[:20] }}...
+                                                        </a>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            data-multimedia="{{ fila[header] }}" data-columna="{{ loop.index0 }}"
+                                            onclick="confirmarEliminarMultimedia(this.dataset.multimedia, parseInt(this.dataset.columna))">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
                                 </div>
                             {% endif %}
                         </div>
@@ -64,7 +83,7 @@
                 {% endif %}
             </div>
             
-        {% elif header == 'Documentación' %}
+        {% elif header == 'Documentación' or header.startswith('Documentación') %}
             <!-- Campo especial para Documentos/Documentación -->
             <div class="mb-3">
                 <label class="form-label fw-bold">
@@ -119,7 +138,7 @@
                                                             <i class="fas fa-download"></i> Descargar
                                                         </a>
                                                     {% else %}
-                                                        <a href="/s3/{{ doc }}" 
+                                                        <a href="/admin/s3/{{ doc }}" 
                                                            download="{{ doc }}" class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-download"></i> Descargar
                                                         </a>
@@ -144,7 +163,7 @@
                                 <div class="alert alert-success">
                                     <i class="fas fa-file"></i> Archivo: {{ doc_data }}
                                     <div class="btn-group ms-2" role="group">
-                                        <a href="/s3/{{ doc_data }}" 
+                                        <a href="/admin/s3/{{ doc_data }}" 
                                            download="{{ doc_data }}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-download"></i> Descargar
                                         </a>
@@ -213,7 +232,7 @@
             <div class="form-text">Puede seleccionar múltiples imágenes. Las nuevas imágenes se añadirán a las existentes.</div>
         </div>
         <!-- 🔥🔥🔥 USAR IMÁGENES PROCESADAS POR EL BACKEND 🔥🔥🔥 -->
-        {% set imagenes_procesadas = fila.images if fila.images else [] %}
+        {% set imagenes_procesadas = fila._imagenes_unificadas if fila._imagenes_unificadas else [] %}
         {% set imagen_externa = fila._imagen_externa if fila._imagen_externa else None %}
         
         <!-- DEBUG - VERSIÓN SEGURA CONTRA ERRORES DE GENERADOR -->
@@ -253,6 +272,7 @@
         </div>
         {% endif %}
         <input type="hidden" id="documentos_a_eliminar" name="documentos_a_eliminar" value="">
+        <input type="hidden" id="multimedia_a_eliminar" name="multimedia_a_eliminar" value="">
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         <a href="{{ url_for('main.ver_tabla', table_id=catalog._id|string) }}?page={{ ((fila_index // 10) + 1) }}" class="btn btn-secondary">Cancelar</a>
     </form>
@@ -418,29 +438,20 @@ function mostrarImagenErrorEdit(modalImg, modalElement) {
 }
 
 function confirmarEliminarImagen(imagen, indice) {
+  console.log('🔍 confirmarEliminarImagen llamado con:', { imagen, indice });
   imagenActual = imagen;
   indiceActual = indice;
   
   // Mostrar la imagen en el modal de confirmación
   let rutaImagen;
-  console.log('🔍 Imagen recibida:', imagen);
-  console.log('🔍 Tipo de imagen:', typeof imagen);
-  console.log('🔍 Longitud de imagen:', imagen.length);
-  console.log('🔍 Imagen startsWith /admin/s3/:', imagen.startsWith('/admin/s3/'));
-  console.log('🔍 Imagen startsWith /s3/:', imagen.startsWith('/s3/'));
-  console.log('🔍 Imagen includes /s3/:', imagen.includes('/s3/'));
-  console.log('🔍 Imagen includes /admin/s3/:', imagen.includes('/admin/s3/'));
   
   if (imagen.startsWith('http')) {
     rutaImagen = imagen;
-    console.log('✅ URL HTTP detectada:', rutaImagen);
   } else if (imagen.startsWith('/admin/s3/') || imagen.startsWith('/s3/') || imagen.includes('/s3/') || imagen.includes('/admin/s3/')) {
     // URL de S3, usar directamente
     rutaImagen = imagen;
-    console.log('✅ URL S3 detectada:', rutaImagen);
   } else {
     rutaImagen = "/imagenes_subidas/" + imagen;
-    console.log('⚠️  URL local generada:', rutaImagen);
   }
   document.getElementById('imagenAEliminar').src = rutaImagen;
   
@@ -456,18 +467,51 @@ function confirmarEliminarImagen(imagen, indice) {
 }
 
 function eliminarImagen(imagen, indice) {
+  console.log('🗑️ eliminarImagen llamado con:', { imagen, indice });
+  console.log('📋 imagenesAEliminar antes:', imagenesAEliminar);
+  
   // Agregar la imagen al array de imágenes a eliminar
   if (!imagenesAEliminar.includes(imagen)) {
     imagenesAEliminar.push(imagen);
+    console.log('✅ Imagen agregada a la lista de eliminación');
+  } else {
+    console.log('⚠️ Imagen ya estaba en la lista de eliminación');
   }
   
   // Actualizar el campo oculto con las imágenes a eliminar
   document.getElementById('imagenes_a_eliminar').value = JSON.stringify(imagenesAEliminar);
+  console.log('📝 Campo oculto actualizado:', document.getElementById('imagenes_a_eliminar').value);
+  console.log('📋 imagenesAEliminar después:', imagenesAEliminar);
   
   // Ocultar visualmente la imagen eliminada
-  const contenedorImagen = document.querySelectorAll('.position-relative')[indice];
-  if (contenedorImagen) {
-    contenedorImagen.style.display = 'none';
+  console.log('🔍 Buscando botón con data-imagen:', imagen);
+  
+  // Buscar directamente el botón que tiene la imagen específica
+  const botonEliminar = document.querySelector(`button[data-imagen="${imagen}"]`);
+  console.log('🔍 Botón encontrado:', botonEliminar);
+  
+  if (botonEliminar) {
+    // Encontrar el contenedor padre que tiene la clase position-relative
+    const contenedorImagen = botonEliminar.closest('.position-relative');
+    console.log('🔍 Contenedor encontrado:', contenedorImagen);
+    
+    if (contenedorImagen) {
+      contenedorImagen.style.display = 'none';
+      console.log('✅ Imagen ocultada visualmente:', imagen);
+    } else {
+      console.error('❌ No se encontró el contenedor padre para la imagen:', imagen);
+      console.log('🔍 Botón padre:', botonEliminar.parentElement);
+      console.log('🔍 Botón abuelo:', botonEliminar.parentElement?.parentElement);
+    }
+  } else {
+    console.error('❌ No se encontró el botón de eliminar para la imagen:', imagen);
+    console.log('🔍 Todos los botones con data-imagen:', document.querySelectorAll('button[data-imagen]'));
+  }
+  
+  // Limpiar el campo de imágenes del formulario
+  const campoImagenes = document.getElementById('images');
+  if (campoImagenes) {
+    campoImagenes.value = '';
   }
 }
 
@@ -477,6 +521,7 @@ function eliminarImagen(imagen, indice) {
 
 // Array para almacenar documentos a eliminar
 let documentosAEliminar = [];
+let multimediaAEliminar = [];
 
 function confirmarEliminarDocumento(documento, columnIndex) {
   // Configurar el modal de confirmación
@@ -512,5 +557,39 @@ function eliminarDocumento(documento, columnIndex) {
   console.log('Documento marcado para eliminación:', documento);
 }
 
+function confirmarEliminarMultimedia(multimedia, columnIndex) {
+  if (confirm(`¿Estás seguro de que quieres eliminar el archivo multimedia "${multimedia}"?`)) {
+    eliminarMultimedia(multimedia, columnIndex);
+  }
+}
+
+function eliminarMultimedia(multimedia, columnIndex) {
+  // Agregar el multimedia al array de multimedia a eliminar
+  if (!multimediaAEliminar.includes(multimedia)) {
+    multimediaAEliminar.push(multimedia);
+  }
+  
+  // Actualizar el campo oculto con los multimedia a eliminar
+  document.getElementById('multimedia_a_eliminar').value = JSON.stringify(multimediaAEliminar);
+  
+  // Ocultar visualmente el multimedia eliminado
+  const multimediaPreview = document.querySelector('.alert-success');
+  if (multimediaPreview) {
+    multimediaPreview.style.display = 'none';
+  }
+  
+  // Limpiar los campos de multimedia del formulario
+  const campoMultimediaUrl = document.querySelector('input[name="Multimedia_url"]');
+  const campoMultimediaFile = document.querySelector('input[name="Multimedia_file"]');
+  
+  if (campoMultimediaUrl) {
+    campoMultimediaUrl.value = '';
+  }
+  if (campoMultimediaFile) {
+    campoMultimediaFile.value = '';
+  }
+}
+
 </script>
+<!-- Cache buster: {{ range(1000000, 9999999) | random }} -->
 {% endblock %}

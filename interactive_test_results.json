@@ -1,0 +1,34 @@
+{
+  "success_rate": 66.66666666666666,
+  "comparison": {
+    "structure_consistency": false,
+    "functionality_consistency": true,
+    "content_consistency": true,
+    "differences": [
+      "No todas las interfaces son accesibles"
+    ]
+  },
+  "results": {
+    "admin": {
+      "structure": {
+        "status": "requires_auth",
+        "accessible": false,
+        "redirected_to_login": true
+      }
+    },
+    "user": {
+      "structure": {
+        "status": "requires_auth",
+        "accessible": false,
+        "redirected_to_login": true
+      }
+    },
+    "admin_alt": {
+      "structure": {
+        "status": "requires_auth",
+        "accessible": false,
+        "redirected_to_login": true
+      }
+    }
+  }
+}

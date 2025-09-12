@@ -1,5 +1,5 @@
 {% extends "admin/base.html" %}
-
+<!-- eslint-disable -->
 {% block title %}Editar Fila - {{ catalog.name }}{% endblock %}
 
 {% block content %}
@@ -198,6 +198,23 @@
                                 </div>
                             {% endif %}
                             
+                        {% elif header == 'Fecha' %}
+                            <!-- Campo especial para Fecha (columna inteligente) -->
+                            <label for="{{ header }}" class="form-label fw-bold">
+                                <i class="fas fa-calendar-alt"></i> {{ header }}
+                                <span class="badge bg-info ms-2">Auto</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="{{ header }}" name="{{ header }}" 
+                                       value="{{ row[header] if row[header] else '' }}">
+                                <button type="button" class="btn btn-outline-secondary" onclick="setTodayDate('{{ header }}')">
+                                    <i class="fas fa-calendar-day"></i> Hoy
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-magic"></i> <strong>Columna Inteligente:</strong> 
+                                Esta fecha se asigna automáticamente al crear la fila. Puedes modificarla si es necesario.
+                            </div>
                         {% else %}
                             <!-- Campo normal -->
                             <label class="form-label fw-bold">{{ header }}</label>
@@ -308,6 +325,22 @@
 </style>
 
 <script>
+// Función para establecer la fecha de hoy
+function setTodayDate(fieldId) {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    
+    const dateInput = document.getElementById(fieldId);
+    if (dateInput) {
+        dateInput.value = formattedDate;
+        // Mostrar notificación
+        showNotification('Fecha actualizada a hoy', 'success');
+    }
+}
+
 // Función para agregar campos de URL dinámicamente
 function addUrlField(containerId, fieldName) {
     const container = document.getElementById(containerId);

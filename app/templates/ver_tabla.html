@@ -2,118 +2,397 @@
 {% block title %}Ver Tabla{% endblock %}
 
 {% block head %}
-{{ super() }}
+<!-- CSS Version: 2025-01-11-17:55 -->
 <style>
+    /* ===== DISEÑO RESPONSIVE Y ESTÉTICA MEJORADA ===== */
+    
+    /* Contenedor principal responsive */
+    .table-container {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    /* Header de la tabla con gradiente */
+    .table-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-header h2 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.8rem;
+    }
+    
+    .table-header .btn {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        color: #495057;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .table-header .btn:hover {
+        background: rgba(255, 255, 255, 1);
+        border-color: rgba(255, 255, 255, 1);
+        color: #212529;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Tabla responsive con scroll horizontal */
+    .table-responsive-custom {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 0 0 12px 12px;
+        background: #fff;
+    }
+    
+    /* Estilos de la tabla */
+    #tablaFilas {
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 800px;
+    }
+    
+    /* Headers de la tabla */
+    #tablaFilas thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        padding: 1rem 0.75rem;
+        font-weight: 600;
+        color: #495057;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: normal;
+        min-width: 120px;
+        word-wrap: break-word;
+        line-height: 1.3;
+    }
+    
+    /* Headers sortables */
     .sortable {
         cursor: pointer;
         user-select: none;
-    }
-    .sortable:hover {
-        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+        position: relative;
     }
     
-    /* Estilos globales para columnas de acciones e imágenes - aplicados a contenido dinámico */
+    .sortable:hover {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sortable .sort-icon {
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sortable:hover .sort-icon {
+        opacity: 1;
+    }
+    
+    /* Celdas de la tabla */
+    #tablaFilas tbody td {
+        padding: 0.75rem;
+        border: none;
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+        transition: background-color 0.2s ease;
+        word-wrap: break-word;
+        white-space: normal;
+        line-height: 1.4;
+    }
+    
+    #tablaFilas tbody tr:hover td {
+        background-color: #f8f9ff;
+    }
+    
+    /* Columna de número de fila */
+    #tablaFilas tbody td:first-child {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        font-weight: 600;
+        color: #6c757d;
+        text-align: center;
+        width: 60px;
+        min-width: 60px;
+        position: sticky;
+        left: 0;
+        z-index: 5;
+    }
+    
+    /* Columnas de acciones e imágenes */
     #tablaFilas td:nth-last-child(1) {
-        white-space: nowrap !important;
-        width: 200px !important;
-        min-width: 200px !important;
+        white-space: nowrap;
+        width: 200px;
+        min-width: 200px;
+        background: #f8f9fa;
+        position: sticky;
+        right: 0;
+        z-index: 5;
     }
     
     #tablaFilas td:nth-last-child(2) {
-        width: 150px !important;
-        min-width: 150px !important;
+        width: 150px;
+        min-width: 150px;
+        background: #f8f9fa;
+        position: sticky;
+        right: 200px;
+        z-index: 5;
     }
     
-    /* Forzar botones en línea horizontal */
+    /* Botones de acción */
     #tablaFilas td:nth-last-child(1) .btn {
-        display: inline-block !important;
-        margin-right: 5px !important;
+        display: inline-block;
+        margin: 2px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
+        transition: all 0.3s ease;
     }
     
-    #tablaFilas td:nth-last-child(1) form {
-        display: inline-block !important;
+    #tablaFilas td:nth-last-child(1) .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
-    /* Asegurar que las acciones permanezcan en línea */
+    /* Contenedor de acciones */
     #tablaFilas td:last-child {
-        display: flex !important;
-        gap: 5px !important;
-        align-items: center !important;
-        flex-wrap: nowrap !important;
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        flex-wrap: nowrap;
+        justify-content: center;
     }
     
-    /* Estilos para miniaturas de video */
-    .video-thumbnail-container {
-        transition: transform 0.2s ease-in-out;
+    /* Estilos para documentos */
+    .documento-item .btn {
+        border-radius: 20px;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.8rem;
+        margin: 2px;
+        transition: all 0.3s ease;
     }
     
-    .video-thumbnail-container:hover {
+    .documento-item .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Estilos para multimedia */
+    .video-thumbnail-container,
+    .audio-thumbnail {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .video-thumbnail-container:hover,
+    .audio-thumbnail:hover {
         transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
     
-    .video-thumbnail-container video {
+    .video-thumbnail-container video,
+    .audio-thumbnail img {
         border: 2px solid #e9ecef;
-        transition: border-color 0.2s ease-in-out;
+        transition: border-color 0.3s ease;
+        border-radius: 6px;
     }
     
-    .video-thumbnail-container:hover video {
+    .video-thumbnail-container:hover video,
+    .audio-thumbnail:hover img {
         border-color: #007bff;
     }
     
+    /* Play button overlay */
     .play-button-overlay {
-        transition: background-color 0.2s ease-in-out;
+        transition: all 0.3s ease;
+        border-radius: 50%;
     }
     
     .video-thumbnail-container:hover .play-button-overlay {
-        background: rgba(0, 123, 255, 0.8) !important;
+        background: rgba(0, 123, 255, 0.9) !important;
+        transform: scale(1.1);
     }
     
-    /* Estilos para miniaturas de audio */
-    .audio-thumbnail {
-        transition: transform 0.2s ease-in-out;
+    /* Barra de búsqueda mejorada */
+    .search-container {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0;
+        margin-bottom: 0;
+        border-bottom: 1px solid #e9ecef;
     }
     
-    .audio-thumbnail:hover {
-        transform: scale(1.05);
+    .search-container .form-control {
+        border-radius: 25px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
     }
     
-    .audio-thumbnail > div {
-        transition: box-shadow 0.2s ease-in-out;
+    .search-container .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     }
     
-    .audio-thumbnail:hover > div {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    /* Responsive breakpoints */
+    @media (max-width: 768px) {
+        .table-header h2 {
+            font-size: 1.4rem;
+        }
+        
+        .table-header {
+            padding: 1rem;
+        }
+        
+        #tablaFilas thead th {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        #tablaFilas tbody td {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .documento-item .btn {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .table-header h2 {
+            font-size: 1.2rem;
+        }
+        
+        #tablaFilas thead th {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.8rem;
+            min-width: 100px;
+        }
+        
+        #tablaFilas tbody td {
+            padding: 0.4rem 0.25rem;
+            font-size: 0.8rem;
+        }
+        
+        #tablaFilas td:nth-last-child(1) {
+            width: 150px;
+            min-width: 150px;
+        }
+        
+        #tablaFilas td:nth-last-child(2) {
+            width: 120px;
+            min-width: 120px;
+        }
+    }
+    
+    /* Animaciones suaves */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .table-container {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    /* Scrollbar personalizado */
+    .table-responsive-custom::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- TEMPLATE ACTUALIZADO: 2025-01-11-18:00 -->
 <div class="container mt-4">
-  <h2>Tabla: {{ table.name }}</h2>
-  <a href="/dashboard_user" class="btn btn-secondary mb-3">← Volver al panel</a>
-  <table class="table table-bordered mb-4">
-    <tbody>
-    <tr><th>Nombre</th><td>{{ table.name }}</td></tr>
-    <tr><th>Fecha de creación</th><td>{{ table.created_at }}</td></tr>
-    <tr><th>Propietario</th><td>{{ table.owner }}</td></tr>
-    <tr><th>Encabezados</th><td>{{ table.headers|join(', ') }}</td></tr>
-    <tr><th>Número de filas</th><td>{{ table.data|length }}</td></tr>
-    </tbody>
-  </table>
-  
-  {% if session.role == 'admin' or session.username == table.owner %}
-    <a href="{{ url_for('main.agregar_fila', tabla_id=table._id|string) }}" class="btn btn-success mb-3">
-      <i class="bi bi-plus"></i> Agregar Fila
-    </a>
-  {% endif %}
-  
-  <h4>Filas de la tabla</h4>
-  {% if table.data and table.headers %}
-    <div class="mb-3">
-      <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
+  <!-- Header de la tabla con información -->
+  <div class="table-container">
+    <div class="table-header">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2><i class="bi bi-table"></i> {{ table.name }}</h2>
+        <a href="/dashboard_user" class="btn btn-light">
+          <i class="bi bi-arrow-left"></i> Volver al panel
+        </a>
+      </div>
     </div>
-    <div class="table-responsive">
-      <table class="table table-striped table-sm" id="tablaFilas">
+    
+    <!-- Información de la tabla -->
+    <div class="p-3 bg-light">
+      <div class="row">
+        <div class="col-md-6">
+          <small class="text-muted">
+            <i class="bi bi-calendar"></i> <strong>Creada:</strong> {{ table.created_at }}<br>
+            <i class="bi bi-person"></i> <strong>Propietario:</strong> {{ table.owner }}
+          </small>
+        </div>
+        <div class="col-md-6">
+          <small class="text-muted">
+            <i class="bi bi-list-ul"></i> <strong>Columnas:</strong> {{ table.headers|length }}<br>
+            <i class="bi bi-bar-chart"></i> <strong>Filas:</strong> {{ table.data|length }}
+          </small>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Botón de agregar fila -->
+    {% if session.role == 'admin' or session.username == table.owner %}
+      <div class="p-3 border-bottom">
+        <a href="{{ url_for('main.agregar_fila', tabla_id=table._id|string) }}" class="btn btn-success">
+          <i class="bi bi-plus-circle"></i> Agregar Nueva Fila
+        </a>
+      </div>
+    {% endif %}
+    
+    <!-- Barra de búsqueda -->
+    {% if table.data and table.headers %}
+      <div class="search-container">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
+        </div>
+      </div>
+      
+      <!-- Tabla responsive -->
+      <div class="table-responsive-custom">
+        <table class="table table-hover" id="tablaFilas">
         <thead>
           <tr>
             <th style="width: 60px; text-align: center;">#</th>
@@ -140,24 +419,28 @@
                     <!-- Columna Documentación - manejar header específico -->
                     {% set doc_data = row[header] if row[header] is defined else '' %}
                     {% if doc_data %}
-                      <div class="documento-item mb-1">
-                        <!-- Determinar si es URL S3 o archivo local -->
-                        {% if doc_data is string and doc_data.startswith('http') %}
-                          <!-- URL S3 o externa -->
-                          {% if doc_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                            <!-- Archivo en S3 - usar proxy -->
-                            {% set doc_proxy = '/s3/' + doc_data.split('/')[-1] %}
-                            {% set doc_filename = doc_data.split('/')[-1] %}
-                          {% else %}
-                            <!-- URL externa real -->
-                            {% set doc_proxy = doc_data %}
-                            {% set doc_filename = doc_data.split('/')[-1] %}
-                          {% endif %}
-                        {% else %}
-                          <!-- Archivo local -->
-                          {% set doc_proxy = '/static/uploads/' + doc_data %}
-                          {% set doc_filename = doc_data %}
-                        {% endif %}
+                      <!-- Verificar si doc_data es una lista -->
+                      {% if doc_data is iterable and doc_data is not string %}
+                        <!-- Es una lista de documentos -->
+                        {% for doc_item in doc_data %}
+                          <div class="documento-item mb-1">
+                            <!-- Determinar si es URL S3 o archivo local -->
+                            {% if doc_item is string and doc_item.startswith('http') %}
+                              <!-- URL S3 o externa -->
+                              {% if doc_item.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
+                                <!-- Archivo en S3 - usar proxy -->
+                                {% set doc_proxy = '/admin/s3/' + doc_item.split('/')[-1] %}
+                                {% set doc_filename = doc_item.split('/')[-1] %}
+                              {% else %}
+                                <!-- URL externa real -->
+                                {% set doc_proxy = doc_item %}
+                                {% set doc_filename = doc_item.split('/')[-1] %}
+                              {% endif %}
+                            {% else %}
+                              <!-- Archivo local -->
+                              {% set doc_proxy = '/static/uploads/' + doc_item %}
+                              {% set doc_filename = doc_item %}
+                            {% endif %}
                         
                         {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
                         {% if file_extension == 'pdf' %}
@@ -176,19 +459,72 @@
                             {% set doc_type = file_extension.upper() %}
                         {% endif %}
                         
-                        <a href="#" 
-                           class="btn btn-sm btn-outline-info"
-                           onclick="
-                               event.preventDefault(); 
-                               if (typeof showPyWebViewDocument !== 'undefined') { 
-                                   showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                               } else { 
-                                   showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                               }
-                           ">
-                            <i class="fas fa-external-link-alt"></i> {{ doc_type }}
-                        </a>
-                      </div>
+                            <a href="#" 
+                               class="btn btn-sm btn-outline-info"
+                               onclick="
+                                   event.preventDefault(); 
+                                   if (typeof showPyWebViewDocument !== 'undefined') { 
+                                       showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
+                                   } else { 
+                                       showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
+                                   }
+                               ">
+                                <i class="fas fa-external-link-alt"></i> {{ doc_type }}
+                            </a>
+                          </div>
+                        {% endfor %}
+                      {% else %}
+                        <!-- Es un string individual -->
+                        <div class="documento-item mb-1">
+                          <!-- Determinar si es URL S3 o archivo local -->
+                          {% if doc_data is string and doc_data.startswith('http') %}
+                            <!-- URL S3 o externa -->
+                            {% if doc_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
+                              <!-- Archivo en S3 - usar proxy -->
+                              {% set doc_proxy = '/admin/s3/' + doc_data.split('/')[-1] %}
+                              {% set doc_filename = doc_data.split('/')[-1] %}
+                            {% else %}
+                              <!-- URL externa real -->
+                              {% set doc_proxy = doc_data %}
+                              {% set doc_filename = doc_data.split('/')[-1] %}
+                            {% endif %}
+                          {% else %}
+                            <!-- Archivo local -->
+                            {% set doc_proxy = '/static/uploads/' + doc_data %}
+                            {% set doc_filename = doc_data %}
+                          {% endif %}
+                          
+                          {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
+                          {% if file_extension == 'pdf' %}
+                              {% set doc_type = 'PDF' %}
+                          {% elif file_extension == 'txt' %}
+                              {% set doc_type = 'TXT' %}
+                          {% elif file_extension == 'md' %}
+                              {% set doc_type = 'MD' %}
+                          {% elif file_extension in ['doc', 'docx'] %}
+                              {% set doc_type = 'WORD' %}
+                          {% elif file_extension in ['xls', 'xlsx'] %}
+                              {% set doc_type = 'EXCEL' %}
+                          {% elif file_extension == 'rtf' %}
+                              {% set doc_type = 'RTF' %}
+                          {% else %}
+                              {% set doc_type = file_extension.upper() %}
+                          {% endif %}
+                          
+                          <a href="#" 
+                             class="btn btn-sm btn-outline-info"
+                             onclick="
+                                 event.preventDefault(); 
+                                 if (typeof showPyWebViewDocument !== 'undefined') { 
+                                     showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
+                                 } else { 
+                                     showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
+                                 }
+                             ">
+                              <i class="fas fa-external-link-alt"></i> {{ doc_type }}
+                          </a>
+                        </div>
+                      {% endif %}
                     {% else %}
                       <span class="text-muted">-</span>
                     {% endif %}
@@ -202,7 +538,7 @@
                           <!-- URL S3 o externa -->
                           {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
                             <!-- Archivo en S3 - usar proxy -->
-                            {% set media_proxy = '/s3/' + multimedia_data.split('/')[-1] %}
+                            {% set media_proxy = '/admin/s3/' + multimedia_data.split('/')[-1] %}
                             {% set media_filename = multimedia_data.split('/')[-1] %}
                           {% else %}
                             <!-- URL externa real -->
@@ -211,8 +547,15 @@
                           {% endif %}
                         {% else %}
                           <!-- Archivo local -->
-                          {% set media_proxy = '/static/uploads/' + multimedia_data %}
-                          {% set media_filename = multimedia_data %}
+                          {% if multimedia_data.startswith('/static/uploads/') %}
+                            <!-- Ya es una URL completa local -->
+                            {% set media_proxy = multimedia_data %}
+                            {% set media_filename = multimedia_data.split('/')[-1] %}
+                          {% else %}
+                            <!-- Solo nombre de archivo, crear URL local -->
+                            {% set media_proxy = '/static/uploads/' + multimedia_data %}
+                            {% set media_filename = multimedia_data %}
+                          {% endif %}
                         {% endif %}
                         
                         <!-- Mostrar miniatura según tipo de archivo -->
@@ -290,22 +633,22 @@
                         </div>
                       {% elif cell_data is string and cell_data.lower().endswith('.pdf') %}
                         <!-- PDF S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-danger">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads//admin/s3/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-danger">
                           <i class="fas fa-file-pdf"></i> Ver PDF
                         </a>
                       {% elif cell_data is string and cell_data.lower().endswith(('.doc', '.docx')) %}
                         <!-- Word S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-primary">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads//admin/s3/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-primary">
                           <i class="fas fa-file-word"></i> Ver Word
                         </a>
                       {% elif cell_data is string and cell_data.lower().endswith(('.xls', '.xlsx')) %}
                         <!-- Excel S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-success">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads//admin/s3/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-success">
                           <i class="fas fa-file-excel"></i> Ver Excel
                         </a>
                       {% else %}
                         <!-- Otro archivo S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-secondary">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads//admin/s3/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-secondary">
                           <i class="fas fa-file"></i> Ver Archivo
                         </a>
                       {% endif %}
@@ -348,22 +691,22 @@
                         </div>
                       {% elif cell_data.lower().endswith('.pdf') %}
                         <!-- PDF local -->
-                        <a href="#" onclick="showDocumentModal('/static/uploads/{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-danger">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-danger">
                           <i class="fas fa-file-pdf"></i> Ver PDF
                         </a>
                       {% elif cell_data.lower().endswith(('.doc', '.docx')) %}
                         <!-- Word local -->
-                        <a href="#" onclick="showDocumentModal('/static/uploads/{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-primary">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-primary">
                           <i class="fas fa-file-word"></i> Ver Word
                         </a>
                       {% elif cell_data.lower().endswith(('.xls', '.xlsx')) %}
                         <!-- Excel local -->
-                        <a href="#" onclick="showDocumentModal('/static/uploads/{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-success">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-success">
                           <i class="fas fa-file-excel"></i> Ver Excel
                         </a>
                       {% elif cell_data.lower().endswith(('.txt', '.rtf', '.md')) %}
                         <!-- Texto local -->
-                        <a href="#" onclick="showDocumentModal('/static/uploads/{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-secondary">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-secondary">
                           <i class="fas fa-file-alt"></i> Ver Texto
                         </a>
                       {% else %}
@@ -409,14 +752,22 @@
             </tr>
           {% endfor %}
         </tbody>
-      </table>
-    </div>
-    <nav>
-      <ul class="pagination justify-content-center" id="paginacionTabla"></ul>
-    </nav>
-  {% else %}
-    <div class="alert alert-info">Esta tabla no tiene filas aún.</div>
-  {% endif %}
+        </table>
+      </div>
+      
+      <!-- Paginación -->
+      <nav class="p-3">
+        <ul class="pagination justify-content-center mb-0" id="paginacionTabla"></ul>
+      </nav>
+    {% else %}
+      <div class="p-4 text-center">
+        <div class="alert alert-info mb-0">
+          <i class="bi bi-info-circle"></i> Esta tabla no tiene filas aún.
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
 
 <!-- Modal para Documentos -->
 <div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
