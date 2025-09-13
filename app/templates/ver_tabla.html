@@ -2,7 +2,8 @@
 {% block title %}Ver Tabla{% endblock %}
 
 {% block head %}
-<!-- CSS Version: 2025-01-11-17:55 -->
+<!-- CSS Version: 2025-01-12-21:15 - Estilos integrados directamente en HTML -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ver_tabla_improvements.css') }}">
 <style>
     /* ===== DISEÑO RESPONSIVE Y ESTÉTICA MEJORADA ===== */
     
@@ -60,24 +61,150 @@
         border-collapse: separate;
         border-spacing: 0;
         width: 100%;
-        min-width: 800px;
+        min-width: 1600px !important; /* Ajustado para columnas más anchas */
     }
     
-    /* Headers de la tabla */
-    #tablaFilas thead th {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border: none;
-        padding: 1rem 0.75rem;
-        font-weight: 600;
-        color: #495057;
-        text-align: center;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        white-space: normal;
-        min-width: 120px;
-        word-wrap: break-word;
-        line-height: 1.3;
+    /* ANCHOS ESPECÍFICOS PARA COLUMNAS - CON MAYOR ESPECIFICIDAD */
+    .table-responsive-custom #tablaFilas th:nth-child(1),
+    .table-responsive-custom #tablaFilas td:nth-child(1),
+    #tablaFilas th:nth-child(1),
+    #tablaFilas td:nth-child(1) {
+        width: 60px !important;
+        min-width: 60px !important;
+        max-width: 60px !important;
+    }
+    
+    /* Columna Fecha - una sola línea */
+    .table-responsive-custom #tablaFilas th:nth-child(2),
+    .table-responsive-custom #tablaFilas td:nth-child(2),
+    #tablaFilas th:nth-child(2),
+    #tablaFilas td:nth-child(2) {
+        width: 140px !important;
+        min-width: 140px !important;
+        max-width: 140px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        font-family: 'Courier New', monospace !important;
+        font-size: 0.9rem !important;
+        color: #6c757d !important;
+    }
+    
+    /* Columnas Título_* - más anchas */
+    .table-responsive-custom #tablaFilas th:nth-child(3),
+    .table-responsive-custom #tablaFilas td:nth-child(3),
+    .table-responsive-custom #tablaFilas th:nth-child(5),
+    .table-responsive-custom #tablaFilas td:nth-child(5),
+    .table-responsive-custom #tablaFilas th:nth-child(7),
+    .table-responsive-custom #tablaFilas td:nth-child(7),
+    #tablaFilas th:nth-child(3),
+    #tablaFilas td:nth-child(3),
+    #tablaFilas th:nth-child(5),
+    #tablaFilas td:nth-child(5),
+    #tablaFilas th:nth-child(7),
+    #tablaFilas td:nth-child(7) {
+        width: 300px !important;
+        min-width: 300px !important;
+        max-width: 300px !important;
+        word-wrap: break-word !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Columnas Documentación_* - anchos estándar */
+    .table-responsive-custom #tablaFilas th:nth-child(4),
+    .table-responsive-custom #tablaFilas td:nth-child(4),
+    .table-responsive-custom #tablaFilas th:nth-child(6),
+    .table-responsive-custom #tablaFilas td:nth-child(6),
+    .table-responsive-custom #tablaFilas th:nth-child(8),
+    .table-responsive-custom #tablaFilas td:nth-child(8),
+    #tablaFilas th:nth-child(4),
+    #tablaFilas td:nth-child(4),
+    #tablaFilas th:nth-child(6),
+    #tablaFilas td:nth-child(6),
+    #tablaFilas th:nth-child(8),
+    #tablaFilas td:nth-child(8) {
+        width: 150px !important;
+        min-width: 150px !important;
+        max-width: 150px !important;
+        text-align: center !important;
+    }
+    
+    /* Columna Multimedia */
+    .table-responsive-custom #tablaFilas th:nth-child(9),
+    .table-responsive-custom #tablaFilas td:nth-child(9),
+    #tablaFilas th:nth-child(9),
+    #tablaFilas td:nth-child(9) {
+        width: 120px !important;
+        min-width: 120px !important;
+        max-width: 120px !important;
+        text-align: center !important;
+    }
+    
+    /* Columna Imágenes */
+    .table-responsive-custom #tablaFilas th:nth-child(10),
+    .table-responsive-custom #tablaFilas td:nth-child(10),
+    #tablaFilas th:nth-child(10),
+    #tablaFilas td:nth-child(10) {
+        width: 150px !important;
+        min-width: 150px !important;
+        max-width: 150px !important;
+        text-align: center !important;
+    }
+    
+    /* Columna Acciones */
+    .table-responsive-custom #tablaFilas th:nth-child(11),
+    .table-responsive-custom #tablaFilas td:nth-child(11),
+    #tablaFilas th:nth-child(11),
+    #tablaFilas td:nth-child(11) {
+        width: 200px !important;
+        min-width: 200px !important;
+        max-width: 200px !important;
+        position: sticky !important;
+        right: 0 !important;
+        background: #f8f9fa !important;
+        border-left: 2px solid #dee2e6 !important;
+        z-index: 5 !important;
+    }
+    
+    
+    /* Headers de la tabla - MEJORADO CON MAYOR ESPECIFICIDAD */
+    .table-responsive-custom #tablaFilas thead th,
+    #tablaFilas thead th,
+    table#tablaFilas thead th {
+        background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        padding: 1rem 0.75rem !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+        white-space: normal !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+        border-bottom: 2px solid #343a40 !important;
+        min-width: 150px !important;
+        word-wrap: break-word !important;
+        line-height: 1.3 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    /* ESTILOS PARA ICONOS DE ORDENAMIENTO */
+    #tablaFilas thead th .sort-icon {
+        color: #ffffff !important;
+        opacity: 0.7 !important;
+        transition: opacity 0.2s ease !important;
+        margin-left: 8px !important;
+        font-size: 0.9em !important;
+        vertical-align: middle !important;
+    }
+    
+    #tablaFilas thead th:hover .sort-icon {
+        opacity: 1 !important;
     }
     
     /* Headers sortables */
@@ -113,6 +240,7 @@
         word-wrap: break-word;
         white-space: normal;
         line-height: 1.4;
+        text-align: center;
     }
     
     #tablaFilas tbody tr:hover td {
@@ -227,13 +355,29 @@
         transform: scale(1.1);
     }
     
-    /* Barra de búsqueda mejorada */
+    /* Barra de búsqueda mejorada - CON MAYOR ESPECIFICIDAD */
+    .table-container .search-container,
     .search-container {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 0;
-        margin-bottom: 0;
-        border-bottom: 1px solid #e9ecef;
+        width: 100% !important;
+        max-width: 100% !important;
+        background: #f8f9fa !important;
+        padding: 1rem !important;
+        border-radius: 0 !important;
+        margin-bottom: 1.5rem !important;
+        border-bottom: 1px solid #e9ecef !important;
+        box-sizing: border-box !important;
+    }
+    
+    .table-container .search-container .input-group,
+    .search-container .input-group {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .table-container .search-container .form-control,
+    .search-container .form-control {
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .search-container .form-control {
@@ -248,56 +392,326 @@
         box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     }
     
-    /* Responsive breakpoints */
-    @media (max-width: 768px) {
+    /* Responsive breakpoints mejorados */
+    @media (max-width: 992px) {
         .table-header h2 {
-            font-size: 1.4rem;
+            font-size: 1.6rem;
         }
-        
+
         .table-header {
-            padding: 1rem;
+            padding: 1.25rem;
         }
-        
+
         #tablaFilas thead th {
-            padding: 0.75rem 0.5rem;
-            font-size: 0.9rem;
+            padding: 0.875rem 0.625rem;
+            font-size: 0.95rem;
+            min-width: 130px;
         }
-        
+
         #tablaFilas tbody td {
-            padding: 0.5rem;
+            padding: 0.625rem;
             font-size: 0.9rem;
         }
-        
+
         .documento-item .btn {
-            font-size: 0.7rem;
-            padding: 0.25rem 0.6rem;
+            font-size: 0.75rem;
+            padding: 0.3rem 0.7rem;
+        }
+
+        /* Mejorar visibilidad de columnas importantes */
+        #tablaFilas td:nth-last-child(1),
+        #tablaFilas td:nth-last-child(2) {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 2px solid #dee2e6;
         }
     }
-    
+
+    @media (max-width: 768px) {
+        .container {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .table-header h2 {
+            font-size: 1.4rem;
+            text-align: center;
+        }
+
+        .table-header {
+            padding: 1rem 0.75rem;
+            text-align: center;
+        }
+
+        .table-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .table-header .btn {
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        #tablaFilas {
+            font-size: 0.85rem;
+        }
+
+        #tablaFilas thead th {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+            min-width: 100px;
+            word-break: break-word;
+            hyphens: auto;
+        }
+
+        #tablaFilas tbody td {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.85rem;
+            word-break: break-word;
+            hyphens: auto;
+        }
+
+        /* Columnas más anchas en móvil para mejor legibilidad */
+        #tablaFilas td:nth-last-child(1) {
+            width: 180px;
+            min-width: 180px;
+            position: sticky;
+            right: 0;
+            z-index: 6;
+        }
+
+        #tablaFilas td:nth-last-child(2) {
+            width: 140px;
+            min-width: 140px;
+            position: sticky;
+            right: 180px;
+            z-index: 6;
+        }
+
+        /* Mejorar botones de acción en móvil */
+        #tablaFilas td:nth-last-child(1) .btn {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.5rem;
+            margin: 1px;
+            min-width: 60px;
+        }
+
+        .documento-item .btn {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            margin: 1px;
+            word-break: break-word;
+        }
+
+        /* Información de la tabla más compacta */
+        .p-3.bg-light .row .col-md-6 {
+            margin-bottom: 0.5rem;
+        }
+
+        .p-3.bg-light small {
+            font-size: 0.8rem;
+        }
+
+        /* Barra de búsqueda más amigable en móvil */
+        .search-container {
+            padding: 0.75rem;
+        }
+
+        .search-container .input-group {
+            flex-direction: column;
+        }
+
+        .search-container .input-group .input-group-text {
+            border-bottom: none;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .search-container .form-control {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+    }
+
     @media (max-width: 576px) {
+        .container {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .table-container {
+            margin-bottom: 1rem;
+            border-radius: 8px;
+        }
+
         .table-header h2 {
             font-size: 1.2rem;
+            margin-bottom: 0.5rem;
         }
-        
+
+        .table-header {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .table-header .d-flex {
+            gap: 0.75rem;
+        }
+
+        .table-header .btn {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+
+        #tablaFilas {
+            font-size: 0.8rem;
+            min-width: 600px; /* Ajustado para mejor scroll */
+        }
+
         #tablaFilas thead th {
             padding: 0.5rem 0.25rem;
             font-size: 0.8rem;
-            min-width: 100px;
+            min-width: 110px;
+            max-width: 140px;
+            white-space: normal;
+            line-height: 1.2;
         }
-        
+
         #tablaFilas tbody td {
-            padding: 0.4rem 0.25rem;
+            padding: 0.4rem 0.2rem;
             font-size: 0.8rem;
+            min-height: 40px;
+            vertical-align: top;
         }
-        
+
+        /* Primera columna (número) más pequeña */
+        #tablaFilas tbody td:first-child {
+            width: 50px;
+            min-width: 50px;
+            padding: 0.4rem 0.1rem;
+            text-align: center;
+            font-size: 0.75rem;
+        }
+
+        /* Columnas de acciones más anchas para mejor usabilidad */
         #tablaFilas td:nth-last-child(1) {
-            width: 150px;
-            min-width: 150px;
+            width: 200px;
+            min-width: 200px;
         }
-        
+
         #tablaFilas td:nth-last-child(2) {
             width: 120px;
             min-width: 120px;
+        }
+
+        /* Botones más grandes y touch-friendly */
+        #tablaFilas td:nth-last-child(1) .btn {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.8rem;
+            margin: 2px;
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .documento-item .btn {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.6rem;
+            margin: 1px;
+            min-height: 32px;
+        }
+
+        /* Imágenes más pequeñas en móvil */
+        .table-responsive-custom img {
+            max-width: 40px;
+            max-height: 30px;
+        }
+
+        /* Información de tabla más compacta */
+        .p-3.bg-light {
+            padding: 0.75rem !important;
+        }
+
+        .p-3.bg-light .row {
+            margin: 0;
+        }
+
+        .p-3.bg-light .col-md-6 {
+            padding: 0.25rem;
+        }
+
+        .p-3.bg-light small {
+            font-size: 0.75rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Paginación más compacta */
+        .pagination {
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .page-link {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.8rem;
+            min-width: 32px;
+        }
+
+        /* Modales más adaptados a móvil */
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+
+        .modal-content {
+            border-radius: 8px;
+        }
+
+        /* Mejorar scrollbar en móvil */
+        .table-responsive-custom::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .table-responsive-custom::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+        }
+    }
+
+    /* Breakpoint extra pequeño para dispositivos muy pequeños */
+    @media (max-width: 480px) {
+        .table-header h2 {
+            font-size: 1.1rem;
+        }
+
+        #tablaFilas thead th {
+            min-width: 80px;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.2rem;
+        }
+
+        #tablaFilas tbody td {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.15rem;
+        }
+
+        #tablaFilas td:nth-last-child(1) {
+            width: 180px;
+            min-width: 180px;
+        }
+
+        #tablaFilas td:nth-last-child(2) {
+            width: 100px;
+            min-width: 100px;
+        }
+
+        .btn {
+            font-size: 0.75rem !important;
+            padding: 0.3rem 0.5rem !important;
+        }
+
+        .search-container .form-control {
+            font-size: 0.9rem;
         }
     }
     
@@ -381,37 +795,41 @@
     
     <!-- Barra de búsqueda -->
     {% if table.data and table.headers %}
-      <div class="search-container">
-        <div class="input-group">
+      <div class="search-container" style="width: 100% !important; max-width: 100% !important; margin-bottom: 1.5rem !important;">
+        <div class="input-group" style="width: 100% !important; max-width: 100% !important;">
           <span class="input-group-text">
             <i class="bi bi-search"></i>
           </span>
-          <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
+          <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla..." style="width: 100% !important; max-width: 100% !important;">
         </div>
       </div>
       
       <!-- Tabla responsive -->
       <div class="table-responsive-custom">
-        <table class="table table-hover" id="tablaFilas">
+        <table class="table table-hover" id="tablaFilas" style="min-width: 1600px !important; width: 100% !important;">
         <thead>
           <tr>
-            <th style="width: 60px; text-align: center;">#</th>
+            <th style="width: 60px; text-align: center; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important;">#</th>
             {% for header in table.headers %}
-              <th class="sortable" data-column="{{ loop.index }}" title="Haz clic para ordenar" style="cursor: pointer; user-select: none;">
-                {{ header }} 
-                <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.5; margin-left: 5px;"></i>
+              <th class="sortable" data-column="{{ loop.index }}" title="Haz clic para ordenar" style="cursor: pointer; user-select: none; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important; text-align: center !important; position: sticky !important; top: 0 !important; z-index: 10 !important; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; border-bottom: 2px solid #343a40 !important;">
+                {% if header.startswith('Documentación') %}
+                  {{ header.replace('Documentación', 'Documento') }}
+                {% else %}
+                  {{ header }}
+                {% endif %}
+                <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.7; margin-left: 8px; color: #ffffff !important;"></i>
               </th>
             {% endfor %}
-            <th style="width: 150px; min-width: 150px;">Imágenes</th>
+            <th style="width: 150px; min-width: 150px; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important; text-align: center !important; position: sticky !important; top: 0 !important; z-index: 10 !important; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; border-bottom: 2px solid #343a40 !important;">Imágenes</th>
             {% if session.role == 'admin' or session.username == table.owner %}
-              <th style="width: 200px; min-width: 200px;">Acciones</th>
+              <th style="width: 200px; min-width: 200px; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important; text-align: center !important; position: sticky !important; top: 0 !important; z-index: 10 !important; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; border-bottom: 2px solid #343a40 !important;">Acciones</th>
             {% endif %}
           </tr>
         </thead>
         <tbody>
           {% for row in table.data %}
             <tr data-row-index="{{ loop.index0 }}">
-              <td style="text-align: center; font-weight: bold; color: #6c757d;">{{ loop.index }}</td>
+              <td style="text-align: center; font-weight: bold; color: #6c757d; width: 60px !important; min-width: 60px !important; max-width: 60px !important;">{{ loop.index }}</td>
               {% for header in table.headers %}
                 <td>
                   {% set cell_data = row[header] if row[header] is defined and row[header] is not none else '' %}
@@ -720,7 +1138,7 @@
                   {% endif %}
                 </td>
               {% endfor %}
-              <td style="width: 150px; min-width: 150px;">
+              <td style="width: 150px !important; min-width: 150px !important; max-width: 150px !important; text-align: center !important;">
                 {% if row.imagen_urls and row.imagen_urls|length > 0 %}
                   <div class="d-flex flex-wrap gap-1">
                     {% for img_url in row.imagen_urls %}
@@ -736,12 +1154,12 @@
                 {% endif %}
               </td>
               {% if session.role == 'admin' or session.username == table.owner %}
-                <td style="white-space: nowrap; width: 200px; min-width: 200px;">
+                <td style="white-space: nowrap; width: 200px; min-width: 200px; position: sticky !important; right: 0 !important; background: #f8f9fa !important; border-left: 2px solid #dee2e6 !important; z-index: 5 !important;">
                   <div class="d-flex gap-1">
                     <a href="{{ url_for('main.editar_fila', tabla_id=table._id|string, fila_index=loop.index0) }}" class="btn btn-sm btn-warning">
                       <i class="bi bi-pencil"></i> Editar
                     </a>
-                    <form method="POST" action="{{ url_for('main.delete_row', tabla_id=table._id|string, fila_index=loop.index0) }}" style="display:inline;">
+                    <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=table._id|string, row_index=loop.index0) }}" style="display:inline;">
                       <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que quieres eliminar esta fila?');">
                         <i class="bi bi-trash"></i> Eliminar
                       </button>
@@ -905,8 +1323,8 @@ let paginaActual = 1;
              }
              
              // Actualizar formulario de eliminar - buscar por diferentes patrones
-             let formEliminar = fila.querySelector('form[action*="delete_row"]') || 
-                               fila.querySelector('form[action*="delete-row"]') ||
+             let formEliminar = fila.querySelector('form[action*="delete-row"]') || 
+                               fila.querySelector('form[action*="delete_row"]') ||
                                fila.querySelector('form[action*="catalogs"]');
              
              if (formEliminar) {
@@ -914,7 +1332,7 @@ let paginaActual = 1;
                  // Extraer tabla_id del action actual
                  let tabla_id = formEliminar.action.match(/([a-f0-9]{24})/)?.[1];
                  if (tabla_id) {
-                     const nuevaAction = `/delete_row/${tabla_id}/${indiceReal}`;
+                     const nuevaAction = `/catalogs/delete-row/${tabla_id}/${indiceReal}`;
                      formEliminar.action = nuevaAction;
                      console.log(`✅ "${nombreFila}" - Formulario eliminar: ${nuevaAction}`);
                  } else {
@@ -1114,224 +1532,8 @@ function filtrarFilas() {
      }
      
      console.log('✅ Inicialización completa');
-    
-    // 🔧 DEFINIR DOWNLOAD COMO FUNCIÓN GLOBAL
-    window.downloadImage = downloadImage;
-    console.log('🌍 downloadImage definida globalmente:', typeof window.downloadImage);
 });
 
-// Funciones globales para el modal
-function mostrarImagenModal(imagenUrl) {
-    console.log('🖼️ Mostrando imagen:', imagenUrl);
-    
-    // Asegurar que el DOM esté completamente cargado
-    if (document.readyState !== 'complete') {
-        console.log('🔄 DOM no completamente cargado, esperando...');
-        setTimeout(() => mostrarImagenModal(imagenUrl), 100);
-        return;
-    }
-    
-    const modalElement = document.getElementById('imagenModalVerTabla');
-    const modalImg = document.getElementById('imagenModalVerTablaSrc');
-    const spinner = document.getElementById('imagenVerTablaSpinner');
-    
-    // 🔄 CACHE-BUSTER: VERSIÓN 2024-08-19-12:00 🔄
-    
-    console.log('🔍 Elementos del modal:', {
-        modalElement: modalElement ? 'encontrado' : 'NO ENCONTRADO',
-        modalImg: modalImg ? 'encontrado' : 'NO ENCONTRADO', 
-        spinner: spinner ? 'encontrado' : 'NO ENCONTRADO',
-        documentReady: document.readyState
-    });
-    
-    if (!modalElement) {
-        console.error('❌ Modal element no encontrado');
-        console.log('🔍 Intentando abrir imagen en nueva ventana como fallback');
-        window.open(imagenUrl, '_blank');
-        return;
-    }
-    
-    if (!modalImg || !spinner) {
-        console.error('❌ Elementos internos del modal no encontrados');
-        alert('Error: Elementos del modal no disponibles'); // Fallback temporal
-        return;
-    }
-    
-    // Verificar si Bootstrap está disponible
-    if (typeof bootstrap === 'undefined') {
-        console.error('❌ Bootstrap no está disponible');
-        // Fallback: mostrar en nueva ventana
-        window.open(imagenUrl, '_blank');
-        return;
-    }
-    
-    console.log('✅ Creando modal de Bootstrap...');
-    const modal = new bootstrap.Modal(modalElement);
-    
-    // Mostrar modal y spinner, ocultar imagen
-    console.log('📱 Mostrando modal...');
-    modal.show();
-    spinner.style.display = 'block';
-    modalImg.style.display = 'none';
-    modalImg.src = '';
-    
-    // Intentar cargar la imagen original
-    const img = new Image();
-    
-    img.onload = function() {
-        console.log('✅ Imagen cargada exitosamente');
-        modalImg.src = imagenUrl;
-        modalImg.style.display = 'block';
-        spinner.style.display = 'none';
-    };
-    
-                img.onerror = function() {
-        console.log('❌ Error cargando imagen original, intentando alternativas...');
-        // Si la imagen original falla, intentar alternativas
-        verificarImagenAlternativa(imagenUrl, modalImg, spinner);
-    };
-    
-    img.src = imagenUrl;
-}
 
-function verificarImagenAlternativa(imagenUrlOriginal, modalImg, spinner) {
-    // Extraer el nombre del archivo de la URL
-    let nombreArchivo = imagenUrlOriginal.split('/').pop();
-    
-    // Si la URL original es de S3, intentar local
-    if (imagenUrlOriginal.includes('amazonaws.com')) {
-        console.log('🔄 Intentando versión local...');
-        const urlLocal = `/imagenes_subidas/${nombreArchivo}`;
-        probarImagen(urlLocal, modalImg, spinner, () => {
-            // Si local también falla, mostrar imagen de error
-            mostrarImagenError(modalImg, spinner);
-        });
-    } 
-    // Si la URL original es local, intentar S3
-    else if (imagenUrlOriginal.includes('/static/uploads/')) {
-        console.log('🔄 Intentando versión S3...');
-        const urlS3 = `/admin/s3/${nombreArchivo}`;
-        probarImagen(urlS3, modalImg, spinner, () => {
-            // Si S3 también falla, mostrar imagen de error
-            mostrarImagenError(modalImg, spinner);
-        });
-    }
-    // Si la URL original es /admin/s3/, intentar local
-    else if (imagenUrlOriginal.includes('/admin/s3/')) {
-        console.log('🔄 Intentando versión local (desde S3)...');
-        const urlLocal = `/imagenes_subidas/${nombreArchivo}`;
-        probarImagen(urlLocal, modalImg, spinner, () => {
-            // Si local también falla, mostrar imagen de error
-            mostrarImagenError(modalImg, spinner);
-        });
-    }
-    // Si la URL original es /imagenes_subidas/, intentar S3
-    else if (imagenUrlOriginal.includes('/imagenes_subidas/')) {
-        console.log('🔄 Intentando versión S3 (desde local)...');
-        const urlS3 = `/admin/s3/${nombreArchivo}`;
-        probarImagen(urlS3, modalImg, spinner, () => {
-            // Si S3 también falla, mostrar imagen de error
-            mostrarImagenError(modalImg, spinner);
-        });
-    }
-    // Si no es ninguna de las anteriores, mostrar error directamente
-    else {
-        mostrarImagenError(modalImg, spinner);
-    }
-}
-
-function probarImagen(url, modalImg, spinner, onError) {
-    const img = new Image();
-    
-    img.onload = function() {
-        console.log('✅ Imagen alternativa cargada:', url);
-        modalImg.src = url;
-        modalImg.style.display = 'block';
-        spinner.style.display = 'none';
-    };
-    
-    img.onerror = function() {
-        console.log('❌ Imagen alternativa también falló:', url);
-        onError();
-    };
-    
-    img.src = url;
-}
-
-function mostrarImagenError(modalImg, spinner) {
-    console.log('❌ Mostrando imagen de error');
-    // Crear una imagen de error simple
-    const canvas = document.createElement('canvas');
-    canvas.width = 300;
-    canvas.height = 200;
-    const ctx = canvas.getContext('2d');
-    
-    // Fondo gris claro
-    ctx.fillStyle = '#f8f9fa';
-    ctx.fillRect(0, 0, 300, 200);
-    
-    // Borde
-    ctx.strokeStyle = '#dee2e6';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(0, 0, 300, 200);
-    
-    // Icono de error (X)
-    ctx.strokeStyle = '#dc3545';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(100, 60);
-    ctx.lineTo(200, 140);
-    ctx.moveTo(200, 60);
-    ctx.lineTo(100, 140);
-    ctx.stroke();
-    
-    // Texto
-    ctx.fillStyle = '#6c757d';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Imagen no disponible', 150, 170);
-    
-    modalImg.src = canvas.toDataURL();
-    modalImg.style.display = 'block';
-    spinner.style.display = 'none';
-}
-
-// 🌍 FUNCIÓN GLOBAL PARA DESCARGA DE IMÁGENES
-function downloadImage() {
-    console.log('🔽 🔽 🔽 FUNCIÓN DOWNLOADIMAGE EJECUTADA 🔽 🔽 🔽');
-    console.log('🔍 Buscando elemento con ID: imagenModalVerTablaSrc');
-    const modalImg = document.getElementById('imagenModalVerTablaSrc');
-    console.log('🖼️ Elemento encontrado:', modalImg);
-    
-    if (!modalImg) {
-        console.error('❌ No se encontró el elemento de imagen del modal');
-        alert('Error: No se puede descargar la imagen');
-        return;
-    }
-    
-    if (!modalImg.src || modalImg.src.startsWith('data:')) {
-        console.error('❌ Imagen no válida para descarga:', modalImg.src);
-        alert('Error: La imagen no se puede descargar');
-        return;
-    }
-    
-    console.log('📥 Descargando imagen:', modalImg.src);
-    
-    const link = document.createElement('a');
-    link.href = modalImg.src;
-    
-    // Extraer nombre del archivo de la URL o usar nombre por defecto
-    const urlParts = modalImg.src.split('/');
-    const fileName = urlParts[urlParts.length - 1] || 'imagen_catalogo.jpg';
-    link.download = fileName;
-    
-    // Ejecutar descarga
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log('✅ Descarga iniciada:', fileName);
-}
 </script>
 {% endblock %}
