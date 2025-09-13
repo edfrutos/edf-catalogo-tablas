@@ -855,9 +855,16 @@
                                 {% set doc_filename = doc_item.split('/')[-1] %}
                               {% endif %}
                             {% else %}
-                              <!-- Archivo local -->
-                              {% set doc_proxy = '/static/uploads/' + doc_item %}
-                              {% set doc_filename = doc_item %}
+                              <!-- Verificar si es archivo S3 por el patrón del nombre -->
+                              {% if doc_item is string and '_' in doc_item and doc_item.split('_')[0]|length == 32 %}
+                                <!-- Archivo S3 - patrón: hash_32_chars_nombre_archivo -->
+                                {% set doc_proxy = '/admin/s3/' + doc_item %}
+                                {% set doc_filename = doc_item %}
+                              {% else %}
+                                <!-- Archivo local -->
+                                {% set doc_proxy = '/static/uploads/' + doc_item %}
+                                {% set doc_filename = doc_item %}
+                              {% endif %}
                             {% endif %}
                         
                         {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
@@ -946,6 +953,70 @@
                     {% else %}
                       <span class="text-muted">-</span>
                     {% endif %}
+                    
+                    <!-- Procesar campos adicionales que empiecen con Documentación (Documentación_2, Documentación_file, etc.) -->
+                    {% for field_name, field_value in row.items() %}
+                      {% if field_name.startswith('Documentación') and field_name != header and field_value %}
+                        <div class="documento-item mb-1">
+                          <!-- Procesar como string (no lista) -->
+                          {% set doc_item = field_value %}
+                          <!-- Determinar si es URL S3 o archivo local -->
+                          {% if doc_item is string and doc_item.startswith('http') %}
+                            <!-- URL S3 o externa -->
+                            {% if doc_item.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
+                              <!-- Archivo en S3 - usar proxy -->
+                              {% set doc_proxy = '/admin/s3/' + doc_item.split('/')[-1] %}
+                              {% set doc_filename = doc_item.split('/')[-1] %}
+                            {% else %}
+                              <!-- URL externa real -->
+                              {% set doc_proxy = doc_item %}
+                              {% set doc_filename = doc_item.split('/')[-1] %}
+                            {% endif %}
+                          {% else %}
+                            <!-- Verificar si es archivo S3 por el patrón del nombre -->
+                            {% if doc_item is string and '_' in doc_item and doc_item.split('_')[0]|length == 32 %}
+                              <!-- Archivo S3 - patrón: hash_32_chars_nombre_archivo -->
+                              {% set doc_proxy = '/admin/s3/' + doc_item %}
+                              {% set doc_filename = doc_item %}
+                            {% else %}
+                              <!-- Archivo local -->
+                              {% set doc_proxy = '/static/uploads/' + doc_item %}
+                              {% set doc_filename = doc_item %}
+                            {% endif %}
+                          {% endif %}
+                          
+                          {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
+                          {% if file_extension == 'pdf' %}
+                              {% set doc_type = 'PDF' %}
+                          {% elif file_extension == 'txt' %}
+                              {% set doc_type = 'TXT' %}
+                          {% elif file_extension == 'md' %}
+                              {% set doc_type = 'MD' %}
+                          {% elif file_extension in ['doc', 'docx'] %}
+                              {% set doc_type = 'WORD' %}
+                          {% elif file_extension in ['xls', 'xlsx'] %}
+                              {% set doc_type = 'EXCEL' %}
+                          {% elif file_extension == 'rtf' %}
+                              {% set doc_type = 'RTF' %}
+                          {% else %}
+                              {% set doc_type = file_extension.upper() %}
+                          {% endif %}
+                          
+                          <a href="#" 
+                             class="btn btn-sm btn-outline-info"
+                             onclick="
+                                 event.preventDefault(); 
+                                 if (typeof showPyWebViewDocument !== 'undefined') { 
+                                     showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
+                                 } else { 
+                                     showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
+                                 }
+                             ">
+                              <i class="fas fa-external-link-alt"></i> {{ doc_type }}
+                          </a>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
                   {% elif header == 'Multimedia' %}
                     <!-- Columna Multimedia - manejar archivo multimedia -->
                     {% set multimedia_data = row[header] if row[header] is defined else '' %}
