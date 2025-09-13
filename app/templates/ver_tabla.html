@@ -1019,7 +1019,7 @@
                       <span class="text-muted">-</span>
                     {% endif %}
                   {% elif cell_data and cell_data is string and cell_data.startswith('http') %}
-                    {% if cell_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or cell_data.startswith('/admin/s3/') %}
+                    {% if cell_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or cell_data.startswith('/admin/s3/') or cell_data.startswith('/static/uploads/') %}
                       <!-- Archivo S3 -->
                       {% if cell_data is string and cell_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
                         <!-- Imagen S3 -->
@@ -1051,22 +1051,22 @@
                         </div>
                       {% elif cell_data is string and cell_data.lower().endswith('.pdf') %}
                         <!-- PDF S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads//admin/s3/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-danger">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-danger">
                           <i class="fas fa-file-pdf"></i> Ver PDF
                         </a>
                       {% elif cell_data is string and cell_data.lower().endswith(('.doc', '.docx')) %}
                         <!-- Word S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads//admin/s3/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-primary">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-primary">
                           <i class="fas fa-file-word"></i> Ver Word
                         </a>
                       {% elif cell_data is string and cell_data.lower().endswith(('.xls', '.xlsx')) %}
                         <!-- Excel S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads//admin/s3/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-success">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-success">
                           <i class="fas fa-file-excel"></i> Ver Excel
                         </a>
                       {% else %}
                         <!-- Otro archivo S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads//admin/s3/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-secondary">
+                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-secondary">
                           <i class="fas fa-file"></i> Ver Archivo
                         </a>
                       {% endif %}
