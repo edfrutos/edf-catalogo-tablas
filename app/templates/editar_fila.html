@@ -275,6 +275,7 @@
         <input type="hidden" id="multimedia_a_eliminar" name="multimedia_a_eliminar" value="">
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         <a href="{{ url_for('main.ver_tabla', table_id=catalog._id|string) }}?page={{ ((fila_index // 10) + 1) }}" class="btn btn-secondary">Cancelar</a>
+        <button type="button" class="btn btn-danger ms-2" onclick="confirmarEliminarFila('{{ tabla_id }}', {{ fila_index }})">Eliminar Fila</button>
     </form>
 </div>
 
@@ -337,6 +338,27 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" class="btn btn-danger" id="btnConfirmarEliminarDocumento">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación para eliminar fila -->
+<div class="modal fade" id="eliminarFilaModal" tabindex="-1" aria-labelledby="eliminarFilaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eliminarFilaModalLabel">Confirmar Eliminación de Fila</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Está seguro que desea eliminar esta fila? Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="delete-row-form" method="post">
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+        </form>
       </div>
     </div>
   </div>
@@ -523,6 +545,26 @@ function eliminarImagen(imagen, indice) {
 let documentosAEliminar = [];
 let multimediaAEliminar = [];
 
+function removeDocument(header, doc, element) {
+  console.log(`Marcando para eliminar documento: ${doc} de la columna ${header}`);
+
+  // Agregar el documento al array de documentos a eliminar
+  if (!documentosAEliminar.includes(doc)) {
+    documentosAEliminar.push(doc);
+  }
+
+  // Actualizar el campo oculto
+  document.getElementById('documentos_a_eliminar').value = JSON.stringify(documentosAEliminar);
+
+  // Ocultar visualmente el elemento del documento
+  const documentContainer = element.closest('.alert');
+  if (documentContainer) {
+    documentContainer.style.display = 'none';
+  }
+
+  console.log('Documento marcado para eliminación:', doc);
+}
+
 function confirmarEliminarDocumento(documento, columnIndex) {
   // Configurar el modal de confirmación
   document.getElementById('documentoAEliminar').textContent = documento;
@@ -588,6 +630,13 @@ function eliminarMultimedia(multimedia, columnIndex) {
   if (campoMultimediaFile) {
     campoMultimediaFile.value = '';
   }
+}
+
+function confirmarEliminarFila(tablaId, filaIndex) {
+  const form = document.getElementById('delete-row-form');
+  form.action = `/delete_row/${tablaId}/${filaIndex}`;
+  const modal = new bootstrap.Modal(document.getElementById('eliminarFilaModal'));
+  modal.show();
 }
 
 </script>
