@@ -233,7 +233,16 @@ def serve_s3_proxy(filename):
 
     except ClientError as e:
         current_app.logger.error(f"Error descargando archivo S3 {filename}: {e}")
-        return jsonify({"error": "Archivo no encontrado en S3"}), 404
+        # Si el archivo no existe en S3, intentar servir desde ruta local
+        current_app.logger.info(f"[S3-PROXY] 🔄 Archivo no encontrado en S3, intentando ruta local: /static/uploads/{filename}")
+        try:
+            from flask import send_from_directory
+            import os
+            uploads_dir = os.path.join(current_app.root_path, '..', 'uploads')
+            return send_from_directory(uploads_dir, filename)
+        except Exception as local_error:
+            current_app.logger.error(f"Error sirviendo archivo local {filename}: {local_error}")
+            return jsonify({"error": "Archivo no encontrado en S3 ni localmente"}), 404
     except Exception as e:
         current_app.logger.error(
             f"Error inesperado sirviendo archivo S3 {filename}: {e}"
