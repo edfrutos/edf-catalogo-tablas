@@ -1,4 +1,4 @@
-the# Requirements para Python 3.10
+# Requirements para Python 3.10
 # Archivo específico para builds con Python 3.10
 
 # Core Flask y dependencias web
