@@ -1,5 +1,5 @@
 /* ===== MEJORAS ESPECÍFICAS PARA VER_TABLA.HTML ===== */
-/* Versión: 2025-01-12-21:00 - Ajustes basados en captura visual */
+/* Versión: 2025-01-16-12:15 - Headers corregidos para mostrar en línea */
 
 /* 1. HEADERS CON COLOR DE FONDO DESTACADO */
 #tablaFilas thead th {
@@ -12,7 +12,7 @@
     position: sticky !important;
     top: 0 !important;
     z-index: 10 !important;
-    white-space: normal !important;
+    white-space: nowrap !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
     border-bottom: 2px solid #343a40 !important;
@@ -276,10 +276,9 @@
 
 /* Asegurar que el texto y el icono estén alineados */
 #tablaFilas thead th {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-wrap: nowrap !important;
+    display: table-cell !important;
+    vertical-align: middle !important;
+    text-align: center !important;
 }
 
 /* 10. MEJORAS EN EL CONTENIDO DE FECHA */

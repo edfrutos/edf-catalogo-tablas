@@ -60,8 +60,8 @@ def get_unified_image_urls(row_data: Dict[str, Any]) -> List[str]:
         if not img or img == "N/A":
             continue
 
-        if isinstance(img, str) and img.startswith("http"):
-            # URL externa - usar directamente
+        if isinstance(img, str) and (img.startswith("http") or img.startswith("/admin/s3/")):
+            # URL externa o S3 - usar directamente
             image_urls.append(img)
         else:
             # Archivo local - implementar fallback optimizado Local → S3 → None

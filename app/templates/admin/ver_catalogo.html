@@ -2,24 +2,28 @@
 {% block title %}Ver Tabla{% endblock %}
 
 {% block head %}
+<!-- CSS Version: 2025-01-16-12:45 - Sistema híbrido S3/local corregido -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ver_tabla_improvements.css') }}">
 <style>
-    /* ===== ESTILOS SIMPLIFICADOS PARA ADMIN ===== */
+    /* ===== DISEÑO RESPONSIVE Y ESTÉTICA MEJORADA ===== */
     
-    /* Contenedor principal */
+    /* Contenedor principal responsive */
     .table-container {
         background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         overflow: hidden;
         margin-bottom: 2rem;
+        min-width: 1420px;
     }
     
-    /* Header de la tabla */
+    /* Header de la tabla con gradiente */
     .table-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 1.5rem;
-        border-radius: 8px 8px 0 0;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
     
     .table-header h2 {
@@ -33,27 +37,109 @@
         border: 1px solid rgba(255, 255, 255, 0.8);
         color: #495057;
         font-weight: 500;
+        transition: all 0.3s ease;
     }
     
     .table-header .btn:hover {
         background: rgba(255, 255, 255, 1);
+        border-color: rgba(255, 255, 255, 1);
         color: #212529;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
-    /* Tabla responsive */
+    /* Tabla responsive con scroll horizontal */
     .table-responsive-custom {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 0 0 12px 12px;
         background: #fff;
+        min-width: 1420px;
     }
     
     /* Estilos de la tabla */
-    #tablaFilas {
+        #tablaFilas {
         margin: 0;
         border-collapse: separate;
         border-spacing: 0;
         width: 100%;
-        min-width: 1200px;
+        min-width: 1420px;
     }
+    
+    /* ANCHOS ESPECÍFICOS PARA COLUMNAS */
+    #tablaFilas th:nth-child(1),
+    #tablaFilas td:nth-child(1) {
+        width: 60px;
+        min-width: 60px;
+        max-width: 60px;
+    }
+    
+    #tablaFilas th:nth-child(2),
+    #tablaFilas td:nth-child(2) {
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    #tablaFilas th:nth-child(3),
+    #tablaFilas td:nth-child(3),
+    #tablaFilas th:nth-child(5),
+    #tablaFilas td:nth-child(5),
+    #tablaFilas th:nth-child(7),
+    #tablaFilas td:nth-child(7) {
+        width: 300px;
+        min-width: 300px;
+        max-width: 300px;
+        word-wrap: break-word;
+        line-height: 1.4;
+    }
+    
+    #tablaFilas th:nth-child(4),
+    #tablaFilas td:nth-child(4),
+    #tablaFilas th:nth-child(6),
+    #tablaFilas td:nth-child(6),
+    #tablaFilas th:nth-child(8),
+    #tablaFilas td:nth-child(8) {
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+        text-align: center;
+    }
+    
+    #tablaFilas th:nth-child(9),
+    #tablaFilas td:nth-child(9) {
+        width: 120px;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+    }
+    
+    #tablaFilas th:nth-child(10),
+    #tablaFilas td:nth-child(10) {
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+        text-align: center;
+    }
+    
+    #tablaFilas th:nth-child(11),
+    #tablaFilas td:nth-child(11) {
+        width: 200px;
+        min-width: 200px;
+        max-width: 200px;
+        position: sticky;
+        right: 0;
+        background: #f8f9fa;
+        border-left: 2px solid #dee2e6;
+        z-index: 5;
+    }
+    
     
     /* Headers de la tabla */
     #tablaFilas thead th {
@@ -68,28 +154,30 @@
         z-index: 10;
         white-space: nowrap;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        border-bottom: 2px solid #343a40;
+        min-width: 150px;
+        word-wrap: break-word;
+        line-height: 1.3;
+        display: table-cell;
+        vertical-align: middle;
     }
     
-    /* Headers sortables */
+    #tablaFilas thead th .sort-icon {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+        margin-left: 8px;
+        font-size: 0.9em;
+        vertical-align: middle;
+    }
+    
+    #tablaFilas thead th:hover .sort-icon {
+        opacity: 1;
+    }
+    
     .sortable {
         cursor: pointer;
         user-select: none;
-        transition: background-color 0.3s ease;
-    }
-    
-    .sortable:hover {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    }
-    
-    .sort-icon {
-        color: #ffffff;
-        opacity: 0.7;
-        margin-left: 8px;
-        font-size: 0.9em;
-    }
-    
-    .sortable:hover .sort-icon {
-        opacity: 1;
     }
     
     /* Celdas de la tabla */
@@ -98,100 +186,360 @@
         border: none;
         border-bottom: 1px solid #f1f3f4;
         vertical-align: middle;
-        text-align: center;
+        transition: background-color 0.2s ease;
         word-wrap: break-word;
+        white-space: normal;
+        line-height: 1.4;
+        text-align: center;
     }
     
     #tablaFilas tbody tr:hover td {
         background-color: #f8f9ff;
     }
     
-    /* Columna de número de fila */
     #tablaFilas tbody td:first-child {
-        background: #f8f9fa;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         font-weight: 600;
         color: #6c757d;
-        text-align: center;
-        width: 60px;
-        min-width: 60px;
         position: sticky;
         left: 0;
         z-index: 5;
     }
     
-    /* Columna de acciones */
-    #tablaFilas td:last-child {
+    #tablaFilas td:nth-last-child(1) {
         white-space: nowrap;
-        width: 200px;
-        min-width: 200px;
-        background: #f8f9fa;
-        position: sticky;
-        right: 0;
-        z-index: 5;
-        border-left: 2px solid #dee2e6;
     }
     
-    /* Botones de acción */
-    #tablaFilas td:last-child .btn {
-        margin: 2px;
-        font-size: 0.8rem;
-        padding: 0.4rem 0.6rem;
+    #tablaFilas td:last-child {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        flex-wrap: nowrap;
+        justify-content: center;
     }
     
-    /* Estilos para documentos */
     .documento-item .btn {
         border-radius: 20px;
         font-size: 0.75rem;
         padding: 0.3rem 0.8rem;
         margin: 2px;
+        transition: all 0.3s ease;
     }
     
-    /* Barra de búsqueda */
-    .search-container {
-        width: 100%;
-        background: #f8f9fa;
-        padding: 1rem;
-        border-bottom: 1px solid #e9ecef;
+    .documento-item .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .video-thumbnail-container,
+    .audio-thumbnail {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative; 
+        display: inline-block;
+    }
+    
+    .video-thumbnail-container:hover,
+    .audio-thumbnail:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .multimedia-thumbnail {
+        width: 50px;
+        height: 38px;
+        object-fit: cover;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 2px solid #e9ecef;
+        transition: border-color 0.3s ease;
+    }
+
+    .video-thumbnail-container:hover .multimedia-thumbnail {
+        border-color: #007bff;
+    }
+    
+    .play-button-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+
+    .play-overlay-icon {
+        font-size: 8px;
+    }
+    
+    .video-thumbnail-container:hover .play-button-overlay {
+        background: rgba(0, 123, 255, 0.9);
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    .audio-thumb-container {
+        display: inline-block;
+        text-align: center;
+    }
+
+    .audio-thumb-icon-wrapper {
+        width: 50px;
+        height: 38px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .audio-thumb-icon {
+        color: white;
+        font-size: 14px;
+    }
+
+    .image-gallery-thumbnail {
+        width: 35px;
+        height: 35px;
+        object-fit: cover;
+        border-radius: 3px;
     }
     
     .search-container .form-control {
         border-radius: 25px;
         border: 2px solid #e9ecef;
         padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
     }
     
     .search-container .form-control:focus {
         border-color: #667eea;
         box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     }
+
+    .modal-spinner-container {
+        min-height: 200px;
+    }
+
+    .modal-img-display {
+        max-width: 100%;
+        max-height: 70vh;
+        display: none;
+    }
+
+    .form-inline-display {
+        display: inline;
+    }
     
-    /* Responsive */
+    @media (max-width: 992px) {
+        .table-header h2 {
+            font-size: 1.6rem;
+        }
+
+        .table-header {
+            padding: 1.25rem;
+        }
+
+        #tablaFilas thead th {
+            padding: 0.875rem 0.625rem;
+            font-size: 0.95rem;
+            min-width: 130px;
+        }
+
+        #tablaFilas tbody td {
+            padding: 0.625rem;
+            font-size: 0.9rem;
+        }
+
+        .documento-item .btn {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.7rem;
+        }
+
+        #tablaFilas td:nth-last-child(1),
+        #tablaFilas td:nth-last-child(2) {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 2px solid #dee2e6;
+        }
+    }
+
     @media (max-width: 768px) {
+        .container {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
         .table-header h2 {
             font-size: 1.4rem;
+            text-align: center;
         }
-        
+
+        .table-header {
+            padding: 1rem 0.75rem;
+            text-align: center;
+        }
+
+        .table-header .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .table-header .btn {
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
         #tablaFilas {
             font-size: 0.85rem;
         }
-        
+
         #tablaFilas thead th {
             padding: 0.75rem 0.5rem;
             font-size: 0.85rem;
+            min-width: 100px;
+            word-break: break-word;
+            hyphens: auto;
         }
-        
+
         #tablaFilas tbody td {
             padding: 0.5rem 0.25rem;
             font-size: 0.85rem;
+            word-break: break-word;
+            hyphens: auto;
         }
+
+        #tablaFilas td:nth-last-child(1) {
+            width: 180px;
+            min-width: 180px;
+            right: 0;
+            z-index: 6;
+        }
+
+        #tablaFilas td:nth-last-child(2) {
+            width: 140px;
+            min-width: 140px;
+            right: 180px;
+            z-index: 6;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .container {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .table-container {
+            margin-bottom: 1rem;
+            border-radius: 8px;
+        }
+
+        .table-header h2 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .table-header {
+            padding: 0.75rem 0.5rem;
+        }
+
+        #tablaFilas {
+            font-size: 0.8rem;
+            min-width: 600px;
+        }
+
+        #tablaFilas thead th {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.8rem;
+            min-width: 110px;
+            max-width: 140px;
+            white-space: normal;
+            line-height: 1.2;
+        }
+
+        #tablaFilas tbody td {
+            padding: 0.4rem 0.2rem;
+            font-size: 0.8rem;
+            min-height: 40px;
+            vertical-align: top;
+        }
+
+        #tablaFilas tbody td:first-child {
+            width: 50px;
+            min-width: 50px;
+            padding: 0.4rem 0.1rem;
+            font-size: 0.75rem;
+        }
+
+        #tablaFilas td:nth-last-child(1) {
+            width: 200px;
+            min-width: 200px;
+        }
+
+        #tablaFilas td:nth-last-child(2) {
+            width: 120px;
+            min-width: 120px;
+        }
+        
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+
+        .modal-content {
+            border-radius: 8px;
+        }
+    }
+    
+    /* Animaciones suaves */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .table-container {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    /* Scrollbar personalizado */
+    .table-responsive-custom::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- TEMPLATE ACTUALIZADO: 2025-01-11-18:00 -->
-<div class="container mt-4">
-  <!-- Header de la tabla con información -->
+<!-- TEMPLATE ACTUALIZADO: 2025-09-15 -->
+<div class="container mt-4" style="min-width: 1420px;">
   <div class="table-container">
     <div class="table-header">
       <div class="d-flex justify-content-between align-items-center">
@@ -199,10 +547,9 @@
         <a href="{{ return_url or url_for('admin.dashboard_admin') }}" class="btn btn-light">
           <i class="bi bi-arrow-left"></i> Volver
         </a>
-      </div>
+            </div>
     </div>
     
-    <!-- Información de la tabla -->
     <div class="p-3 bg-light">
       <div class="row">
         <div class="col-md-6">
@@ -220,484 +567,217 @@
       </div>
     </div>
     
-    <!-- Botón de agregar fila -->
     {% if session.role == 'admin' %}
       <div class="p-3 border-bottom">
         <a href="{{ url_for('admin.editar_catalogo_admin', collection_source=catalog.collection_source, catalog_id=catalog._id_str) }}" class="btn btn-success">
           <i class="bi bi-plus-circle"></i> Editar Catálogo
-        </a>
-      </div>
+                </a>
+            </div>
     {% endif %}
     
-    <!-- Barra de búsqueda -->
     {% if catalog.data and catalog.headers %}
-      <div class="search-container" style="width: 100% !important; max-width: 100% !important; margin-bottom: 1.5rem !important;">
-        <div class="input-group" style="width: 100% !important; max-width: 100% !important;">
+      <div class="search-container p-3">
+        <div class="input-group">
           <span class="input-group-text">
             <i class="bi bi-search"></i>
           </span>
-          <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla..." style="width: 100% !important; max-width: 100% !important;">
+          <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
         </div>
       </div>
       
-      <!-- Tabla responsive -->
       <div class="table-responsive-custom">
         <table class="table table-hover" id="tablaFilas">
-        <thead>
-          <tr>
+                    <thead>
+                        <tr>
             <th>#</th>
-            {% for header in catalog.headers %}
+            {%- for header in catalog.headers -%}
               <th class="sortable" data-column="{{ loop.index }}" title="Haz clic para ordenar">
                 {% if header.startswith('Documentación') %}
-                  {{ header.replace('Documentación', 'Documento') }}
-                {% else %}
-                  {{ header }}
-                {% endif %}
+                  {{ header.replace('Documentación', 'Doc') }}
+                                    {% else %}
+                                        {{ header }}
+                                    {% endif %}
                 <i class="bi bi-chevron-expand sort-icon"></i>
-              </th>
-            {% endfor %}
+                                </th>
+            {%- endfor -%}
             <th>Imágenes</th>
-            {% if session.role == 'admin' %}
+            {%- if session.role == 'admin' -%}
               <th>Acciones</th>
-            {% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in catalog.data %}
+            {%- endif -%}
+                        </tr>
+                    </thead>
+                    <tbody>
+          {%- for row in catalog.data -%}
             <tr data-row-index="{{ loop.index0 }}">
               <td>{{ loop.index }}</td>
-              {% for header in catalog.headers %}
+              {%- for header in catalog.headers -%}
                 <td>
-                  {% set cell_data = row[header] if row[header] is defined and row[header] is not none else '' %}
-                  {% if header.startswith('Documentación') %}
-                    <!-- Columna Documentación - manejar header específico -->
-                    {% set doc_data = row[header] if row[header] is defined else '' %}
+                  {% set cell_data = row.get(header, '') %}
+                  
+                  {# === LÓGICA UNIFICADA PARA ARCHIVOS === #}
+                  {% if header.lower().startswith('document') %}
+                    {% set doc_data = row.get(header, '') %}
                     {% if doc_data %}
-                      <!-- Verificar si doc_data es una lista -->
                       {% if doc_data is iterable and doc_data is not string %}
-                        <!-- Es una lista de documentos -->
                         {% for doc_item in doc_data %}
                           <div class="documento-item mb-1">
-                            <!-- Determinar si es URL S3 o archivo local -->
                             {% if doc_item is string and doc_item.startswith('http') %}
-                              <!-- URL S3 o externa -->
                               {% if doc_item.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                                <!-- Archivo en S3 - usar proxy -->
                                 {% set doc_proxy = '/admin/s3/' + doc_item.split('/')[-1] %}
                                 {% set doc_filename = doc_item.split('/')[-1] %}
                               {% else %}
-                                <!-- URL externa real -->
                                 {% set doc_proxy = doc_item %}
                                 {% set doc_filename = doc_item.split('/')[-1] %}
                               {% endif %}
                             {% else %}
-                              <!-- Verificar si es archivo S3 por el patrón del nombre -->
+                              {# Sistema híbrido: S3 primero, luego local #}
                               {% if doc_item is string and '_' in doc_item and doc_item.split('_')[0]|length == 32 %}
-                                <!-- Archivo S3 - patrón: hash_32_chars_nombre_archivo -->
+                                {# Archivo S3 - patrón: hash_32_chars_nombre_archivo #}
                                 {% set doc_proxy = '/admin/s3/' + doc_item %}
                                 {% set doc_filename = doc_item %}
-                              {% elif doc_item.startswith('/static/uploads/') %}
-                                <!-- Archivo local con ruta completa -->
-                                {% set doc_proxy = doc_item.replace('/static/uploads/', '/admin/s3/') %}
-                                {% set doc_filename = doc_item.split('/')[-1] %}
-                              {% elif doc_item.startswith('/') %}
-                                <!-- Ya es una URL completa local o proxy -->
-                                {% set doc_proxy = doc_item %}
-                                {% set doc_filename = doc_item.split('/')[-1] %}
                               {% else %}
-                                <!-- Solo nombre de archivo, crear URL local -->
+                                {# Archivo local - buscar en app/static/uploads/ #}
                                 {% set doc_proxy = '/static/uploads/' + doc_item %}
                                 {% set doc_filename = doc_item %}
                               {% endif %}
                             {% endif %}
-                        
-                        {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
-                        {% if file_extension == 'pdf' %}
-                            {% set doc_type = 'PDF' %}
-                        {% elif file_extension == 'txt' %}
-                            {% set doc_type = 'TXT' %}
-                        {% elif file_extension == 'md' %}
-                            {% set doc_type = 'MD' %}
-                        {% elif file_extension in ['doc', 'docx'] %}
-                            {% set doc_type = 'WORD' %}
-                        {% elif file_extension in ['xls', 'xlsx'] %}
-                            {% set doc_type = 'EXCEL' %}
-                        {% elif file_extension == 'rtf' %}
-                            {% set doc_type = 'RTF' %}
-                        {% else %}
-                            {% set doc_type = file_extension.upper() %}
-                        {% endif %}
-                        
-                            <a href="#" 
+                            
+                            {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
+                            {% if file_extension == 'pdf' %}
+                              {% set doc_type = 'PDF' %}
+                            {% elif file_extension == 'txt' %}
+                              {% set doc_type = 'TXT' %}
+                            {% elif file_extension == 'md' %}
+                              {% set doc_type = 'MD' %}
+                            {% elif file_extension == 'doc' or file_extension == 'docx' %}
+                              {% set doc_type = 'DOC' %}
+                                                {% else %}
+                              {% set doc_type = file_extension.upper() %}
+                                                {% endif %}
+                            
+                                                                                <a href="#" 
                                class="btn btn-sm btn-outline-info"
-                               onclick="
-                                   event.preventDefault(); 
-                                   if (typeof showPyWebViewDocument !== 'undefined') { 
-                                       showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                   } else { 
-                                       showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                   }
-                               ">
-                                <i class="fas fa-external-link-alt"></i> {{ doc_type }}
+                               onclick="event.preventDefault(); showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}');">
+                              <i class="fas fa-file-{{ 'pdf' if file_extension == 'pdf' else 'alt' }}"></i> {{ doc_type }}
                             </a>
                           </div>
                         {% endfor %}
-                      {% else %}
-                        <!-- Es un string individual -->
+                                                                            {% else %}
                         <div class="documento-item mb-1">
-                          <!-- Determinar si es URL S3 o archivo local -->
                           {% if doc_data is string and doc_data.startswith('http') %}
-                            <!-- URL S3 o externa -->
                             {% if doc_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                              <!-- Archivo en S3 - usar proxy -->
                               {% set doc_proxy = '/admin/s3/' + doc_data.split('/')[-1] %}
                               {% set doc_filename = doc_data.split('/')[-1] %}
                             {% else %}
-                              <!-- URL externa real -->
                               {% set doc_proxy = doc_data %}
                               {% set doc_filename = doc_data.split('/')[-1] %}
                             {% endif %}
                           {% else %}
-                            <!-- Archivo local o proxy S3 -->
-                              {% if doc_data.startswith('/') %}
-                                {% set doc_proxy = doc_data %}
-                                {% set doc_filename = doc_data.split('/')[-1] %}
-                              {% else %}
-                                {% set doc_proxy = '/static/uploads/' + doc_data %}
-                                {% set doc_filename = doc_data %}
-                              {% endif %}
+                            {# Sistema híbrido: S3 primero, luego local #}
+                            {% if doc_data is string and '_' in doc_data and doc_data.split('_')[0]|length == 32 %}
+                              {# Archivo S3 - patrón: hash_32_chars_nombre_archivo #}
+                              {% set doc_proxy = '/admin/s3/' + doc_data %}
+                              {% set doc_filename = doc_data %}
+                            {% else %}
+                              {# Archivo local - buscar en app/static/uploads/ #}
+                              {% set doc_proxy = '/static/uploads/' + doc_data %}
+                              {% set doc_filename = doc_data %}
+                            {% endif %}
                           {% endif %}
                           
                           {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
                           {% if file_extension == 'pdf' %}
-                              {% set doc_type = 'PDF' %}
+                            {% set doc_type = 'PDF' %}
                           {% elif file_extension == 'txt' %}
-                              {% set doc_type = 'TXT' %}
+                            {% set doc_type = 'TXT' %}
                           {% elif file_extension == 'md' %}
-                              {% set doc_type = 'MD' %}
-                          {% elif file_extension in ['doc', 'docx'] %}
-                              {% set doc_type = 'WORD' %}
-                          {% elif file_extension in ['xls', 'xlsx'] %}
-                              {% set doc_type = 'EXCEL' %}
-                          {% elif file_extension == 'rtf' %}
-                              {% set doc_type = 'RTF' %}
-                          {% else %}
-                              {% set doc_type = file_extension.upper() %}
-                          {% endif %}
+                            {% set doc_type = 'MD' %}
+                          {% elif file_extension == 'doc' or file_extension == 'docx' %}
+                            {% set doc_type = 'DOC' %}
+                                                                {% else %}
+                            {% set doc_type = file_extension.upper() %}
+                                                                {% endif %}
                           
-                          <a href="#" 
-                             class="btn btn-sm btn-outline-info"
-                             onclick="
-                                 event.preventDefault(); 
-                                 if (typeof showPyWebViewDocument !== 'undefined') { 
-                                     showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                 } else { 
-                                     showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                 }
-                             ">
-                              <i class="fas fa-external-link-alt"></i> {{ doc_type }}
+                                                            <a href="#" 
+                                                               class="btn btn-sm btn-outline-info"
+                             onclick="event.preventDefault(); showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}');">
+                            <i class="fas fa-file-{{ 'pdf' if file_extension == 'pdf' else 'alt' }}"></i> {{ doc_type }}
                           </a>
                         </div>
-                      {% endif %}
-                    {% else %}
+                                                        {% endif %}
+                                                    {% else %}
                       <span class="text-muted">-</span>
-                    {% endif %}
-                    
-                    <!-- Procesar campos adicionales que empiecen con Documentación (Documentación_2, Documentación_file, etc.) -->
-                    {% for field_name, field_value in row.items() %}
-                      {% if field_name.startswith('Documentación') and field_name != header and field_value %}
-                        <div class="documento-item mb-1">
-                          <!-- Procesar como string (no lista) -->
-                          {% set doc_item = field_value %}
-                          <!-- Determinar si es URL S3 o archivo local -->
-                          {% if doc_item is string and doc_item.startswith('http') %}
-                            <!-- URL S3 o externa -->
-                            {% if doc_item.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                              <!-- Archivo en S3 - usar proxy -->
-                              {% set doc_proxy = '/admin/s3/' + doc_item.split('/')[-1] %}
-                              {% set doc_filename = doc_item.split('/')[-1] %}
-                            {% else %}
-                              <!-- URL externa real -->
-                              {% set doc_proxy = doc_item %}
-                              {% set doc_filename = doc_item.split('/')[-1] %}
-                            {% endif %}
-                          {% else %}
-                            <!-- Verificar si es archivo S3 por el patrón del nombre -->
-                            {% if doc_item is string and '_' in doc_item and doc_item.split('_')[0]|length == 32 %}
-                              <!-- Archivo S3 - patrón: hash_32_chars_nombre_archivo -->
-                              {% set doc_proxy = '/admin/s3/' + doc_item %}
-                              {% set doc_filename = doc_item %}
-                            {% elif doc_item is string and doc_item.startswith('/static/uploads/') %}
-                              <!-- Archivo local con ruta completa -->
-                              {% set doc_proxy = doc_item.replace('/static/uploads/', '/admin/s3/') %}
-                              {% set doc_filename = doc_item.split('/')[-1] %}
-                            {% else %}
-                              <!-- Archivo local -->
-                              {% set doc_proxy = '/static/uploads/' + doc_item %}
-                              {% set doc_filename = doc_item %}
-                            {% endif %}
-                          {% endif %}
-                          
-                          {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
-                          {% if file_extension == 'pdf' %}
-                              {% set doc_type = 'PDF' %}
-                          {% elif file_extension == 'txt' %}
-                              {% set doc_type = 'TXT' %}
-                          {% elif file_extension == 'md' %}
-                              {% set doc_type = 'MD' %}
-                          {% elif file_extension in ['doc', 'docx'] %}
-                              {% set doc_type = 'WORD' %}
-                          {% elif file_extension in ['xls', 'xlsx'] %}
-                              {% set doc_type = 'EXCEL' %}
-                          {% elif file_extension == 'rtf' %}
-                              {% set doc_type = 'RTF' %}
-                          {% else %}
-                              {% set doc_type = file_extension.upper() %}
-                          {% endif %}
-                          
-                          <a href="#" 
-                             class="btn btn-sm btn-outline-info"
-                             onclick="
-                                 event.preventDefault(); 
-                                 if (typeof showPyWebViewDocument !== 'undefined') { 
-                                     showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                 } else { 
-                                     showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                 }
-                             ">
-                              <i class="fas fa-external-link-alt"></i> {{ doc_type }}
-                          </a>
-                        </div>
-                      {% endif %}
-                    {% endfor %}
+                                        {% endif %}
+                  
                   {% elif header == 'Multimedia' %}
-                    <!-- Columna Multimedia - manejar archivo multimedia -->
-                    {% set multimedia_data = row[header] if row[header] is defined else '' %}
-                    {% if multimedia_data %}
+                    {% if row.get('multimedia_url') %}
+                      {% set media_proxy = row.get('multimedia_url') %}
+                      {% set media_filename = row.get('multimedia_filename', '') %}
                       <div class="multimedia-preview">
-                        <!-- Determinar si es URL S3 o archivo local -->
-                        {% if multimedia_data is string and multimedia_data.startswith('http') %}
-                          <!-- URL S3 o externa -->
-                          {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                            <!-- Archivo en S3 - usar proxy -->
-                            {% set media_proxy = '/admin/s3/' + multimedia_data.split('/')[-1] %}
-                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                          {% else %}
-                            <!-- URL externa real -->
-                            {% set media_proxy = multimedia_data %}
-                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                          {% endif %}
-                        {% else %}
-                              <!-- Archivo local o proxy S3 -->
-                              {% if multimedia_data.startswith('/') %}
-                                <!-- Ya es una URL completa local o proxy -->
-                                {% set media_proxy = multimedia_data %}
-                                {% set media_filename = multimedia_data.split('/')[-1] %}
-                              {% else %}
-                                <!-- Solo nombre de archivo, crear URL local -->
-                                {% set media_proxy = '/static/uploads/' + multimedia_data %}
-                                {% set media_filename = multimedia_data %}
-                              {% endif %}
-                        {% endif %}
-                        
-                        <!-- Mostrar miniatura según tipo de archivo -->
                         {% if media_filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                          <!-- Imagen -->
-                          <img src="{{ media_proxy }}" 
-                               alt="Multimedia" 
-                               style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                               onclick="showImageModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
-                               onmouseover="this.style.opacity='0.8'"
-                               onmouseout="this.style.opacity='1'">
-                        {% elif media_filename.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
-                          <!-- Video -->
-                          <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
-                            <video 
-                              src="{{ media_proxy }}" 
-                              style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                              onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
-                              onmouseover="this.style.opacity='0.8'"
-                              onmouseout="this.style.opacity='1'"
-                              preload="metadata">
-                            </video>
-                            <div class="play-button-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                              <i class="fas fa-play" style="font-size: 8px;"></i>
-                            </div>
-                          </div>
+                          <img src="{{ media_proxy }}" alt="Multimedia" class="multimedia-thumbnail" onclick="showImageModal('{{ media_proxy }}', '{{ media_filename }}');">
+                        {% elif media_filename.lower().endswith(('.mp4', '.avi', 'mov', '.wmv')) %}
+                          <div class="video-thumb-container" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}');">
+                            <video src="{{ media_proxy }}" class="multimedia-thumbnail" preload="metadata"></video>
+                            <div class="play-button-overlay"><i class="fas fa-play play-overlay-icon"></i></div>
+                                                        </div>
                         {% elif media_filename.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                          <!-- Audio -->
-                          <div class="audio-thumbnail" style="display: inline-block; text-align: center;">
-                            <div style="width: 50px; height: 38px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;">
-                              <i class="fas fa-music" style="color: white; font-size: 14px;"></i>
-                            </div>
-                            <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
+                          <div class="audio-thumb-container" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}');">
+                            <div class="audio-thumb-icon-wrapper"><i class="fas fa-music audio-thumb-icon"></i></div>
                           </div>
                         {% else %}
-                          <!-- Otro tipo de archivo -->
-                          <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-file"></i> Ver Archivo
-                          </a>
-                        {% endif %}
+                          <a href="#" onclick="showDocumentModal('{{ media_proxy }}', '{{ media_filename }}');" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file"></i> Ver</a>
+                                                    {% endif %}
                       </div>
-                    {% else %}
-                      <span class="text-muted">-</span>
-                    {% endif %}
-                  {% elif cell_data and cell_data is string and cell_data.startswith('http') %}
-                    {% if cell_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or cell_data.startswith('/admin/s3/') or cell_data.startswith('/static/uploads/') %}
-                      <!-- Archivo S3 -->
-                      {% if cell_data is string and cell_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                        <!-- Imagen S3 -->
-                        <a href="#" onclick="showImageModal('{{ cell_data }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-info">
-                          <i class="fas fa-image"></i> Ver Imagen
-                        </a>
-                      {% elif cell_data is string and cell_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
-                        <!-- Video S3 -->
-                        <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
-                          <video 
-                            src="{{ cell_data }}" 
-                            style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                            onclick="showMultimediaModal('{{ cell_data }}', '{{ cell_data.split('/')[-1] }}'); return false;"
-                            onmouseover="this.style.opacity='0.8'"
-                            onmouseout="this.style.opacity='1'"
-                            preload="metadata">
-                          </video>
-                          <div class="play-button-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                            <i class="fas fa-play" style="font-size: 8px;"></i>
-                          </div>
-                        </div>
-                      {% elif cell_data is string and cell_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                        <!-- Audio S3 -->
-                        <div class="audio-thumbnail" style="display: inline-block; text-align: center;">
-                          <div style="width: 50px; height: 38px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showMultimediaModal('{{ cell_data }}', '{{ cell_data.split('/')[-1] }}'); return false;">
-                            <i class="fas fa-music" style="color: white; font-size: 14px;"></i>
-                          </div>
-                          <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
-                        </div>
-                      {% elif cell_data is string and cell_data.lower().endswith('.pdf') %}
-                        <!-- PDF S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-danger">
-                          <i class="fas fa-file-pdf"></i> Ver PDF
-                        </a>
-                      {% elif cell_data is string and cell_data.lower().endswith(('.doc', '.docx')) %}
-                        <!-- Word S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-primary">
-                          <i class="fas fa-file-word"></i> Ver Word
-                        </a>
-                      {% elif cell_data is string and cell_data.lower().endswith(('.xls', '.xlsx')) %}
-                        <!-- Excel S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-success">
-                          <i class="fas fa-file-excel"></i> Ver Excel
-                        </a>
-                      {% else %}
-                        <!-- Otro archivo S3 -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data.replace('/static/uploads/', '/admin/s3/') }}', '{{ cell_data.split('/')[-1] }}'); return false;" class="btn btn-sm btn-outline-secondary">
-                          <i class="fas fa-file"></i> Ver Archivo
-                        </a>
-                      {% endif %}
-                    {% else %}
-                      <!-- URL externa -->
-                      <a href="{{ cell_data }}" target="_blank" class="btn btn-sm btn-outline-warning">
-                        <i class="fas fa-external-link-alt"></i> Enlace Externo
-                      </a>
-                    {% endif %}
-                  {% else %}
-                    <!-- Contenido normal o archivo local -->
-                    {% if cell_data and cell_data is string %}
-                      {% if cell_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                        <!-- Imagen local -->
-                        <a href="#" onclick="showImageModal('/static/uploads/{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-info">
-                          <i class="fas fa-image"></i> Ver Imagen
-                        </a>
-                      {% elif cell_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
-                        <!-- Video local -->
-                        <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
-                          <video 
-                            src="/static/uploads/{{ cell_data }}" 
-                            style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                            onclick="showMultimediaModal('/static/uploads/{{ cell_data }}', '{{ cell_data }}'); return false;"
-                            onmouseover="this.style.opacity='0.8'"
-                            onmouseout="this.style.opacity='1'"
-                            preload="metadata">
-                          </video>
-                          <div class="play-button-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                            <i class="fas fa-play" style="font-size: 8px;"></i>
-                          </div>
-                        </div>
-                      {% elif cell_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                        <!-- Audio local -->
-                        <div class="audio-thumbnail" style="display: inline-block; text-align: center;">
-                          <div style="width: 50px; height: 38px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showMultimediaModal('/static/uploads/{{ cell_data }}', '{{ cell_data }}'); return false;">
-                            <i class="fas fa-music" style="color: white; font-size: 14px;"></i>
-                          </div>
-                          <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
-                        </div>
-                      {% elif cell_data.lower().endswith('.pdf') %}
-                        <!-- PDF local -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-danger">
-                          <i class="fas fa-file-pdf"></i> Ver PDF
-                        </a>
-                      {% elif cell_data.lower().endswith(('.doc', '.docx')) %}
-                        <!-- Word local -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-primary">
-                          <i class="fas fa-file-word"></i> Ver Word
-                        </a>
-                      {% elif cell_data.lower().endswith(('.xls', '.xlsx')) %}
-                        <!-- Excel local -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-success">
-                          <i class="fas fa-file-excel"></i> Ver Excel
-                        </a>
-                      {% elif cell_data.lower().endswith(('.txt', '.rtf', '.md')) %}
-                        <!-- Texto local -->
-                        <a href="#" onclick="showDocumentModal('{{ cell_data }}', '{{ cell_data }}'); return false;" class="btn btn-sm btn-outline-secondary">
-                          <i class="fas fa-file-alt"></i> Ver Texto
-                        </a>
-                      {% else %}
-                        <!-- Contenido normal -->
-                        {{ cell_data }}
-                      {% endif %}
-                    {% else %}
-                      <!-- Contenido normal -->
-                      {{ cell_data }}
-                    {% endif %}
-                  {% endif %}
-                </td>
-              {% endfor %}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+
+                  {% elif cell_data is string and cell_data.startswith('http') %}
+                    <a href="{{ cell_data }}" target="_blank" class="btn btn-sm btn-outline-warning">
+                      <i class="fas fa-external-link-alt"></i> Enlace
+                    </a>
+
+                                            {% else %}
+                    {{ cell_data }}
+                                            {% endif %}
+                                        </td>
+              {%- endfor -%}
               <td>
                 {% if row.imagen_urls and row.imagen_urls|length > 0 %}
-                  <div class="d-flex flex-wrap gap-1">
+                  <div class="d-flex flex-wrap justify-content-center gap-1">
                     {% for img_url in row.imagen_urls %}
                       <a href="#" onclick="showImageModal('{{ img_url }}', '{{ img_url.split('/')[-1] }}'); return false;">
-                        <img src="{{ img_url }}" alt="Imagen" style="width:35px; height:35px; object-fit:cover; border-radius: 3px;"
+                        <img src="{{ img_url }}" alt="Imagen" class="image-gallery-thumbnail"
                              onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzUiIGhlaWdodD0iMzUiIHZpZXdCb3g9IjAgMCAzNSAzNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjM1IiBoZWlnaHQ9IjM1IiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNy41IDEwQzE5LjQzIDEwIDIxIDExLjU3IDIxIDEzLjVDMjEgMTUuNDMgMTkuNDMgMTcgMTcuNSAxN0MxNS41NyAxNyAxNCAxNS40MyAxNCAxMy41QzE0IDExLjU3IDE1LjU3IDEwIDE3LjUgMTBaIiBmaWxsPSIjQ0NDQ0NDIi8+CjxwYXRoIGQ9Ik0xMCAyMkMyMCAyMiAyMCAyMiAyMCAyMkgxMEMxMCAyMiAxMCAyMiAxMCAyMloiIGZpbGw9IiNDQ0NDQ0MiLz4KPC9zdmc+'; this.style.opacity='0.5';">
                       </a>
-                    {% endfor %}
-                    <small class="text-muted w-100">({{ row.imagen_urls|length }} imágenes)</small>
+                                            {% endfor %}
+                    <small class="text-muted w-100 mt-1">({{ row.imagen_urls|length }} imágenes)</small>
                   </div>
-                {% else %}
+                                        {% else %}
                   <span class="text-muted">Sin imágenes</span>
-                {% endif %}
-              </td>
-              {% if session.role == 'admin' %}
-                <td>
-                  <div class="d-flex gap-1">
+                                        {% endif %}
+                                    </td>
+              {%- if session.role == 'admin' -%}
+                                    <td>
+                  <div class="d-flex gap-1 justify-content-center">
                     <a href="{{ url_for('admin.editar_fila_admin', collection_source=catalog.collection_source, catalog_id=catalog._id_str, row_index=loop.index0) }}" class="btn btn-sm btn-warning">
                       <i class="bi bi-pencil"></i> Editar
-                    </a>
-                    <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id_str, row_index=loop.index0) }}" style="display:inline;">
+                                        </a>
+                    <form method="POST" action="{{ url_for('catalogs.delete_row', catalog_id=catalog._id_str, row_index=loop.index0) }}" class="form-inline-display">
                       <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que quieres eliminar esta fila?');">
-                        <i class="bi bi-trash"></i> Eliminar
-                      </button>
-                    </form>
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
                   </div>
-                </td>
-              {% endif %}
-            </tr>
-          {% endfor %}
-        </tbody>
-        </table>
-      </div>
+                                    </td>
+              {%- endif -%}
+                                </tr>
+          {%- endfor -%}
+                    </tbody>
+                </table>
+            </div>
       
-      <!-- Paginación -->
       <nav class="p-3">
         <ul class="pagination justify-content-center mb-0" id="paginacionTabla"></ul>
       </nav>
@@ -708,7 +788,7 @@
         </div>
       </div>
     {% endif %}
-  </div>
+    </div>
 </div>
 
 <!-- Modal para Documentos -->
@@ -757,22 +837,22 @@
   </div>
 </div>
 
-<!-- Modal para visualizar imágenes - VERSIÓN ACTUALIZADA -->
-<div class="modal fade" id="imagenModalVerTabla" tabindex="-1" aria-labelledby="imagenModalVerTablaLabel" aria-hidden="true" data-version="2024-08-19">
+<!-- Modal para visualizar imágenes -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="imagenModalVerTablaLabel">
+        <h5 class="modal-title" id="imageModalLabel">
           <i class="bi bi-image"></i> Visualizar Imagen
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
-          <div class="spinner-border text-primary" id="imagenVerTablaSpinner" role="status">
+        <div class="d-flex justify-content-center align-items-center modal-spinner-container">
+          <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando imagen...</span>
           </div>
-          <img id="imagenModalVerTablaSrc" src="" alt="Imagen del catálogo" style="max-width: 100%; max-height: 70vh; display: none;">
+          <img id="modalImage" src="" alt="Imagen del catálogo" class="modal-img-display">
         </div>
       </div>
       <div class="modal-footer">
@@ -789,277 +869,134 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}&t={{ range(1, 100000) | random }}&ts={{ range(1, 999999) | random }}"></script>
-<script>
 
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-    
-const filas = Array.from(document.querySelectorAll('#tablaFilas tbody tr'));
-    
-const filasPorPagina = 10;
-let paginaActual = 1;
+    const filas = Array.from(document.querySelectorAll('#tablaFilas tbody tr'));
+    const filasPorPagina = 10;
+    let paginaActual = 1;
     let ordenActual = { columna: -1, ascendente: true };
 
-         function mostrarPagina(pagina) {
-         console.log(`📄 Mostrando página ${pagina}`);
-         const inicio = (pagina - 1) * filasPorPagina;
-         const fin = inicio + filasPorPagina;
-         
-         filas.forEach((fila, i) => {
-             fila.style.display = (i >= inicio && i < fin) ? '' : 'none';
-         });
-                 
+    function mostrarPagina(pagina) {
+        const inicio = (pagina - 1) * filasPorPagina;
+        const fin = inicio + filasPorPagina;
+        filas.forEach((fila, i) => {
+            fila.style.display = (i >= inicio && i < fin) ? '' : 'none';
+        });
         renderizarPaginacion(pagina);
-        
-        // Asegurar que los enlaces se actualicen después de mostrar la página
-        setTimeout(() => {
-            actualizarEnlacesEdicion();
-        }, 100);
-        
-        console.log(`✅ Página ${pagina} mostrada con enlaces actualizados`);
-     }
+        setTimeout(actualizarEnlacesEdicion, 100);
+    }
 
-     function actualizarEnlacesEdicion() {
-         console.log('🔧 Actualizando enlaces de edición y eliminación...');
-         // Actualizar enlaces de edición con el índice real de la fila
-         const filasVisibles = document.querySelectorAll('#tablaFilas tbody tr[style=""], #tablaFilas tbody tr:not([style*="none"])');
-         console.log(`🔍 Filas visibles encontradas: ${filasVisibles.length}`);
-         
-         filasVisibles.forEach((fila, index) => {
-             const indiceReal = fila.getAttribute('data-row-index');
-             const nombreFila = fila.querySelector('td:first-child')?.textContent?.trim();
-             console.log(`🎯 Fila ${index}: "${nombreFila}" data-row-index=${indiceReal}`);
-             
-             // Verificar que el índice es válido
-             if (!indiceReal) {
-                 console.error(`❌ Fila ${index} ("${nombreFila}") no tiene data-row-index`);
-                 return;
-             }
-             
-             // Actualizar enlace de editar
-             const enlaceEditar = fila.querySelector('a[href*="editar_fila"]');
-             if (enlaceEditar) {
-                 const collection_source = enlaceEditar.href.match(/editar_fila_admin\/([^\/]+)\//)?.[1];
-                 const catalog_id = enlaceEditar.href.match(/editar_fila_admin\/[^\/]+\/([^\/]+)\//)?.[1];
-                 if (collection_source && catalog_id) {
-                     const nuevaURL = `/admin/catalogo/${collection_source}/${catalog_id}/editar-fila/${indiceReal}`;
-                     enlaceEditar.href = nuevaURL;
-                     console.log(`✅ "${nombreFila}" - Enlace editar: ${nuevaURL}`);
-                 }
-             }
-             
-             // Actualizar formulario de eliminar - buscar por diferentes patrones
-             let formEliminar = fila.querySelector('form[action*="delete-row"]') || 
-                               fila.querySelector('form[action*="delete_row"]') ||
-                               fila.querySelector('form[action*="catalogs"]');
-             
-             if (formEliminar) {
-                 console.log(`🗑️ "${nombreFila}" - Formulario original: ${formEliminar.action}`);
-                 // Extraer tabla_id del action actual
-                 let tabla_id = formEliminar.action.match(/([a-f0-9]{24})/)?.[1];
-                 if (tabla_id) {
-                     const nuevaAction = `/catalogs/delete-row/${tabla_id}/${indiceReal}`;
-                     formEliminar.action = nuevaAction;
-                     console.log(`✅ "${nombreFila}" - Formulario eliminar: ${nuevaAction}`);
-                 } else {
-                     console.error(`❌ "${nombreFila}" - No se pudo extraer tabla_id de: ${formEliminar.action}`);
-                 }
-             } else {
-                 console.error(`❌ "${nombreFila}" - No se encontró formulario eliminar`);
-             }
-         });
-}
+    function actualizarEnlacesEdicion() {
+        const filasVisibles = document.querySelectorAll('#tablaFilas tbody tr:not([style*="none"])');
+        filasVisibles.forEach((fila) => {
+            const indiceReal = fila.getAttribute('data-row-index');
+            if (!indiceReal) return;
+            const enlaceEditar = fila.querySelector('a[href*="editar_fila"]');
+            if (enlaceEditar) {
+                const collection_source = enlaceEditar.href.match(/editar_fila_admin\/([^\/]+)\//)?.[1];
+                const catalog_id = enlaceEditar.href.match(/editar_fila_admin\/[^\/]+\/([^\/]+)\//)?.[1];
+                if (collection_source && catalog_id) {
+                    enlaceEditar.href = `/admin/catalogo/${collection_source}/${catalog_id}/editar-fila/${indiceReal}`;
+                }
+            }
+            let formEliminar = fila.querySelector('form[action*="delete-row"]');
+            if (formEliminar) {
+                let tabla_id = formEliminar.action.match(/([a-f0-9]{24})/)?.[1];
+                if (tabla_id) {
+                    formEliminar.action = `/catalogs/delete-row/${tabla_id}/${indiceReal}`;
+                }
+            }
+        });
+    }
 
-function renderizarPaginacion(pagina) {
-        const totalFilas = filas.length;
-        const totalPaginas = Math.ceil(totalFilas / filasPorPagina);
-  const paginacion = document.getElementById('paginacionTabla');
-        
-        if (!paginacion) {
-            console.error('❌ No se encontró el elemento paginacionTabla');
-            return;
+    function renderizarPaginacion(pagina) {
+        const totalPaginas = Math.ceil(filas.length / filasPorPagina);
+        const paginacion = document.getElementById('paginacionTabla');
+        if (!paginacion) return;
+        paginacion.innerHTML = '';
+        if (totalPaginas <= 1) return;
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            const li = document.createElement('li');
+            li.className = 'page-item' + (i === pagina ? ' active' : '');
+            const a = document.createElement('a');
+            a.className = 'page-link';
+            a.textContent = i;
+            a.href = '#';
+            a.onclick = (e) => { e.preventDefault(); paginaActual = i; mostrarPagina(i); };
+            li.appendChild(a);
+            paginacion.appendChild(li);
         }
-        
-  paginacion.innerHTML = '';
-        
-        console.log(`🔢 Renderizando paginación: ${totalFilas} filas, ${totalPaginas} páginas`);
-        
-        if (totalPaginas <= 1) {
-            console.log('📄 Solo una página, no mostrando paginación');
-            return;
-        }
-        
-  for (let i = 1; i <= totalPaginas; i++) {
-    const li = document.createElement('li');
-    li.className = 'page-item' + (i === pagina ? ' active' : '');
-            
-    const a = document.createElement('a');
-    a.className = 'page-link';
-    a.textContent = i;
-    a.href = '#';
-            a.onclick = function(e) { 
-                e.preventDefault(); 
-                paginaActual = i; 
-                mostrarPagina(i); 
-            };
-            
-    li.appendChild(a);
-    paginacion.appendChild(li);
-  }
-        
-        console.log(`✅ Paginación creada con ${totalPaginas} páginas`);
-}
+    }
 
-function filtrarFilas() {
-  const valor = document.getElementById('searchInput').value.toLowerCase();
-        console.log(`🔍 Filtrando por: "${valor}"`);
-        
+    function filtrarFilas() {
+        const valor = document.getElementById('searchInput').value.toLowerCase();
         if (!valor.trim()) {
-            paginaActual = 1;
             mostrarPagina(1);
             return;
         }
-        
-        let filasVisibles = 0;
-  filas.forEach(fila => {
-    const texto = fila.textContent.toLowerCase();
-            const coincide = texto.includes(valor);
-            fila.style.display = coincide ? '' : 'none';
-            if (coincide) filasVisibles++;
+        filas.forEach(fila => {
+            fila.style.display = fila.textContent.toLowerCase().includes(valor) ? '' : 'none';
         });
-        
-        console.log(`📊 ${filasVisibles} filas coinciden con el filtro`);
         document.getElementById('paginacionTabla').innerHTML = '';
     }
 
-         function ordenarTabla(columna) {
-         console.log(`🔄 Ordenando por columna ${columna}`);
-         
-         // Si es la misma columna, cambiar dirección; si no, ascendente
-         if (ordenActual.columna === columna) {
-             ordenActual.ascendente = !ordenActual.ascendente;
-         } else {
-             ordenActual.columna = columna;
-             ordenActual.ascendente = true;
-         }
-         
-         // Obtener todas las filas como array
-         const filasArray = Array.from(filas);
-         
-         // Ordenar las filas (ajustar índice porque la primera columna es el número de fila)
-         filasArray.sort((a, b) => {
-             const celdaA = a.cells[columna]?.textContent?.trim() || '';
-             const celdaB = b.cells[columna]?.textContent?.trim() || '';
-             
-             // Intentar comparar como números primero
-             const numA = parseFloat(celdaA);
-             const numB = parseFloat(celdaB);
-             
-             let resultado;
-             if (!isNaN(numA) && !isNaN(numB)) {
-                 resultado = numA - numB;
-             } else {
-                 resultado = celdaA.localeCompare(celdaB, 'es', { sensitivity: 'base' });
-             }
-             
-             return ordenActual.ascendente ? resultado : -resultado;
-         });
-         
-         // Reemplazar las filas en el DOM
-         const tbody = document.querySelector('#tablaFilas tbody');
-         filasArray.forEach(fila => tbody.appendChild(fila));
-         
-         // Actualizar el array global de filas
-         filas.splice(0, filas.length, ...filasArray);
-         
-         // Actualizar iconos de ordenamiento
-         actualizarIconosOrdenamiento();
-         
-         // Mostrar la primera página
-  paginaActual = 1;
-  mostrarPagina(1);
-}
+    function ordenarTabla(columna) {
+        ordenActual.ascendente = (ordenActual.columna === columna) ? !ordenActual.ascendente : true;
+        ordenActual.columna = columna;
+        
+        filas.sort((a, b) => {
+            const celdaA = a.cells[columna]?.textContent?.trim() || '';
+            const celdaB = b.cells[columna]?.textContent?.trim() || '';
+            
+            // Verificar si es una fecha (formato YYYY-MM-DD)
+            const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (fechaRegex.test(celdaA) && fechaRegex.test(celdaB)) {
+                const fechaA = new Date(celdaA);
+                const fechaB = new Date(celdaB);
+                let resultado = fechaA - fechaB;
+                return ordenActual.ascendente ? resultado : -resultado;
+            }
+            
+            // Verificar si son números
+            const numA = parseFloat(celdaA);
+            const numB = parseFloat(celdaB);
+            if (!isNaN(numA) && !isNaN(numB)) {
+                let resultado = numA - numB;
+                return ordenActual.ascendente ? resultado : -resultado;
+            }
+            
+            // Ordenación alfabética
+            let resultado = celdaA.localeCompare(celdaB, 'es', { sensitivity: 'base' });
+            return ordenActual.ascendente ? resultado : -resultado;
+        });
 
-     function actualizarIconosOrdenamiento() {
-         const headers = document.querySelectorAll('.sortable');
-         headers.forEach((header, index) => {
-             const icon = header.querySelector('.sort-icon');
-             if (icon) {
-                 if (index === ordenActual.columna) {
-                     icon.className = ordenActual.ascendente ? 
-                         'bi bi-chevron-up sort-icon' : 
-                         'bi bi-chevron-down sort-icon';
-                     icon.style.opacity = '1';
-                 } else {
-                     icon.className = 'bi bi-chevron-expand sort-icon';
-                     icon.style.opacity = '0.5';
-                 }
-             }
-         });
-     }
+        const tbody = document.querySelector('#tablaFilas tbody');
+        filas.forEach(fila => tbody.appendChild(fila));
+        actualizarIconosOrdenamiento();
+        mostrarPagina(1);
+    }
 
-     // Event listeners
-     const searchInput = document.getElementById('searchInput');
-     if (searchInput) {
-         searchInput.addEventListener('input', filtrarFilas);
-         console.log('🔍 Event listener de búsqueda agregado');
-     }
+    function actualizarIconosOrdenamiento() {
+        document.querySelectorAll('.sortable .sort-icon').forEach((icon, index) => {
+            icon.className = 'bi bi-chevron-expand sort-icon';
+            if (index + 1 === ordenActual.columna) {
+                icon.className = ordenActual.ascendente ? 'bi bi-chevron-up sort-icon' : 'bi bi-chevron-down sort-icon';
+            }
+        });
+    }
 
-     // Event listeners para ordenamiento
-     const headers = document.querySelectorAll('.sortable');
-     console.log(`🎯 Headers encontrados para ordenamiento: ${headers.length}`);
-     console.log('🔍 Todos los elementos con clase sortable:', headers);
-     
-     headers.forEach((header, index) => {
-         console.log(`Header ${index}: "${header.textContent.trim()}", data-column: ${header.dataset.column}`);
-         header.addEventListener('click', function(e) {
-             e.preventDefault();
-             const columna = parseInt(this.dataset.column);
-             console.log(`📋 Click en header ${index}, columna: ${columna}`);
-             ordenarTabla(columna);
-         });
-         // Agregar estilo visual al hover
-         header.style.cursor = 'pointer';
-     });
-     
-     if (headers.length === 0) {
-         console.error('❌ No se encontraron headers con clase .sortable');
-     }
+    document.getElementById('searchInput')?.addEventListener('input', filtrarFilas);
+    document.querySelectorAll('.sortable').forEach((header) => {
+        header.addEventListener('click', (e) => {
+            e.preventDefault();
+            ordenarTabla(parseInt(header.dataset.column));
+        });
+    });
 
-     // Inicializar - verificar si hay parámetro de página en la URL
-     const urlParams = new URLSearchParams(window.location.search);
-     const paginaInicial = parseInt(urlParams.get('page')) || 1;
-     const fragmento = window.location.hash;
-     
-     console.log(`🔗 URL: página=${paginaInicial}, fragmento=${fragmento}`);
-     
-     mostrarPagina(paginaInicial);
-     
-     // Si hay un fragmento para destacar una fila específica
-     if (fragmento && fragmento.startsWith('#fila-')) {
-         const filaNumero = parseInt(fragmento.replace('#fila-', ''));
-         const filaIndex = filaNumero - 1; // Convertir de número visible (1-based) a índice interno (0-based)
-         console.log(`✨ Destacando fila número ${filaNumero} (índice ${filaIndex})`);
-         
-         setTimeout(() => {
-             const fila = document.querySelector(`tr[data-row-index="${filaIndex}"]`);
-             if (fila) {
-                 fila.style.backgroundColor = '#d4edda';
-                 fila.style.border = '2px solid #28a745';
-                 fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                 
-                 // Quitar el destacado después de 3 segundos
-                 setTimeout(() => {
-                     fila.style.backgroundColor = '';
-                     fila.style.border = '';
-                 }, 3000);
-             }
-         }, 500);
-     }
-     
-     console.log('✅ Inicialización completa');
+    const urlParams = new URLSearchParams(window.location.search);
+    mostrarPagina(parseInt(urlParams.get('page')) || 1);
 });
-
-
 </script>
 {% endblock %}

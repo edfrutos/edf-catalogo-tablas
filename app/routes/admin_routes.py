@@ -39,7 +39,7 @@ from werkzeug.security import generate_password_hash
 import app.monitoring as monitoring
 import app.notifications as notifications
 from app.audit import audit_log
-from app.cache_system import get_cache_stats
+from app.cache_system import get_cache_stats, clear_cache
 from app.database import (
     get_audit_logs_collection,
     get_catalogs_collection,
@@ -922,6 +922,22 @@ def ver_catalogo_admin(catalog_id: str):
 
         # Añadir _id_str al catálogo
         catalog["_id_str"] = str(catalog["_id"])
+
+        # Procesar imágenes para cada fila (igual que en ver_tabla)
+        if catalog.get("data"):
+            from app.utils.image_utils import get_images_for_template
+            
+            for i, row in enumerate(catalog["data"]):
+                # Usar función unificada para obtener URLs de imágenes
+                image_data = get_images_for_template(row)
+                row.update(image_data)  # Añade imagen_urls, num_imagenes, tiene_imagenes
+                
+                current_app.logger.info(
+                    f"[DEBUG][ADMIN] URLs de imágenes para fila {i}: {row.get('imagen_urls', [])}"
+                )
+                current_app.logger.info(
+                    f"[DEBUG][ADMIN] Total de imágenes en fila {i}: {len(row.get('imagen_urls', []))}"
+                )
 
         return render_template("admin/ver_catalogo.html", catalog=catalog)
     except (AttributeError, KeyError, TypeError) as e:
@@ -2425,7 +2441,6 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
             return redirect(url_for("admin.dashboard_admin"))
         collection = db[collection_source]
         
-        # Validar si catalog_id es un ObjectId válido
         try:
             catalog = collection.find_one({"_id": ObjectId(catalog_id)})
         except Exception as e:
@@ -2441,21 +2456,92 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
             return render_template(
                 "admin/ver_catalogo.html", catalog=None, error="Catálogo no encontrado"
             )
-        # Refuerzo: asegurar que headers siempre exista y sea lista
-        if "headers" not in catalog or not isinstance(catalog["headers"], list):
-            catalog["headers"] = []
-        # Refuerzo: asegurar que rows siempre exista y sea lista
-        if ("rows" not in catalog or catalog["rows"] is None) and (
-            "data" in catalog and isinstance(catalog["data"], list)
-        ):
-            catalog["rows"] = catalog["data"]
-        elif "rows" not in catalog or catalog["rows"] is None:
-            catalog["rows"] = []
-        # Añadir información sobre la colección de origen
+
+        # --- Start of Refactoring ---
+
+        def get_final_url(file_identifier):
+            if not isinstance(file_identifier, str) or not file_identifier.strip():
+                return None, None
+
+            filename = file_identifier.split('/')[-1]
+
+            if file_identifier.startswith('http'):
+                if 's3.amazonaws.com' in file_identifier:
+                    return f"/admin/s3/{filename}", filename
+                return file_identifier, filename
+            
+            if file_identifier.startswith('/'):
+                return file_identifier, filename
+
+            s3_url = get_s3_url(file_identifier)
+            if s3_url:
+                return f"/admin/s3/{filename}", filename
+            
+            return f"/static/uploads/{file_identifier}", filename
+
+        if "data" in catalog and catalog["data"]:
+            for i, row in enumerate(catalog["data"]):
+                if not isinstance(row, dict):
+                    logger.warning(f"[ADMIN] Fila {i} ignorada por no ser un dict: {row}")
+                    continue
+
+                # 1. Consolidate and process documents
+                processed_documents = []
+                seen_documents = set()
+                doc_fields = [k for k in row if k.lower().startswith('document')]
+
+                for field in doc_fields:
+                    doc_values = row.get(field)
+                    if not doc_values: continue
+                    
+                    doc_list = [doc_values] if isinstance(doc_values, str) else doc_values
+                    
+                    if isinstance(doc_list, list):
+                        for doc_item in doc_list:
+                            if doc_item and isinstance(doc_item, str) and doc_item.strip() not in seen_documents:
+                                doc_item_clean = doc_item.strip()
+                                seen_documents.add(doc_item_clean)
+                                url, filename = get_final_url(doc_item_clean)
+                                if url and filename:
+                                    ext = filename.split('.')[-1].lower() if '.' in filename else 'link'
+                                    processed_documents.append({'url': url, 'name': ext.upper(), 'filename': filename})
+                
+                row['processed_documents'] = processed_documents
+
+                # 2. Consolidate and process images
+                processed_images = []
+                seen_images = set()
+                image_fields = [k for k in row if k.lower() in ['images', 'imagenes', 'imagen']]
+
+                for field in image_fields:
+                    img_values = row.get(field)
+                    if not img_values: continue
+
+                    img_list = [img_values] if isinstance(img_values, str) else img_values
+
+                    if isinstance(img_list, list):
+                        for img_item in img_list:
+                            if img_item and isinstance(img_item, str) and img_item.strip() not in seen_images:
+                                img_item_clean = img_item.strip()
+                                seen_images.add(img_item_clean)
+                                url, _ = get_final_url(img_item_clean)
+                                if url:
+                                    processed_images.append(url)
+                
+                row['imagen_urls'] = processed_images
+
+                # 3. Process Multimedia
+                if 'Multimedia' in row and row['Multimedia']:
+                    media_item = row['Multimedia']
+                    url, filename = get_final_url(media_item)
+                    row['multimedia_url'] = url
+                    row['multimedia_filename'] = filename if filename else ''
+
+        # --- End of Refactoring ---
+
         catalog["collection_source"] = collection_source
         catalog["_id_str"] = str(catalog["_id"])
 
-        # Añadir información adicional al catálogo
         if "created_at" in catalog and catalog["created_at"]:
             if isinstance(catalog["created_at"], str):
                 catalog["created_at_formatted"] = catalog["created_at"]
@@ -2466,10 +2552,8 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
         else:
             catalog["created_at_formatted"] = "Fecha desconocida"
 
-        # Contar filas según la estructura
         if "rows" in catalog and catalog["rows"] is not None:
             catalog["row_count"] = len(catalog["rows"])
-            # Para compatibilidad con la plantilla
             catalog["data"] = catalog["rows"]
         elif "data" in catalog and catalog["data"] is not None:
             catalog["row_count"] = len(catalog["data"])
@@ -2477,133 +2561,12 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
             catalog["row_count"] = 0
             catalog["data"] = []
 
-        # Procesar las imágenes en cada fila usando la función unificada
-        from app.utils.image_utils import get_images_for_template
-        from app.utils.s3_utils import get_s3_url
-
-        # Verificar si hay datos en el catálogo
-        if "data" in catalog and catalog["data"]:
-            # Limpiar cache de S3 al cargar la página para evitar imágenes fantasma
-            from app.utils.image_utils import clear_s3_cache
-            clear_s3_cache()  # Limpiar todo el cache
-            
-            for i, row in enumerate(catalog["data"]):
-                if not isinstance(row, dict):
-                    logger.warning(f"[ADMIN] Fila {i} ignorada por no ser un dict: {row}")
-                    continue
-
-                logger.info(f"[DEBUG][ADMIN] Procesando fila {i}: {row}")
-                
-                # DEBUG: Verificar campos Documentación_0, Documentación_1, etc.
-                for key, value in row.items():
-                    if key.startswith('Documentación_'):
-                        logger.info(f"[DEBUG][ADMIN] Campo {key}: {value}")
-
-                # Usar función unificada para obtener URLs de imágenes
-                image_data = get_images_for_template(row)
-                row.update(image_data)  # Añade imagen_urls, num_imagenes, tiene_imagenes
-
-                logger.info(f"[DEBUG][ADMIN] URLs de imágenes para fila {i}: {row.get('imagen_urls', [])}")
-                logger.info(f"[DEBUG][ADMIN] Total de imágenes en fila {i}: {len(row.get('imagen_urls', []))}")
-
-                # Procesar campos de Documentación - crear URLs correctas para documentos
-                for key, value in row.items():
-                    if key.startswith('Documentación_') and value:
-                        logger.info(f"[DEBUG][ADMIN] Procesando documento {key}: {value}")
-                        
-                        # Verificar si ya es una URL completa
-                        if isinstance(value, str) and (value.startswith('/admin/s3/') or value.startswith('/static/uploads/') or value.startswith('/imagenes_subidas/') or value.startswith('http')):
-                            # Ya es una URL completa, usar directamente
-                            logger.info(f"[DEBUG][ADMIN] URL completa detectada para {key}: {value}")
-                            continue
-                        
-                        # Si es solo un nombre de archivo, intentar obtener la URL de S3 primero
-                        if isinstance(value, str) and len(value) > 5:
-                            s3_url = get_s3_url(value)
-                            if s3_url:
-                                # Convertir URL S3 a proxy local
-                                filename = value.split('/')[-1] if '/' in value else value
-                                proxy_url = f"/admin/s3/{filename}"
-                                row[key] = proxy_url
-                                logger.info(f"[DEBUG][ADMIN] Documento S3 encontrado: {value} -> {proxy_url}")
-                            else:
-                                # Si no está en S3, usar la URL local
-                                # Verificar si ya contiene una ruta para evitar concatenación incorrecta
-                                if value.startswith('/admin/s3/') or value.startswith('/static/uploads/') or value.startswith('/imagenes_subidas/'):
-                                    local_url = value
-                                else:
-                                    local_url = f"/static/uploads/{value}"
-                                row[key] = local_url
-                                logger.info(f"[DEBUG][ADMIN] Usando URL local para documento: {value} -> {local_url}")
-                        elif isinstance(value, list):
-                            # Si es una lista de documentos, procesar cada uno
-                            processed_docs = []
-                            for doc in value:
-                                if isinstance(doc, str) and len(doc) > 5:
-                                    s3_url = get_s3_url(doc)
-                                    if s3_url:
-                                        filename = doc.split('/')[-1] if '/' in doc else doc
-                                        proxy_url = f"/admin/s3/{filename}"
-                                        processed_docs.append(proxy_url)
-                                        logger.info(f"[DEBUG][ADMIN] Documento S3 en lista: {doc} -> {proxy_url}")
-                                    else:
-                                        # Verificar si ya contiene una ruta para evitar concatenación incorrecta
-                                        if doc.startswith('/admin/s3/') or doc.startswith('/static/uploads/') or doc.startswith('/imagenes_subidas/'):
-                                            local_url = doc
-                                        else:
-                                            local_url = f"/static/uploads/{doc}"
-                                        processed_docs.append(local_url)
-                                        logger.info(f"[DEBUG][ADMIN] Documento local en lista: {doc} -> {local_url}")
-                                else:
-                                    processed_docs.append(doc)
-                            row[key] = processed_docs
-
-                # Procesar campo Multimedia - crear URL correcta
-                if 'Multimedia' in row and row['Multimedia']:
-                    multimedia_value = row['Multimedia']
-                    logger.info(f"[DEBUG][ADMIN] Procesando multimedia: {multimedia_value}")
-                    
-                    # Verificar si ya es una URL completa
-                    if isinstance(multimedia_value, str) and (multimedia_value.startswith('/admin/s3/') or multimedia_value.startswith('/static/uploads/') or multimedia_value.startswith('/imagenes_subidas/') or multimedia_value.startswith('http')):
-                        # Ya es una URL completa, usar directamente
-                        logger.info(f"[DEBUG][ADMIN] URL multimedia completa detectada: {multimedia_value}")
-                    elif isinstance(multimedia_value, str) and len(multimedia_value) > 5:
-                        # Si es solo un nombre de archivo, intentar obtener la URL de S3 primero
-                        s3_url = get_s3_url(multimedia_value)
-                        if s3_url:
-                            # Convertir URL S3 a proxy local
-                            filename = multimedia_value.split('/')[-1] if '/' in multimedia_value else multimedia_value
-                            proxy_url = f"/admin/s3/{filename}"
-                            row['Multimedia'] = proxy_url
-                            logger.info(f"[DEBUG][ADMIN] Multimedia S3 encontrado: {multimedia_value} -> {proxy_url}")
-                        else:
-                            # Si no está en S3, usar la URL local directamente
-                            # No usar proxy S3 para archivos locales
-                            # Verificar si ya contiene una ruta para evitar concatenación incorrecta
-                            if multimedia_value.startswith('/admin/s3/') or multimedia_value.startswith('/static/uploads/') or multimedia_value.startswith('/imagenes_subidas/'):
-                                local_url = multimedia_value
-                            else:
-                                local_url = f"/static/uploads/{multimedia_value}"
-                            row['Multimedia'] = local_url
-                            logger.info(f"[DEBUG][ADMIN] Usando URL local para multimedia: {multimedia_value} -> {local_url}")
-
-            # Sincronizar catalog["rows"] con catalog["data"] procesado
-            catalog["rows"] = catalog["data"]
-            logger.info(
-                f"[ADMIN] Procesadas {catalog['row_count']} filas con imágenes para el catálogo {catalog_id}"
-            )
-        else:
-            logger.warning(f"[ADMIN] El catálogo {catalog_id} no tiene filas o datos")
-
         logger.info(
             f"[ADMIN] Mostrando catálogo desde {collection_source}: {catalog.get('name', 'Sin nombre')}"
         )
-        # Determinar return_url
         return_url = request.args.get("return_url") or request.referrer
 
-        # Si el referrer es la página de edición de fila, construir una URL apropiada
         if return_url and "editar-fila" in return_url:
-            # Intentar deducir el user_id para volver a la lista de catálogos del usuario
             user_id = None
             if "created_by_id" in catalog and catalog["created_by_id"]:
                 user_id = str(catalog["created_by_id"])
@@ -2626,7 +2589,6 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
             else:
                 return_url = url_for("admin.dashboard_admin")
         elif not return_url:
-            # Si no hay referrer, intentar deducir el user_id para volver a la lista de catálogos del usuario
             user_id = None
             if "created_by_id" in catalog and catalog["created_by_id"]:
                 user_id = str(catalog["created_by_id"])
@@ -2648,6 +2610,7 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
                 )
             else:
                 return_url = url_for("admin.dashboard_admin")
+        
         return render_template(
             "admin/ver_catalogo.html",
             catalog=catalog,
@@ -6296,6 +6259,8 @@ def truncate_log_route():
     return redirect(url_for("maintenance.maintenance_dashboard"))
 
 
+from app.routes.admin.admin_system import admin_system_bp
+
 # Función para registrar los blueprints
 def register_admin_blueprints(app: Any) -> None:
     """
@@ -6303,9 +6268,7 @@ def register_admin_blueprints(app: Any) -> None:
     Nota: admin_logs_bp ya está registrado en __init__.py
     """
     try:
-        # No es necesario registrar admin_logs_bp aquí ya que ya está registrado en __init__.py
-        # con el prefijo correcto
-        pass
+        app.register_blueprint(admin_system_bp)
     except (AttributeError, ValueError, TypeError) as e:
         app.logger.error(f"Error en register_admin_blueprints: {str(e)}")
 

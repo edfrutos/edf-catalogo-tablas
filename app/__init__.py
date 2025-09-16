@@ -288,13 +288,10 @@ def create_app(testing=False):
     except Exception as e:
         app.logger.error(f"Error registrando blueprint de emergencia: {str(e)}")
 
-    # Registrar blueprints adicionales si existen - TEMPORALMENTE DESHABILITADO
+    # Registrar blueprints adicionales si existen
     try:
-        # from app.routes.admin_routes import register_admin_blueprints
-        # if not register_admin_blueprints(app):
-        app.logger.warning(
-            "Blueprints de administración adicionales deshabilitados temporalmente"
-        )
+        from app.routes.admin_routes import register_admin_blueprints
+        register_admin_blueprints(app)
     except Exception as e:
         app.logger.error(f"Error con blueprints adicionales: {str(e)}")
 
