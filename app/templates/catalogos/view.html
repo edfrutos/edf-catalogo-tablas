@@ -283,12 +283,15 @@
                                             </div>
                                             <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
                                           </div>
-                                        {% else %}
-                                          <!-- Otro tipo de archivo -->
-                                          <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary">
-                                            <i class="fas fa-file"></i> Ver Archivo
-                                          </a>
-                                        {% endif %}
+                                                                                {% else %}
+                                                                                    <!-- Otro tipo de archivo -->
+                                                                                    <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary me-2">
+                                                                                        <i class="fas fa-file"></i> Ver Archivo
+                                                                                    </a>
+                                                                                    <a href="{{ media_proxy }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                        <i class="fas fa-external-link-alt"></i> Abrir URL
+                                                                                    </a>
+                                                                                {% endif %}
                                     </div>
                                 {% endif %}
                             {% else %}

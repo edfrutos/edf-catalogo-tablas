@@ -593,5 +593,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
+
+// Forzar recarga tras guardar (solo si hay mensaje de éxito)
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert-success');
+    if (alerts.length > 0) {
+        setTimeout(function() {
+            window.location.href = window.location.origin + window.location.pathname.replace('/edit-row', '/view');
+        }, 800); // Redirige tras 0.8s
+    }
+});
 </script>
 {% endblock %}
