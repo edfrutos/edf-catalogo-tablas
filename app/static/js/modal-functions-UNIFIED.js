@@ -15,7 +15,10 @@ if (typeof window.modalLog === 'undefined') {
 if (typeof window.modalLogError === 'undefined') {
   window.modalLogError = console.error; // Siempre mostrar errores
 }
-const log = window.modalLog;
+
+// Evitar redeclaración de 'log' si ya existe
+window.log = window.log || window.modalLog;
+const log = window.log;
 const logError = window.modalLogError;
 
 log("[MODAL-UNIFIED] 🚀 Iniciando sistema unificado de modales...");
