@@ -246,7 +246,7 @@
                                                      alt="Imagen {{ loop.index }}" 
                                                      class="img-thumbnail" 
                                                      style="width: 100px; height: 100px; object-fit: cover;"
-                                                     onerror="this.src='/imagenes_subidas/{{ img.split('/')[-1] }}'; this.onerror=function(){this.src='/static/img/image-error.svg'};">
+                                                     onerror="this.src='{{ url_for('static', filename='uploads/' + img.split('/')[-1]) }}'; this.onerror=function(){this.src='/static/img/image-error.svg'};">
                                             {% else %}
                                                 <!-- Archivo local -->
                                                 <img src="{{ url_for('uploaded_images.uploaded_images', filename=img) }}" 
@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Extraer el nombre del archivo
                     const filename = img.src.split('/').pop();
                     // Usar la ruta correcta para archivos locales
-                    newSrc = `/imagenes_subidas/${filename}`;
+                    newSrc = `{{ url_for('static', filename='uploads/') }}${filename}`;
                 }
                 
                 console.log('[IMG-PROTECTION] 🔧 Corrigiendo URL:', img.src, '→', newSrc);
@@ -464,4 +464,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(protectImages, 2000);
 });
 </script>
+
+<!-- Scripts de modales para templates de edición admin -->
+<script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
+<script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}

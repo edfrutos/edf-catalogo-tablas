@@ -333,7 +333,11 @@
     .modal-img-display {
         max-width: 100%;
         max-height: 70vh;
-        display: none;
+        display: block !important; /* CAMBIADO: era 'display: none' que causaba problemas */
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin: 0 auto;
+        object-fit: contain;
     }
 
     .form-inline-display {
@@ -710,28 +714,77 @@
                                         {% endif %}
                   
                   {% elif header == 'Multimedia' %}
-                    {% if row.get('multimedia_url') %}
-                      {% set media_proxy = row.get('multimedia_url') %}
-                      {% set media_filename = row.get('multimedia_filename', '') %}
+                    <!-- Columna Multimedia - manejar archivo multimedia -->
+                    {% set multimedia_data = row[header] if row[header] is defined else '' %}
+                    {% if multimedia_data %}
                       <div class="multimedia-preview">
+                        <!-- Determinar si es URL S3 o archivo local -->
+                        {% if multimedia_data is string and multimedia_data.startswith('http') %}
+                          <!-- URL S3 o externa -->
+                          {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
+                            <!-- Archivo en S3 - usar proxy -->
+                            {% set media_proxy = '/admin/s3/' + multimedia_data.split('/')[-1] %}
+                            {% set media_filename = multimedia_data.split('/')[-1] %}
+                          {% else %}
+                            <!-- URL externa real -->
+                            {% set media_proxy = multimedia_data %}
+                            {% set media_filename = multimedia_data.split('/')[-1] %}
+                          {% endif %}
+                        {% else %}
+                          <!-- Archivo local -->
+                          {% if multimedia_data.startswith('/admin/s3/') %}
+                            <!-- Ya es una URL proxy S3 -->
+                            {% set media_proxy = multimedia_data %}
+                            {% set media_filename = multimedia_data.split('/')[-1] %}
+                          {% else %}
+                            <!-- Solo nombre de archivo, crear URL proxy S3 -->
+                            {% set media_proxy = '/admin/s3/' + multimedia_data %}
+                            {% set media_filename = multimedia_data %}
+                          {% endif %}
+                        {% endif %}
+                        
+                        <!-- Mostrar miniatura según tipo de archivo -->
                         {% if media_filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                          <img src="{{ media_proxy }}" alt="Multimedia" class="multimedia-thumbnail" onclick="showImageModal('{{ media_proxy }}', '{{ media_filename }}');">
-                        {% elif media_filename.lower().endswith(('.mp4', '.avi', 'mov', '.wmv')) %}
-                          <div class="video-thumb-container" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}');">
-                            <video src="{{ media_proxy }}" class="multimedia-thumbnail" preload="metadata"></video>
-                            <div class="play-button-overlay"><i class="fas fa-play play-overlay-icon"></i></div>
-                                                        </div>
+                          <!-- Imagen -->
+                          <img src="{{ media_proxy }}" 
+                               alt="Multimedia" 
+                               style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                               onclick="showImageModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
+                               onmouseover="this.style.opacity='0.8'"
+                               onmouseout="this.style.opacity='1'">
+                        {% elif media_filename.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
+                          <!-- Video -->
+                          <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
+                            <video 
+                              src="{{ media_proxy }}" 
+                              style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                              onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
+                              onmouseover="this.style.opacity='0.8'"
+                              onmouseout="this.style.opacity='1'"
+                              preload="metadata">
+                            </video>
+                            <div class="play-button-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                              <i class="fas fa-play" style="font-size: 8px;"></i>
+                            </div>
+                          </div>
                         {% elif media_filename.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                          <div class="audio-thumb-container" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}');">
-                            <div class="audio-thumb-icon-wrapper"><i class="fas fa-music audio-thumb-icon"></i></div>
+                          <!-- Audio -->
+                          <div class="audio-thumbnail" style="display: inline-block; text-align: center;">
+                            <div style="width: 50px; height: 38px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;">
+                              <i class="fas fa-music" style="color: white; font-size: 14px;"></i>
+                            </div>
+                            <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
                           </div>
                         {% else %}
-                          <a href="#" onclick="showDocumentModal('{{ media_proxy }}', '{{ media_filename }}');" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file"></i> Ver</a>
-                                                    {% endif %}
+                          <!-- Otro tipo de archivo -->
+                          <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-file"></i> Ver Archivo
+                          </a>
+                        {% endif %}
                       </div>
-                                                {% else %}
-                                                    <span class="text-muted">-</span>
-                                                {% endif %}
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
 
                   {% elif cell_data is string and cell_data.startswith('http') %}
                     <a href="{{ cell_data }}" target="_blank" class="btn btn-sm btn-outline-warning">
@@ -999,4 +1052,9 @@ document.addEventListener('DOMContentLoaded', function() {
     mostrarPagina(parseInt(urlParams.get('page')) || 1);
 });
 </script>
+
+<!-- Scripts de modales para templates admin de catálogo -->
+<!-- modal-functions-UNIFIED.js ya está incluido en base.html -->
+<script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v=20250917"></script>
+<script src="{{ url_for('static', filename='js/mp4-debug-fila5.js') }}?v=20250917"></script>
 {% endblock %}

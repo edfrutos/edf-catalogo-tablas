@@ -248,7 +248,7 @@
                 <div class="position-relative">
                     <!-- Usar fallback S3 → Local → Error -->
                     <a href="#" onclick="mostrarImagenModal('/admin/s3/{{ img }}'); return false;">
-                        <img src="/admin/s3/{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.src='/imagenes_subidas/{{ img }}'; this.onerror=function(){this.src='/static/img/image-error.svg'};">
+                        <img src="/admin/s3/{{ img }}" alt="Imagen" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;" onerror="this.src='{{ url_for('static', filename='uploads/' + img) }}'; this.onerror=function(){this.src='/static/img/image-error.svg'};">
                     </a>
                     <div class="mt-1 text-center">
                         <button type="button" class="btn btn-sm btn-danger" data-imagen="{{ img|e }}" data-index="{{ loop.index0 }}" onclick="confirmarEliminarImagen(this.dataset.imagen, this.dataset.index)">Eliminar</button>
@@ -415,7 +415,7 @@ function verificarImagenAlternativaEdit(imagenUrlOriginal, modalImg, modalElemen
     
     if (imagenUrlOriginal.includes('amazonaws.com')) {
         console.log('🔄 Intentando versión local en editar...');
-        const urlLocal = `/imagenes_subidas/${nombreArchivo}`;
+        const urlLocal = `{{ url_for('static', filename='uploads/') }}${nombreArchivo}`;
         probarImagenEdit(urlLocal, modalImg, modalElement);
     } else if (imagenUrlOriginal.includes('/static/uploads/')) {
         console.log('🔄 Intentando versión S3 en editar...');
@@ -423,9 +423,9 @@ function verificarImagenAlternativaEdit(imagenUrlOriginal, modalImg, modalElemen
         probarImagenEdit(urlS3, modalImg, modalElement);
     } else if (imagenUrlOriginal.includes('/admin/s3/')) {
         console.log('🔄 Intentando versión local en editar (desde S3)...');
-        const urlLocal = `/imagenes_subidas/${nombreArchivo}`;
+        const urlLocal = `{{ url_for('static', filename='uploads/') }}${nombreArchivo}`;
         probarImagenEdit(urlLocal, modalImg, modalElement);
-    } else if (imagenUrlOriginal.includes('/imagenes_subidas/')) {
+    } else if (imagenUrlOriginal.includes('/static/uploads/')) {
         console.log('🔄 Intentando versión S3 en editar (desde local)...');
         const urlS3 = `/admin/s3/${nombreArchivo}`;
         probarImagenEdit(urlS3, modalImg, modalElement);
@@ -473,7 +473,7 @@ function confirmarEliminarImagen(imagen, indice) {
     // URL de S3, usar directamente
     rutaImagen = imagen;
   } else {
-    rutaImagen = "/imagenes_subidas/" + imagen;
+    rutaImagen = "{{ url_for('static', filename='uploads/') }}" + imagen;
   }
   document.getElementById('imagenAEliminar').src = rutaImagen;
   
@@ -640,5 +640,8 @@ function confirmarEliminarFila(tablaId, filaIndex) {
 }
 
 </script>
+<!-- Scripts de modales para templates de edición -->
+<script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
+<script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
 <!-- Cache buster: {{ range(1000000, 9999999) | random }} -->
 {% endblock %}

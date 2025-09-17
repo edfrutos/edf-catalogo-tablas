@@ -1,5 +1,10 @@
 # app/__init__.py
 
+# app/__init__.py
+"""
+Módulo de inicialización de la aplicación Flask para edf_catalogotablas.
+Configura blueprints, variables de entorno, S3, MongoDB y otros componentes.
+"""
 import logging
 import os
 from logging.handlers import RotatingFileHandler
@@ -55,6 +60,12 @@ db = None
 
 def create_app(testing=False):
     import os
+
+    """
+    Crea y configura una instancia de la aplicación Flask.
+    :param testing: Si es True, activa el modo de pruebas.
+    :return: Instancia de Flask app configurada.
+    """
 
     app = Flask(
         __name__,
@@ -365,13 +376,12 @@ def create_app(testing=False):
     file_handler.setFormatter(formatter)
     app.logger.addHandler(file_handler)
 
-    # TEMPORAL: Blueprint de debug para usuarios
-    try:
-        from app.routes.debug_user_access import debug_bp
-
-        app.register_blueprint(debug_bp)
-        app.logger.info("Blueprint de debug de usuario registrado (TEMPORAL)")
-    except Exception as e:
-        app.logger.error(f"Error registrando blueprint de debug: {str(e)}")
+    # TEMPORAL: Blueprint de debug para usuarios - COMENTADO TEMPORALMENTE
+    # try:
+    #     from app.routes.debug_user_access import debug_bp
+    #     app.register_blueprint(debug_bp)
+    #     app.logger.info("Blueprint de debug de usuario registrado (TEMPORAL)")
+    # except Exception as e:
+    #     app.logger.error(f"Error registrando blueprint de debug: {str(e)}")
 
     return app

@@ -1,3 +1,8 @@
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <script src="{{ url_for('static', filename='js/mp4-debug-fila5.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% endblock %}
 {% extends 'base.html' %}
 {% block content %}
 <div class="container-fluid mt-4">
@@ -30,6 +35,11 @@
                                                accept="video/*,audio/*,image/*">
                                         <div class="form-text">Videos: MP4, AVI, MOV | Audio: MP3, WAV | Imágenes: JPG, PNG, GIF | Máximo: 300MB</div>
                                     </div>
+                                </div>
+                                <!-- DEBUG: Mostrar valor crudo del campo Multimedia -->
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary">Valor crudo Multimedia:</span>
+                                    <code style="font-size:0.95em;">{{ row[header]|default('') }}</code>
                                 </div>
                                 
                                 <!-- Mostrar multimedia actual -->

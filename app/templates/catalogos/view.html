@@ -1,3 +1,8 @@
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <script src="{{ url_for('static', filename='js/mp4-debug-fila5.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% endblock %}
 {% extends 'base.html' %}
 
 {% block head %}
@@ -114,6 +119,21 @@
             <a href="{{ url_for('catalogs.add_row', catalog_id=catalog._id) }}" class="btn btn-success">
                 <i class="fas fa-plus"></i> Añadir Fila
             </a>
+            
+            <!-- Botones de DEBUG -->
+            <div class="btn-group ms-2" role="group">
+                <button type="button" class="btn btn-outline-info btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-bug"></i> Debug
+                </button>
+                <ul class="dropdown-menu">
+                    <li><button class="dropdown-item" onclick="debugRow(5)">Debug Fila #5</button></li>
+                    <li><button class="dropdown-item" onclick="debugAllRows()">Debug Todas las Filas</button></li>
+                    <li><button class="dropdown-item" onclick="findMultimediaFiles()">Buscar Multimedia</button></li>
+                    <li><button class="dropdown-item" onclick="checkS3Files()">Verificar S3</button></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><button class="dropdown-item" onclick="console.clear()">Limpiar Console</button></li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -153,10 +173,14 @@
                     {% for header in catalog.headers %}
                     <td>
                         {% if header == 'Multimedia' %}
-                            <!-- Columna Multimedia -->
-                            {% if row[header] %}
-                                {% set multimedia_data = row[header] %}
-                                {% if multimedia_data is string and multimedia_data.startswith('http') %}
+                                                        <!-- Columna Multimedia -->
+                                                        {% if row[header] %}
+                                                                {% set multimedia_data = row[header] %}
+                                                                {# Si no es string o no tiene extensión reconocida, mostrar advertencia #}
+                                                                {% if not (multimedia_data is string and (multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.avi', '.mov', '.wmv', '.mp3', '.wav', '.ogg')))) %}
+                                                                    <span class="badge bg-warning text-dark">Valor multimedia no reconocido: <code>{{ multimedia_data }}</code></span>
+                                                                {% endif %}
+                                                                {% if multimedia_data is string and multimedia_data.startswith('http') %}
                                     <!-- URL externa o S3 -->
                                     {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or multimedia_data.startswith('/admin/s3/') %}
                                         <!-- Archivo en S3 -->
@@ -491,13 +515,15 @@
 </div>
 
 <script>
-// Función para mostrar modal de imagen
+// FUNCIÓN COMENTADA - Ahora usa la del modal-functions-UNIFIED.js que tiene mejor manejo de errores
+/*
 function showImageModal(imageSrc, imageTitle) {
     document.getElementById('modalImage').src = imageSrc;
     document.getElementById('imageModalLabel').innerHTML = '<i class="fas fa-image"></i> ' + imageTitle;
     const modal = new bootstrap.Modal(document.getElementById('imageModal'));
     modal.show();
 }
+*/
 
 // Función para confirmar eliminación de fila
 function confirmDeleteRow(catalogId, rowIndex) {

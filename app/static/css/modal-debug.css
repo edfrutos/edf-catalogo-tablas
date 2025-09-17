@@ -1,0 +1,176 @@
+/* MODAL DEBUG CSS - VERSIÓN AGRESIVA PARA FORZAR VISUALIZACIÓN */
+/* Este CSS fuerza la visualización de modales que no aparecen */
+
+/* FORZAR VISUALIZACIÓN AGRESIVA DE MODALES */
+.modal {
+    z-index: 9999 !important;
+    display: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    outline: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important; /* Fondo temporal */
+}
+
+.modal.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.modal.fade.show {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* FORZAR BACKDROP VISIBLE */
+.modal-backdrop {
+    z-index: 9998 !important;
+    opacity: 0.5 !important;
+    background-color: #000 !important;
+}
+
+/* MODAL DIALOG - POSICIÓN Y TAMAÑO FORZADOS */
+.modal-dialog {
+    transform: none !important;
+    position: relative !important;
+    z-index: 10000 !important;
+    margin: 1.75rem auto !important;
+    pointer-events: auto !important;
+    max-width: 500px !important; /* Tamaño mínimo para debug */
+}
+
+.modal-lg {
+    max-width: 800px !important;
+}
+
+.modal-xl {
+    max-width: 1140px !important;
+}
+
+/* MODAL CONTENT - FORZAR VISIBILIDAD */
+.modal-content {
+    background-color: #fff !important;
+    border: 3px solid #ff0000 !important; /* Borde rojo para debug */
+    border-radius: 0.375rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+}
+
+/* DEBUG VISUAL - INDICADOR VISIBLE */
+.modal.show::before {
+    content: "🔧 MODAL ACTIVO - DEBUG";
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #ff0000;
+    color: white;
+    padding: 5px 10px;
+    z-index: 10001;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 3px;
+    border: 2px solid #fff;
+}
+
+/* FORZAR VISIBILIDAD DE TODAS LAS PARTES */
+.modal-header,
+.modal-body,
+.modal-footer {
+    display: block !important;
+    visibility: visible !important;
+    background: rgba(255, 255, 0, 0.1) !important; /* Fondo amarillo para debug */
+}
+
+/* IMAGEN EN MODAL - FORZAR VISIBILIDAD */
+#modalImage {
+    max-width: 100% !important;
+    max-height: 70vh !important;
+    display: block !important;
+    margin: 0 auto !important;
+    border: 2px solid #00ff00 !important; /* Borde verde para debug */
+}
+
+/* CONTENIDO MULTIMEDIA Y DOCUMENTOS */
+#multimediaContent,
+#documentContent {
+    min-height: 200px !important;
+    display: block !important;
+    background: rgba(0, 255, 0, 0.1) !important; /* Fondo verde para debug */
+    border: 1px solid #00ff00 !important;
+}
+
+/* OVERRIDE BOOTSTRAP ANIMACIONES PROBLEMÁTICAS */
+.modal.fade .modal-dialog {
+    transition: none !important;
+    transform: none !important;
+}
+
+/* BODY MODAL OPEN */
+body.modal-open {
+    overflow: hidden !important;
+    padding-right: 0 !important;
+}
+
+/* FORZAR CADA MODAL ESPECÍFICO */
+#imageModal.show,
+#multimediaModal.show,  
+#documentModal.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 9999 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* DEBUG INFO PANEL */
+.modal-debug-panel {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    z-index: 10002;
+    max-width: 300px;
+    border-radius: 5px;
+    border: 2px solid #00ff00;
+}
+
+/* Forzar que el body tenga el overflow hidden cuando modal abierto */
+.modal-open {
+    overflow: hidden !important;
+}
+
+/* Fix específico para pywebview si es necesario */
+.pywebview-modal-fix {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 9999 !important;
+    display: block !important;
+    background-color: rgba(0,0,0,0.5) !important;
+}
+
+/* Debug info - mostrar todos los modales que estén activos */
+.modal.show::before {
+    content: "MODAL ACTIVO" !important;
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    background: red !important;
+    color: white !important;
+    padding: 5px !important;
+    z-index: 10000 !important;
+    font-size: 12px !important;
+}

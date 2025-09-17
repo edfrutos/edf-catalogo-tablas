@@ -827,7 +827,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for row in table.data %}
+          {% for row in table.rows %}
             <tr data-row-index="{{ loop.index0 }}">
               <td style="text-align: center; font-weight: bold; color: #6c757d; width: 60px !important; min-width: 60px !important; max-width: 60px !important;">{{ loop.index }}</td>
               {% for header in table.headers %}
@@ -1036,13 +1036,13 @@
                           {% endif %}
                         {% else %}
                           <!-- Archivo local -->
-                          {% if multimedia_data.startswith('/static/uploads/') %}
-                            <!-- Ya es una URL completa local -->
+                          {% if multimedia_data.startswith('/admin/s3/') %}
+                            <!-- Ya es una URL proxy S3 -->
                             {% set media_proxy = multimedia_data %}
                             {% set media_filename = multimedia_data.split('/')[-1] %}
                           {% else %}
-                            <!-- Solo nombre de archivo, crear URL local -->
-                            {% set media_proxy = '/static/uploads/' + multimedia_data %}
+                            <!-- Solo nombre de archivo, crear URL proxy S3 -->
+                            {% set media_proxy = '/admin/s3/' + multimedia_data %}
                             {% set media_filename = multimedia_data %}
                           {% endif %}
                         {% endif %}
@@ -1336,6 +1336,10 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Incluir sistema de modales -->
+<script src="{{ url_for('static', filename='js/pywebview_compatibility.js') }}?v=20250917"></script>
+<script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v=20250917b"></script>
+<script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v=20250917"></script>
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {

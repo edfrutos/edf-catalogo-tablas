@@ -6,9 +6,17 @@
  */
 
 // Sistema de logging condicional
-const DEBUG_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const log = DEBUG_MODE ? console.log : () => {};
-const logError = console.error; // Siempre mostrar errores
+if (typeof window.DEBUG_MODE === 'undefined') {
+  window.DEBUG_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+}
+if (typeof window.modalLog === 'undefined') {
+  window.modalLog = window.DEBUG_MODE ? console.log : () => {};
+}
+if (typeof window.modalLogError === 'undefined') {
+  window.modalLogError = console.error; // Siempre mostrar errores
+}
+const log = window.modalLog;
+const logError = window.modalLogError;
 
 log("[MODAL-UNIFIED] 🚀 Iniciando sistema unificado de modales...");
 log("[MODAL-UNIFIED] 📁 Archivo cargado:", window.location.href);
@@ -658,8 +666,10 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
   // Configurar título (sin mostrar ruta completa)
   modalTitle.textContent = 'Reproduciendo Video';
   
-  // Determinar tipo de archivo
+  // Determinar tipo de archivo y URL
   const fileExtension = multimediaSrc.split('.').pop()?.toLowerCase();
+  const isYouTube = multimediaSrc.includes('youtube.com') || multimediaSrc.includes('youtu.be');
+  const isExternalVideo = multimediaSrc.startsWith('http') && (isYouTube || multimediaSrc.includes('vimeo.com') || multimediaSrc.includes('.mp4') || multimediaSrc.includes('.webm'));
   let mediaHTML = '';
   
   // Limpiar URL si contiene rutas incorrectas
@@ -675,15 +685,36 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
   // DETECCIÓN HÍBRIDA S3/LOCAL
   const isS3File = cleanMultimediaSrc.includes('s3.amazonaws.com') || cleanMultimediaSrc.includes('edf-catalogo-tablas.s3') || cleanMultimediaSrc.includes('/admin/s3/') || cleanMultimediaSrc.includes('/s3/');
   
-  if (['mp4', 'webm', 'avi', 'mov'].includes(fileExtension)) {
-    // Video
+  // Convertir YouTube URLs a embed
+  if (isYouTube) {
+    let videoId = '';
+    if (cleanMultimediaSrc.includes('youtube.com/watch?v=')) {
+      videoId = cleanMultimediaSrc.split('v=')[1]?.split('&')[0];
+    } else if (cleanMultimediaSrc.includes('youtu.be/')) {
+      videoId = cleanMultimediaSrc.split('youtu.be/')[1]?.split('?')[0];
+    }
+    
+    if (videoId) {
+      mediaHTML = `
+        <div class="text-center mb-3">
+          <h5><i class="fab fa-youtube text-danger"></i> Video de YouTube</h5>
+        </div>
+        <div class="d-flex justify-content-center">
+          <iframe width="100%" height="400" src="https://www.youtube.com/embed/${videoId}" 
+                  frameborder="0" allowfullscreen 
+                  style="max-width: 100%; max-height: 70vh;"></iframe>
+        </div>
+      `;
+    }
+  } else if (['mp4', 'webm', 'avi', 'mov'].includes(fileExtension) || isExternalVideo) {
+    // Video (archivos locales y URLs externas de video)
     mediaHTML = `
       <div class="text-center mb-3">
         <h5><i class="fas fa-video text-primary"></i> Reproduciendo Video</h5>
       </div>
       <div class="d-flex justify-content-center">
-        <video controls class="img-fluid" style="max-width: 100%; height: auto; max-height: 70vh;">
-          <source src="${cleanMultimediaSrc}" type="video/${fileExtension}">
+        <video controls preload="metadata" class="img-fluid" style="max-width: 100%; height: auto; max-height: 70vh;">
+          <source src="${cleanMultimediaSrc}" type="video/${fileExtension || 'mp4'}">
           Tu navegador no soporta el elemento de video.
         </video>
       </div>
