@@ -17,7 +17,16 @@ from datetime import datetime
 
 import certifi  # Añadido para certificados SSL
 from bson import ObjectId
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from pymongo import MongoClient
 
 from app.database import get_mongo_db
@@ -26,52 +35,62 @@ from app.database import get_mongo_db
 logger = logging.getLogger(__name__)
 
 # Crear blueprint
-tables_helper_bp = Blueprint('tables_helper', __name__, url_prefix='/tables_helper')
+tables_helper_bp = Blueprint("tables_helper", __name__, url_prefix="/tables_helper")
 
 # Usar la función centralizada de conexión a MongoDB
 
 # Ruta auxiliar para listar tablas de forma alternativa
-@tables_helper_bp.route('/')
+
+
+@tables_helper_bp.route("/")
 def list_tables():
     try:
         # Obtener la sesión actual
-        user_id = session.get('user_id', 'no-user')
-        email = session.get('email', 'no-email')
-        username = session.get('username', session.get('email', 'no-username'))
-        role = session.get('role', 'no-role')
+        user_id = session.get("user_id", "no-user")
+        email = session.get("email", "no-email")
+        username = session.get("username", session.get("email", "no-username"))
+        role = session.get("role", "no-role")
 
-        logger.info(f"Acceso a lista de tablas por: {email} (ID: {user_id}, Rol: {role})")
+        logger.info(
+            f"Acceso a lista de tablas por: {email} (ID: {user_id}, Rol: {role})"
+        )
 
         # Obtener la base de datos
         db = get_mongo_db()
         if db is None:
-            return render_template('admin/tables_emergency.html',
-                                message="Error de conexión a MongoDB",
-                                tables=[],
-                                user={'email': email, 'username': username, 'role': role})
+            return render_template(
+                "admin/tables_emergency.html",
+                message="Error de conexión a MongoDB",
+                tables=[],
+                user={"email": email, "username": username, "role": role},
+            )
 
         # Buscar colecciones de tablas
         collections = db.list_collection_names()
         tables_collection = None
 
         # Detectar colección correcta
-        if 'tables' in collections:
+        if "tables" in collections:
             tables_collection = db.tables
-        elif 'tables_data' in collections:
+        elif "tables_data" in collections:
             tables_collection = db.tables_data
 
         if tables_collection is None:
-            return render_template('admin/tables_emergency.html',
-                                message="No se encontró la colección de tablas",
-                                tables=[],
-                                user={'email': email, 'username': username, 'role': role})
+            return render_template(
+                "admin/tables_emergency.html",
+                message="No se encontró la colección de tablas",
+                tables=[],
+                user={"email": email, "username": username, "role": role},
+            )
 
         # Obtener todas las tablas
-        tables = list(tables_collection.find().sort('created_at', -1))
+        tables = list(tables_collection.find().sort("created_at", -1))
 
-        return render_template('admin/tables_emergency.html',
-                            tables=tables,
-                            user={'email': email, 'username': username, 'role': role})
+        return render_template(
+            "admin/tables_emergency.html",
+            tables=tables,
+            user={"email": email, "username": username, "role": role},
+        )
 
     except Exception as e:
         logger.error(f"Error en list_tables: {str(e)}")
@@ -103,17 +122,17 @@ def list_tables():
         </head>
         <body>
             <h1>Tablas de Usuarios - Acceso de Emergencia</h1>
-            
+
             <div class="nav">
                 <a href="/admin/" class="btn">Panel Admin</a>
                 <a href="/admin.html" class="btn">Acceso Directo</a>
             </div>
-            
+
             <div class="alert">
                 Se ha producido un error al obtener las tablas de la base de datos.
                 <br>Este es un modo de emergencia simplificado.
             </div>
-            
+
             <p>Sesión actual:</p>
             <ul>
                 <li>Usuario ID: {user_id}</li>
@@ -121,7 +140,7 @@ def list_tables():
                 <li>Username: {username}</li>
                 <li>Rol: {role}</li>
             </ul>
-            
+
             <h2>Acciones rápidas</h2>
             <p>
                 <a href="/admin/" class="btn btn-primary">Volver al Panel</a>
@@ -129,23 +148,26 @@ def list_tables():
         </body>
         </html>
         """.format(
-            user_id=session.get('user_id', 'no-user'),
-            email=session.get('email', 'no-email'),
-            username=session.get('username', session.get('email', 'no-username')),
-            role=session.get('role', 'no-role')
+            user_id=session.get("user_id", "no-user"),
+            email=session.get("email", "no-email"),
+            username=session.get("username", session.get("email", "no-username")),
+            role=session.get("role", "no-role"),
         )
 
         return emergency_html
 
+
 # Vista de tabla por ID
-@tables_helper_bp.route('/<table_id>')
+
+
+@tables_helper_bp.route("/<table_id>")
 def view_table(table_id):
     try:
         # Obtener la sesión actual
-        user_id = session.get('user_id', 'no-user')
-        email = session.get('email', 'no-email')
-        username = session.get('username', session.get('email', 'no-username'))
-        role = session.get('role', 'no-role')
+        user_id = session.get("user_id", "no-user")
+        email = session.get("email", "no-email")
+        username = session.get("username", session.get("email", "no-username"))
+        role = session.get("role", "no-role")
 
         logger.info(f"Acceso a tabla {table_id} por: {email}")
 
@@ -171,20 +193,20 @@ def view_table(table_id):
         </head>
         <body>
             <h1>Tabla {table_id} - Modo Emergencia</h1>
-            
+
             <div class="nav">
                 <a href="/admin/" class="btn">Panel Admin</a>
                 <a href="/tables_helper/" class="btn">Todas las Tablas</a>
                 <a href="/admin.html" class="btn">Acceso Directo</a>
             </div>
-            
+
             <div class="alert success">
                 Estás viendo la tabla {table_id} en modo de emergencia.
             </div>
-            
+
             <h2>Detalles de la tabla</h2>
             <p>Se ha solicitado la vista de la tabla con ID: <strong>{table_id}</strong></p>
-            
+
             <h2>Sesión actual</h2>
             <ul>
                 <li>Usuario ID: {user_id}</li>
@@ -192,7 +214,7 @@ def view_table(table_id):
                 <li>Username: {username}</li>
                 <li>Rol: {role}</li>
             </ul>
-            
+
             <h2>Acciones disponibles</h2>
             <p>
                 <a href="/tables_helper/" class="btn btn-primary">Volver a todas las tablas</a>

@@ -19,10 +19,7 @@ def check_session():
     session = requests.Session()
 
     # Credenciales de administrador
-    login_data = {
-        'username': 'edefrutos',
-        'password': '15si34Maf'
-    }
+    login_data = {"username": "edefrutos", "password": "15si34Maf"}
 
     print("🔐 Iniciando sesión...")
     login_response = session.post(f"{base_url}/auth/login", data=login_data)
@@ -42,11 +39,7 @@ def check_session():
     print("\n👤 Verificando información de usuario...")
 
     # Probar diferentes rutas para ver la información de sesión
-    test_routes = [
-        "/catalogs/",
-        "/admin/",
-        "/dev-template/testing/"
-    ]
+    test_routes = ["/catalogs/", "/admin/", "/dev-template/testing/"]
 
     for route in test_routes:
         print(f"   🔗 Probando: {route}")
@@ -67,12 +60,11 @@ def check_session():
 
     # Intentar acceder directamente a la API con headers
     print("\n🔗 Probando API con headers...")
-    headers = {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Content-Type': 'application/json'
-    }
+    headers = {"X-Requested-With": "XMLHttpRequest", "Content-Type": "application/json"}
 
-    api_response = session.get(f"{base_url}/dev-template/testing/api/tests_metadata", headers=headers)
+    api_response = session.get(
+        f"{base_url}/dev-template/testing/api/tests_metadata", headers=headers
+    )
     print(f"   📊 Status: {api_response.status_code}")
     print(f"   📄 Headers: {dict(api_response.headers)}")
 
@@ -81,7 +73,7 @@ def check_session():
             data = api_response.json()
             print("   ✅ JSON válido recibido")
             print(f"   📊 Datos: {json.dumps(data, indent=2)[:200]}...")
-        except:
+        except BaseException:
             print("   ❌ No es JSON válido")
             print(f"   📄 Respuesta: {api_response.text[:200]}...")
     else:
@@ -89,6 +81,7 @@ def check_session():
         print(f"   📄 Respuesta: {api_response.text[:200]}...")
 
     return True
+
 
 if __name__ == "__main__":
     check_session()

@@ -1,5 +1,10 @@
 # app/models.py
 
+from app.database import get_users_collection as db_get_users_collection
+from app.database import get_catalogs_collection as db_get_catalogs_collection
+from app.database import (
+    get_audit_logs_collection,
+)
 import logging
 import os
 import re
@@ -10,19 +15,6 @@ from bson.objectid import ObjectId
 logger = logging.getLogger(__name__)
 
 # Importar funciones de base de datos desde el módulo database.py
-from app.database import (
-    get_audit_logs_collection,
-    get_collection,
-    get_mongo_client,
-    get_mongo_db,
-    get_reset_tokens_collection,
-)
-from app.database import (
-    get_catalogs_collection as db_get_catalogs_collection,
-)
-from app.database import (
-    get_users_collection as db_get_users_collection,
-)
 
 # === Colecciones ===
 
@@ -78,7 +70,9 @@ def find_user_by_email_or_name(identifier):
 
     # Normalizar el identificador
     identifier = identifier.lower().strip()
-    logger.info(f"[find_user_by_email_or_name] Identificador normalizado: '{identifier}'")
+    logger.info(
+        f"[find_user_by_email_or_name] Identificador normalizado: '{identifier}'"
+    )
 
     collection = get_users_collection()
     logger.info(f"[find_user_by_email_or_name] Colección obtenida: {collection}")
@@ -99,7 +93,9 @@ def find_user_by_email_or_name(identifier):
     logger.info(f"[find_user_by_email_or_name] Query exacta: {query}")
 
     user = collection.find_one(query)
-    logger.info(f"[find_user_by_email_or_name] Resultado query exacta: {user is not None}")
+    logger.info(
+        f"[find_user_by_email_or_name] Resultado query exacta: {user is not None}"
+    )
 
     if user:
         # Log which field matched
@@ -126,7 +122,9 @@ def find_user_by_email_or_name(identifier):
         logger.info(f"[find_user_by_email_or_name] Query parcial: {query_partial}")
 
         user = collection.find_one(query_partial)
-        logger.info(f"[find_user_by_email_or_name] Resultado query parcial: {user is not None}")
+        logger.info(
+            f"[find_user_by_email_or_name] Resultado query parcial: {user is not None}"
+        )
 
         if user:
             logger.info(
@@ -147,7 +145,9 @@ def find_user_by_email_or_name(identifier):
         for domain in common_domains:
             email = f"{identifier}{domain}"
             query_domain = {"email": {"$regex": f"^{email}$", "$options": "i"}}
-            logger.info(f"[find_user_by_email_or_name] Probando dominio {domain}: {query_domain}")
+            logger.info(
+                f"[find_user_by_email_or_name] Probando dominio {domain}: {query_domain}"
+            )
 
             user = collection.find_one(query_domain)
             if user:
@@ -156,7 +156,9 @@ def find_user_by_email_or_name(identifier):
                 )
                 return user
 
-    logger.warning(f"[find_user_by_email_or_name] Usuario no encontrado con identificador: {identifier}")
+    logger.warning(
+        f"[find_user_by_email_or_name] Usuario no encontrado con identificador: {identifier}"
+    )
     return None
 
 

@@ -33,7 +33,7 @@ def fix_port_configuration():
 
         try:
             # Leer archivo
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Buscar ocurrencias del puerto incorrecto
@@ -44,10 +44,12 @@ def fix_port_configuration():
                 print(f"   📄 {file_path}: {len(matches)} ocurrencias encontradas")
 
                 # Reemplazar puerto incorrecto
-                new_content = content.replace(f"localhost:{wrong_port}", f"localhost:{correct_port}")
+                new_content = content.replace(
+                    f"localhost:{wrong_port}", f"localhost:{correct_port}"
+                )
 
                 # Escribir archivo modificado
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(new_content)
 
                 files_modified += 1
@@ -73,6 +75,7 @@ def fix_port_configuration():
 
     return files_modified, total_replacements
 
+
 def verify_corrections():
     """Verifica que las correcciones se aplicaron correctamente"""
 
@@ -96,9 +99,12 @@ def verify_corrections():
 
     # Verificar puertos correctos
     correct_files = glob.glob(f"{tools_dir}/**/*.py", recursive=True)
-    correct_files = [f for f in correct_files if f"localhost:{correct_port}" in open(f).read()]
+    correct_files = [
+        f for f in correct_files if f"localhost:{correct_port}" in open(f).read()
+    ]
 
     print(f"   📊 Archivos con puerto {correct_port}: {len(correct_files)}")
+
 
 if __name__ == "__main__":
     # Ejecutar corrección

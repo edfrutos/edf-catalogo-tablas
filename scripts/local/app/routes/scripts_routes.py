@@ -183,9 +183,9 @@ def scripts_metadata():
                                     "descripcion": descripcion,
                                     "path": os.path.join(directorio, fname),
                                     "executable": executable,
-                                    "tipo": "python"
-                                    if fname.endswith(".py")
-                                    else "bash",
+                                    "tipo": (
+                                        "python" if fname.endswith(".py") else "bash"
+                                    ),
                                     "entorno": "local",
                                 }
                             )
@@ -228,9 +228,9 @@ def scripts_metadata():
                                     "descripcion": descripcion,
                                     "path": os.path.join(directorio, fname),
                                     "executable": executable,
-                                    "tipo": "python"
-                                    if fname.endswith(".py")
-                                    else "bash",
+                                    "tipo": (
+                                        "python" if fname.endswith(".py") else "bash"
+                                    ),
                                     "entorno": "produccion",
                                 }
                             )
@@ -295,7 +295,7 @@ def execute_script():
                             script_path = (
                                 data.get("rel_path") or data.get("script_path") or ""
                             )
-                except:
+                except BaseException:
                     pass
 
                 if not script_path:
@@ -311,12 +311,15 @@ def execute_script():
         # Validación estricta: solo rutas relativas, sin '..' ni barra inicial
         if not script_path or ".." in script_path or script_path.startswith("/"):
             print(f"[execute_script] Rechazado script_path no permitido: {script_path}")
-            return jsonify(
-                {
-                    "error": "Ruta no permitida (solo rutas relativas sin barra inicial)",
-                    "script": script_path,
-                }
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "error": "Ruta no permitida (solo rutas relativas sin barra inicial)",
+                        "script": script_path,
+                    }
+                ),
+                400,
+            )
 
         print("\n=== Iniciando ejecución de script (método alternativo) ===")
         print(f"Script solicitado (rel_path): {script_path}")
@@ -331,12 +334,15 @@ def execute_script():
         # Verificar que el archivo existe
         if not os.path.exists(abs_script_path):
             print(f"[execute_script] Script no encontrado: {abs_script_path}")
-            return jsonify(
-                {
-                    "error": f"Script no encontrado: {script_path}",
-                    "script": script_path,
-                }
-            ), 404
+            return (
+                jsonify(
+                    {
+                        "error": f"Script no encontrado: {script_path}",
+                        "script": script_path,
+                    }
+                ),
+                404,
+            )
 
         # Verificar que el archivo es ejecutable
         if not os.access(abs_script_path, os.X_OK):
@@ -346,13 +352,16 @@ def execute_script():
                 print(f"Permisos corregidos para: {abs_script_path}")
             except (OSError, PermissionError) as e:
                 print(f"No se pudieron corregir los permisos: {str(e)}")
-                return jsonify(
-                    {
-                        "script": os.path.basename(abs_script_path),
-                        "error": f"Script no tiene permisos de ejecución: {abs_script_path}",
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    }
-                ), 403
+                return (
+                    jsonify(
+                        {
+                            "script": os.path.basename(abs_script_path),
+                            "error": f"Script no tiene permisos de ejecución: {abs_script_path}",
+                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        }
+                    ),
+                    403,
+                )
 
         # Establecer el tiempo máximo para la ejecución del script
         timeout = 60  # segundos
@@ -394,22 +403,28 @@ def execute_script():
             print(
                 f"\n❌ ERROR: Tiempo de ejecución excedido ({timeout}s): {abs_script_path}"
             )
-            return jsonify(
-                {
-                    "script": os.path.basename(abs_script_path),
-                    "error": f"Tiempo de ejecución excedido ({timeout}s)",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                }
-            ), 408
+            return (
+                jsonify(
+                    {
+                        "script": os.path.basename(abs_script_path),
+                        "error": f"Tiempo de ejecución excedido ({timeout}s)",
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                ),
+                408,
+            )
 
     except Exception as e:
         print(f"\n❌ ERROR GENERAL: {str(e)}")
-        return jsonify(
-            {
-                "error": f"Error al ejecutar script: {str(e)}",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            }
-        ), 500
+        return (
+            jsonify(
+                {
+                    "error": f"Error al ejecutar script: {str(e)}",
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
+            ),
+            500,
+        )
 
 
 def get_script_path(script_path):
@@ -474,9 +489,12 @@ def view_script_content_route(script_path):
 
         # Verificar que está dentro del directorio del proyecto
         if not abs_path.startswith(ROOT_DIR):
-            return jsonify(
-                {"error": f"Script fuera del directorio del proyecto: {abs_path}"}
-            ), 403
+            return (
+                jsonify(
+                    {"error": f"Script fuera del directorio del proyecto: {abs_path}"}
+                ),
+                403,
+            )
 
         with open(abs_path, encoding="utf-8") as f:
             content = f.read()
@@ -506,9 +524,16 @@ def run_script(script_path):
         # Verificar que el request es válido antes de procesarlo
         if not request or not hasattr(request, "headers"):
             print("Error: Request inválido o malformado")
-            return jsonify(
-                {"error": "Request inválido", "script": script_path, "status": "error"}
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "error": "Request inválido",
+                        "script": script_path,
+                        "status": "error",
+                    }
+                ),
+                400,
+            )
 
         try:
             # Verificar el Content-Type del request
@@ -556,21 +581,27 @@ def run_script(script_path):
         abs_script_path = get_script_path(script_path)
 
         if not os.path.exists(abs_script_path):
-            return jsonify(
-                {
-                    "error": f"Script no encontrado: {script_path}",
-                    "script": script_path,
-                }
-            ), 404
+            return (
+                jsonify(
+                    {
+                        "error": f"Script no encontrado: {script_path}",
+                        "script": script_path,
+                    }
+                ),
+                404,
+            )
 
         # Verificar que está dentro del directorio del proyecto
         if not abs_script_path.startswith(ROOT_DIR):
-            return jsonify(
-                {
-                    "error": f"Script fuera del directorio del proyecto: {abs_script_path}",
-                    "script": script_path,
-                }
-            ), 403
+            return (
+                jsonify(
+                    {
+                        "error": f"Script fuera del directorio del proyecto: {abs_script_path}",
+                        "script": script_path,
+                    }
+                ),
+                403,
+            )
 
         # Determinar el tipo de script y ejecutarlo
         script_name = os.path.basename(abs_script_path)
@@ -593,12 +624,15 @@ def run_script(script_path):
             else:
                 cmd = ["bash", abs_script_path]
         else:
-            return jsonify(
-                {
-                    "error": f"Tipo de script no soportado: {script_ext}",
-                    "script": script_path,
-                }
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "error": f"Tipo de script no soportado: {script_ext}",
+                        "script": script_path,
+                    }
+                ),
+                400,
+            )
 
         # Ejecutar el script
         result = subprocess.run(
@@ -632,19 +666,25 @@ def run_script(script_path):
         return jsonify(response)
 
     except subprocess.TimeoutExpired:
-        return jsonify(
-            {
-                "error": f"Script excedió el tiempo límite de ejecución: {script_path}",
-                "script": script_path,
-                "status": "timeout",
-            }
-        ), 408
+        return (
+            jsonify(
+                {
+                    "error": f"Script excedió el tiempo límite de ejecución: {script_path}",
+                    "script": script_path,
+                    "status": "timeout",
+                }
+            ),
+            408,
+        )
     except Exception as e:
         print(f"Error general en run_script: {str(e)}")
-        return jsonify(
-            {
-                "error": f"Error al ejecutar script: {str(e)}",
-                "script": script_path,
-                "status": "error",
-            }
-        ), 500
+        return (
+            jsonify(
+                {
+                    "error": f"Error al ejecutar script: {str(e)}",
+                    "script": script_path,
+                    "status": "error",
+                }
+            ),
+            500,
+        )

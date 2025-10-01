@@ -12,7 +12,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 
 from app.routes.maintenance_routes import admin_required
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 # Ruta movida a admin_routes.py para evitar conflictos de blueprints
 # @admin_bp.route("/tools")

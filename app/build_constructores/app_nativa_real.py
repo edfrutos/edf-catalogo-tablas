@@ -6,7 +6,7 @@ Sin dependencia de servidor web o Flask
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import filedialog, messagebox, ttk
 
 
 class EDFCatalogoApp:
@@ -136,15 +136,15 @@ class EDFCatalogoApp:
         # Mensaje de bienvenida
         welcome_text = """
         🎉 ¡Bienvenido a EDF Catálogo de Tablas!
-        
+
         Esta es una aplicación nativa de escritorio que te permite:
-        
+
         📋 • Gestionar catálogos de productos
         👤 • Administrar usuarios y permisos
         🖼️  • Gestionar imágenes y documentos
         📊 • Generar reportes y estadísticas
         🔧 • Acceder a herramientas de mantenimiento
-        
+
         Selecciona una opción del menú superior para comenzar.
         """
 
@@ -374,31 +374,31 @@ class EDFCatalogoApp:
         # Contenido de ayuda
         help_text = """
         🎯 EDF Catálogo de Tablas - Aplicación Nativa
-        
+
         📋 GESTIÓN DE CATÁLOGOS:
         • Crear nuevos catálogos de productos
         • Editar catálogos existentes
         • Importar/exportar datos
         • Gestionar imágenes y documentos
-        
+
         👤 GESTIÓN DE USUARIOS:
         • Crear nuevos usuarios
         • Asignar roles y permisos
         • Gestionar contraseñas
         • Control de acceso
-        
+
         🔧 HERRAMIENTAS:
         • Backup y restauración
         • Limpieza del sistema
         • Diagnóstico y logs
         • Configuración avanzada
-        
+
         💡 CONSEJOS:
         • Realiza backups regularmente
         • Mantén actualizada la aplicación
         • Revisa los logs periódicamente
         • Contacta al administrador si tienes problemas
-        
+
         📞 SOPORTE:
         • Email: soporte@edf.com
         • Teléfono: +34 123 456 789
@@ -460,15 +460,15 @@ class EDFCatalogoApp:
         if self.current_catalogo:
             details = f"""
             📋 CATÁLOGO: {self.current_catalogo['nombre']}
-            
+
             🆔 ID: {self.current_catalogo['id']}
             📅 Fecha: {self.current_catalogo['fecha']}
             📦 Productos: {self.current_catalogo['productos']}
-            
+
             📄 DESCRIPCIÓN:
             Este es un catálogo de productos con información detallada
             sobre precios, especificaciones y disponibilidad.
-            
+
             🔧 ACCIONES DISPONIBLES:
             • Editar información del catálogo
             • Gestionar productos

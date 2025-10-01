@@ -35,13 +35,16 @@ def leer_datos_excel(filename):
     wb.close()
     return data
 
+
 def escribir_datos_excel(data, filename):
     """Guardar datos en un archivo Excel"""
     wb = Workbook()
     hoja = wb.active
     hoja.title = "Datos"
 
-    headers = session.get("selected_headers", ["Número", "Descripción", "Peso", "Valor", "Imagenes"])
+    headers = session.get(
+        "selected_headers", ["Número", "Descripción", "Peso", "Valor", "Imagenes"]
+    )
 
     if "Número" not in headers:
         headers.insert(0, "Número")

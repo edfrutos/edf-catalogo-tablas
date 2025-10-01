@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
+from pymongo import MongoClient
 import os
 
 import certifi
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
-from pymongo import MongoClient
 
 uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
 try:

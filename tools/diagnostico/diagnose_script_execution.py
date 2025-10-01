@@ -263,14 +263,16 @@ def create_test_script():
 
     try:
         with open(test_script_path, "w") as f:
-            f.write("""#!/bin/bash
+            f.write(
+                """#!/bin/bash
 # Script de prueba para verificar la ejecución desde la interfaz web
 echo "Script de prueba ejecutado correctamente"
 echo "Fecha y hora: $(date)"
 echo "Usuario: $(whoami)"
 echo "Directorio: $(pwd)"
 exit 0
-""")
+"""
+            )
 
         os.chmod(test_script_path, 0o755)
         print(f"  ✅ Script de prueba creado en: {test_script_path}")

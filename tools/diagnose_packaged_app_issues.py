@@ -3,14 +3,15 @@
 Script de diagnóstico específico para problemas de la aplicación empaquetada
 """
 
+import json  # pyright: ignore[reportUnusedImport]
 import os
+import subprocess  # pyright: ignore[reportUnusedImport]
 import sys
 import tempfile
-from pathlib import Path
-import requests
 import time  # pyright: ignore[reportUnusedImport]
-import subprocess  # pyright: ignore[reportUnusedImport]
-import json  # pyright: ignore[reportUnusedImport]
+from pathlib import Path
+
+import requests
 
 
 def check_app_launch():
@@ -141,7 +142,7 @@ def check_network_access():
         try:
             response = requests.get(f"http://127.0.0.1:{port}", timeout=1)
             print(f"⚠️  Puerto {port} ocupado (status: {response.status_code})")
-        except:
+        except BaseException:
             pass
 
     return False

@@ -11,12 +11,12 @@ Este módulo proporciona herramientas para monitorear la salud de la aplicación
 y generar alertas cuando se detectan problemas.
 """
 
-from datetime import datetime  # type: ignore
 import json
 import logging
 import os
 import threading
 import time
+from datetime import datetime  # type: ignore
 
 import psutil  # type: ignore
 from flask import current_app  # noqa: F401
@@ -322,7 +322,8 @@ def get_health_status():
     # Verificar métricas del sistema de forma segura
     system_status = _app_metrics.get("system_status", {})
 
-    # Manejar el caso donde system_status podría ser un entero en lugar de un diccionario
+    # Manejar el caso donde system_status podría ser un entero en lugar de un
+    # diccionario
     if isinstance(system_status, dict):
         cpu_usage = system_status.get("cpu_usage", 0)
         memory_usage = system_status.get("memory_usage", {})
@@ -440,7 +441,8 @@ def start_monitoring_thread(app, mongo_client):
                     if _save_counter % 2 == 0:
                         save_metrics()
 
-                    # Verificar si hay alertas que enviar (cada 3 ciclos para reducir spam)
+                    # Verificar si hay alertas que enviar (cada 3 ciclos para reducir
+                    # spam)
                     if _save_counter % 3 == 0:
                         try:
                             health_status = get_health_status()
@@ -451,7 +453,8 @@ def start_monitoring_thread(app, mongo_client):
                 except Exception as e:
                     logger.error(f"Error en el hilo de monitoreo: {str(e)}")
 
-                # Esperar antes del siguiente ciclo (30 minutos para reducir carga significativamente)
+                # Esperar antes del siguiente ciclo (30 minutos para reducir carga
+                # significativamente)
                 time.sleep(1800)
 
     # Crear e iniciar el hilo

@@ -22,26 +22,58 @@ def fix_remaining_imports():
         "app/utils/storage_utils.py",
         "app/utils/backup_utils.py",
         "scripts/maintenance/10_backup_incremental.py",
-        "descarga_msanual_de_google.py"
+        "descarga_msanual_de_google.py",
     ]
 
     # Patrones de búsqueda y reemplazo
     patterns = [
         # Imports de run_db_script
-        (r'from app\.utils\.script_manager import run_db_script upload_to_drive', 'from app.utils.google_drive_wrapper import upload_to_drive'),
-        (r'from app\.utils\.script_manager import run_db_script download_file', 'from app.utils.google_drive_wrapper import download_file'),
-        (r'from app\.utils\.script_manager import run_db_script list_files_in_folder', 'from app.utils.google_drive_wrapper import list_files_in_folder'),
-        (r'from app\.utils\.script_manager import run_db_script delete_file', 'from app.utils.google_drive_wrapper import delete_file'),
-        (r'from app\.utils\.script_manager import run_db_script get_drive', 'from app.utils.google_drive_wrapper import get_drive'),
-        (r'from app\.utils\.script_manager import run_db_script get_or_create_folder, list_files_in_folder', 'from app.utils.google_drive_wrapper import get_or_create_folder, list_files_in_folder'),
-
+        (
+            r"from app\.utils\.script_manager import run_db_script upload_to_drive",
+            "from app.utils.google_drive_wrapper import upload_to_drive",
+        ),
+        (
+            r"from app\.utils\.script_manager import run_db_script download_file",
+            "from app.utils.google_drive_wrapper import download_file",
+        ),
+        (
+            r"from app\.utils\.script_manager import run_db_script list_files_in_folder",
+            "from app.utils.google_drive_wrapper import list_files_in_folder",
+        ),
+        (
+            r"from app\.utils\.script_manager import run_db_script delete_file",
+            "from app.utils.google_drive_wrapper import delete_file",
+        ),
+        (
+            r"from app\.utils\.script_manager import run_db_script get_drive",
+            "from app.utils.google_drive_wrapper import get_drive",
+        ),
+        (
+            r"from app\.utils\.script_manager import run_db_script get_or_create_folder, list_files_in_folder",
+            "from app.utils.google_drive_wrapper import get_or_create_folder, list_files_in_folder",
+        ),
         # Llamadas a run_db_script que necesitan ser reemplazadas
-        (r'run_db_script\("google_drive_utils\.py", "upload_to_drive", ([^)]+)\)', r'upload_to_drive(\1)'),
-        (r'run_db_script\("google_drive_utils\.py", "download_file", ([^)]+)\)', r'download_file(\1)'),
-        (r'run_db_script\("google_drive_utils\.py", "list_files_in_folder", ([^)]+)\)', r'list_files_in_folder(\1)'),
-        (r'run_db_script\("google_drive_utils\.py", "delete_file", ([^)]+)\)', r'delete_file(\1)'),
-        (r'run_db_script\("google_drive_utils\.py", "get_drive"\)', r'get_drive()'),
-        (r'run_db_script\("google_drive_utils\.py", "get_or_create_folder", ([^)]+)\)', r'get_or_create_folder(\1)'),
+        (
+            r'run_db_script\("google_drive_utils\.py", "upload_to_drive", ([^)]+)\)',
+            r"upload_to_drive(\1)",
+        ),
+        (
+            r'run_db_script\("google_drive_utils\.py", "download_file", ([^)]+)\)',
+            r"download_file(\1)",
+        ),
+        (
+            r'run_db_script\("google_drive_utils\.py", "list_files_in_folder", ([^)]+)\)',
+            r"list_files_in_folder(\1)",
+        ),
+        (
+            r'run_db_script\("google_drive_utils\.py", "delete_file", ([^)]+)\)',
+            r"delete_file(\1)",
+        ),
+        (r'run_db_script\("google_drive_utils\.py", "get_drive"\)', r"get_drive()"),
+        (
+            r'run_db_script\("google_drive_utils\.py", "get_or_create_folder", ([^)]+)\)',
+            r"get_or_create_folder(\1)",
+        ),
     ]
 
     total_fixes = 0
@@ -55,7 +87,7 @@ def fix_remaining_imports():
 
         try:
             # Leer el archivo
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -71,7 +103,7 @@ def fix_remaining_imports():
 
             # Si hubo cambios, escribir el archivo
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 print(f"   💾 Archivo actualizado con {file_fixes} correcciones")
                 total_fixes += file_fixes
@@ -87,6 +119,7 @@ def fix_remaining_imports():
     print(f"🎯 Archivos procesados: {len(files_to_fix)}")
 
     return total_fixes
+
 
 if __name__ == "__main__":
     fix_remaining_imports()

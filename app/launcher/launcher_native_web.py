@@ -7,9 +7,10 @@ Ejecuta la aplicación web Flask en una ventana nativa de macOS
 import os
 import sys
 import tempfile
-from pathlib import Path
 import threading
 import time
+from pathlib import Path
+
 import requests
 import webview
 

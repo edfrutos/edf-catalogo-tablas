@@ -10,8 +10,10 @@ from datetime import datetime
 
 # Agregar el directorio raíz al path
 script_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.dirname(os.path.dirname(script_dir))  # Subir dos niveles: utils -> app -> raíz
+# Subir dos niveles: utils -> app -> raíz
+root_dir = os.path.dirname(os.path.dirname(script_dir))
 sys.path.insert(0, root_dir)
+
 
 def setup_logging():
     """Configurar el sistema de logging unificado"""
@@ -23,9 +25,9 @@ def setup_logging():
         print("✅ Sistema de logging configurado correctamente")
 
         # Mostrar información del logging
-        log_dir = os.path.join(root_dir, 'logs')
+        log_dir = os.path.join(root_dir, "logs")
         if os.path.exists(log_dir):
-            log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
+            log_files = [f for f in os.listdir(log_dir) if f.endswith(".log")]
             print(f"📁 Archivos de log encontrados: {len(log_files)}")
             for log_file in log_files[:5]:  # Mostrar solo los primeros 5
                 print(f"   - {log_file}")
@@ -38,6 +40,7 @@ def setup_logging():
     except Exception as e:
         print(f"❌ Error configurando logging: {e}")
         return False
+
 
 if __name__ == "__main__":
     print("🚀 Iniciando configuración de logging unificado...")

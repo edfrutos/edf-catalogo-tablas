@@ -4,5 +4,3 @@
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-05-28
-
-

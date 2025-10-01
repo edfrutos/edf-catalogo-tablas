@@ -5,17 +5,18 @@ Aplicación de escritorio nativa usando tkinter y WebSockets
 para comunicación en tiempo real sin navegador
 """
 
-import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
 import asyncio
-import websockets
 import json
-import threading
-import sqlite3
 import os
+import sqlite3
+import sys
+import threading
+import tkinter as tk
 from datetime import datetime
 from pathlib import Path
-import sys
+from tkinter import filedialog, messagebox, ttk
+
+import websockets
 
 
 class EDFCatalogoApp:
@@ -226,17 +227,17 @@ class EDFCatalogoApp:
         # Mensaje de bienvenida
         welcome_text = """
         🎉 ¡Bienvenido a EDF Catálogo de Tablas!
-        
+
         Esta es una aplicación nativa con WebSockets que te permite:
-        
+
         📋 • Gestionar catálogos de productos en tiempo real
         👤 • Administrar usuarios y permisos
         🖼️  • Gestionar imágenes y documentos
         📊 • Generar reportes y estadísticas
         🔧 • Acceder a herramientas de mantenimiento
-        
+
         🌐 Comunicación WebSocket: {}
-        
+
         Selecciona una opción del menú superior para comenzar.
         """.format(
             "✅ Conectado" if self.websocket_connected else "❌ Desconectado"
@@ -469,37 +470,37 @@ class EDFCatalogoApp:
         # Contenido de ayuda
         help_text = """
         🎯 EDF Catálogo de Tablas - Aplicación Nativa con WebSockets
-        
+
         📋 GESTIÓN DE CATÁLOGOS:
         • Crear nuevos catálogos de productos
         • Editar catálogos existentes
         • Importar/exportar datos
         • Gestionar imágenes y documentos
-        
+
         👤 GESTIÓN DE USUARIOS:
         • Crear nuevos usuarios
         • Asignar roles y permisos
         • Gestionar contraseñas
         • Control de acceso
-        
+
         🔧 HERRAMIENTAS:
         • Backup y restauración
         • Limpieza del sistema
         • Diagnóstico y logs
         • Configuración avanzada
-        
+
         🌐 WEBSOCKETS:
         • Comunicación en tiempo real
         • Sin necesidad de navegador
         • Actualizaciones automáticas
         • Conexión persistente
-        
+
         💡 CONSEJOS:
         • Realiza backups regularmente
         • Mantén actualizada la aplicación
         • Revisa los logs periódicamente
         • Contacta al administrador si tienes problemas
-        
+
         📞 SOPORTE:
         • Email: soporte@edf.com
         • Teléfono: +34 123 456 789
@@ -561,21 +562,21 @@ class EDFCatalogoApp:
         if self.current_catalogo:
             details = f"""
             📋 CATÁLOGO: {self.current_catalogo['nombre']}
-            
+
             🆔 ID: {self.current_catalogo['id']}
             📅 Fecha: {self.current_catalogo['fecha']}
             📦 Productos: {self.current_catalogo['productos']}
-            
+
             📄 DESCRIPCIÓN:
             Este es un catálogo de productos con información detallada
             sobre precios, especificaciones y disponibilidad.
-            
+
             🔧 ACCIONES DISPONIBLES:
             • Editar información del catálogo
             • Gestionar productos
             • Exportar a diferentes formatos
             • Compartir con otros usuarios
-            
+
             🌐 WEBSOCKET: {'Conectado' if self.websocket_connected else 'Desconectado'}
             """
 

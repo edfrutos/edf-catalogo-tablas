@@ -28,12 +28,12 @@ class UnknownWordDetector:
             return
 
         try:
-            with open(self.pyproject_path, encoding='utf-8') as f:
+            with open(self.pyproject_path, encoding="utf-8") as f:
                 config = toml.load(f)
 
             # Obtener palabras de cSpell
-            cspell_config = config.get('tool', {}).get('cspell', {})
-            words = cspell_config.get('words', [])
+            cspell_config = config.get("tool", {}).get("cspell", {})
+            words = cspell_config.get("words", [])
             self.known_words = set(words)
             print(f"✅ Cargadas {len(self.known_words)} palabras conocidas")
 
@@ -43,21 +43,18 @@ class UnknownWordDetector:
     def extract_words_from_text(self, text: str) -> Set[str]:
         """Extraer palabras únicas de un texto"""
         # Patrón para palabras (letras, números, guiones bajos, acentos)
-        word_pattern = r'\b[a-zA-ZÀ-ÿ\u00C0-\u017F][a-zA-ZÀ-ÿ\u00C0-\u017F0-9_-]*\b'
+        word_pattern = r"\b[a-zA-ZÀ-ÿ\u00C0-\u017F][a-zA-ZÀ-ÿ\u00C0-\u017F0-9_-]*\b"
         words = re.findall(word_pattern, text)
 
         # Filtrar palabras muy cortas o muy largas
-        filtered_words = {
-            word for word in words
-            if len(word) >= 2 and len(word) <= 50
-        }
+        filtered_words = {word for word in words if len(word) >= 2 and len(word) <= 50}
 
         return filtered_words
 
     def scan_file(self, file_path: Path) -> Set[str]:
         """Escanear un archivo en busca de palabras"""
         try:
-            with open(file_path, encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
             return self.extract_words_from_text(content)
         except Exception as e:
@@ -67,17 +64,20 @@ class UnknownWordDetector:
     def scan_project(self, extensions: List[str] | None = None) -> Set[str]:
         """Escanear todo el proyecto en busca de palabras"""
         if extensions is None:
-            extensions = ['.py', '.md', '.html', '.js', '.css', '.txt', '.json']
+            extensions = [".py", ".md", ".html", ".js", ".css", ".txt", ".json"]
 
         all_words = set()
         scanned_files = 0
 
-        for file_path in self.project_root.rglob('*'):
+        for file_path in self.project_root.rglob("*"):
             if file_path.is_file() and file_path.suffix in extensions:
                 # Ignorar directorios comunes
-                if any(part.startswith('.') for part in file_path.parts):
+                if any(part.startswith(".") for part in file_path.parts):
                     continue
-                if any(part in ['venv', '__pycache__', 'node_modules', '.git'] for part in file_path.parts):
+                if any(
+                    part in ["venv", "__pycache__", "node_modules", ".git"]
+                    for part in file_path.parts
+                ):
                     continue
 
                 words = self.scan_file(file_path)
@@ -100,23 +100,86 @@ class UnknownWordDetector:
 
         # Filtrar palabras comunes en inglés y español
         common_words = {
-            'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with',
-            'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas', 'y', 'o', 'pero',
-            'en', 'con', 'por', 'para', 'de', 'del', 'al', 'se', 'que', 'como',
-            'this', 'that', 'these', 'those', 'is', 'are', 'was', 'were', 'be',
-            'este', 'esta', 'estos', 'estas', 'ese', 'esa', 'esos', 'esas',
-            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-            'tener', 'tiene', 'tenido', 'hacer', 'hace', 'hecho', 'puede', 'debe'
+            "the",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "el",
+            "la",
+            "los",
+            "las",
+            "un",
+            "una",
+            "unos",
+            "unas",
+            "y",
+            "o",
+            "pero",
+            "en",
+            "con",
+            "por",
+            "para",
+            "de",
+            "del",
+            "al",
+            "se",
+            "que",
+            "como",
+            "this",
+            "that",
+            "these",
+            "those",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "este",
+            "esta",
+            "estos",
+            "estas",
+            "ese",
+            "esa",
+            "esos",
+            "esas",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "tener",
+            "tiene",
+            "tenido",
+            "hacer",
+            "hace",
+            "hecho",
+            "puede",
+            "debe",
         }
 
         unknown = unknown - common_words
 
         # Filtrar palabras que parecen ser nombres de archivos o rutas
-        unknown = {word for word in unknown if not any(char in word for char in ['/', '\\', '.'])}
+        unknown = {
+            word
+            for word in unknown
+            if not any(char in word for char in ["/", "\\", "."])
+        }
 
         # Filtrar palabras con caracteres especiales (idiomas eslavos, etc.)
         # Solo mantener palabras con letras básicas del alfabeto latino
-        latin_pattern = re.compile(r'^[a-zA-ZÀ-ÿ\u00C0-\u017F0-9_-]+$')
+        latin_pattern = re.compile(r"^[a-zA-ZÀ-ÿ\u00C0-\u017F0-9_-]+$")
         unknown = {word for word in unknown if latin_pattern.match(word)}
 
         # Filtrar palabras muy cortas o muy largas
@@ -124,11 +187,30 @@ class UnknownWordDetector:
 
         # Filtrar palabras que parecen ser nombres propios o términos técnicos específicos
         # Solo mantener palabras que parecen ser términos del proyecto
-        project_terms = {word for word in unknown if any([
-            word.lower().startswith(('catalog', 'tabla', 'user', 'admin', 'app', 'data')),
-            word.lower().endswith(('tion', 'cion', 'ment', 'mento', 'able', 'ible')),
-            word.lower() in ['pip', 'flask', 'mongodb', 'python', 'javascript', 'html', 'css']
-        ])}
+        project_terms = {
+            word
+            for word in unknown
+            if any(
+                [
+                    word.lower().startswith(
+                        ("catalog", "tabla", "user", "admin", "app", "data")
+                    ),
+                    word.lower().endswith(
+                        ("tion", "cion", "ment", "mento", "able", "ible")
+                    ),
+                    word.lower()
+                    in [
+                        "pip",
+                        "flask",
+                        "mongodb",
+                        "python",
+                        "javascript",
+                        "html",
+                        "css",
+                    ],
+                ]
+            )
+        }
 
         return project_terms
 
@@ -139,26 +221,26 @@ class UnknownWordDetector:
             return
 
         try:
-            with open(self.pyproject_path, encoding='utf-8') as f:
+            with open(self.pyproject_path, encoding="utf-8") as f:
                 config = toml.load(f)
 
             # Obtener configuración actual de cSpell
-            if 'tool' not in config:
-                config['tool'] = {}
-            if 'cspell' not in config['tool']:
-                config['tool']['cspell'] = {}
-            if 'words' not in config['tool']['cspell']:
-                config['tool']['cspell']['words'] = []
+            if "tool" not in config:
+                config["tool"] = {}
+            if "cspell" not in config["tool"]:
+                config["tool"]["cspell"] = {}
+            if "words" not in config["tool"]["cspell"]:
+                config["tool"]["cspell"]["words"] = []
 
             # Añadir nuevas palabras
-            current_words = set(config['tool']['cspell']['words'])
+            current_words = set(config["tool"]["cspell"]["words"])
             new_words = words - current_words
 
             if new_words:
-                config['tool']['cspell']['words'].extend(sorted(new_words))
+                config["tool"]["cspell"]["words"].extend(sorted(new_words))
 
                 # Guardar configuración actualizada
-                with open(self.pyproject_path, 'w', encoding='utf-8') as f:
+                with open(self.pyproject_path, "w", encoding="utf-8") as f:
                     toml.dump(config, f)
 
                 print(f"✅ Añadidas {len(new_words)} palabras nuevas a pyproject.toml:")
@@ -193,17 +275,25 @@ class UnknownWordDetector:
         else:
             print("✅ No se encontraron palabras desconocidas")
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Detectar palabras desconocidas en el proyecto")
-    parser.add_argument("--no-auto-add", action="store_true",
-                       help="No añadir automáticamente las palabras encontradas")
-    parser.add_argument("--project-root", default=".",
-                       help="Directorio raíz del proyecto")
+    parser = argparse.ArgumentParser(
+        description="Detectar palabras desconocidas en el proyecto"
+    )
+    parser.add_argument(
+        "--no-auto-add",
+        action="store_true",
+        help="No añadir automáticamente las palabras encontradas",
+    )
+    parser.add_argument(
+        "--project-root", default=".", help="Directorio raíz del proyecto"
+    )
 
     args = parser.parse_args()
 
     detector = UnknownWordDetector(args.project_root)
     detector.run(auto_add=not args.no_auto_add)
+
 
 if __name__ == "__main__":
     main()

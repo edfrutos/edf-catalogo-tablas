@@ -16,7 +16,8 @@ from werkzeug.utils import secure_filename
 # Importaciones para Google Drive
 try:
     import sys
-    sys.path.append(os.path.join(os.path.dirname(__file__), '../../tools/db_utils'))
+
+    sys.path.append(os.path.join(os.path.dirname(__file__), "../../tools/db_utils"))
     from google_drive_utils import get_drive
 except ImportError:
     get_drive = None
@@ -29,23 +30,25 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 # Inicializar S3 Client
 s3_client = boto3.client(
-    's3',
+    "s3",
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    region_name=os.getenv("AWS_REGION")
+    region_name=os.getenv("AWS_REGION"),
 )
+
 
 def allowed_file(filename):
     """Verificar si el archivo tiene una extensión permitida"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def eliminar_archivo_imagen(ruta_imagen):
     """Eliminar un archivo local o de S3"""
     if not ruta_imagen:
         return False
 
-    if ruta_imagen.startswith('s3://'):
-        parts = ruta_imagen[5:].split('/', 1)
+    if ruta_imagen.startswith("s3://"):
+        parts = ruta_imagen[5:].split("/", 1)
         if len(parts) == 2:
             bucket_name, object_key = parts
             try:
@@ -55,11 +58,12 @@ def eliminar_archivo_imagen(ruta_imagen):
                 print(f"Error al eliminar de S3: {e}")
                 return False
     else:
-        ruta_local = os.path.join(current_app.root_path, ruta_imagen.lstrip('/'))
+        ruta_local = os.path.join(current_app.root_path, ruta_imagen.lstrip("/"))
         if os.path.exists(ruta_local):
             os.remove(ruta_local)
             return True
     return False
+
 
 def get_storage_client():
     """Obtiene un cliente de almacenamiento de Google Drive."""
@@ -79,6 +83,7 @@ def get_storage_client():
     except Exception as e:
         print(f"Error al obtener cliente de Google Drive: {e}")
         return None
+
 
 def upload_file_to_s3(filepath, object_name=None):
     """Subir un archivo a S3"""

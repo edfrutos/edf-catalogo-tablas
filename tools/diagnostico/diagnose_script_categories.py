@@ -122,7 +122,9 @@ def check_script_categories():
 
                 for fname in archivos:
                     fpath = os.path.join(dir_path, fname)
-                    if os.path.isfile(fpath) and (fname.endswith(".py") or fname.endswith(".sh")):
+                    if os.path.isfile(fpath) and (
+                        fname.endswith(".py") or fname.endswith(".sh")
+                    ):
                         scripts_en_dir.append(fname)
                         scripts_encontrados.append(f"{directorio}/{fname}")
 
@@ -179,16 +181,16 @@ def check_script_categories():
 
         for root, dirs, files in os.walk(os.path.join(ROOT_DIR, base_dir)):
             for file in files:
-                if file.endswith(('.py', '.sh')):
+                if file.endswith((".py", ".sh")):
                     rel_path = os.path.relpath(os.path.join(root, file), ROOT_DIR)
                     orphan_scripts.append(rel_path)
 
         return orphan_scripts
 
     # Buscar scripts huérfanos
-    orphan_production = find_orphan_scripts('scripts/production')
-    orphan_local = find_orphan_scripts('scripts/local')
-    orphan_tools = find_orphan_scripts('tools')
+    orphan_production = find_orphan_scripts("scripts/production")
+    orphan_local = find_orphan_scripts("scripts/local")
+    orphan_tools = find_orphan_scripts("tools")
 
     print(f"Scripts en scripts/production: {len(orphan_production)}")
     for script in orphan_production[:10]:  # Mostrar solo los primeros 10
@@ -204,6 +206,7 @@ def check_script_categories():
 
     return total_produccion + total_local
 
+
 def test_script_execution():
     """Prueba la ejecución de algunos scripts"""
     print("\n🧪 PRUEBA DE EJECUCIÓN DE SCRIPTS")
@@ -212,7 +215,7 @@ def test_script_execution():
     test_scripts = [
         "scripts/production/maintenance/supervise_gunicorn.sh",
         "scripts/local/maintenance/clean_old_logs.py",
-        "tools/local/db_utils/conexion_MongoDB.py"
+        "tools/local/db_utils/conexion_MongoDB.py",
     ]
 
     for script_path in test_scripts:
@@ -227,18 +230,19 @@ def test_script_execution():
             import subprocess
 
             # Ejecutar con script_runner
-            result = subprocess.run([
-                sys.executable,
-                "tools/script_runner.py",
-                script_path
-            ], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                [sys.executable, "tools/script_runner.py", script_path],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
 
             if result.returncode == 0:
                 try:
                     json_output = json.loads(result.stdout)
                     print("  ✅ Ejecutado exitosamente")
                     print(f"     Exit code: {json_output.get('exit_code', 'N/A')}")
-                    if json_output.get('error'):
+                    if json_output.get("error"):
                         print(f"     Error: {json_output['error']}")
                 except json.JSONDecodeError:
                     print("  ⚠️  Ejecutado pero no devolvió JSON válido")
@@ -251,6 +255,7 @@ def test_script_execution():
         except Exception as e:
             print(f"  ❌ Error: {e}")
 
+
 def main():
     """Función principal"""
     total_scripts = check_script_categories()
@@ -260,6 +265,7 @@ def main():
     print(f"Total de scripts encontrados: {total_scripts}")
 
     return total_scripts > 0
+
 
 if __name__ == "__main__":
     success = main()

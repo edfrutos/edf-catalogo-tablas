@@ -3,13 +3,13 @@
 Script para verificar imágenes de LabelPrint en MongoDB
 """
 
+from dotenv import load_dotenv
+import pymongo
 import os
 import sys
 
 sys.path.append("/Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas")
 
-import pymongo
-from dotenv import load_dotenv
 
 # Cargar variables de entorno
 load_dotenv()

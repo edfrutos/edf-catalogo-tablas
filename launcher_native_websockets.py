@@ -8,9 +8,10 @@ con soporte para WebSockets en tiempo real
 import os
 import sys
 import tempfile
-from pathlib import Path
 import threading
 import time
+from pathlib import Path
+
 import requests
 import webview
 
@@ -84,7 +85,8 @@ def wait_for_server():
         time.sleep(1)
         if attempt % 5 == 0:
             print(
-                f"⏳ Esperando servidor Flask... "  # pyright: ignore[reportImplicitStringConcatenation]
+                # pyright: ignore[reportImplicitStringConcatenation]
+                f"⏳ Esperando servidor Flask... "
                 f"(intento {attempt + 1}/{max_attempts})"
             )
 

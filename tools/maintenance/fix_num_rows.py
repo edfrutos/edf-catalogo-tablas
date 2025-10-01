@@ -4,6 +4,8 @@ Script para corregir el campo num_rows en todas las tablas.
 El problema es que num_rows está desactualizado (ej. dice 3 pero hay 16 filas).
 """
 
+from app.models.database import get_mongo_db
+from bson.objectid import ObjectId
 import os
 import sys
 from datetime import datetime
@@ -12,10 +14,6 @@ from datetime import datetime
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-
-from bson.objectid import ObjectId
-
-from app.models.database import get_mongo_db
 
 
 def fix_num_rows():

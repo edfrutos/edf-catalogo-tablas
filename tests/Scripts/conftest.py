@@ -5,6 +5,8 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-06-18
 
+from app.database import get_mongo_client, get_mongo_db, initialize_db
+from app import create_app
 import os
 import sys
 from unittest.mock import MagicMock
@@ -19,8 +21,6 @@ from pymongo import MongoClient
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, project_root)
 
-from app import create_app
-from app.database import get_mongo_client, get_mongo_db, initialize_db
 
 load_dotenv()
 

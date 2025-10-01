@@ -14,6 +14,10 @@ def crear_imagen_perfil_default(path="static/default_profile.png"):
     Función temporalmente deshabilitada para evitar dependencia de Pillow.
     Devuelve None para indicar que no se pudo crear la imagen.
     """
-    logging.warning("La creación de imágenes de perfil por defecto está temporalmente deshabilitada.")
-    logging.warning("Por favor, asegúrate de que existe una imagen por defecto en: %s", path)
+    logging.warning(
+        "La creación de imágenes de perfil por defecto está temporalmente deshabilitada."
+    )
+    logging.warning(
+        "Por favor, asegúrate de que existe una imagen por defecto en: %s", path
+    )
     return None

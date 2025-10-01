@@ -22,10 +22,11 @@ from pymongo.server_api import ServerApi
 # Configurar logging
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    handlers=[logging.StreamHandler()]
+    format="[%(asctime)s] %(levelname)s: %(message)s",
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
+
 
 def verificar_mongodb():
     """Verifica la conexión a MongoDB y el usuario administrador"""
@@ -36,18 +37,18 @@ def verificar_mongodb():
         # Obtener la URI de MongoDB
         mongo_uri = os.getenv("MONGO_URI")
         if not mongo_uri:
-            return {"status": "error", "message": "No se encontró MONGO_URI en las variables de entorno"}
+            return {
+                "status": "error",
+                "message": "No se encontró MONGO_URI en las variables de entorno",
+            }
 
         # Conectar a MongoDB
         client = MongoClient(
-            mongo_uri,
-            tls=True,
-            tlsCAFile=certifi.where(),
-            server_api=ServerApi('1')
+            mongo_uri, tls=True, tlsCAFile=certifi.where(), server_api=ServerApi("1")
         )
 
         # Verificar conexión
-        client.admin.command('ping')
+        client.admin.command("ping")
 
         # Seleccionar base de datos y colección
         db = client["app_catalogojoyero_nueva"]
@@ -63,23 +64,24 @@ def verificar_mongodb():
                 "role": admin_user.get("role"),
                 "username": admin_user.get("username") or admin_user.get("nombre"),
                 "locked_until": admin_user.get("locked_until"),
-                "failed_attempts": admin_user.get("failed_attempts")
+                "failed_attempts": admin_user.get("failed_attempts"),
             }
             return {
                 "status": "success",
                 "message": "Conexión a MongoDB establecida correctamente",
                 "admin_user": admin_info,
-                "total_users": users_collection.count_documents({})
+                "total_users": users_collection.count_documents({}),
             }
         else:
             return {
                 "status": "warning",
                 "message": "No se encontró el usuario administrador",
-                "total_users": users_collection.count_documents({})
+                "total_users": users_collection.count_documents({}),
             }
 
     except Exception as e:
         return {"status": "error", "message": f"Error al conectar a MongoDB: {str(e)}"}
+
 
 def verificar_blueprints():
     """Verifica si los blueprints están registrados correctamente"""
@@ -93,31 +95,39 @@ def verificar_blueprints():
         # Obtener información de blueprints
         blueprints = []
         for rule in app.url_map.iter_rules():
-            blueprint = rule.endpoint.split('.')[0] if '.' in rule.endpoint else None
-            if blueprint and blueprint not in [bp.get('name') for bp in blueprints]:
-                blueprints.append({
-                    "name": blueprint,
-                    "url_prefix": None  # No podemos obtener el prefijo directamente
-                })
+            blueprint = rule.endpoint.split(".")[0] if "." in rule.endpoint else None
+            if blueprint and blueprint not in [bp.get("name") for bp in blueprints]:
+                blueprints.append(
+                    {
+                        "name": blueprint,
+                        "url_prefix": None,  # No podemos obtener el prefijo directamente
+                    }
+                )
 
         # Obtener información de rutas
         routes = []
         for rule in app.url_map.iter_rules():
-            routes.append({
-                "endpoint": rule.endpoint,
-                "methods": list(rule.methods),
-                "rule": str(rule)
-            })
+            routes.append(
+                {
+                    "endpoint": rule.endpoint,
+                    "methods": list(rule.methods),
+                    "rule": str(rule),
+                }
+            )
 
         return {
             "status": "success",
             "message": f"Se encontraron {len(blueprints)} blueprints y {len(routes)} rutas",
             "blueprints": blueprints,
-            "routes": routes[:20]  # Limitar a 20 rutas para no saturar la salida
+            "routes": routes[:20],  # Limitar a 20 rutas para no saturar la salida
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"Error al verificar blueprints: {str(e)}"}
+        return {
+            "status": "error",
+            "message": f"Error al verificar blueprints: {str(e)}",
+        }
+
 
 def verificar_configuracion_sesion():
     """Verifica la configuración de sesiones"""
@@ -138,9 +148,11 @@ def verificar_configuracion_sesion():
             "SESSION_COOKIE_SAMESITE": app.config.get("SESSION_COOKIE_SAMESITE"),
             "SESSION_PERMANENT": app.config.get("SESSION_PERMANENT"),
             "PERMANENT_SESSION_LIFETIME": app.config.get("PERMANENT_SESSION_LIFETIME"),
-            "SESSION_REFRESH_EACH_REQUEST": app.config.get("SESSION_REFRESH_EACH_REQUEST"),
+            "SESSION_REFRESH_EACH_REQUEST": app.config.get(
+                "SESSION_REFRESH_EACH_REQUEST"
+            ),
             "SESSION_USE_SIGNER": app.config.get("SESSION_USE_SIGNER"),
-            "SECRET_KEY": "***OCULTO***" if app.config.get("SECRET_KEY") else None
+            "SECRET_KEY": "***OCULTO***" if app.config.get("SECRET_KEY") else None,
         }
 
         # Verificar directorio de sesiones
@@ -155,31 +167,37 @@ def verificar_configuracion_sesion():
             "message": "Configuración de sesión obtenida correctamente",
             "session_config": session_config,
             "session_files_count": len(session_files),
-            "session_dir_exists": os.path.exists(session_dir) if session_dir else False
+            "session_dir_exists": os.path.exists(session_dir) if session_dir else False,
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"Error al verificar configuración de sesión: {str(e)}"}
+        return {
+            "status": "error",
+            "message": f"Error al verificar configuración de sesión: {str(e)}",
+        }
+
 
 def crear_app_diagnostico():
     """Crea una aplicación Flask para diagnóstico"""
     app = Flask(__name__)
 
     # Configuración básica
-    app.config['SECRET_KEY'] = 'clave_diagnostico_temporal'
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_session_diagnostico')
-    app.config['SESSION_COOKIE_NAME'] = 'diagnostico_session'
-    app.config['SESSION_COOKIE_SECURE'] = False
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['SESSION_PERMANENT'] = True
+    app.config["SECRET_KEY"] = "clave_diagnostico_temporal"
+    app.config["SESSION_TYPE"] = "filesystem"
+    app.config["SESSION_FILE_DIR"] = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "flask_session_diagnostico"
+    )
+    app.config["SESSION_COOKIE_NAME"] = "diagnostico_session"
+    app.config["SESSION_COOKIE_SECURE"] = False
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_PERMANENT"] = True
 
     # Asegurar que el directorio de sesiones existe
-    os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+    os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
 
     # Ruta principal
-    @app.route('/')
+    @app.route("/")
     def index():
         # Ejecutar verificaciones
         mongodb_info = verificar_mongodb()
@@ -191,7 +209,7 @@ def crear_app_diagnostico():
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "mongodb": mongodb_info,
             "blueprints": blueprints_info,
-            "session": session_info
+            "session": session_info,
         }
 
         # Plantilla HTML
@@ -216,7 +234,7 @@ def crear_app_diagnostico():
             <div class="container">
                 <h1 class="mb-4">Diagnóstico de Acceso</h1>
                 <p>Fecha y hora: {{ diagnostico.timestamp }}</p>
-                
+
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         Conexión a MongoDB
@@ -226,7 +244,7 @@ def crear_app_diagnostico():
                             Estado: {{ diagnostico.mongodb.status.upper() }}
                         </h5>
                         <p>{{ diagnostico.mongodb.message }}</p>
-                        
+
                         {% if diagnostico.mongodb.status == 'success' %}
                             <h6>Usuario Administrador:</h6>
                             <pre>{{ diagnostico.mongodb.admin_user|tojson(indent=2) }}</pre>
@@ -234,7 +252,7 @@ def crear_app_diagnostico():
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         Blueprints y Rutas
@@ -244,17 +262,17 @@ def crear_app_diagnostico():
                             Estado: {{ diagnostico.blueprints.status.upper() }}
                         </h5>
                         <p>{{ diagnostico.blueprints.message }}</p>
-                        
+
                         {% if diagnostico.blueprints.status == 'success' %}
                             <h6>Blueprints Registrados:</h6>
                             <pre>{{ diagnostico.blueprints.blueprints|tojson(indent=2) }}</pre>
-                            
+
                             <h6>Rutas Disponibles (primeras 20):</h6>
                             <pre>{{ diagnostico.blueprints.routes|tojson(indent=2) }}</pre>
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         Configuración de Sesión
@@ -264,17 +282,17 @@ def crear_app_diagnostico():
                             Estado: {{ diagnostico.session.status.upper() }}
                         </h5>
                         <p>{{ diagnostico.session.message }}</p>
-                        
+
                         {% if diagnostico.session.status == 'success' %}
                             <h6>Configuración:</h6>
                             <pre>{{ diagnostico.session.session_config|tojson(indent=2) }}</pre>
-                            
+
                             <p>Directorio de sesiones existe: {{ diagnostico.session.session_dir_exists }}</p>
                             <p>Número de archivos de sesión: {{ diagnostico.session.session_files_count }}</p>
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="card-header bg-success text-white">
                         Acciones Disponibles
@@ -322,20 +340,19 @@ def crear_app_diagnostico():
 
         # Renderizar plantilla
         rendered = render_template_string(
-            template,
-            diagnostico=diagnostico,
-            tojson=tojson_filter
+            template, diagnostico=diagnostico, tojson=tojson_filter
         )
 
         return rendered
 
     return app
 
+
 if __name__ == "__main__":
     try:
         app = crear_app_diagnostico()
         logger.info("Iniciando aplicación de diagnóstico en el puerto 5003...")
-        app.run(host='0.0.0.0', port=5003, debug=True)
+        app.run(host="0.0.0.0", port=5003, debug=True)
     except Exception as e:
         logger.error(f"Error al iniciar la aplicación: {str(e)}")
         logger.error(traceback.format_exc())

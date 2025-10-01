@@ -8,10 +8,11 @@ import sys
 from pathlib import Path
 
 try:
-    from google_auth_oauthlib.flow import InstalledAppFlow
+    import pickle
+
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
-    import pickle
+    from google_auth_oauthlib.flow import InstalledAppFlow
 except ImportError as e:
     print(f"❌ Error: Falta módulo {e}")
     print(

@@ -13,21 +13,18 @@ def install_missing_dependencies():
     print("=" * 50)
 
     # Dependencias que pueden faltar
-    dependencies = [
-        "beautifulsoup4",
-        "requests",
-        "pytest",
-        "pytest-html"
-    ]
+    dependencies = ["beautifulsoup4", "requests", "pytest", "pytest-html"]
 
     print("📦 Instalando dependencias faltantes...")
 
     for dep in dependencies:
         try:
             print(f"   📥 Instalando {dep}...")
-            result = subprocess.run([
-                sys.executable, "-m", "pip", "install", dep
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", dep],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 print(f"      ✅ {dep} instalado correctamente")
@@ -35,6 +32,7 @@ def install_missing_dependencies():
                 print(f"      ⚠️  Error instalando {dep}: {result.stderr}")
         except Exception as e:
             print(f"      ❌ Error: {e}")
+
 
 def create_missing_directories():
     """Crea directorios faltantes para tests"""
@@ -51,7 +49,7 @@ def create_missing_directories():
         "tests/production/integration",
         "tests/production/functional",
         "tests/production/performance",
-        "tests/production/security"
+        "tests/production/security",
     ]
 
     for directory in directories:
@@ -60,6 +58,7 @@ def create_missing_directories():
             print(f"   ✅ Creado: {directory}")
         else:
             print(f"   ⚠️  Ya existe: {directory}")
+
 
 def create_sample_tests():
     """Crea tests de ejemplo para verificar funcionamiento"""
@@ -81,10 +80,11 @@ if __name__ == "__main__":
 '''
 
     test_path = "tests/local/unit/test_system_working.py"
-    with open(test_path, 'w') as f:
+    with open(test_path, "w") as f:
         f.write(sample_test)
 
     print(f"   ✅ Creado: {test_path}")
+
 
 def verify_python_environment():
     """Verifica el entorno de Python"""
@@ -111,6 +111,7 @@ def verify_python_environment():
         except ImportError:
             print(f"   ❌ Módulo {module} NO disponible")
 
+
 def main():
     """Función principal"""
 
@@ -124,6 +125,7 @@ def main():
     print("   1. Reiniciar Gunicorn")
     print("   2. Acceder a: http://localhost:8000/dev-template/testing/")
     print("   3. Probar el test de ejemplo: test_system_working.py")
+
 
 if __name__ == "__main__":
     main()

@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 
 def get_upload_dir() -> str:
     """Obtiene la ruta absoluta del directorio de subidas y la crea si no existe."""
-    static_folder = current_app.static_folder or os.path.join(current_app.root_path, 'static')
+    static_folder = current_app.static_folder or os.path.join(
+        current_app.root_path, "static"
+    )
     folder = os.path.join(static_folder, "uploads")
     os.makedirs(folder, exist_ok=True)
     return folder
@@ -35,7 +37,7 @@ def handle_file_upload(file: Optional[FileStorage]) -> Optional[str]:
 
     try:
         filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
-        
+
         use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
         if use_s3:
             logger.info(f"Intentando subir archivo directamente a S3: {filename}")
@@ -45,8 +47,14 @@ def handle_file_upload(file: Optional[FileStorage]) -> Optional[str]:
                 logger.info(f"Archivo subido a S3 exitosamente: {result.get('key')}")
                 return filename
             else:
-                error_msg = result.get("error", "Error desconocido en S3") if result else "Resultado de S3 fue None"
-                logger.error(f"Fallo al subir a S3: {error_msg}. Usando modo local como fallback: {filename}")
+                error_msg = (
+                    result.get("error", "Error desconocido en S3")
+                    if result
+                    else "Resultado de S3 fue None"
+                )
+                logger.error(
+                    f"Fallo al subir a S3: {error_msg}. Usando modo local como fallback: {filename}"
+                )
                 # Fallback a modo local
                 upload_dir = get_upload_dir()
                 local_path = os.path.join(upload_dir, filename)
@@ -62,5 +70,7 @@ def handle_file_upload(file: Optional[FileStorage]) -> Optional[str]:
             logger.info(f"Archivo guardado localmente: {local_path}")
             return filename
     except Exception as e:
-        logger.error(f"Error inesperado durante la subida de archivo: {e}", exc_info=True)
+        logger.error(
+            f"Error inesperado durante la subida de archivo: {e}", exc_info=True
+        )
         return None

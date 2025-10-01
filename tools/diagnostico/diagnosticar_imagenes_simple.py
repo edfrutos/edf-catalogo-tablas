@@ -33,7 +33,8 @@ def diagnosticar_imagenes_simple():
 
         # Obtener catálogo
         from bson import ObjectId
-        catalog = db['catalogs'].find_one({'_id': ObjectId(catalog_id)})
+
+        catalog = db["catalogs"].find_one({"_id": ObjectId(catalog_id)})
 
         if not catalog:
             print("   ❌ Catálogo no encontrado")
@@ -43,11 +44,13 @@ def diagnosticar_imagenes_simple():
         print(f"   📅 Fecha: {catalog.get('created_at', 'Sin fecha')}")
 
         # Analizar filas
-        rows = catalog.get('rows', [])
+        rows = catalog.get("rows", [])
         print(f"   📊 Total filas: {len(rows)}")
 
         # Verificar directorio local
-        local_path = "/var/www/vhosts/edefrutos2025.xyz/httpdocs/app/static/imagenes_subidas"
+        local_path = (
+            "/var/www/vhosts/edefrutos2025.xyz/httpdocs/app/static/imagenes_subidas"
+        )
         print(f"\n   📁 Directorio local: {local_path}")
         print(f"   📂 Existe: {'✅ Sí' if os.path.exists(local_path) else '❌ No'}")
 
@@ -60,11 +63,11 @@ def diagnosticar_imagenes_simple():
             print(f"\n   📄 Fila {i+1}:")
 
             # Obtener imágenes
-            images = row.get('images', [])
+            images = row.get("images", [])
             if isinstance(images, str):
                 try:
                     images = json.loads(images)
-                except:
+                except BaseException:
                     images = [images]
 
             print(f"      🖼️  Imágenes: {len(images)}")
@@ -76,14 +79,19 @@ def diagnosticar_imagenes_simple():
                 # Verificar local
                 local_file = os.path.join(local_path, img)
                 local_exists = os.path.exists(local_file)
-                print(f"            📁 Local: {'✅ Existe' if local_exists else '❌ No existe'}")
+                print(
+                    f"            📁 Local: {'✅ Existe' if local_exists else '❌ No existe'}"
+                )
 
                 # Verificar S3 (simular)
-                s3_url = f"https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/{img}"
+                s3_url = (
+                    f"https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/{img}"
+                )
                 print(f"            🔗 S3 URL: {s3_url}")
 
                 # Probar acceso S3
                 import requests
+
                 try:
                     response = requests.head(s3_url, timeout=5)
                     print(f"            🌐 S3 Status: {response.status_code}")
@@ -92,12 +100,16 @@ def diagnosticar_imagenes_simple():
 
         # Verificar configuración S3
         print("\n   ⚙️  CONFIGURACIÓN S3:")
-        aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID')
-        aws_secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-        s3_bucket = os.environ.get('S3_BUCKET_NAME')
+        aws_access_key = os.environ.get("AWS_ACCESS_KEY_ID")
+        aws_secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
+        s3_bucket = os.environ.get("S3_BUCKET_NAME")
 
-        print(f"      🔑 Access Key: {'✅ Configurada' if aws_access_key else '❌ No configurada'}")
-        print(f"      🔑 Secret Key: {'✅ Configurada' if aws_secret_key else '❌ No configurada'}")
+        print(
+            f"      🔑 Access Key: {'✅ Configurada' if aws_access_key else '❌ No configurada'}"
+        )
+        print(
+            f"      🔑 Secret Key: {'✅ Configurada' if aws_secret_key else '❌ No configurada'}"
+        )
         print(f"      📦 Bucket: {s3_bucket or '❌ No configurado'}")
 
         return True
@@ -105,8 +117,10 @@ def diagnosticar_imagenes_simple():
     except Exception as e:
         print(f"   ❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     diagnosticar_imagenes_simple()

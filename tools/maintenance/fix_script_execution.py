@@ -41,10 +41,13 @@ def check_script_runner():
             [sys.executable, script_runner_path],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
 
-        if result.returncode == 1 and "Debe especificar la ruta del script" in result.stdout:
+        if (
+            result.returncode == 1
+            and "Debe especificar la ruta del script" in result.stdout
+        ):
             print("  ✅ script_runner.py se ejecuta correctamente")
             return True
         else:
@@ -56,6 +59,7 @@ def check_script_runner():
     except Exception as e:
         print(f"  ❌ Error al ejecutar script_runner.py: {str(e)}")
         return False
+
 
 def test_script_execution():
     """Prueba la ejecución de un script específico"""
@@ -87,7 +91,7 @@ def test_script_execution():
             capture_output=True,
             text=True,
             timeout=30,
-            cwd=os.getcwd()
+            cwd=os.getcwd(),
         )
 
         print(f"Código de salida: {result.returncode}")
@@ -114,7 +118,7 @@ def test_script_execution():
             capture_output=True,
             text=True,
             timeout=30,
-            cwd=os.getcwd()
+            cwd=os.getcwd(),
         )
 
         print(f"Código de salida: {result.returncode}")
@@ -137,6 +141,7 @@ def test_script_execution():
 
     return True
 
+
 def check_web_routes():
     """Verifica las rutas web para ejecución de scripts"""
     print("\n=== VERIFICACIÓN DE RUTAS WEB ===")
@@ -150,22 +155,23 @@ def check_web_routes():
     print(f"✅ Archivo de rutas encontrado: {routes_file}")
 
     # Verificar que las rutas estén correctamente configuradas
-    with open(routes_file, encoding='utf-8') as f:
+    with open(routes_file, encoding="utf-8") as f:
         content = f.read()
 
-    if '/run/<path:script_path>' in content:
+    if "/run/<path:script_path>" in content:
         print("✅ Ruta /run/ encontrada")
     else:
         print("❌ Ruta /run/ no encontrada")
         return False
 
-    if '/execute' in content:
+    if "/execute" in content:
         print("✅ Ruta /execute encontrada")
     else:
         print("❌ Ruta /execute no encontrada")
         return False
 
     return True
+
 
 def fix_script_execution_issues():
     """Corrige los problemas de ejecución de scripts"""
@@ -181,10 +187,12 @@ def fix_script_execution_issues():
             print(f"❌ Error al corregir permisos de script_runner: {e}")
 
     # 2. Corregir permisos de scripts de producción
-    production_scripts_dir = os.path.join(os.getcwd(), "tools", "production", "db_utils")
+    production_scripts_dir = os.path.join(
+        os.getcwd(), "tools", "production", "db_utils"
+    )
     if os.path.exists(production_scripts_dir):
         for file in os.listdir(production_scripts_dir):
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 script_path = os.path.join(production_scripts_dir, file)
                 try:
                     os.chmod(script_path, 0o755)
@@ -195,7 +203,9 @@ def fix_script_execution_issues():
     # 3. Verificar que el script_runner devuelva JSON válido
     print("\n--- Verificando salida JSON del script_runner ---")
     script_runner_path = os.path.join(os.getcwd(), "tools", "script_runner.py")
-    test_script = os.path.join(os.getcwd(), "tools", "production", "db_utils", "test_date_format.py")
+    test_script = os.path.join(
+        os.getcwd(), "tools", "production", "db_utils", "test_date_format.py"
+    )
 
     if os.path.exists(script_runner_path) and os.path.exists(test_script):
         try:
@@ -204,7 +214,7 @@ def fix_script_execution_issues():
                 capture_output=True,
                 text=True,
                 timeout=30,
-                cwd=os.getcwd()
+                cwd=os.getcwd(),
             )
 
             if result.returncode == 0:
@@ -221,6 +231,7 @@ def fix_script_execution_issues():
         except Exception as e:
             print(f"❌ Error al probar script_runner: {e}")
 
+
 def main():
     """Función principal"""
     print("🔧 DIAGNÓSTICO Y CORRECCIÓN DE SCRIPTS EN PRODUCCIÓN")
@@ -228,7 +239,9 @@ def main():
 
     # Verificar que estamos en el directorio correcto
     if not os.path.exists("tools"):
-        print("❌ No se encontró el directorio 'tools'. Asegúrate de ejecutar desde el directorio raíz del proyecto.")
+        print(
+            "❌ No se encontró el directorio 'tools'. Asegúrate de ejecutar desde el directorio raíz del proyecto."
+        )
         return
 
     print(f"📁 Directorio actual: {os.getcwd()}")
@@ -260,6 +273,7 @@ def main():
         print("   2. Asegúrate de que script_runner.py devuelva JSON válido")
         print("   3. Verifica que las rutas web estén correctamente configuradas")
         print("   4. Revisa los logs del servidor web para errores adicionales")
+
 
 if __name__ == "__main__":
     main()

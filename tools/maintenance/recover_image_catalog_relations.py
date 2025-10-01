@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 # Agregar el directorio actual al path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 def recover_image_catalog_relations():
     """Intenta recuperar las relaciones originales entre imágenes y catálogos"""
 
@@ -40,12 +41,14 @@ def recover_image_catalog_relations():
                 return False
 
             # Obtener archivos físicos
-            upload_dir = os.path.join(app.static_folder, 'uploads')
+            upload_dir = os.path.join(app.static_folder, "uploads")
             physical_files = []
 
             if os.path.exists(upload_dir):
                 for filename in os.listdir(upload_dir):
-                    if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp')):
+                    if filename.lower().endswith(
+                        (".jpg", ".jpeg", ".png", ".gif", ".bmp")
+                    ):
                         physical_files.append(filename)
 
             print(f"   📁 Archivos físicos encontrados: {len(physical_files)}")
@@ -62,9 +65,10 @@ def recover_image_catalog_relations():
 
             # Patrones comunes en nombres de archivos
             patterns = [
-                r'(\w+)_(\d+)_(\w+)',  # ejemplo: tabla_1_c4384f19.jpg
-                r'(\w+)\.(\w+)_(\d+)_(\w+)',  # ejemplo: storage_units.xlsx_6_895fc11c.jpg
-                r'(\w+)_(\d+)_(\w+)',  # ejemplo: Catalogo_hecho_a_mano_0_a74e2715.jpg
+                r"(\w+)_(\d+)_(\w+)",  # ejemplo: tabla_1_c4384f19.jpg
+                r"(\w+)\.(\w+)_(\d+)_(\w+)",
+                # ejemplo: storage_units.xlsx_6_895fc11c.jpg
+                r"(\w+)_(\d+)_(\w+)",  # ejemplo: Catalogo_hecho_a_mano_0_a74e2715.jpg
             ]
 
             print("   🔍 Analizando patrones en nombres de archivos...")
@@ -82,8 +86,10 @@ def recover_image_catalog_relations():
                         # Buscar catálogos con nombres similares
                         for catalog in catalogs:
                             catalog_name = catalog.get("name", "").lower()
-                            if (potential_catalog_name.lower() in catalog_name or
-                                catalog_name in potential_catalog_name.lower()):
+                            if (
+                                potential_catalog_name.lower() in catalog_name
+                                or catalog_name in potential_catalog_name.lower()
+                            ):
                                 matched_catalog = catalog
                                 break
 
@@ -93,7 +99,7 @@ def recover_image_catalog_relations():
                 # Si no se encontró por patrón, intentar por fecha o contenido
                 if not matched_catalog:
                     # Buscar por fechas en el nombre (formato iOS)
-                    date_match = re.search(r'(\d{8})_(\d{9})_iOS', filename)
+                    date_match = re.search(r"(\d{8})_(\d{9})_iOS", filename)
                     if date_match:
                         # Buscar catálogos creados en fechas similares
                         date_str = date_match.group(1)
@@ -101,17 +107,24 @@ def recover_image_catalog_relations():
                             created_at = catalog.get("created_at")
                             if created_at:
                                 # Manejar tanto objetos datetime como strings
-                                if hasattr(created_at, 'strftime'):
+                                if hasattr(created_at, "strftime"):
                                     catalog_date = created_at.strftime("%Y%m%d")
                                 else:
                                     # Si es string, intentar parsear
                                     try:
                                         from datetime import datetime
+
                                         if isinstance(created_at, str):
                                             # Intentar diferentes formatos
-                                            for fmt in ["%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"]:
+                                            for fmt in [
+                                                "%Y-%m-%d",
+                                                "%Y-%m-%d %H:%M:%S",
+                                                "%Y-%m-%dT%H:%M:%S",
+                                            ]:
                                                 try:
-                                                    dt = datetime.strptime(created_at, fmt)
+                                                    dt = datetime.strptime(
+                                                        created_at, fmt
+                                                    )
                                                     catalog_date = dt.strftime("%Y%m%d")
                                                     break
                                                 except ValueError:
@@ -120,7 +133,7 @@ def recover_image_catalog_relations():
                                                 continue  # No se pudo parsear la fecha
                                         else:
                                             continue
-                                    except:
+                                    except BaseException:
                                         continue
 
                                 if catalog_date == date_str:
@@ -135,17 +148,21 @@ def recover_image_catalog_relations():
                     catalog_patterns[catalog_id].append(filename)
 
             # Mostrar resultados del análisis
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("ANÁLISIS DE RELACIONES ENCONTRADAS")
-            print("="*50)
+            print("=" * 50)
 
             total_matched = len(image_catalog_matches)
             print(f"📊 Imágenes con catálogo identificado: {total_matched}")
-            print(f"📊 Imágenes sin catálogo identificado: {len(physical_files) - total_matched}")
+            print(
+                f"📊 Imágenes sin catálogo identificado: {len(physical_files) - total_matched}"
+            )
 
             # Mostrar detalles por catálogo
             for catalog_id, images in catalog_patterns.items():
-                catalog = next((c for c in catalogs if str(c.get("_id")) == catalog_id), None)
+                catalog = next(
+                    (c for c in catalogs if str(c.get("_id")) == catalog_id), None
+                )
                 if catalog:
                     catalog_name = catalog.get("name", "Sin nombre")
                     print(f"\n📋 {catalog_name} (ID: {catalog_id})")
@@ -156,43 +173,55 @@ def recover_image_catalog_relations():
                         print(f"      ... y {len(images) - 5} más")
 
             # Imágenes sin catálogo identificado
-            unmatched_images = [f for f in physical_files if f not in image_catalog_matches]
+            unmatched_images = [
+                f for f in physical_files if f not in image_catalog_matches
+            ]
             if unmatched_images:
-                print(f"\n❓ IMÁGENES SIN CATÁLOGO IDENTIFICADO ({len(unmatched_images)}):")
+                print(
+                    f"\n❓ IMÁGENES SIN CATÁLOGO IDENTIFICADO ({len(unmatched_images)}):"
+                )
                 for img in unmatched_images[:10]:
                     print(f"   - {img}")
                 if len(unmatched_images) > 10:
                     print(f"   ... y {len(unmatched_images) - 10} más")
 
             # Preguntar al usuario qué hacer
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("OPCIONES DISPONIBLES")
-            print("="*50)
+            print("=" * 50)
 
             if total_matched > 0:
-                print(f"✅ Opción 1: Restaurar {total_matched} imágenes a sus catálogos originales")
-                print("   - Las imágenes se agregarán a las filas existentes de sus catálogos")
+                print(
+                    f"✅ Opción 1: Restaurar {total_matched} imágenes a sus catálogos originales"
+                )
+                print(
+                    "   - Las imágenes se agregarán a las filas existentes de sus catálogos"
+                )
                 print("   - Se migrarán a S3 automáticamente")
 
             if unmatched_images:
-                print(f"✅ Opción 2: Crear catálogo separado para {len(unmatched_images)} imágenes sin relación")
+                print(
+                    f"✅ Opción 2: Crear catálogo separado para {len(unmatched_images)} imágenes sin relación"
+                )
                 print("   - Se creará un catálogo 'Imágenes Sin Clasificar'")
                 print("   - Se migrarán a S3 automáticamente")
 
             print("✅ Opción 3: Solo mostrar análisis (no hacer cambios)")
 
             return {
-                'matched_images': image_catalog_matches,
-                'unmatched_images': unmatched_images,
-                'catalog_patterns': catalog_patterns,
-                'total_matched': total_matched
+                "matched_images": image_catalog_matches,
+                "unmatched_images": unmatched_images,
+                "catalog_patterns": catalog_patterns,
+                "total_matched": total_matched,
             }
 
     except Exception as e:
         print(f"   ❌ Error en análisis: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def restore_images_to_catalogs(analysis_result):
     """Restaura las imágenes a sus catálogos originales"""
@@ -222,10 +251,10 @@ def restore_images_to_catalogs(analysis_result):
                 return False
 
             collection = db["spreadsheets"]
-            upload_dir = os.path.join(app.static_folder, 'uploads')
+            upload_dir = os.path.join(app.static_folder, "uploads")
 
-            matched_images = analysis_result['matched_images']
-            catalog_patterns = analysis_result['catalog_patterns']
+            matched_images = analysis_result["matched_images"]
+            catalog_patterns = analysis_result["catalog_patterns"]
 
             restored_count = 0
             failed_count = 0
@@ -255,7 +284,7 @@ def restore_images_to_catalogs(analysis_result):
                             # Subir a S3
                             s3_result = upload_file_to_s3(file_path, filename)
 
-                            if s3_result.get('success'):
+                            if s3_result.get("success"):
                                 # Agregar a la fila
                                 if "images" not in rows[0]:
                                     rows[0]["images"] = []
@@ -285,9 +314,9 @@ def restore_images_to_catalogs(analysis_result):
                             "$set": {
                                 "rows": rows,
                                 "data": rows,  # Mantener compatibilidad
-                                "updated_at": datetime.now()
+                                "updated_at": datetime.now(),
                             }
-                        }
+                        },
                     )
                     print(f"   ✅ Catálogo '{catalog_name}' actualizado")
 
@@ -296,9 +325,9 @@ def restore_images_to_catalogs(analysis_result):
                     failed_count += len(images)
 
             # Imprimir estadísticas
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("ESTADÍSTICAS DE RESTAURACIÓN")
-            print("="*50)
+            print("=" * 50)
             print(f"Imágenes restauradas: {restored_count}")
             print(f"Errores: {failed_count}")
             print(f"Catálogos actualizados: {len(catalog_patterns)}")
@@ -308,8 +337,10 @@ def restore_images_to_catalogs(analysis_result):
     except Exception as e:
         print(f"   ❌ Error en restauración: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def main():
     """Función principal"""
@@ -324,14 +355,16 @@ def main():
         print("\n❌ El análisis no se completó correctamente")
         return False
 
-    if analysis_result['total_matched'] == 0:
+    if analysis_result["total_matched"] == 0:
         print("\n⚠️  No se encontraron relaciones entre imágenes y catálogos")
         print("   Considera usar la migración simple a S3")
         return False
 
     # Preguntar al usuario qué hacer
     print("\n¿Qué acción deseas realizar?")
-    print(f"1. Restaurar {analysis_result['total_matched']} imágenes a sus catálogos originales")
+    print(
+        f"1. Restaurar {analysis_result['total_matched']} imágenes a sus catálogos originales"
+    )
     print("2. Solo mostrar análisis (no hacer cambios)")
 
     # Por ahora, ejecutar automáticamente la restauración
@@ -346,6 +379,7 @@ def main():
     else:
         print("\n❌ La restauración no se completó correctamente")
         return False
+
 
 if __name__ == "__main__":
     main()

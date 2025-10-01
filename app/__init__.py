@@ -25,9 +25,9 @@ from .routes.catalog_images_routes import image_bp
 from .routes.catalogs_routes import catalogs_bp
 from .routes.dev_template import bp_dev_template
 from .routes.emergency_access import emergency_bp
-from .routes.images_routes import (
+from .routes.images_routes import (  # Blueprint para /imagenes_subidas/<filename> (ahora llamado uploaded_images)
     images_bp,
-)  # Blueprint para /imagenes_subidas/<filename> (ahora llamado uploaded_images)
+)
 
 # Importar blueprints
 from .routes.main_routes import main_bp
@@ -98,7 +98,8 @@ def create_app(testing=False):
     # Inicializar conexión a MongoDB usando el nuevo módulo de base de datos
     global client, db
 
-    # Importamos el módulo de base de datos que maneja las conexiones de forma resiliente
+    # Importamos el módulo de base de datos que maneja las conexiones de forma
+    # resiliente
     app.logger.info("Inicializando conexión a MongoDB usando el módulo database.py...")
     try:
         from app.database import get_mongo_client, get_mongo_db, initialize_db
@@ -221,7 +222,8 @@ def create_app(testing=False):
         app.logger.error(f"Error registrando blueprint de testing: {str(e)}")
 
     # ---
-    # Error handlers globales para API (devuelven JSON en endpoints tipo /api/ o si se acepta JSON)
+    # Error handlers globales para API (devuelven JSON en endpoints tipo /api/
+    # o si se acepta JSON)
     def api_error_handler(error):
         from flask import jsonify, request
 
@@ -302,6 +304,7 @@ def create_app(testing=False):
     # Registrar blueprints adicionales si existen
     try:
         from app.routes.admin_routes import register_admin_blueprints
+
         register_admin_blueprints(app)
     except Exception as e:
         app.logger.error(f"Error con blueprints adicionales: {str(e)}")

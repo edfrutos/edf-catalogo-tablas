@@ -14,17 +14,17 @@ import logging
 import os  # noqa: F401
 
 from bson import ObjectId  # noqa: F401
-from flask import (
+from flask import abort  # noqa: F401
+from flask import current_app  # noqa: F401
+from flask import (  # noqa: F401
     Blueprint,
-    abort,  # noqa: F401
-    current_app,  # noqa: F401
     flash,
     redirect,
     render_template,
     request,
     session,
     url_for,
-)  # noqa: F401
+)
 
 logger = logging.getLogger(__name__)
 direct_access_bp = Blueprint("direct_access", __name__)

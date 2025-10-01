@@ -14,8 +14,12 @@ def check_mypy_config():
 
     # Verificar si mypy está instalado
     try:
-        result = subprocess.run([sys.executable, '-m', 'mypy', '--version'],
-                              capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            [sys.executable, "-m", "mypy", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
         if result.returncode == 0:
             print(f"✅ mypy instalado: {result.stdout.strip()}")
         else:
@@ -27,8 +31,12 @@ def check_mypy_config():
 
     # Verificar configuración
     try:
-        result = subprocess.run([sys.executable, '-m', 'mypy', '--show-config'],
-                              capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            [sys.executable, "-m", "mypy", "--show-config"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
         if result.returncode == 0:
             print("✅ Configuración de mypy válida")
             return True
@@ -39,27 +47,32 @@ def check_mypy_config():
         print(f"❌ Error verificando configuración: {e}")
         return False
 
+
 def test_mypy_on_file():
     """Prueba mypy en un archivo simple"""
     print("\n🧪 Probando mypy en un archivo de prueba...")
 
     # Crear un archivo de prueba simple
     test_file = "test_mypy.py"
-    test_content = '''
+    test_content = """
 def test_function(x: int) -> int:
     return x * 2
 
 result = test_function(5)
 print(result)
-'''
+"""
 
     try:
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             f.write(test_content)
 
         # Ejecutar mypy en el archivo de prueba
-        result = subprocess.run([sys.executable, '-m', 'mypy', test_file],
-                              capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            [sys.executable, "-m", "mypy", test_file],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
 
         if result.returncode == 0:
             print("✅ mypy funciona correctamente")
@@ -78,13 +91,18 @@ print(result)
             os.remove(test_file)
         return False
 
+
 def install_mypy():
     """Instala mypy si no está disponible"""
     print("\n📦 Instalando mypy...")
 
     try:
-        result = subprocess.run([sys.executable, '-m', 'pip', 'install', 'mypy'],
-                              capture_output=True, text=True, timeout=60)
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "mypy"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
 
         if result.returncode == 0:
             print("✅ mypy instalado correctamente")
@@ -95,6 +113,7 @@ def install_mypy():
     except Exception as e:
         print(f"❌ Error en instalación: {e}")
         return False
+
 
 def main():
     """Función principal"""
@@ -130,6 +149,7 @@ def main():
         print("   1. Instalar mypy manualmente: pip install mypy")
         print("   2. Revisar la configuración en pyproject.toml")
         print("   3. Usar el archivo mypy.ini creado")
+
 
 if __name__ == "__main__":
     main()

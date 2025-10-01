@@ -25,7 +25,7 @@ from pymongo import MongoClient
 load_dotenv()
 
 # Configure SSL certificate file for secure connections
-os.environ['SSL_CERT_FILE'] = certifi.where()
+os.environ["SSL_CERT_FILE"] = certifi.where()
 # MongoDB configuration
 MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:
@@ -40,7 +40,9 @@ S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 
 if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME]):
     print("Error: One or more AWS environment variables not set")
-    print("Required: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME")
+    print(
+        "Required: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME"
+    )
     sys.exit(1)
 
 # Connect to MongoDB
@@ -56,10 +58,10 @@ except Exception as e:
 # Initialize S3 client
 try:
     s3_client = boto3.client(
-        's3',
+        "s3",
         aws_access_key_id=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        region_name=AWS_REGION
+        region_name=AWS_REGION,
     )
     print(f"Connected to AWS S3 in region {AWS_REGION}")
 except ClientError as e:
@@ -72,13 +74,14 @@ if not UPLOAD_FOLDER.exists():
     print(f"Error: Directory {UPLOAD_FOLDER} does not exist")
     sys.exit(1)
 
+
 def upload_file_to_s3(file_path, object_name=None):
     """Upload a file to an S3 bucket
-    
+
     Args:
         file_path (str): Path to the file to upload
         object_name (str, optional): S3 object name. If not provided, file_path's basename is used
-        
+
     Returns:
         bool: True if file was uploaded, else False
     """
@@ -91,6 +94,7 @@ def upload_file_to_s3(file_path, object_name=None):
     except ClientError as e:
         print(f"Error uploading file {file_path} to S3: {e}")
         return False
+
 
 def migrate_images():
     """Migrate all images from local filesystem to S3"""
@@ -111,7 +115,9 @@ def migrate_images():
     total_records = catalog_collection.count_documents({})
     records_with_images = catalog_collection.count_documents(query)
 
-    print(f"Found {records_with_images} records with images out of {total_records} total records")
+    print(
+        f"Found {records_with_images} records with images out of {total_records} total records"
+    )
 
     # Process each record
     for record in records:
@@ -162,8 +168,7 @@ def migrate_images():
                 # Update MongoDB record with S3 path
                 s3_path = f"s3://{S3_BUCKET_NAME}/{unique_filename}"
                 catalog_collection.update_one(
-                    {"_id": record_id},
-                    {"$set": {f"Imagenes.{i}": s3_path}}
+                    {"_id": record_id}, {"$set": {f"Imagenes.{i}": s3_path}}
                 )
                 print(f"    ✅ Successfully migrated to: {s3_path}")
                 images_migrated += 1
@@ -172,22 +177,22 @@ def migrate_images():
                 images_failed += 1
 
     # Print statistics
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("MIGRATION STATISTICS")
-    print("="*50)
+    print("=" * 50)
     print(f"Total records: {total_records}")
     print(f"Records with images: {records_with_images}")
     print(f"Total images processed: {total_images}")
     print(f"Images successfully migrated: {images_migrated}")
     print(f"Images not found in filesystem: {images_not_found}")
     print(f"Images failed to upload: {images_failed}")
-    print("="*50)
+    print("=" * 50)
 
     if images_migrated + images_not_found + images_failed == total_images:
         print("✅ Migration completed successfully")
     else:
         print("⚠️ Migration completed with inconsistencies")
 
+
 if __name__ == "__main__":
     migrate_images()
-

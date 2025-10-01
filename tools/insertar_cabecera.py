@@ -9,32 +9,35 @@ import os
 import sys
 from datetime import date
 
-CABECERA = '''# Script: {nombre}
+CABECERA = """# Script: {nombre}
 # Descripción: [Explica brevemente qué hace el script]
 # Uso: python3 {nombre} [opciones]
 # Requiere: [librerías externas, si aplica]
 # Variables de entorno: [si aplica]
 # Autor: [Tu nombre o equipo] - {fecha}
-'''
+"""
+
 
 def tiene_cabecera(path):
-    with open(path, encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         for _ in range(5):
             linea = f.readline()
-            if '#' in linea:
+            if "#" in linea:
                 return True
     return False
+
 
 def insertar_cabecera(path):
     nombre = os.path.basename(path)
     fecha = date.today().isoformat()
-    with open(path, encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         contenido = f.read()
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(CABECERA.format(nombre=nombre, fecha=fecha))
-        f.write('\n')
+        f.write("\n")
         f.write(contenido)
     print(f"Cabecera insertada en {path}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

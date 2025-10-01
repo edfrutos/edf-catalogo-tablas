@@ -5,9 +5,9 @@ Autor: EDF Developer - 2025
 """
 
 import os
-import sys
 import shutil
 import subprocess
+import sys
 from pathlib import Path  # pyright: ignore[reportUnusedImport]
 
 
@@ -130,9 +130,9 @@ def test_mongodb_connection():
     print("=" * 40)
 
     try:
-        from dotenv import load_dotenv
-        import pymongo
         import certifi
+        import pymongo
+        from dotenv import load_dotenv
 
         # Cargar variables de entorno
         load_dotenv()
@@ -185,10 +185,10 @@ def create_fallback_user():
     print("=" * 40)
 
     try:
-        from dotenv import load_dotenv
-        import pymongo
         import certifi
+        import pymongo
         from bson import ObjectId
+        from dotenv import load_dotenv
 
         load_dotenv()
 

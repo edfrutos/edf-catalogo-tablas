@@ -3,6 +3,7 @@
 Script para verificar si las imágenes corregidas existen en S3
 """
 
+from utils.s3_utils import get_s3_client, get_s3_url
 import os
 import sys
 
@@ -11,7 +12,6 @@ from dotenv import load_dotenv
 # Agregar el directorio app al path para importar las utilidades
 sys.path.append(os.path.join(os.path.dirname(__file__), "app"))
 
-from utils.s3_utils import get_s3_client, get_s3_url
 
 # Cargar variables de entorno
 load_dotenv()

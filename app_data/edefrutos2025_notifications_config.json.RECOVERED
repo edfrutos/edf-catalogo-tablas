@@ -1,0 +1,22 @@
+{
+  "enabled": false,
+  "smtp": {
+    "server": "smtp-relay.brevo.com",
+    "port": 587,
+    "username": "admin@edefrutos.me",
+    "password": "Rmp3UXwsIkvA0c1dRmp3UXwsIkvA0c1d",
+    "use_tls": true
+  },
+  "recipients": [
+    "admin@edefrutos2025.xyz",
+    "edfrutos@gmail.com"
+  ],
+  "thresholds": {
+    "cpu": 85,
+    "memory": 85,
+    "disk": 85,
+    "error_rate": 10
+  },
+  "cooldown_minutes": 60,
+  "last_alerts": {}
+}

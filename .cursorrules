@@ -4,9 +4,11 @@
 
 ## Entorno Virtual
 
-- El entorno virtual está en `.venv/`
-- Usar Python 3.8 del entorno virtual
-- Ruta del intérprete: `./.venv/bin/python`
+- **Entorno principal**: `.venv/` (Python 3.12)
+- **Entorno Python 3.10**: `.venv310/` (Recién instalado)
+- **Ruta intérprete principal**: `./.venv/bin/python`
+- **Ruta intérprete Python 3.10**: `./.venv310/bin/python`
+- **Activar Python 3.10**: `source .venv310/bin/activate`
 
 ## Configuración del Proyecto
 

@@ -7,8 +7,9 @@ Autor: EDF Developer - 2025
 import os
 import subprocess
 import time
-import requests
 from datetime import datetime
+
+import requests
 
 
 def check_native_app_process():

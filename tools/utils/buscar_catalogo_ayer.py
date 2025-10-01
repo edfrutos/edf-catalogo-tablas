@@ -35,23 +35,23 @@ def buscar_catalogo_ayer():
 
         # Buscar en catalogs
         print("\n   🔍 Buscando en colección 'catalogs'...")
-        catalogs = list(db['catalogs'].find({
-            'created_at': {
-                '$gte': fecha_inicio,
-                '$lte': fecha_fin
-            }
-        }, {'_id': 1, 'name': 1, 'created_at': 1, 'rows': 1}))
+        catalogs = list(
+            db["catalogs"].find(
+                {"created_at": {"$gte": fecha_inicio, "$lte": fecha_fin}},
+                {"_id": 1, "name": 1, "created_at": 1, "rows": 1},
+            )
+        )
 
         print(f"   📊 Encontrados: {len(catalogs)}")
 
         for i, doc in enumerate(catalogs):
-            doc_id = str(doc['_id'])
-            name = doc.get('name', 'Sin nombre')
-            created_at = doc.get('created_at', 'Sin fecha')
-            rows = doc.get('rows', [])
+            doc_id = str(doc["_id"])
+            name = doc.get("name", "Sin nombre")
+            created_at = doc.get("created_at", "Sin fecha")
+            rows = doc.get("rows", [])
 
             if isinstance(created_at, datetime):
-                created_str = created_at.strftime('%Y-%m-%d %H:%M:%S')
+                created_str = created_at.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 created_str = str(created_at)
 
@@ -62,12 +62,13 @@ def buscar_catalogo_ayer():
 
             # Mostrar primeras filas
             for j, row in enumerate(rows[:2]):
-                images = row.get('images', [])
+                images = row.get("images", [])
                 if isinstance(images, str):
                     import json
+
                     try:
                         images = json.loads(images)
-                    except:
+                    except BaseException:
                         images = [images]
 
                 print(f"       📄 Fila {j+1}: {len(images)} imágenes")
@@ -78,23 +79,23 @@ def buscar_catalogo_ayer():
 
         # Buscar en spreadsheets también
         print("\n   🔍 Buscando en colección 'spreadsheets'...")
-        spreadsheets = list(db['spreadsheets'].find({
-            'created_at': {
-                '$gte': fecha_inicio,
-                '$lte': fecha_fin
-            }
-        }, {'_id': 1, 'name': 1, 'created_at': 1, 'rows': 1}))
+        spreadsheets = list(
+            db["spreadsheets"].find(
+                {"created_at": {"$gte": fecha_inicio, "$lte": fecha_fin}},
+                {"_id": 1, "name": 1, "created_at": 1, "rows": 1},
+            )
+        )
 
         print(f"   📊 Encontrados: {len(spreadsheets)}")
 
         for i, doc in enumerate(spreadsheets):
-            doc_id = str(doc['_id'])
-            name = doc.get('name', 'Sin nombre')
-            created_at = doc.get('created_at', 'Sin fecha')
-            rows = doc.get('rows', [])
+            doc_id = str(doc["_id"])
+            name = doc.get("name", "Sin nombre")
+            created_at = doc.get("created_at", "Sin fecha")
+            rows = doc.get("rows", [])
 
             if isinstance(created_at, datetime):
-                created_str = created_at.strftime('%Y-%m-%d %H:%M:%S')
+                created_str = created_at.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 created_str = str(created_at)
 
@@ -108,8 +109,10 @@ def buscar_catalogo_ayer():
     except Exception as e:
         print(f"   ❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     buscar_catalogo_ayer()

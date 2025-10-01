@@ -1564,8 +1564,8 @@ def download_csv_file(temp_filename):
 def open_downloads_folder():
     """Abre la carpeta de descargas en el Finder"""
     try:
-        import subprocess
         import os
+        import subprocess
 
         # Obtener la carpeta de descargas del usuario
         downloads_path = os.path.expanduser("~/Downloads")

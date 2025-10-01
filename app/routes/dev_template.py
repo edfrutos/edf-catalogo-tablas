@@ -8,7 +8,7 @@
 import os
 from functools import wraps
 
-from flask import (
+from flask import (  # noqa: F401
     Blueprint,
     abort,
     current_app,
@@ -19,7 +19,7 @@ from flask import (
     send_file,
     send_from_directory,
     session,
-)  # noqa: F401
+)
 
 
 # Decorador robusto para restringir a admin (soporta Flask-Login y session)
@@ -247,7 +247,7 @@ def update_tests_readme():
                     mod_time = datetime.fromtimestamp(stat.st_mtime).strftime(
                         "%Y-%m-%d %H:%M"
                     )
-                except:
+                except BaseException:
                     mod_time = "N/A"
 
                 # Determinar tipo de test

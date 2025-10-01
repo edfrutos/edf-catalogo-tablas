@@ -6,9 +6,10 @@ Script de diagnóstico para la aplicación empaquetada
 import os
 import sys
 import tempfile
-from pathlib import Path
-import requests
 import time  # pyright: ignore[reportUnusedImport]
+from pathlib import Path
+
+import requests
 
 
 def check_environment():
@@ -22,7 +23,8 @@ def check_environment():
 
     if is_frozen:
         print(
-            f"📁 Directorio base: {sys._MEIPASS}"  # pyright: ignore[reportAttributeAccessIssue]
+            # pyright: ignore[reportAttributeAccessIssue]
+            f"📁 Directorio base: {sys._MEIPASS}"
         )
     else:
         print(f"📁 Directorio actual: {os.getcwd()}")
@@ -120,7 +122,7 @@ def check_network():
         try:
             response = requests.get(f"http://127.0.0.1:{port}", timeout=1)
             print(f"   ⚠️  Puerto {port} ocupado (status: {response.status_code})")
-        except:
+        except BaseException:
             pass
 
 

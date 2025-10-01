@@ -6,13 +6,14 @@
 # Variables de entorno: [si aplica]
 # Autor: [Tu nombre o equipo] - 2025-05-28
 
+import csv
+import json
 import os
+import zipfile
+from datetime import datetime
+
 import certifi
 from pymongo import MongoClient
-import json
-import csv
-from datetime import datetime
-import zipfile
 
 MONGO_URI = os.getenv("MONGO_URI")
 client: MongoClient = MongoClient(MONGO_URI, tlsCAFile=certifi.where())

@@ -17,7 +17,7 @@ def get_script_directories():
             "tools/local/db_utils",
             "tools/production/db_utils",
             "scripts/local/maintenance",
-            "scripts/production/maintenance"
+            "scripts/production/maintenance",
         ],
         "System Maintenance": [
             "scripts/local/maintenance",
@@ -25,25 +25,25 @@ def get_script_directories():
             "tools/local/maintenance",
             "tools/production/maintenance",
             "tools/local/system",
-            "tools/production/system"
+            "tools/production/system",
         ],
         "User Management": [
             "tools/local/admin_utils",
             "tools/production/admin_utils",
             "tools/local/user_utils",
-            "tools/production/user_utils"
+            "tools/production/user_utils",
         ],
         "File Management": [
             "tools/local/utils",
             "tools/production/utils",
             "tools/local/catalog_utils",
-            "tools/production/catalog_utils"
+            "tools/production/catalog_utils",
         ],
         "Monitoring": [
             "tools/local/monitoring",
             "tools/production/monitoring",
             "tools/local/diagnostico",
-            "tools/production/diagnostico"
+            "tools/production/diagnostico",
         ],
         "Testing": [
             "tests/local/unit",
@@ -56,39 +56,37 @@ def get_script_directories():
             "tests/production/functional",
             "tests/production/performance",
             "tests/production/security",
-            "tools/testing"
+            "tools/testing",
         ],
         "Diagnostic Tools": [
             "tools/diagnostic",
             "tools/local/diagnostico",
-            "tools/production/diagnostico"
+            "tools/production/diagnostico",
         ],
         "Migration Tools": [
             "tools/migration",
             "tools/local/aws_utils",
-            "tools/production/aws_utils"
+            "tools/production/aws_utils",
         ],
         "Configuration Tools": [
             "tools/configuration",
-            "tools/production/configuration"
+            "tools/production/configuration",
         ],
         "Development Tools": [
             "tools/local/app",
             "tools/production/app",
             "tools/local/src",
-            "tools/production/src"
+            "tools/production/src",
         ],
         "Infrastructure": [
             "tools/local/aws_utils",
             "tools/production/aws_utils",
             "tools/local/session_utils",
-            "tools/production/session_utils"
+            "tools/production/session_utils",
         ],
-        "Root Tools": [
-            "tools/local/utils",
-            "tools/production/utils"
-        ]
+        "Root Tools": ["tools/local/utils", "tools/production/utils"],
     }
+
 
 def scan_scripts_in_directory(directory):
     """Escanea scripts en un directorio específico"""
@@ -97,17 +95,22 @@ def scan_scripts_in_directory(directory):
         try:
             for fname in os.listdir(directory):
                 fpath = os.path.join(directory, fname)
-                if os.path.isfile(fpath) and (fname.endswith('.py') or fname.endswith('.sh')):
-                    scripts.append({
-                        'name': fname,
-                        'path': fpath,
-                        'type': 'python' if fname.endswith('.py') else 'bash',
-                        'executable': os.access(fpath, os.X_OK),
-                        'size': os.path.getsize(fpath)
-                    })
+                if os.path.isfile(fpath) and (
+                    fname.endswith(".py") or fname.endswith(".sh")
+                ):
+                    scripts.append(
+                        {
+                            "name": fname,
+                            "path": fpath,
+                            "type": "python" if fname.endswith(".py") else "bash",
+                            "executable": os.access(fpath, os.X_OK),
+                            "size": os.path.getsize(fpath),
+                        }
+                    )
         except Exception as e:
             print(f"Error escaneando {directory}: {e}")
     return scripts
+
 
 def check_script_recognition():
     """Verifica qué scripts son reconocidos por el sistema"""
@@ -132,11 +135,13 @@ def check_script_recognition():
                     category_scripts += 1
 
                     # Verificar si el script es reconocido por el sistema
-                    is_recognized = check_script_in_metadata(script['name'], directory)
+                    is_recognized = check_script_in_metadata(script["name"], directory)
                     status = "✅" if is_recognized else "❌"
                     recognized_scripts += 1 if is_recognized else 0
 
-                    print(f"    {status} {script['name']} ({script['type']}, {script['size']} bytes)")
+                    print(
+                        f"    {status} {script['name']} ({script['type']}, {script['size']} bytes)"
+                    )
 
         if category_scripts == 0:
             print(f"  📂 {directory}: (vacío)")
@@ -147,6 +152,7 @@ def check_script_recognition():
     print(f"  Scripts no reconocidos: {total_scripts - recognized_scripts}")
 
     return total_scripts, recognized_scripts
+
 
 def check_script_in_metadata(script_name, directory):
     """Verifica si un script aparece en los metadatos del sistema"""
@@ -159,6 +165,7 @@ def check_script_in_metadata(script_name, directory):
         recognized_dirs.extend(category_dirs)
 
     return directory in recognized_dirs
+
 
 def add_new_script():
     """Guía para agregar un nuevo script"""
@@ -180,6 +187,7 @@ def add_new_script():
     print("4. El script será reconocido automáticamente al recargar la página")
     print("5. No necesitas ejecutar ningún comando adicional")
 
+
 def create_script_template():
     """Crea una plantilla de script"""
     print("\n=== PLANTILLA DE SCRIPT ===")
@@ -200,7 +208,7 @@ def main():
     print("=== EJECUTANDO SCRIPT ===")
     print(f"Fecha y hora: {datetime.now()}")
     print(f"Directorio actual: {os.getcwd()}")
-    
+
     # Tu código aquí
     print("Script ejecutado correctamente")
 
@@ -213,10 +221,11 @@ if __name__ == "__main__":
 
     # Crear archivo de plantilla
     template_file = "plantilla_script.py"
-    with open(template_file, 'w', encoding='utf-8') as f:
+    with open(template_file, "w", encoding="utf-8") as f:
         f.write(template)
 
     print(f"\n✅ Plantilla guardada como: {template_file}")
+
 
 def check_new_scripts():
     """Verifica si hay scripts nuevos que no están siendo reconocidos"""
@@ -231,8 +240,8 @@ def check_new_scripts():
             full_path = os.path.join(os.getcwd(), directory)
             scripts = scan_scripts_in_directory(full_path)
             for script in scripts:
-                script['category'] = category
-                script['directory'] = directory
+                script["category"] = category
+                script["directory"] = directory
                 all_scripts.append(script)
 
     # Verificar permisos
@@ -240,7 +249,7 @@ def check_new_scripts():
     scripts_without_permissions = []
 
     for script in all_scripts:
-        if not script['executable']:
+        if not script["executable"]:
             scripts_without_permissions.append(script)
 
     if scripts_without_permissions:
@@ -255,6 +264,7 @@ def check_new_scripts():
         print("✅ Todos los scripts tienen permisos correctos")
 
     return len(scripts_without_permissions)
+
 
 def main():
     """Función principal"""
@@ -303,6 +313,7 @@ def main():
                 print("Opción inválida")
         except KeyboardInterrupt:
             print("\n\n👋 ¡Hasta luego!")
+
 
 if __name__ == "__main__":
     main()

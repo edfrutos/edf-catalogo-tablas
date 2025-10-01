@@ -10,11 +10,11 @@ import traceback  # pyright: ignore[reportUnusedImport]
 from datetime import datetime, timedelta
 
 import bcrypt  # pyright: ignore[reportUnusedImport]
+from flask import g  # pyright: ignore[reportUnusedImport]
 from flask import (
     Blueprint,
     current_app,
     flash,
-    g,  # pyright: ignore[reportUnusedImport]
     jsonify,
     redirect,
     render_template,
@@ -22,18 +22,17 @@ from flask import (
     session,
     url_for,
 )
-
 from flask_mail import Message
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import mail  # pyright: ignore[reportUnusedImport]
+from app.models import find_reset_token  # pyright: ignore[reportUnusedImport]
+from app.models import mark_token_as_used  # pyright: ignore[reportUnusedImport]
+from app.models import update_user_password  # pyright: ignore[reportUnusedImport]
 from app.models import (
-    find_reset_token,  # pyright: ignore[reportUnusedImport]
     find_user_by_email_or_name,
     get_resets_collection,
     get_users_collection,
-    mark_token_as_used,  # pyright: ignore[reportUnusedImport]
-    update_user_password,  # pyright: ignore[reportUnusedImport]
 )
 from app.models.user import User  # pyright: ignore[reportUnusedImport]
 
@@ -476,7 +475,8 @@ def temp_password_reset():
     Similar a forgot password pero para usuarios con contraseñas temporales.
     """
     try:
-        # Verificar que el usuario llegó desde el proceso de login con contraseña temporal
+        # Verificar que el usuario llegó desde el proceso de login con contraseña
+        # temporal
         if "temp_reset_user_id" not in session:
             flash("Acceso no autorizado. Inicia sesión normalmente.", "warning")
             return redirect(url_for("auth.login"))

@@ -108,9 +108,11 @@ def upload_images(catalog_id):
 
                 current_app.logger.info(f"Imagen guardada localmente: {save_path}")
 
-        # Actualizar el catálogo con las nuevas imágenes en ambos campos para mantener compatibilidad
+        # Actualizar el catálogo con las nuevas imágenes en ambos campos para
+        # mantener compatibilidad
         try:
-            # Actualizar tanto el campo 'images' como 'imagenes' para mantener compatibilidad
+            # Actualizar tanto el campo 'images' como 'imagenes' para mantener
+            # compatibilidad
             current_collection.update_one(
                 {"_id": ObjectId(catalog_id)},
                 {

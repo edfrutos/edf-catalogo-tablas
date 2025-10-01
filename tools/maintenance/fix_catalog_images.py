@@ -16,10 +16,22 @@ def fix_image_paths():
 
     # Patrones a buscar y reemplazar
     patterns = [
-        (r'url_for\(\'static\', filename=\'uploads/\' \+ ([^)]+)\)', r'/imagenes_subidas/\1'),
-        (r'url_for\(\'static\', filename=\'uploads/\' ~ ([^)]+)\)', r'/imagenes_subidas/\1'),
-        (r'url_for\(\'static\', filename=\'uploads/\' \+ ([^)]+)\)', r'/imagenes_subidas/\1'),
-        (r'url_for\(\'static\', filename=\'uploads/\' ~ ([^)]+)\)', r'/imagenes_subidas/\1'),
+        (
+            r"url_for\(\'static\', filename=\'uploads/\' \+ ([^)]+)\)",
+            r"/imagenes_subidas/\1",
+        ),
+        (
+            r"url_for\(\'static\', filename=\'uploads/\' ~ ([^)]+)\)",
+            r"/imagenes_subidas/\1",
+        ),
+        (
+            r"url_for\(\'static\', filename=\'uploads/\' \+ ([^)]+)\)",
+            r"/imagenes_subidas/\1",
+        ),
+        (
+            r"url_for\(\'static\', filename=\'uploads/\' ~ ([^)]+)\)",
+            r"/imagenes_subidas/\1",
+        ),
     ]
 
     # Buscar todos los archivos HTML
@@ -32,7 +44,7 @@ def fix_image_paths():
 
         try:
             # Leer el archivo
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -47,7 +59,7 @@ def fix_image_paths():
 
             # Si se hicieron cambios, escribir el archivo
             if file_fixed:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 print("   ✅ Corregido")
                 total_fixed += 1
@@ -63,6 +75,7 @@ def fix_image_paths():
 
     return total_fixed
 
+
 def fix_python_files():
     """Corrige las rutas de imágenes en archivos Python"""
 
@@ -71,8 +84,14 @@ def fix_python_files():
 
     # Patrones específicos para Python
     patterns = [
-        (r'url_for\(\'static\', filename=f\'uploads/\{([^}]+)\}\)', r'/imagenes_subidas/\1'),
-        (r'url_for\(\'static\', filename=\'uploads/\' \+ ([^)]+)\)', r'/imagenes_subidas/\1'),
+        (
+            r"url_for\(\'static\', filename=f\'uploads/\{([^}]+)\}\)",
+            r"/imagenes_subidas/\1",
+        ),
+        (
+            r"url_for\(\'static\', filename=\'uploads/\' \+ ([^)]+)\)",
+            r"/imagenes_subidas/\1",
+        ),
     ]
 
     # Archivos Python específicos que sabemos que tienen problemas
@@ -80,7 +99,7 @@ def fix_python_files():
         "app/models/user.py",
         "app/routes/main_routes.py",
         "app/routes/admin_routes.py",
-        "app/utils/image_utils.py"
+        "app/utils/image_utils.py",
     ]
 
     total_fixed = 0
@@ -93,7 +112,7 @@ def fix_python_files():
 
         try:
             # Leer el archivo
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -108,7 +127,7 @@ def fix_python_files():
 
             # Si se hicieron cambios, escribir el archivo
             if file_fixed:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 print("   ✅ Corregido")
                 total_fixed += 1
@@ -123,6 +142,7 @@ def fix_python_files():
     print(f"   ✅ Archivos corregidos: {total_fixed}")
 
     return total_fixed
+
 
 def main():
     """Función principal"""
@@ -147,6 +167,7 @@ def main():
         print("   🔄 Reinicia el servicio para aplicar los cambios")
     else:
         print("\nℹ️  No se encontraron archivos que necesiten corrección")
+
 
 if __name__ == "__main__":
     main()

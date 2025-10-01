@@ -15,7 +15,14 @@ import os  # noqa: F401
 from datetime import datetime, timedelta  # noqa: F401
 
 from bson import ObjectId  # noqa: F401
-from flask import Blueprint, flash, redirect, render_template, session, url_for  # noqa: F401
+from flask import (  # noqa: F401
+    Blueprint,
+    flash,
+    redirect,
+    render_template,
+    session,
+    url_for,
+)
 
 logger = logging.getLogger(__name__)
 emergency_bp = Blueprint("emergency", __name__)

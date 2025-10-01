@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 def diagnosticar_imagenes_catalogo():
     """Diagnostica el problema de imágenes en el catálogo"""
 
@@ -35,7 +36,7 @@ def diagnosticar_imagenes_catalogo():
 
             # Obtener datos del catálogo
             db = get_mongo_db()
-            catalog = db['spreadsheets'].find_one({'_id': ObjectId(catalog_id)})
+            catalog = db["spreadsheets"].find_one({"_id": ObjectId(catalog_id)})
 
             if not catalog:
                 print("   ❌ Catálogo no encontrado")
@@ -46,19 +47,20 @@ def diagnosticar_imagenes_catalogo():
             print(f"   📊 Filas: {len(catalog.get('rows', []))}")
 
             # Analizar imágenes en cada fila
-            rows = catalog.get('rows', [])
+            rows = catalog.get("rows", [])
 
             for i, row in enumerate(rows):
                 print(f"\n   📄 Fila {i+1}:")
 
                 # Obtener imágenes de la fila
-                images = row.get('images', [])
+                images = row.get("images", [])
                 if isinstance(images, str):
                     # Si es string, intentar parsear como JSON
                     import json
+
                     try:
                         images = json.loads(images)
-                    except:
+                    except BaseException:
                         images = [images]
 
                 print(f"      🖼️  Imágenes encontradas: {len(images)}")
@@ -73,7 +75,9 @@ def diagnosticar_imagenes_catalogo():
                     # Verificar si existe localmente
                     local_path = f"/var/www/vhosts/edefrutos2025.xyz/httpdocs/app/static/imagenes_subidas/{img}"
                     local_exists = os.path.exists(local_path)
-                    print(f"            📁 Local: {'✅ Existe' if local_exists else '❌ No existe'}")
+                    print(
+                        f"            📁 Local: {'✅ Existe' if local_exists else '❌ No existe'}"
+                    )
 
                     # Probar URL del gestor de imágenes
                     try:
@@ -89,10 +93,13 @@ def diagnosticar_imagenes_catalogo():
             print("\n   ⚙️  CONFIGURACIÓN DEL GESTOR:")
             try:
                 from app.utils.image_manager import image_manager
+
                 print(f"      📦 Bucket S3: {image_manager.s3_bucket}")
                 print(f"      🌍 Región: {image_manager.aws_region}")
                 print(f"      📁 Ruta local: {image_manager.local_path}")
-                print(f"      🔧 Cliente S3: {'✅ Disponible' if image_manager.s3_client else '❌ No disponible'}")
+                print(
+                    f"      🔧 Cliente S3: {'✅ Disponible' if image_manager.s3_client else '❌ No disponible'}"
+                )
             except Exception as e:
                 print(f"      ❌ Error configurando gestor: {e}")
 
@@ -101,8 +108,10 @@ def diagnosticar_imagenes_catalogo():
     except Exception as e:
         print(f"   ❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     diagnosticar_imagenes_catalogo()

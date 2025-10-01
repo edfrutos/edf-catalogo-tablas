@@ -52,7 +52,8 @@ class CatalogoTablasWindow(QMainWindow):
 
         # Añadir contenido básico para que no esté en blanco
         self.info_label = QLabel()
-        self.info_label.setText(f"""
+        self.info_label.setText(
+            f"""
         <div style="text-align: center; padding: 50px;">
             <h1>EDF CatálogoDeTablas</h1>
             <p><strong>Tamaño de ventana:</strong> {self.DEFAULT_WIDTH} x {self.DEFAULT_HEIGHT} píxeles</p>
@@ -61,16 +62,19 @@ class CatalogoTablasWindow(QMainWindow):
             <p style="color: #666;">Esta es una ventana de prueba para verificar el tamaño configurado.</p>
             <p style="color: #666;">La aplicación principal se cargará aquí.</p>
         </div>
-        """)
+        """
+        )
         self.info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.info_label.setStyleSheet("""
+        self.info_label.setStyleSheet(
+            """
             QLabel {
                 background-color: #f5f5f5;
                 border: 2px solid #ddd;
                 border-radius: 10px;
                 margin: 20px;
             }
-        """)
+        """
+        )
 
         self.main_layout.addWidget(self.info_label)
 
@@ -82,7 +86,8 @@ class CatalogoTablasWindow(QMainWindow):
         # Establecer el tamaño deseado
         self.resize(self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
 
-        # Usar QTimer para centrar después de que la ventana esté completamente inicializada
+        # Usar QTimer para centrar después de que la ventana esté completamente
+        # inicializada
         QTimer.singleShot(100, self.center_window)
 
         # Guardar el tamaño en la configuración
@@ -117,7 +122,8 @@ class CatalogoTablasWindow(QMainWindow):
         """Evento que se ejecuta cuando se muestra la ventana."""
         super().showEvent(a0)
         # Actualizar la información mostrada
-        self.info_label.setText(f"""
+        self.info_label.setText(
+            f"""
         <div style="text-align: center; padding: 50px;">
             <h1>EDF CatálogoDeTablas</h1>
             <p><strong>Tamaño configurado:</strong> {self.DEFAULT_WIDTH} x {self.DEFAULT_HEIGHT} píxeles</p>
@@ -127,7 +133,8 @@ class CatalogoTablasWindow(QMainWindow):
             <p style="color: #666;">Esta es una ventana de prueba para verificar el tamaño configurado.</p>
             <p style="color: #666;">La aplicación principal se cargará aquí.</p>
         </div>
-        """)
+        """
+        )
 
     def closeEvent(self, a0):  # type: ignore
         # Guardar el tamaño actual antes de cerrar

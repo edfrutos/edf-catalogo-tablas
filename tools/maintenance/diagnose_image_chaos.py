@@ -3,6 +3,8 @@
 Script para diagnosticar el caos de imágenes
 """
 
+from app.models.database import get_mongo_db
+from bson.objectid import ObjectId
 import os
 import sys
 
@@ -10,10 +12,6 @@ import sys
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-
-from bson.objectid import ObjectId
-
-from app.models.database import get_mongo_db
 
 
 def diagnose_image_chaos():

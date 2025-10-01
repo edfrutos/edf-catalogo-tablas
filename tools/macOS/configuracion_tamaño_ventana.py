@@ -58,23 +58,25 @@ ALTO = 1050
 # ANCHO, ALTO = 1440, 900  # WXGA+
 # ANCHO, ALTO = 1680, 1050 # WSXGA+
 
+
 def obtener_configuracion():
     """
     Retorna la configuración actual de tamaño de ventana.
-    
+
     Returns:
         tuple: (ancho, alto) en píxeles
     """
     return ANCHO, ALTO
 
+
 def validar_tamaño(ancho, alto):
     """
     Valida que el tamaño esté dentro de los límites permitidos.
-    
+
     Args:
         ancho (int): Ancho en píxeles
         alto (int): Alto en píxeles
-        
+
     Returns:
         tuple: (ancho, alto) validados y ajustados si es necesario
     """
@@ -87,10 +89,13 @@ def validar_tamaño(ancho, alto):
     alto_ajustado = max(MIN_ALTO, min(alto, MAX_ALTO))
 
     if ancho != ancho_ajustado or alto != alto_ajustado:
-        print(f"⚠️  Tamaño ajustado de {ancho}x{alto} a {ancho_ajustado}x{alto_ajustado}")
+        print(
+            f"⚠️  Tamaño ajustado de {ancho}x{alto} a {ancho_ajustado}x{alto_ajustado}"
+        )
         print(f"   Límites: {MIN_ANCHO}x{MIN_ALTO} - {MAX_ANCHO}x{MAX_ALTO}")
 
     return ancho_ajustado, alto_ajustado
+
 
 def mostrar_configuracion():
     """Muestra la configuración actual de tamaño."""
@@ -106,17 +111,18 @@ def mostrar_configuracion():
 
     # Determinar el tipo de formato
     ratio = ancho_val / alto_val
-    if abs(ratio - 16/9) < 0.1:
+    if abs(ratio - 16 / 9) < 0.1:
         formato = "16:9 (Widescreen)"
-    elif abs(ratio - 4/3) < 0.1:
+    elif abs(ratio - 4 / 3) < 0.1:
         formato = "4:3 (Clásico)"
-    elif abs(ratio - 16/10) < 0.1:
+    elif abs(ratio - 16 / 10) < 0.1:
         formato = "16:10 (Profesional)"
     else:
         formato = "Personalizado"
 
     print(f"Formato detectado:  {formato}")
     print("=" * 50)
+
 
 if __name__ == "__main__":
     # Mostrar la configuración actual
@@ -135,7 +141,7 @@ if __name__ == "__main__":
 
         # Crear la aplicación
         app = QApplication(sys.argv)
-        app.setStyle('Fusion')
+        app.setStyle("Fusion")
 
         # Crear la ventana con el tamaño personalizado
         print(f"\n🚀 Iniciando aplicación con tamaño {ancho_val}x{alto_val}...")
@@ -147,7 +153,9 @@ if __name__ == "__main__":
 
     except ImportError as e:
         print("\n❌ Error: No se pudo importar la aplicación principal.")
-        print("   Asegúrate de que 'ventana_edf_catalogodetablas.py' esté en el mismo directorio.")
+        print(
+            "   Asegúrate de que 'ventana_edf_catalogodetablas.py' esté en el mismo directorio."
+        )
         print(f"   Error técnico: {e}")
     except Exception as e:
         print(f"\n❌ Error inesperado: {e}")

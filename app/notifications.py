@@ -15,11 +15,11 @@ import json
 import logging
 import os
 import smtplib
-import requests
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import requests
 from flask import render_template_string
 
 # Configuración del logger
@@ -172,7 +172,8 @@ def send_email_via_smtp(subject, body_html, recipients=None, config=None):
     mail_use_tls = os.environ.get("MAIL_USE_TLS", "True").lower() in ("true", "1", "t")
     mail_default_sender = os.environ.get("MAIL_DEFAULT_SENDER")
 
-    # Usar configuración de .env si está disponible, de lo contrario usar la configuración guardada
+    # Usar configuración de .env si está disponible, de lo contrario usar la
+    # configuración guardada
     smtp_server = mail_server if mail_server else config["smtp"]["server"]
     smtp_port = int(mail_port) if mail_port else config["smtp"]["port"]
     smtp_username = mail_username if mail_username else config["smtp"]["username"]

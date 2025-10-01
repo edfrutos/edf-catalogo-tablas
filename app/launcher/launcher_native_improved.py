@@ -33,6 +33,7 @@ if getattr(sys, "frozen", False):
 
 import threading
 import time
+
 import requests
 import webview
 

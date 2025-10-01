@@ -9,6 +9,7 @@ from functools import wraps
 
 try:
     import pandas as pd
+
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
@@ -38,14 +39,18 @@ def allowed_file(filename):
 
 def leer_datos_excel(filepath):
     if not PANDAS_AVAILABLE:
-        raise ImportError("pandas no está disponible. Instálelo para usar funciones de Excel.")
+        raise ImportError(
+            "pandas no está disponible. Instálelo para usar funciones de Excel."
+        )
     df = pd.read_excel(filepath)
     return df.to_dict(orient="records")
 
 
 def escribir_datos_excel(filepath, data):
     if not PANDAS_AVAILABLE:
-        raise ImportError("pandas no está disponible. Instálelo para usar funciones de Excel.")
+        raise ImportError(
+            "pandas no está disponible. Instálelo para usar funciones de Excel."
+        )
     df = pd.DataFrame(data)
     df.to_excel(filepath, index=False)
 

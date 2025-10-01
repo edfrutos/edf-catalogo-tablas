@@ -12,13 +12,29 @@ errors_bp = Blueprint("errors", __name__)
 def page_not_found(e):
     # Solo registrar 404s que no sean recursos estáticos comunes
     from flask import request
+
     path = request.path
 
     # Filtrar recursos estáticos comunes que generan ruido
-    static_extensions = ('.css', '.js', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2', '.ttf', '.map')
-    common_paths = ('/favicon.ico', '/robots.txt', '/sitemap.xml', '/apple-touch-icon')
+    static_extensions = (
+        ".css",
+        ".js",
+        ".ico",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".svg",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".map",
+    )
+    common_paths = ("/favicon.ico", "/robots.txt", "/sitemap.xml", "/apple-touch-icon")
 
-    if not (path.endswith(static_extensions) or path in common_paths or '/static/' in path):
+    if not (
+        path.endswith(static_extensions) or path in common_paths or "/static/" in path
+    ):
         logger.warning(f"Error 404: Página no encontrada - {path}")
 
     return render_template("error/404.html"), 404

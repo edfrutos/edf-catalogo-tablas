@@ -11,35 +11,35 @@ import os
 import certifi
 from pymongo import MongoClient
 
-MONGO_URI = os.getenv('MONGO_URI')
-db_name = os.getenv('MONGODB_DB', 'app_catalogojoyero_nueva')
+MONGO_URI = os.getenv("MONGO_URI")
+db_name = os.getenv("MONGODB_DB", "app_catalogojoyero_nueva")
 client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
 db = client[db_name]
 
-print('--- SINCRONIZACIÓN FORZADA rows/data EN CATÁLOGOS (AMBOS DIFERENTES) ---')
+print("--- SINCRONIZACIÓN FORZADA rows/data EN CATÁLOGOS (AMBOS DIFERENTES) ---")
 
-colecciones = [('catalogs', 'Catálogos'), ('spreadsheets', 'Spreadsheets')]
+colecciones = [("catalogs", "Catálogos"), ("spreadsheets", "Spreadsheets")]
 total_modificados = 0
 for col, label in colecciones:
     modificados = 0
     ids_modificados = []
     for doc in db[col].find():
-        rows = doc.get('rows')
-        data = doc.get('data')
+        rows = doc.get("rows")
+        data = doc.get("data")
         if isinstance(rows, list) and isinstance(data, list) and rows != data:
             # Elegir el más largo
             if len(rows) >= len(data):
-                update = {'data': rows}
+                update = {"data": rows}
                 largo = len(rows)
             else:
-                update = {'rows': data}
+                update = {"rows": data}
                 largo = len(data)
-            db[col].update_one({'_id': doc['_id']}, {'$set': update})
+            db[col].update_one({"_id": doc["_id"]}, {"$set": update})
             modificados += 1
-            ids_modificados.append(str(doc['_id']))
+            ids_modificados.append(str(doc["_id"]))
             print(f"  - ID {doc['_id']}: sincronizado, longitud final = {largo}")
     print(f"✔ {label}: {modificados} documentos sincronizados (ambos diferentes)")
     if ids_modificados:
         print(f"    IDs modificados: {ids_modificados}")
     total_modificados += modificados
-print(f'--- FIN. Total modificados: {total_modificados} ---')
+print(f"--- FIN. Total modificados: {total_modificados} ---")

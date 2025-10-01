@@ -11,12 +11,14 @@ import sys
 
 # Configuración
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS_DIR = os.path.join(ROOT_DIR, 'tools')
+TOOLS_DIR = os.path.join(ROOT_DIR, "tools")
+
 
 def print_header(message):
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print(f"{message}".center(80))
-    print("="*80)
+    print("=" * 80)
+
 
 def ensure_directory(directory):
     """Asegura que un directorio existe"""
@@ -24,6 +26,7 @@ def ensure_directory(directory):
         os.makedirs(directory)
         print(f"✅ Directorio creado: {directory}")
     return directory
+
 
 def find_duplicate_scripts():
     """Encuentra scripts duplicados en el directorio /tools"""
@@ -35,7 +38,7 @@ def find_duplicate_scripts():
     # Recorrer todos los archivos en /tools y subdirectorios
     for root, dirs, files in os.walk(TOOLS_DIR):
         for file in files:
-            if file.endswith('.py') or file.endswith('.sh'):
+            if file.endswith(".py") or file.endswith(".sh"):
                 # Ignorar enlaces simbólicos
                 file_path = os.path.join(root, file)
                 if os.path.islink(file_path):
@@ -48,7 +51,9 @@ def find_duplicate_scripts():
                     scripts_by_name[file] = [file_path]
 
     # Encontrar duplicados
-    duplicates = {name: paths for name, paths in scripts_by_name.items() if len(paths) > 1}
+    duplicates = {
+        name: paths for name, paths in scripts_by_name.items() if len(paths) > 1
+    }
 
     if duplicates:
         print(f"Se encontraron {len(duplicates)} scripts duplicados:")
@@ -61,6 +66,7 @@ def find_duplicate_scripts():
 
     return duplicates
 
+
 def check_script_quality(script_path):
     """Verifica la calidad de un script"""
     issues = []
@@ -70,31 +76,31 @@ def check_script_quality(script_path):
         return []
 
     # Verificar extensión
-    if not script_path.endswith('.py') and not script_path.endswith('.sh'):
+    if not script_path.endswith(".py") and not script_path.endswith(".sh"):
         return []
 
     try:
         # Leer el contenido del script
-        with open(script_path, encoding='utf-8', errors='ignore') as f:
+        with open(script_path, encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
         # Verificar shebang
-        first_line = content.split('\n')[0] if content else ""
-        if not first_line.startswith('#!'):
+        first_line = content.split("\n")[0] if content else ""
+        if not first_line.startswith("#!"):
             issues.append("Falta shebang (#!)")
 
         # Verificar comentarios
-        if content.count('#') < 3 and script_path.endswith('.py'):
+        if content.count("#") < 3 and script_path.endswith(".py"):
             issues.append("Pocos comentarios")
 
         # Verificar imports en scripts Python
-        if script_path.endswith('.py'):
-            if 'import' not in content:
+        if script_path.endswith(".py"):
+            if "import" not in content:
                 issues.append("No hay imports")
 
             # Verificar errores de sintaxis
             try:
-                compile(content, script_path, 'exec')
+                compile(content, script_path, "exec")
             except SyntaxError as e:
                 issues.append(f"Error de sintaxis: {str(e)}")
 
@@ -107,13 +113,14 @@ def check_script_quality(script_path):
             issues.append("Script muy pequeño")
 
         # Verificar líneas vacías al final
-        if content.endswith('\n\n\n'):
+        if content.endswith("\n\n\n"):
             issues.append("Múltiples líneas vacías al final")
 
         return issues
 
     except Exception as e:
         return [f"Error al analizar: {str(e)}"]
+
 
 def review_scripts():
     """Revisa la calidad de los scripts en /tools"""
@@ -125,7 +132,7 @@ def review_scripts():
     # Recorrer todos los archivos en /tools y subdirectorios
     for root, dirs, files in os.walk(TOOLS_DIR):
         for file in files:
-            if file.endswith('.py') or file.endswith('.sh'):
+            if file.endswith(".py") or file.endswith(".sh"):
                 # Ignorar enlaces simbólicos
                 file_path = os.path.join(root, file)
                 if os.path.islink(file_path):
@@ -148,6 +155,7 @@ def review_scripts():
 
     return problematic_scripts
 
+
 def fix_script_permissions():
     """Corrige los permisos de los scripts en /tools"""
     print("Corrigiendo permisos de scripts...")
@@ -158,7 +166,7 @@ def fix_script_permissions():
     # Recorrer todos los archivos en /tools y subdirectorios
     for root, dirs, files in os.walk(TOOLS_DIR):
         for file in files:
-            if file.endswith('.py') or file.endswith('.sh'):
+            if file.endswith(".py") or file.endswith(".sh"):
                 # Ignorar enlaces simbólicos
                 file_path = os.path.join(root, file)
                 if os.path.islink(file_path):
@@ -171,10 +179,13 @@ def fix_script_permissions():
                         print(f"  ✅ Permisos corregidos: {file_path}")
                         fixed_scripts += 1
                     except Exception as e:
-                        print(f"  ❌ Error al corregir permisos: {file_path} - {str(e)}")
+                        print(
+                            f"  ❌ Error al corregir permisos: {file_path} - {str(e)}"
+                        )
 
     print(f"Se corrigieron los permisos de {fixed_scripts} scripts")
     return fixed_scripts
+
 
 def add_missing_shebangs():
     """Añade shebangs faltantes a los scripts"""
@@ -186,7 +197,7 @@ def add_missing_shebangs():
     # Recorrer todos los archivos en /tools y subdirectorios
     for root, dirs, files in os.walk(TOOLS_DIR):
         for file in files:
-            if file.endswith('.py') or file.endswith('.sh'):
+            if file.endswith(".py") or file.endswith(".sh"):
                 # Ignorar enlaces simbólicos
                 file_path = os.path.join(root, file)
                 if os.path.islink(file_path):
@@ -194,22 +205,22 @@ def add_missing_shebangs():
 
                 try:
                     # Leer el contenido del script
-                    with open(file_path, encoding='utf-8', errors='ignore') as f:
+                    with open(file_path, encoding="utf-8", errors="ignore") as f:
                         content = f.read()
 
                     # Verificar shebang
-                    first_line = content.split('\n')[0] if content else ""
-                    if not first_line.startswith('#!'):
+                    first_line = content.split("\n")[0] if content else ""
+                    if not first_line.startswith("#!"):
                         # Añadir shebang
-                        if file.endswith('.py'):
+                        if file.endswith(".py"):
                             new_content = "#!/usr/bin/env python3\n" + content
-                        elif file.endswith('.sh'):
+                        elif file.endswith(".sh"):
                             new_content = "#!/bin/bash\n" + content
                         else:
                             continue
 
                         # Guardar el archivo
-                        with open(file_path, 'w', encoding='utf-8') as f:
+                        with open(file_path, "w", encoding="utf-8") as f:
                             f.write(new_content)
 
                         print(f"  ✅ Shebang añadido: {file_path}")
@@ -221,21 +232,32 @@ def add_missing_shebangs():
     print(f"Se añadieron shebangs a {fixed_scripts} scripts")
     return fixed_scripts
 
+
 def organize_scripts_in_root():
     """Organiza los scripts que están directamente en /tools"""
     print("Organizando scripts en el directorio raíz de /tools...")
 
     # Definir categorías y patrones de nombres de archivos
     categories = {
-        'admin_utils': ['admin', 'user', 'permission', 'role', 'unlock'],
-        'db_utils': ['db', 'mongo', 'database', 'collection', 'catalog'],
-        'maintenance': ['maintenance', 'backup', 'clean', 'update', 'monitor', 'supervise', 'start', 'stop', 'restart'],
-        'monitoring': ['monitor', 'check', 'diagnose', 'log', 'status', 'health'],
-        'aws_utils': ['aws', 's3', 'bucket', 'cloud'],
-        'image_utils': ['image', 'photo', 'picture', 'thumbnail'],
-        'session_utils': ['session', 'cookie', 'auth', 'login'],
-        'system': ['system', 'os', 'process', 'service', 'daemon'],
-        'utils': ['util', 'helper', 'tool', 'test']
+        "admin_utils": ["admin", "user", "permission", "role", "unlock"],
+        "db_utils": ["db", "mongo", "database", "collection", "catalog"],
+        "maintenance": [
+            "maintenance",
+            "backup",
+            "clean",
+            "update",
+            "monitor",
+            "supervise",
+            "start",
+            "stop",
+            "restart",
+        ],
+        "monitoring": ["monitor", "check", "diagnose", "log", "status", "health"],
+        "aws_utils": ["aws", "s3", "bucket", "cloud"],
+        "image_utils": ["image", "photo", "picture", "thumbnail"],
+        "session_utils": ["session", "cookie", "auth", "login"],
+        "system": ["system", "os", "process", "service", "daemon"],
+        "utils": ["util", "helper", "tool", "test"],
     }
 
     # Asegurar que los subdirectorios existen
@@ -248,9 +270,19 @@ def organize_scripts_in_root():
         source_item = os.path.join(TOOLS_DIR, item)
 
         # Solo procesar archivos, no directorios ni enlaces simbólicos
-        if os.path.isfile(source_item) and not os.path.islink(source_item) and (item.endswith('.py') or item.endswith('.sh')):
+        if (
+            os.path.isfile(source_item)
+            and not os.path.islink(source_item)
+            and (item.endswith(".py") or item.endswith(".sh"))
+        ):
             # Ignorar archivos específicos que deben permanecer en el directorio raíz
-            if item in ['script_runner.py', 'fix_script_paths.py', 'migrate_scripts.py', 'cleanup_tools_directory.py', '__init__.py']:
+            if item in [
+                "script_runner.py",
+                "fix_script_paths.py",
+                "migrate_scripts.py",
+                "cleanup_tools_directory.py",
+                "__init__.py",
+            ]:
                 continue
 
             # Determinar la categoría del script
@@ -265,7 +297,7 @@ def organize_scripts_in_root():
 
             # Si no se encontró una categoría, usar 'utils'
             if not category:
-                category = 'utils'
+                category = "utils"
 
             # Mover el script a su categoría
             target_dir = os.path.join(TOOLS_DIR, category)
@@ -283,6 +315,7 @@ def organize_scripts_in_root():
 
     print(f"Se categorizaron {scripts_moved} scripts del directorio raíz")
     return scripts_moved
+
 
 def remove_broken_symlinks():
     """Elimina enlaces simbólicos rotos"""
@@ -307,11 +340,12 @@ def remove_broken_symlinks():
     print(f"Se eliminaron {removed_links} enlaces simbólicos rotos")
     return removed_links
 
+
 def run_fix_script_paths():
     """Ejecuta el script fix_script_paths.py"""
     print("Ejecutando fix_script_paths.py...")
 
-    fix_script = os.path.join(TOOLS_DIR, 'fix_script_paths.py')
+    fix_script = os.path.join(TOOLS_DIR, "fix_script_paths.py")
     if not os.path.exists(fix_script):
         print(f"❌ No se encontró el script {fix_script}")
         return False
@@ -329,18 +363,23 @@ def run_fix_script_paths():
         print(f"❌ Error al ejecutar fix_script_paths.py: {str(e)}")
         return False
 
+
 def restart_service():
     """Reinicia el servicio edefrutos2025"""
     print("Reiniciando el servicio edefrutos2025...")
 
     try:
-        result = subprocess.run(['systemctl', 'restart', 'edefrutos2025'], capture_output=True, text=True)
+        result = subprocess.run(
+            ["systemctl", "restart", "edefrutos2025"], capture_output=True, text=True
+        )
 
         if result.returncode == 0:
             print("✅ Servicio reiniciado correctamente")
 
             # Verificar el estado del servicio
-            status_result = subprocess.run(['systemctl', 'status', 'edefrutos2025'], capture_output=True, text=True)
+            status_result = subprocess.run(
+                ["systemctl", "status", "edefrutos2025"], capture_output=True, text=True
+            )
             if "Active: active (running)" in status_result.stdout:
                 print("✅ El servicio está activo y en ejecución")
                 return True
@@ -354,16 +393,17 @@ def restart_service():
         print(f"❌ Error al reiniciar el servicio: {str(e)}")
         return False
 
+
 def test_script_execution():
     """Prueba la ejecución de algunos scripts desde la interfaz web"""
     print("Probando la ejecución de scripts...")
 
     # Lista de scripts a probar
     test_scripts = [
-        'test_script.sh',
-        'supervise_gunicorn_web.sh',
-        'check_logs.py',
-        'check_mongodb.py'
+        "test_script.sh",
+        "supervise_gunicorn_web.sh",
+        "check_logs.py",
+        "check_mongodb.py",
     ]
 
     # Probar cada script
@@ -396,7 +436,7 @@ def test_script_execution():
         # Probar la ejecución del script
         try:
             # Usar script_runner.py para ejecutar el script
-            runner_path = os.path.join(TOOLS_DIR, 'script_runner.py')
+            runner_path = os.path.join(TOOLS_DIR, "script_runner.py")
             if not os.path.exists(runner_path):
                 print("    ❌ script_runner.py no encontrado")
                 continue
@@ -405,13 +445,13 @@ def test_script_execution():
                 [sys.executable, runner_path, script_path],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             # Verificar el resultado
             try:
                 result_json = json.loads(result.stdout)
-                exit_code = result_json.get('exit_code')
+                exit_code = result_json.get("exit_code")
 
                 if exit_code == 0:
                     print("    ✅ Script ejecutado correctamente")
@@ -426,6 +466,7 @@ def test_script_execution():
 
     print(f"Se ejecutaron correctamente {success_count} de {len(test_scripts)} scripts")
     return success_count == len(test_scripts)
+
 
 def main():
     print_header("LIMPIEZA Y ORGANIZACIÓN DEL DIRECTORIO /TOOLS")
@@ -476,8 +517,12 @@ def main():
     print(f"5. Se organizaron {organized_scripts} scripts del directorio raíz")
     print(f"6. Se eliminaron {removed_links} enlaces simbólicos rotos")
     print("7. Se ejecutó fix_script_paths.py para crear enlaces simbólicos")
-    print(f"8. {'✅' if service_restarted else '❌'} El servicio edefrutos2025 se reinició {'correctamente' if service_restarted else 'con errores'}")
-    print(f"9. {'✅' if scripts_executable else '❌'} Los scripts son {'accesibles y ejecutables' if scripts_executable else 'no accesibles o ejecutables'}")
+    print(
+        f"8. {'✅' if service_restarted else '❌'} El servicio edefrutos2025 se reinició {'correctamente' if service_restarted else 'con errores'}"
+    )
+    print(
+        f"9. {'✅' if scripts_executable else '❌'} Los scripts son {'accesibles y ejecutables' if scripts_executable else 'no accesibles o ejecutables'}"
+    )
 
     if not service_restarted or not scripts_executable:
         print("\n⚠️ Se encontraron problemas que requieren atención:")
@@ -486,7 +531,10 @@ def main():
         if not scripts_executable:
             print("  - Algunos scripts no son accesibles o ejecutables")
     else:
-        print("\n✅ Todo funciona correctamente. Los scripts están organizados y son accesibles y ejecutables.")
+        print(
+            "\n✅ Todo funciona correctamente. Los scripts están organizados y son accesibles y ejecutables."
+        )
+
 
 if __name__ == "__main__":
     main()

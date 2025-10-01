@@ -15,48 +15,49 @@ from datetime import datetime
 def get_discarded_patterns():
     """Define patrones de archivos y directorios a descartar"""
     return {
-        'files': [
-            '*.md',           # Archivos de documentación
-            '*.ipynb',        # Notebooks de Jupyter
-            '*.txt',          # Archivos de texto
-            '*.log',          # Archivos de log
-            '*.tmp',          # Archivos temporales
-            '*.bak',          # Archivos de respaldo
-            '*.old',          # Archivos antiguos
-            '*.orig',         # Archivos originales
-            '*.pyc',          # Archivos compilados de Python
-            '*.pyo',          # Archivos optimizados de Python
-            '__pycache__',    # Directorios de caché de Python
-            '.DS_Store',      # Archivos del sistema macOS
-            'Thumbs.db',      # Archivos del sistema Windows
+        "files": [
+            "*.md",  # Archivos de documentación
+            "*.ipynb",  # Notebooks de Jupyter
+            "*.txt",  # Archivos de texto
+            "*.log",  # Archivos de log
+            "*.tmp",  # Archivos temporales
+            "*.bak",  # Archivos de respaldo
+            "*.old",  # Archivos antiguos
+            "*.orig",  # Archivos originales
+            "*.pyc",  # Archivos compilados de Python
+            "*.pyo",  # Archivos optimizados de Python
+            "__pycache__",  # Directorios de caché de Python
+            ".DS_Store",  # Archivos del sistema macOS
+            "Thumbs.db",  # Archivos del sistema Windows
         ],
-        'directories': [
-            '_sincontenido',
-            '_para colocar',
-            'exportados',
-            'backup',
-            'temp',
-            'tmp',
-            'old',
-            'deprecated',
-            'obsolete',
+        "directories": [
+            "_sincontenido",
+            "_para colocar",
+            "exportados",
+            "backup",
+            "temp",
+            "tmp",
+            "old",
+            "deprecated",
+            "obsolete",
         ],
-        'name_patterns': [
-            '🔍',             # Emojis en nombres
-            '**',             # Asteriscos dobles
-            'README',         # Archivos README
-            'CHANGELOG',      # Archivos de cambios
-            'LICENSE',        # Archivos de licencia
-        ]
+        "name_patterns": [
+            "🔍",  # Emojis en nombres
+            "**",  # Asteriscos dobles
+            "README",  # Archivos README
+            "CHANGELOG",  # Archivos de cambios
+            "LICENSE",  # Archivos de licencia
+        ],
     }
+
 
 def should_discard_file(filename, filepath):
     """Determina si un archivo debe ser descartado"""
     patterns = get_discarded_patterns()
 
     # Verificar extensiones de archivo
-    for pattern in patterns['files']:
-        if pattern.startswith('*.'):
+    for pattern in patterns["files"]:
+        if pattern.startswith("*."):
             ext = pattern[1:]  # Obtener la extensión
             if filename.endswith(ext):
                 return True, f"Extensión descartada: {ext}"
@@ -64,15 +65,16 @@ def should_discard_file(filename, filepath):
             return True, f"Archivo descartado: {pattern}"
 
     # Verificar patrones en nombres
-    for pattern in patterns['name_patterns']:
+    for pattern in patterns["name_patterns"]:
         if pattern in filename:
             return True, f"Patrón en nombre: {pattern}"
 
     # Verificar si es un directorio de caché
-    if os.path.isdir(filepath) and filename in patterns['directories']:
+    if os.path.isdir(filepath) and filename in patterns["directories"]:
         return True, f"Directorio descartado: {filename}"
 
     return False, ""
+
 
 def scan_directory(directory_path):
     """Escanea un directorio y encuentra archivos a descartar"""
@@ -92,12 +94,16 @@ def scan_directory(directory_path):
 
             if should_discard:
                 rel_path = os.path.relpath(filepath, directory_path)
-                discarded_files.append({
-                    'path': filepath,
-                    'rel_path': rel_path,
-                    'reason': reason,
-                    'size': os.path.getsize(filepath) if os.path.exists(filepath) else 0
-                })
+                discarded_files.append(
+                    {
+                        "path": filepath,
+                        "rel_path": rel_path,
+                        "reason": reason,
+                        "size": (
+                            os.path.getsize(filepath) if os.path.exists(filepath) else 0
+                        ),
+                    }
+                )
 
         # Procesar directorios
         for dirname in dirs[:]:  # Copia para poder modificar durante la iteración
@@ -106,16 +112,19 @@ def scan_directory(directory_path):
 
             if should_discard:
                 rel_path = os.path.relpath(dirpath, directory_path)
-                discarded_files.append({
-                    'path': dirpath,
-                    'rel_path': rel_path,
-                    'reason': reason,
-                    'size': 0  # Los directorios no tienen tamaño directo
-                })
+                discarded_files.append(
+                    {
+                        "path": dirpath,
+                        "rel_path": rel_path,
+                        "reason": reason,
+                        "size": 0,  # Los directorios no tienen tamaño directo
+                    }
+                )
                 # Remover del listado para no procesar su contenido
                 dirs.remove(dirname)
 
     return discarded_files
+
 
 def create_discarded_directory(base_path):
     """Crea el directorio para archivos descartados"""
@@ -128,13 +137,14 @@ def create_discarded_directory(base_path):
 
     return discarded_dir
 
+
 def move_discarded_files(discarded_files, target_dir, dry_run=False):
     """Mueve los archivos descartados al directorio objetivo"""
     moved_files = []
     errors = []
 
     for item in discarded_files:
-        source_path = item['path']
+        source_path = item["path"]
         filename = os.path.basename(source_path)
 
         # Crear nombre único si hay conflictos
@@ -146,7 +156,9 @@ def move_discarded_files(discarded_files, target_dir, dry_run=False):
             counter += 1
 
         if dry_run:
-            print(f"[DRY RUN] Mover: {item['rel_path']} -> {os.path.relpath(target_path, target_dir)}")
+            print(
+                f"[DRY RUN] Mover: {item['rel_path']} -> {os.path.relpath(target_path, target_dir)}"
+            )
             moved_files.append(item)
         else:
             try:
@@ -154,7 +166,9 @@ def move_discarded_files(discarded_files, target_dir, dry_run=False):
                     shutil.move(source_path, target_path)
                 else:
                     shutil.move(source_path, target_path)
-                print(f"Movido: {item['rel_path']} -> {os.path.relpath(target_path, target_dir)}")
+                print(
+                    f"Movido: {item['rel_path']} -> {os.path.relpath(target_path, target_dir)}"
+                )
                 moved_files.append(item)
             except Exception as e:
                 error_msg = f"Error moviendo {item['rel_path']}: {str(e)}"
@@ -163,11 +177,20 @@ def move_discarded_files(discarded_files, target_dir, dry_run=False):
 
     return moved_files, errors
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Migra archivos descartados a un directorio separado')
-    parser.add_argument('--dry-run', action='store_true', help='Mostrar qué se haría sin ejecutar')
-    parser.add_argument('--force', action='store_true', help='Forzar la migración sin confirmación')
-    parser.add_argument('--directory', default='tools', help='Directorio a escanear (default: tools)')
+    parser = argparse.ArgumentParser(
+        description="Migra archivos descartados a un directorio separado"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Mostrar qué se haría sin ejecutar"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Forzar la migración sin confirmación"
+    )
+    parser.add_argument(
+        "--directory", default="tools", help="Directorio a escanear (default: tools)"
+    )
 
     args = parser.parse_args()
 
@@ -184,7 +207,7 @@ def main():
 
     # Mostrar resumen
     print(f"\nArchivos encontrados para descartar: {len(discarded_files)}")
-    total_size = sum(item['size'] for item in discarded_files)
+    total_size = sum(item["size"] for item in discarded_files)
     print(f"Tamaño total: {total_size / 1024:.2f} KB")
 
     print("\nArchivos a descartar:")
@@ -193,8 +216,12 @@ def main():
 
     # Confirmar si no es dry-run y no se fuerza
     if not args.dry_run and not args.force:
-        confirm = input(f"\n¿Desea mover {len(discarded_files)} archivos? (s/N): ").strip().lower()
-        if confirm != 's':
+        confirm = (
+            input(f"\n¿Desea mover {len(discarded_files)} archivos? (s/N): ")
+            .strip()
+            .lower()
+        )
+        if confirm != "s":
             print("Operación cancelada.")
             return
 
@@ -202,7 +229,9 @@ def main():
     target_dir = create_discarded_directory(args.directory)
 
     # Mover archivos
-    moved_files, errors = move_discarded_files(discarded_files, target_dir, args.dry_run)
+    moved_files, errors = move_discarded_files(
+        discarded_files, target_dir, args.dry_run
+    )
 
     # Resumen final
     print("\n=== Resumen ===")
@@ -215,6 +244,7 @@ def main():
     if not args.dry_run:
         print(f"Archivos movidos a: {target_dir}")
         print("Migración completada.")
+
 
 if __name__ == "__main__":
     main()

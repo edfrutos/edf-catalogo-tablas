@@ -7,13 +7,13 @@ Autor: Sistema de limpieza automática
 Fecha: 2025-08-27
 """
 
-import sys
 import json
-import shutil
-from pathlib import Path
-from datetime import datetime
-from typing import List, Dict
 import logging
+import shutil
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List
 
 # Configurar logging
 logging.basicConfig(

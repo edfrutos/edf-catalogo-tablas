@@ -17,7 +17,9 @@ def check_syntax(filename):
         print(f"No syntax errors found in {filename}")
         return True
     except SyntaxError as e:
-        print(f"Syntax error in {filename} at line {e.lineno}, column {e.offset}: {e.msg}")
+        print(
+            f"Syntax error in {filename} at line {e.lineno}, column {e.offset}: {e.msg}"
+        )
         # Print the problematic line and a few lines around it for context
         with open(filename) as file:
             lines = file.readlines()
@@ -28,6 +30,7 @@ def check_syntax(filename):
             prefix = ">> " if i + 1 == e.lineno else "   "
             print(f"{prefix}{i + 1}: {lines[i].rstrip()}")
         return False
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

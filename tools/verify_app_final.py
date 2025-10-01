@@ -4,8 +4,9 @@ Script de verificación final para confirmar que la aplicación funciona correct
 """
 
 import os
-import requests
 import time
+
+import requests
 from pymongo import MongoClient
 
 # Cargar variables de entorno desde .env

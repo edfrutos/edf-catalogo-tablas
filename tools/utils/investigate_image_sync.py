@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 # Agregar el directorio actual al path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 def investigate_image_sync():
     """Investiga la sincronización entre archivos físicos y referencias en la base de datos"""
 
@@ -38,12 +39,14 @@ def investigate_image_sync():
                 return False
 
             # 1. Contar archivos físicos
-            upload_dir = os.path.join(app.static_folder, 'uploads')
+            upload_dir = os.path.join(app.static_folder, "uploads")
             physical_files = []
 
             if os.path.exists(upload_dir):
                 for filename in os.listdir(upload_dir):
-                    if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp')):
+                    if filename.lower().endswith(
+                        (".jpg", ".jpeg", ".png", ".gif", ".bmp")
+                    ):
                         physical_files.append(filename)
 
             print(f"   📁 Archivos físicos en uploads/: {len(physical_files)}")
@@ -68,31 +71,34 @@ def investigate_image_sync():
                     for img in images:
                         if img not in db_references:
                             db_references.append(img)
-                        catalog_images.append({
-                            'row': row_index + 1,
-                            'image': img
-                        })
+                        catalog_images.append({"row": row_index + 1, "image": img})
 
                 if catalog_images:
-                    catalog_details.append({
-                        'name': catalog_name,
-                        'id': catalog_id,
-                        'images': catalog_images
-                    })
+                    catalog_details.append(
+                        {
+                            "name": catalog_name,
+                            "id": catalog_id,
+                            "images": catalog_images,
+                        }
+                    )
 
             print(f"   🗄️  Referencias en base de datos: {len(db_references)}")
 
             # 3. Análisis de sincronización
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("ANÁLISIS DE SINCRONIZACIÓN")
-            print("="*50)
+            print("=" * 50)
 
             # Archivos físicos sin referencia en DB
             orphaned_files = [f for f in physical_files if f not in db_references]
             print(f"📁 Archivos huérfanos (físicos sin DB): {len(orphaned_files)}")
 
             # Referencias en DB sin archivo físico
-            missing_files = [f for f in db_references if f not in physical_files and not f.startswith('http')]
+            missing_files = [
+                f
+                for f in db_references
+                if f not in physical_files and not f.startswith("http")
+            ]
             print(f"🗄️  Referencias faltantes (DB sin físico): {len(missing_files)}")
 
             # Archivos sincronizados
@@ -100,34 +106,36 @@ def investigate_image_sync():
             print(f"✅ Archivos sincronizados: {len(synced_files)}")
 
             # 4. Detalles por catálogo
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("DETALLES POR CATÁLOGO")
-            print("="*50)
+            print("=" * 50)
 
             for catalog in catalog_details:
                 print(f"📋 {catalog['name']} (ID: {catalog['id']})")
-                for img_info in catalog['images']:
-                    status = "✅" if img_info['image'] in physical_files else "❌"
+                for img_info in catalog["images"]:
+                    status = "✅" if img_info["image"] in physical_files else "❌"
                     print(f"   {status} Fila {img_info['row']}: {img_info['image']}")
                 print()
 
             # 5. Muestra de archivos huérfanos
             if orphaned_files:
-                print("\n" + "="*50)
+                print("\n" + "=" * 50)
                 print("MUESTRA DE ARCHIVOS HUÉRFANOS (primeros 10)")
-                print("="*50)
+                print("=" * 50)
                 for i, filename in enumerate(orphaned_files[:10]):
                     print(f"   {i+1}. {filename}")
                 if len(orphaned_files) > 10:
                     print(f"   ... y {len(orphaned_files) - 10} más")
 
             # 6. Recomendaciones
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("RECOMENDACIONES")
-            print("="*50)
+            print("=" * 50)
 
             if orphaned_files:
-                print(f"⚠️  Hay {len(orphaned_files)} archivos físicos sin referencia en la base de datos")
+                print(
+                    f"⚠️  Hay {len(orphaned_files)} archivos físicos sin referencia en la base de datos"
+                )
                 print("   Estos archivos no se mostrarán en los catálogos")
                 print("   Opciones:")
                 print("   1. Eliminar archivos huérfanos para ahorrar espacio")
@@ -135,20 +143,28 @@ def investigate_image_sync():
                 print("   3. Migrar archivos a S3 y eliminar locales")
 
             if missing_files:
-                print(f"⚠️  Hay {len(missing_files)} referencias en DB sin archivo físico")
+                print(
+                    f"⚠️  Hay {len(missing_files)} referencias en DB sin archivo físico"
+                )
                 print("   Estas referencias causarán errores 404")
-                print("   Recomendación: Limpiar referencias huérfanas de la base de datos")
+                print(
+                    "   Recomendación: Limpiar referencias huérfanas de la base de datos"
+                )
 
             if not orphaned_files and not missing_files:
-                print("✅ Sincronización perfecta entre archivos físicos y base de datos")
+                print(
+                    "✅ Sincronización perfecta entre archivos físicos y base de datos"
+                )
 
             return True
 
     except Exception as e:
         print(f"   ❌ Error en investigación: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def main():
     """Función principal"""
@@ -165,6 +181,7 @@ def main():
     else:
         print("\n❌ La investigación no se completó correctamente")
         return False
+
 
 if __name__ == "__main__":
     main()

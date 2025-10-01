@@ -4,11 +4,11 @@ Script de diagnóstico para problemas de MongoDB en la aplicación macOS
 Autor: EDF Developer - 2025
 """
 
-import os
-import sys
-import logging
-import subprocess
 import json
+import logging
+import os
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -76,8 +76,8 @@ def test_mongodb_connection(mongo_uri):
         return False
 
     try:
-        import pymongo
         import certifi
+        import pymongo
 
         print("📡 Intentando conectar a MongoDB...")
 
@@ -272,8 +272,8 @@ def generate_report():
     mongo_uri = os.environ.get("MONGO_URI")
     if mongo_uri:
         try:
-            import pymongo
             import certifi
+            import pymongo
 
             config = {
                 "serverSelectionTimeoutMS": 5000,

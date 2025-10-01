@@ -2,12 +2,11 @@
 """
 Script para verificar los datos del usuario y permisos de administrador
 """
+from app.database import get_users_collection, initialize_db
 import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from app.database import get_users_collection, initialize_db
 
 
 def check_user_permissions():
@@ -46,13 +45,12 @@ def check_user_permissions():
         print(f"   Is Admin: {user.get('is_admin')}")
 
         # Verificar si necesita actualización
-        if user.get('role') == 'admin' and not user.get('is_admin'):
+        if user.get("role") == "admin" and not user.get("is_admin"):
             print("\n⚠️  El usuario tiene role='admin' pero is_admin=False")
             print("   Actualizando is_admin=True...")
 
             result = users_collection.update_one(
-                {"username": "edefrutos"},
-                {"$set": {"is_admin": True}}
+                {"username": "edefrutos"}, {"$set": {"is_admin": True}}
             )
 
             if result.modified_count > 0:
@@ -60,7 +58,7 @@ def check_user_permissions():
             else:
                 print("❌ Error actualizando usuario")
 
-        elif user.get('is_admin'):
+        elif user.get("is_admin"):
             print("✅ Usuario tiene permisos de administrador correctos")
 
         else:
@@ -68,8 +66,7 @@ def check_user_permissions():
             print("   Actualizando permisos de administrador...")
 
             result = users_collection.update_one(
-                {"username": "edefrutos"},
-                {"$set": {"is_admin": True, "role": "admin"}}
+                {"username": "edefrutos"}, {"$set": {"is_admin": True, "role": "admin"}}
             )
 
             if result.modified_count > 0:
@@ -79,6 +76,7 @@ def check_user_permissions():
 
     except Exception as e:
         print(f"❌ Error accediendo a la base de datos: {e}")
+
 
 if __name__ == "__main__":
     check_user_permissions()

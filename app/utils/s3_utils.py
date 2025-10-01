@@ -71,7 +71,7 @@ def upload_file_to_s3_direct(file_obj, object_name, bucket_name=None):
     try:
         # Reset file pointer to beginning
         file_obj.seek(0)
-        
+
         # Subir el archivo directamente a S3
         s3_client.upload_fileobj(file_obj, bucket_name, object_name)
 
@@ -154,7 +154,10 @@ def delete_file_from_s3(object_name, bucket_name=None):
             logger.error(
                 "No se especificó un bucket y no se encontró S3_BUCKET_NAME en las variables de entorno"
             )
-            return {"success": False, "error": "No se especificó un bucket y no se encontró S3_BUCKET_NAME en las variables de entorno"}
+            return {
+                "success": False,
+                "error": "No se especificó un bucket y no se encontró S3_BUCKET_NAME en las variables de entorno",
+            }
 
     # Obtener el cliente S3
     s3_client = get_s3_client()
@@ -166,7 +169,10 @@ def delete_file_from_s3(object_name, bucket_name=None):
         # Eliminar el archivo de S3
         s3_client.delete_object(Bucket=bucket_name, Key=object_name)
         logger.info(f"Archivo eliminado de S3: {object_name}")
-        return {"success": True, "message": f"Archivo {object_name} eliminado correctamente"}
+        return {
+            "success": True,
+            "message": f"Archivo {object_name} eliminado correctamente",
+        }
     except ClientError as e:
         logger.error(f"Error al eliminar archivo de S3: {str(e)}")
         return {"success": False, "error": str(e)}
@@ -178,22 +184,22 @@ def delete_file_from_s3(object_name, bucket_name=None):
 def convert_s3_url_to_proxy(s3_url):
     """
     Convierte una URL directa de S3 a una URL del proxy para evitar CORS
-    
+
     Args:
         s3_url (str): URL directa de S3
-        
+
     Returns:
         str: URL del proxy S3 o la URL original si no es de S3
     """
     if not s3_url or not isinstance(s3_url, str):
         return s3_url
-    
+
     # Verificar si es una URL directa de S3
-    if 's3.amazonaws.com' in s3_url or 'edf-catalogo-tablas.s3' in s3_url:
+    if "s3.amazonaws.com" in s3_url or "edf-catalogo-tablas.s3" in s3_url:
         try:
             # Extraer el nombre del archivo de la URL
-            filename = s3_url.split('/')[-1]
-            
+            filename = s3_url.split("/")[-1]
+
             # Generar URL del proxy manualmente
             proxy_url = f"/admin/s3/{filename}"
             logger.info(f"[S3-PROXY] Convirtiendo URL S3: {s3_url} -> {proxy_url}")
@@ -202,7 +208,7 @@ def convert_s3_url_to_proxy(s3_url):
             # Si no se puede generar la URL del proxy, devolver la original
             logger.warning(f"[S3-PROXY] Error generando URL del proxy: {e}")
             return s3_url
-    
+
     return s3_url
 
 
@@ -220,7 +226,7 @@ def get_s3_url(object_name, bucket_name=None, retry_count=3, retry_delay=1):
         str: URL del objeto en S3 si existe, None si no existe después de todos los reintentos
     """
     import time
-    
+
     if bucket_name is None:
         bucket_name = os.environ.get("S3_BUCKET_NAME")
         if not bucket_name:
@@ -242,18 +248,24 @@ def get_s3_url(object_name, bucket_name=None, retry_count=3, retry_delay=1):
 
             # Si llegamos aquí, el objeto existe - usar proxy S3 para evitar CORS
             if attempt > 0:
-                logger.info(f"Archivo {object_name} encontrado en S3 en el intento {attempt + 1}")
+                logger.info(
+                    f"Archivo {object_name} encontrado en S3 en el intento {attempt + 1}"
+                )
             return f"/admin/s3/{object_name}"
 
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "404":
                 if attempt < retry_count - 1:
-                    logger.info(f"Archivo {object_name} no encontrado en S3, reintentando en {retry_delay}s (intento {attempt + 1}/{retry_count})")
+                    logger.info(
+                        f"Archivo {object_name} no encontrado en S3, reintentando en {retry_delay}s (intento {attempt + 1}/{retry_count})"
+                    )
                     time.sleep(retry_delay)
                     continue
                 else:
-                    logger.warning(f"Archivo {object_name} no encontrado en S3 después de {retry_count} intentos")
+                    logger.warning(
+                        f"Archivo {object_name} no encontrado en S3 después de {retry_count} intentos"
+                    )
                     return None
             else:
                 logger.error(f"Error verificando archivo en S3: {str(e)}")
@@ -261,37 +273,39 @@ def get_s3_url(object_name, bucket_name=None, retry_count=3, retry_delay=1):
         except Exception as e:
             logger.error(f"Error inesperado verificando archivo en S3: {str(e)}")
             return None
-    
+
     return None
 
 
 def check_s3_file_exists_fast(object_name, bucket_name=None):
     """
     Verificación rápida de existencia de archivo en S3 (sin reintentos)
-    
+
     Args:
         object_name (str): Nombre del objeto en S3
         bucket_name (str): Nombre del bucket de S3
-        
+
     Returns:
         bool: True si el archivo existe, False si no existe
     """
     if bucket_name is None:
         bucket_name = os.environ.get("S3_BUCKET_NAME")
         if not bucket_name:
-            logger.error("No se especificó un bucket y no se encontró S3_BUCKET_NAME en las variables de entorno")
+            logger.error(
+                "No se especificó un bucket y no se encontró S3_BUCKET_NAME en las variables de entorno"
+            )
             return False
-    
+
     s3_client = get_s3_client()
     if not s3_client:
         return False
-    
+
     try:
         # Verificación rápida sin reintentos
         s3_client.head_object(Bucket=bucket_name, Key=object_name)
         return True
     except ClientError as e:
-        error_code = e.response['Error']['Code']
+        error_code = e.response["Error"]["Code"]
         if error_code == "404":
             return False
         else:

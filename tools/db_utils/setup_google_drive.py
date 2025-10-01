@@ -14,9 +14,9 @@ def setup_google_drive_auth():
     """Configura la autenticación inicial de Google Drive"""
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    creds_file = os.path.join(script_dir, 'credentials.json')
-    settings_file = os.path.join(script_dir, 'settings.yaml')
-    token_file = os.path.join(script_dir, 'token.json')
+    creds_file = os.path.join(script_dir, "credentials.json")
+    settings_file = os.path.join(script_dir, "settings.yaml")
+    token_file = os.path.join(script_dir, "token.json")
 
     print("🔧 Configurando autenticación de Google Drive...")
     print(f"📁 Directorio: {script_dir}")
@@ -57,8 +57,12 @@ def setup_google_drive_auth():
             print("🔍 Probando conexión con Google Drive...")
 
             # Listar algunos archivos para verificar
-            file_list = drive.ListFile({'q': "'root' in parents and trashed=false", 'maxResults': 5}).GetList()
-            print(f"✅ Conexión exitosa! Encontrados {len(file_list)} archivos en Drive")
+            file_list = drive.ListFile(
+                {"q": "'root' in parents and trashed=false", "maxResults": 5}
+            ).GetList()
+            print(
+                f"✅ Conexión exitosa! Encontrados {len(file_list)} archivos en Drive"
+            )
 
             return True
         else:
@@ -68,6 +72,7 @@ def setup_google_drive_auth():
     except Exception as e:
         print(f"❌ Error durante la autenticación: {e}")
         return False
+
 
 if __name__ == "__main__":
     print("=" * 60)

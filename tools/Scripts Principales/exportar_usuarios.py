@@ -58,14 +58,16 @@ except Exception as e:
     sys.exit(2)
 
 if ALLOW_INVALID_CERTS:
-    print("""
+    print(
+        """
 [AVISO DE INSEGURIDAD]
 --------------------------------------------------
 La verificación de certificados SSL está DESACTIVADA.
 Esto es INSEGURO y solo debe usarse para pruebas puntuales.
 No uses esta opción en producción.
 --------------------------------------------------
-""")
+"""
+    )
 
 # Buscar usuarios normales y admin
 usuarios = list(users_col.find({"role": {"$in": ["user", "admin"]}}))

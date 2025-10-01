@@ -20,10 +20,7 @@ def verify_testing_system():
     session = requests.Session()
 
     # Login como admin
-    login_data = {
-        'username': 'admin',
-        'password': 'admin123'
-    }
+    login_data = {"username": "admin", "password": "admin123"}
 
     print("🔐 Iniciando sesión...")
     login_response = session.post(f"{base_url}/auth/login", data=login_data)
@@ -39,7 +36,9 @@ def verify_testing_system():
     testing_response = session.get(f"{base_url}/dev-template/testing/")
 
     if testing_response.status_code != 200:
-        print(f"   ❌ Error accediendo a /dev-template/testing/: {testing_response.status_code}")
+        print(
+            f"   ❌ Error accediendo a /dev-template/testing/: {testing_response.status_code}"
+        )
         return False
 
     print("   ✅ Dashboard accesible")
@@ -65,13 +64,15 @@ def verify_testing_system():
             print(f"      📁 Categorías: {len(categorias)}")
 
             for categoria in categorias:
-                nombre_cat = categoria.get('categoria', 'N/A')
-                tests = categoria.get('tests', [])
+                nombre_cat = categoria.get("categoria", "N/A")
+                tests = categoria.get("tests", [])
                 print(f"         📂 {nombre_cat}: {len(tests)} tests")
 
                 # Mostrar algunos tests de ejemplo
                 for test in tests[:3]:
-                    print(f"            • {test.get('nombre', 'N/A')}: {test.get('descripcion', 'Sin descripción')}")
+                    print(
+                        f"            • {test.get('nombre', 'N/A')}: {test.get('descripcion', 'Sin descripción')}"
+                    )
                 if len(tests) > 3:
                     print(f"            ... y {len(tests) - 3} más")
 
@@ -86,8 +87,8 @@ def verify_testing_system():
     test_to_run = None
     for entorno, categorias in tests_data.items():
         for categoria in categorias:
-            for test in categoria.get('tests', []):
-                if 'test_system_working' in test.get('nombre', ''):
+            for test in categoria.get("tests", []):
+                if "test_system_working" in test.get("nombre", ""):
                     test_to_run = test
                     break
             if test_to_run:
@@ -99,16 +100,20 @@ def verify_testing_system():
         print(f"   🎯 Ejecutando: {test_to_run['nombre']}")
 
         # Ejecutar el test
-        test_path = test_to_run['path']
+        test_path = test_to_run["path"]
         run_response = session.post(f"{base_url}/dev-template/testing/run/{test_path}")
 
         if run_response.status_code == 200:
             run_data = run_response.json()
-            if run_data.get('status') == 'success':
+            if run_data.get("status") == "success":
                 print("   ✅ Test ejecutado exitosamente")
-                print(f"      📄 Salida: {run_data.get('stdout', 'Sin salida')[:100]}...")
+                print(
+                    f"      📄 Salida: {run_data.get('stdout', 'Sin salida')[:100]}..."
+                )
             else:
-                print(f"   ⚠️  Test ejecutado pero con errores: {run_data.get('error', 'Error desconocido')}")
+                print(
+                    f"   ⚠️  Test ejecutado pero con errores: {run_data.get('error', 'Error desconocido')}"
+                )
         else:
             print(f"   ❌ Error ejecutando test: {run_response.status_code}")
     else:
@@ -121,6 +126,7 @@ def verify_testing_system():
     print("   ✅ Ejecución de tests funcional")
 
     return True
+
 
 if __name__ == "__main__":
     verify_testing_system()

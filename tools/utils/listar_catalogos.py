@@ -28,17 +28,21 @@ def listar_catalogos():
 
         # Buscar en spreadsheets
         print("   🔍 Buscando en colección 'spreadsheets'...")
-        spreadsheets = list(db['spreadsheets'].find({}, {'_id': 1, 'name': 1, 'created_at': 1}).limit(10))
+        spreadsheets = list(
+            db["spreadsheets"]
+            .find({}, {"_id": 1, "name": 1, "created_at": 1})
+            .limit(10)
+        )
 
         print(f"   📊 Total encontrados: {len(spreadsheets)}")
 
         for i, doc in enumerate(spreadsheets):
-            doc_id = str(doc['_id'])
-            name = doc.get('name', 'Sin nombre')
-            created_at = doc.get('created_at', 'Sin fecha')
+            doc_id = str(doc["_id"])
+            name = doc.get("name", "Sin nombre")
+            created_at = doc.get("created_at", "Sin fecha")
 
             if isinstance(created_at, datetime):
-                created_str = created_at.strftime('%Y-%m-%d %H:%M:%S')
+                created_str = created_at.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 created_str = str(created_at)
 
@@ -49,17 +53,19 @@ def listar_catalogos():
 
         # Buscar en catalogs también
         print("   🔍 Buscando en colección 'catalogs'...")
-        catalogs = list(db['catalogs'].find({}, {'_id': 1, 'name': 1, 'created_at': 1}).limit(10))
+        catalogs = list(
+            db["catalogs"].find({}, {"_id": 1, "name": 1, "created_at": 1}).limit(10)
+        )
 
         print(f"   📊 Total encontrados: {len(catalogs)}")
 
         for i, doc in enumerate(catalogs):
-            doc_id = str(doc['_id'])
-            name = doc.get('name', 'Sin nombre')
-            created_at = doc.get('created_at', 'Sin fecha')
+            doc_id = str(doc["_id"])
+            name = doc.get("name", "Sin nombre")
+            created_at = doc.get("created_at", "Sin fecha")
 
             if isinstance(created_at, datetime):
-                created_str = created_at.strftime('%Y-%m-%d %H:%M:%S')
+                created_str = created_at.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 created_str = str(created_at)
 
@@ -73,8 +79,10 @@ def listar_catalogos():
     except Exception as e:
         print(f"   ❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     listar_catalogos()

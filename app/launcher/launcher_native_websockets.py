@@ -8,9 +8,10 @@ con soporte para WebSockets en tiempo real
 import os
 import sys
 import tempfile
-from pathlib import Path
 import threading
 import time
+from pathlib import Path
+
 import requests
 import webview
 

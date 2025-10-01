@@ -10,8 +10,8 @@ Módulo de auditoría para el registro de acciones de usuarios y sistema.
 Proporciona funciones para registrar eventos y consultar el historial de auditoría.
 """
 
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from bson.objectid import ObjectId
@@ -19,7 +19,13 @@ from bson.objectid import ObjectId
 from app.database import get_audit_logs_collection
 
 
-def audit_log(event_type: str, user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None, ip_address: Optional[str] = None, success: bool = True) -> bool:
+def audit_log(
+    event_type: str,
+    user_id: Optional[str] = None,
+    details: Optional[Dict[str, Any]] = None,
+    ip_address: Optional[str] = None,
+    success: bool = True,
+) -> bool:
     """
     Registra un evento de auditoría en la base de datos.
 
@@ -36,7 +42,13 @@ def audit_log(event_type: str, user_id: Optional[str] = None, details: Optional[
     return log_event(event_type, user_id, details, ip_address, success)
 
 
-def log_event(event_type: str, user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None, ip_address: Optional[str] = None, success: bool = True) -> bool:
+def log_event(
+    event_type: str,
+    user_id: Optional[str] = None,
+    details: Optional[Dict[str, Any]] = None,
+    ip_address: Optional[str] = None,
+    success: bool = True,
+) -> bool:
     """
     Registra un evento de auditoría en la base de datos.
 

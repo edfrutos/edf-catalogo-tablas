@@ -5,12 +5,12 @@
 # Variables de entorno: [si aplica]
 # Autor: EDF Developer - 2025-06-03
 
+from pymongo import MongoClient
 import os
 
 import certifi
 
-os.environ['SSL_CERT_FILE'] = certifi.where()
-from pymongo import MongoClient
+os.environ["SSL_CERT_FILE"] = certifi.where()
 
 # URI de conexión a MongoDB Atlas
 uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"

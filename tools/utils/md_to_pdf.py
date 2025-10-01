@@ -8,10 +8,10 @@ import pdfkit
 
 # Leer el archivo Markdown
 def md_to_pdf(input_md, output_pdf):
-    with open(input_md, encoding='utf-8') as f:
+    with open(input_md, encoding="utf-8") as f:
         text = f.read()
     # Convertir Markdown a HTML
-    html = markdown.markdown(text, extensions=['tables', 'fenced_code'])
+    html = markdown.markdown(text, extensions=["tables", "fenced_code"])
     # Opcional: añadir estilos básicos para PDF
     html = f"""
     <html><head><meta charset='utf-8'>
@@ -26,21 +26,27 @@ def md_to_pdf(input_md, output_pdf):
     pdfkit.from_string(html, output_pdf)
     print(f"PDF generado: {output_pdf}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import os
     import sys
+
     if len(sys.argv) >= 2:
         input_md = sys.argv[1]
         if len(sys.argv) >= 3:
             output_pdf = sys.argv[2]
         else:
-            output_pdf = os.path.splitext(input_md)[0] + '.pdf'
+            output_pdf = os.path.splitext(input_md)[0] + ".pdf"
     else:
-        input_md = input('Introduce el nombre del archivo .md a convertir: ').strip()
+        input_md = input("Introduce el nombre del archivo .md a convertir: ").strip()
         while not os.path.isfile(input_md):
             print(f"Archivo '{input_md}' no encontrado. Intenta de nuevo.")
-            input_md = input('Introduce el nombre del archivo .md a convertir: ').strip()
-        output_pdf = input(f"Nombre del PDF de salida (ENTER para '{os.path.splitext(input_md)[0] + '.pdf'}'): ").strip()
+            input_md = input(
+                "Introduce el nombre del archivo .md a convertir: "
+            ).strip()
+        output_pdf = input(
+            f"Nombre del PDF de salida (ENTER para '{os.path.splitext(input_md)[0] + '.pdf'}'): "
+        ).strip()
         if not output_pdf:
-            output_pdf = os.path.splitext(input_md)[0] + '.pdf'
+            output_pdf = os.path.splitext(input_md)[0] + ".pdf"
     md_to_pdf(input_md, output_pdf)

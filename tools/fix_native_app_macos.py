@@ -24,7 +24,7 @@ def check_native_app():
         contents_path = os.path.join(app_path, "Contents")
         macos_path = os.path.join(
             contents_path, "MacOS"
-        resources_path = os.path.join(
+        resources_path=os.path.join(
             contents_path, "Resources"
 
         if os.path.exists(contents_path):
@@ -45,9 +45,9 @@ def copy_env_file():
     print("=" * 40)
 
     # Rutas
-    source_env = ".env"
-    app_path = "dist/EDF_CatalogoDeTablas_Web_Native.app"
-    target_env = os.path.join(app_path, ".env")
+    source_env=".env"
+    app_path="dist/EDF_CatalogoDeTablas_Web_Native.app"
+    target_env=os.path.join(app_path, ".env")
 
     if not os.path.exists(source_env):
         print("❌ Archivo .env no encontrado en el directorio raíz")
@@ -76,8 +76,8 @@ def create_native_launcher():
     print("\n🚀 CREANDO LAUNCHER PARA APLICACIÓN NATIVA")
     print("=" * 40)
 
-    app_path = "dist/EDF_CatalogoDeTablas_Web_Native.app"
-    launcher_script = f"""#!/bin/bash
+    app_path="dist/EDF_CatalogoDeTablas_Web_Native.app"
+    launcher_script=f"""#!/bin/bash
 # Launcher para la aplicación nativa macOS
 # Generado automáticamente por fix_native_app_macos.py
 
@@ -93,7 +93,7 @@ fi
 # Cargar variables de entorno desde .env si existe
 if [ -f ".env" ]; then
     echo "📁 Cargando variables de entorno desde .env..."
-    
+
     # Cargar variables de entorno de forma robusta
     while IFS= read -r line; do
         # Ignorar líneas vacías, comentarios y líneas que no contienen '='
@@ -110,7 +110,7 @@ if [ -f ".env" ]; then
             fi
         fi
     done < ".env"
-    
+
     echo "✅ Variables de entorno cargadas"
 else
     echo "⚠️  Archivo .env no encontrado, usando variables del sistema"
@@ -131,7 +131,7 @@ open "{app_path}"
 """
 
     # Guardar el launcher
-    launcher_path = "launch_native_app.sh"
+    launcher_path="launch_native_app.sh"
     try:
         with open(launcher_path, "w") as f:
             f.write(launcher_script)
@@ -152,14 +152,14 @@ def test_native_app():
     print("\n🧪 PROBANDO APLICACIÓN NATIVA")
     print("=" * 40)
 
-    app_path = "dist/EDF_CatalogoDeTablas_Web_Native.app"
+    app_path="dist/EDF_CatalogoDeTablas_Web_Native.app"
 
     try:
         # Verificar que la aplicación se puede abrir
         print("🔍 Verificando que la aplicación se puede abrir...")
 
         # Intentar abrir la aplicación
-        result = subprocess.run(
+        result=subprocess.run(
             ["open", app_path], capture_output=True, text=True, timeout=10
         )
 
@@ -183,13 +183,13 @@ def create_env_in_app_bundle():
     print("\n📝 CREANDO .env EN EL BUNDLE DE LA APLICACIÓN")
     print("=" * 40)
 
-    app_path = "dist/EDF_CatalogoDeTablas_Web_Native.app"
-    bundle_env_path = os.path.join(app_path, "Contents", "Resources", ".env")
+    app_path="dist/EDF_CatalogoDeTablas_Web_Native.app"
+    bundle_env_path=os.path.join(app_path, "Contents", "Resources", ".env")
 
     # Leer el archivo .env original
     try:
         with open(".env", "r") as f:
-            env_content = f.read()
+            env_content=f.read()
 
         # Escribir el archivo .env en el bundle
         with open(bundle_env_path, "w") as f:
@@ -208,14 +208,14 @@ def fix_app_permissions():
     print("\n🔐 ARREGLANDO PERMISOS")
     print("=" * 40)
 
-    app_path = "dist/EDF_CatalogoDeTablas_Web_Native.app"
+    app_path="dist/EDF_CatalogoDeTablas_Web_Native.app"
 
     try:
         # Dar permisos de ejecución a la aplicación
         os.chmod(app_path, 0o755)
 
         # Dar permisos al ejecutable
-        executable_path = os.path.join(
+        executable_path=os.path.join(
             app_path, "Contents", "MacOS", "EDF_CatalogoDeTablas_Web_Native"
         )
         if os.path.exists(executable_path):
@@ -223,7 +223,7 @@ def fix_app_permissions():
             print("✅ Permisos de ejecución configurados")
 
         # Dar permisos a los archivos .env
-        env_files = [
+        env_files=[
             os.path.join(app_path, ".env"),
             os.path.join(app_path, "Contents", "Resources", ".env"),
         ]

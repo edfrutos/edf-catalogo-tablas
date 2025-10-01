@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 # Agregar el directorio actual al path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 def list_all_users():
     """Lista todos los usuarios y sus contraseñas"""
 
@@ -35,27 +36,32 @@ def list_all_users():
             users_collection = get_users_collection()
 
             # Obtener todos los usuarios
-            all_users = list(users_collection.find({}, {
-                "email": 1,
-                "username": 1,
-                "nombre": 1,
-                "role": 1,
-                "password_type": 1,
-                "_id": 1
-            }).sort("email", 1))
+            all_users = list(
+                users_collection.find(
+                    {},
+                    {
+                        "email": 1,
+                        "username": 1,
+                        "nombre": 1,
+                        "role": 1,
+                        "password_type": 1,
+                        "_id": 1,
+                    },
+                ).sort("email", 1)
+            )
 
             print(f"   📊 Total de usuarios: {len(all_users)}")
 
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("LISTA COMPLETA DE USUARIOS")
-            print("="*50)
+            print("=" * 50)
 
             for i, user in enumerate(all_users, 1):
-                email = user.get('email', 'N/A')
-                username = user.get('username', 'N/A')
-                nombre = user.get('nombre', 'N/A')
-                role = user.get('role', 'user')
-                password_type = user.get('password_type', 'unknown')
+                email = user.get("email", "N/A")
+                username = user.get("username", "N/A")
+                nombre = user.get("nombre", "N/A")
+                role = user.get("role", "user")
+                password_type = user.get("password_type", "unknown")
 
                 print(f"   {i:2d}. {email}")
                 print(f"       - Usuario: {username}")
@@ -64,7 +70,7 @@ def list_all_users():
                 print(f"       - Tipo contraseña: {password_type}")
 
                 # Sugerir contraseña basada en username
-                if username and username != 'N/A':
+                if username and username != "N/A":
                     suggested_password = f"{username}123"
                 else:
                     suggested_password = "password123"
@@ -73,25 +79,29 @@ def list_all_users():
                 print()
 
             # Mostrar resumen por roles
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("RESUMEN POR ROLES")
-            print("="*50)
+            print("=" * 50)
 
-            admin_users = [u for u in all_users if u.get('role') == 'admin']
-            regular_users = [u for u in all_users if u.get('role') == 'user']
+            admin_users = [u for u in all_users if u.get("role") == "admin"]
+            regular_users = [u for u in all_users if u.get("role") == "user"]
 
             print(f"   👑 Administradores: {len(admin_users)}")
             for user in admin_users:
-                email = user.get('email', 'N/A')
-                username = user.get('username', 'N/A')
-                suggested_password = f"{username}123" if username != 'N/A' else "admin123"
+                email = user.get("email", "N/A")
+                username = user.get("username", "N/A")
+                suggested_password = (
+                    f"{username}123" if username != "N/A" else "admin123"
+                )
                 print(f"      - {email} / {suggested_password}")
 
             print(f"\n   👤 Usuarios regulares: {len(regular_users)}")
             for user in regular_users:
-                email = user.get('email', 'N/A')
-                username = user.get('username', 'N/A')
-                suggested_password = f"{username}123" if username != 'N/A' else "user123"
+                email = user.get("email", "N/A")
+                username = user.get("username", "N/A")
+                suggested_password = (
+                    f"{username}123" if username != "N/A" else "user123"
+                )
                 print(f"      - {email} / {suggested_password}")
 
             return True
@@ -99,8 +109,10 @@ def list_all_users():
     except Exception as e:
         print(f"   ❌ Error listando usuarios: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def main():
     """Función principal"""
@@ -117,6 +129,7 @@ def main():
     else:
         print("\n❌ El listado no se completó correctamente")
         return False
+
 
 if __name__ == "__main__":
     main()

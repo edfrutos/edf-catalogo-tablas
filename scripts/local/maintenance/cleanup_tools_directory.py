@@ -2,12 +2,12 @@
 # Script para revisar, depurar y organizar scripts en el directorio /tools
 # Creado: 18/05/2025
 
-import os
-import sys
-import shutil
 import datetime
-import subprocess
 import json
+import os
+import shutil
+import subprocess
+import sys
 
 # Configuración
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

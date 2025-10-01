@@ -3,6 +3,8 @@
 Script para verificar detalles específicos de la tabla Componentes ordenador
 """
 
+from app.models.database import get_mongo_db
+from bson.objectid import ObjectId
 import os
 import sys
 
@@ -10,10 +12,6 @@ import sys
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-
-from bson.objectid import ObjectId
-
-from app.models.database import get_mongo_db
 
 
 def check_table_details():

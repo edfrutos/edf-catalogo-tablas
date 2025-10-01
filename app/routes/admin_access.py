@@ -71,7 +71,8 @@ def admin_login_direct():
                 }
                 logger.warning("⚠️ Usando admin temporal por fallo de conexión")
 
-        # 2. Solo buscar en las colecciones si estamos en producción y no tenemos un usuario todavía
+        # 2. Solo buscar en las colecciones si estamos en producción y no tenemos
+        # un usuario todavía
         if not admin_user and not is_local:
             try:
                 # Primero buscar en los IDs conocidos

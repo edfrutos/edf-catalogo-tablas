@@ -30,20 +30,25 @@ def buscar_catalogos_recientes():
         print("\n   🔍 Buscando en colección 'catalogs' (últimos 30 días)...")
         fecha_limite = datetime.now() - timedelta(days=30)
 
-        catalogs = list(db['catalogs'].find({
-            'created_at': {'$gte': fecha_limite}
-        }, {'_id': 1, 'name': 1, 'created_at': 1, 'rows': 1}).sort('created_at', -1))
+        catalogs = list(
+            db["catalogs"]
+            .find(
+                {"created_at": {"$gte": fecha_limite}},
+                {"_id": 1, "name": 1, "created_at": 1, "rows": 1},
+            )
+            .sort("created_at", -1)
+        )
 
         print(f"   📊 Encontrados: {len(catalogs)}")
 
         for i, doc in enumerate(catalogs):
-            doc_id = str(doc['_id'])
-            name = doc.get('name', 'Sin nombre')
-            created_at = doc.get('created_at', 'Sin fecha')
-            rows = doc.get('rows', [])
+            doc_id = str(doc["_id"])
+            name = doc.get("name", "Sin nombre")
+            created_at = doc.get("created_at", "Sin fecha")
+            rows = doc.get("rows", [])
 
             if isinstance(created_at, datetime):
-                created_str = created_at.strftime('%Y-%m-%d %H:%M:%S')
+                created_str = created_at.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 created_str = str(created_at)
 
@@ -54,12 +59,13 @@ def buscar_catalogos_recientes():
 
             # Mostrar primeras filas con imágenes
             for j, row in enumerate(rows[:2]):
-                images = row.get('images', [])
+                images = row.get("images", [])
                 if isinstance(images, str):
                     import json
+
                     try:
                         images = json.loads(images)
-                    except:
+                    except BaseException:
                         images = [images]
 
                 if images:
@@ -71,20 +77,25 @@ def buscar_catalogos_recientes():
 
         # Buscar en spreadsheets también
         print("\n   🔍 Buscando en colección 'spreadsheets' (últimos 30 días)...")
-        spreadsheets = list(db['spreadsheets'].find({
-            'created_at': {'$gte': fecha_limite}
-        }, {'_id': 1, 'name': 1, 'created_at': 1, 'rows': 1}).sort('created_at', -1))
+        spreadsheets = list(
+            db["spreadsheets"]
+            .find(
+                {"created_at": {"$gte": fecha_limite}},
+                {"_id": 1, "name": 1, "created_at": 1, "rows": 1},
+            )
+            .sort("created_at", -1)
+        )
 
         print(f"   📊 Encontrados: {len(spreadsheets)}")
 
         for i, doc in enumerate(spreadsheets):
-            doc_id = str(doc['_id'])
-            name = doc.get('name', 'Sin nombre')
-            created_at = doc.get('created_at', 'Sin fecha')
-            rows = doc.get('rows', [])
+            doc_id = str(doc["_id"])
+            name = doc.get("name", "Sin nombre")
+            created_at = doc.get("created_at", "Sin fecha")
+            rows = doc.get("rows", [])
 
             if isinstance(created_at, datetime):
-                created_str = created_at.strftime('%Y-%m-%d %H:%M:%S')
+                created_str = created_at.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 created_str = str(created_at)
 
@@ -95,12 +106,13 @@ def buscar_catalogos_recientes():
 
             # Mostrar primeras filas con imágenes
             for j, row in enumerate(rows[:2]):
-                images = row.get('images', [])
+                images = row.get("images", [])
                 if isinstance(images, str):
                     import json
+
                     try:
                         images = json.loads(images)
-                    except:
+                    except BaseException:
                         images = [images]
 
                 if images:
@@ -115,8 +127,10 @@ def buscar_catalogos_recientes():
     except Exception as e:
         print(f"   ❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     buscar_catalogos_recientes()

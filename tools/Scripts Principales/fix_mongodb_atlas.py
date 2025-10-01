@@ -17,20 +17,27 @@ from dotenv import load_dotenv
 
 
 def print_header(message):
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print(f" {message} ".center(80, "="))
-    print("="*80)
+    print("=" * 80)
+
 
 def backup_file(file_path):
     """Crea una copia de seguridad del archivo"""
     if os.path.exists(file_path):
         # Crear directorio de backup si no existe
-        backup_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'backups', 'automated')
+        backup_dir = os.path.join(
+            os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            ),
+            "backups",
+            "automated",
+        )
         os.makedirs(backup_dir, exist_ok=True)
 
         # Crear nombre de archivo de backup con timestamp
         filename = os.path.basename(file_path)
-        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         backup_filename = f"{filename}.bak.{timestamp}"
         backup_path = os.path.join(backup_dir, backup_filename)
 
@@ -39,6 +46,7 @@ def backup_file(file_path):
         print(f"Copia de seguridad creada: {backup_path}")
         return True
     return False
+
 
 def check_dns_resolution(hostname):
     """Verifica la resolución DNS de un hostname"""
@@ -52,6 +60,7 @@ def check_dns_resolution(hostname):
         print(f"  Error de resolución DNS: {e}")
         return False, None
 
+
 def check_srv_records(hostname):
     """Verifica los registros SRV para MongoDB Atlas"""
     print(f"Verificando registros SRV para: _mongodb._tcp.{hostname}")
@@ -63,14 +72,17 @@ def check_srv_records(hostname):
         servers = []
         # Convertir RRset a lista para iteración
         for rdata in list(answers):
-            server = str(rdata.target).rstrip('.')
-            print(f"  {server} (prioridad: {rdata.priority}, peso: {rdata.weight}, puerto: {rdata.port})")
+            server = str(rdata.target).rstrip(".")
+            print(
+                f"  {server} (prioridad: {rdata.priority}, peso: {rdata.weight}, puerto: {rdata.port})"
+            )
             servers.append(f"{server}:{rdata.port}")
 
         return True, servers
     except Exception as e:
         print(f"  Error al resolver registros SRV: {e}")
         return False, []
+
 
 def check_network_connectivity(host, port):
     """Verifica la conectividad de red a un host y puerto específicos"""
@@ -99,10 +111,11 @@ def check_network_connectivity(host, port):
         print(f"  Error de socket: {e}")
         return False
 
+
 def create_direct_mongodb_uri(srv_uri, servers):
     """Crea una URI directa a partir de una URI SRV y una lista de servidores"""
     # Extraer usuario, contraseña y base de datos de la URI SRV
-    match = re.match(r'mongodb\+srv://([^:]+):([^@]+)@([^/]+)/([^?]+)(\?.*)?', srv_uri)
+    match = re.match(r"mongodb\+srv://([^:]+):([^@]+)@([^/]+)/([^?]+)(\?.*)?", srv_uri)
     if not match:
         return None
 
@@ -116,7 +129,10 @@ def create_direct_mongodb_uri(srv_uri, servers):
 
     return direct_uri
 
-def update_env_file(env_path, new_uri=None, use_direct_uri=False, use_local_mongodb=False):
+
+def update_env_file(
+    env_path, new_uri=None, use_direct_uri=False, use_local_mongodb=False
+):
     """Actualiza el archivo .env con la nueva URI de MongoDB"""
     if not os.path.exists(env_path):
         print(f"Error: No se encontró el archivo {env_path}")
@@ -130,15 +146,15 @@ def update_env_file(env_path, new_uri=None, use_direct_uri=False, use_local_mong
         content = f.read()
 
     # Extraer la URI actual
-    mongo_uri_match = re.search(r'^MONGO_URI\s*=\s*(.*)$', content, re.MULTILINE)
+    mongo_uri_match = re.search(r"^MONGO_URI\s*=\s*(.*)$", content, re.MULTILINE)
     current_uri = mongo_uri_match.group(1).strip() if mongo_uri_match else None
 
     # Determinar la nueva URI
     if use_local_mongodb:
-        new_uri = 'mongodb://localhost:27017/app_catalogojoyero_nueva'
-    elif use_direct_uri and current_uri and current_uri.startswith('mongodb+srv://'):
+        new_uri = "mongodb://localhost:27017/app_catalogojoyero_nueva"
+    elif use_direct_uri and current_uri and current_uri.startswith("mongodb+srv://"):
         # Extraer el hostname de la URI SRV
-        hostname_match = re.search(r'mongodb\+srv://[^@]+@([^/]+)', current_uri)
+        hostname_match = re.search(r"mongodb\+srv://[^@]+@([^/]+)", current_uri)
         if hostname_match:
             hostname = hostname_match.group(1)
             # Verificar registros SRV
@@ -154,22 +170,23 @@ def update_env_file(env_path, new_uri=None, use_direct_uri=False, use_local_mong
         # Reemplazar la URI existente o añadir una nueva
         if mongo_uri_match:
             content = re.sub(
-                r'^MONGO_URI\s*=.*$',
-                f'MONGO_URI={new_uri}',
+                r"^MONGO_URI\s*=.*$",
+                f"MONGO_URI={new_uri}",
                 content,
-                flags=re.MULTILINE
+                flags=re.MULTILINE,
             )
         else:
-            content += f'\nMONGO_URI={new_uri}\n'
+            content += f"\nMONGO_URI={new_uri}\n"
 
         # Guardar los cambios
-        with open(env_path, 'w') as f:
+        with open(env_path, "w") as f:
             f.write(content)
 
         print(f"Archivo {env_path} actualizado con la nueva URI: {new_uri[:20]}...")
         return True
 
     return False
+
 
 def update_app_py(app_path, add_retry_logic=True):
     """Modifica app.py para añadir lógica de reintento para MongoDB"""
@@ -187,11 +204,11 @@ def update_app_py(app_path, add_retry_logic=True):
     if add_retry_logic:
         # Añadir importaciones necesarias si no existen
         if "import time" not in content:
-            import_section = re.search(r'import.*?\n\n', content, re.DOTALL)
+            import_section = re.search(r"import.*?\n\n", content, re.DOTALL)
             if import_section:
                 content = content.replace(
                     import_section.group(0),
-                    import_section.group(0) + "import time\nimport certifi\n"
+                    import_section.group(0) + "import time\nimport certifi\n",
                 )
 
         # Modificar la inicialización de PyMongo para añadir lógica de reintento
@@ -221,27 +238,32 @@ for retry in range(max_retries):
                 print("Usando datos simulados en lugar de MongoDB")
             except ImportError:
                 print("No se encontró el módulo de datos simulados. Algunas funciones estarán deshabilitadas.")
-                mongo = None"""
+                mongo = None""",
             )
 
-        # Modificar las asignaciones de colecciones para manejar el caso cuando mongo es None
+        # Modificar las asignaciones de colecciones para manejar el caso cuando
+        # mongo es None
         content = content.replace(
             "app.spreadsheets_collection = mongo.db.spreadsheets",
-            "app.spreadsheets_collection = mongo.db.spreadsheets if hasattr(mongo, 'db') else None"
+            "app.spreadsheets_collection = mongo.db.spreadsheets if hasattr(mongo, 'db') else None",
         )
 
         content = content.replace(
             "app.catalogs_collection = mongo.db.catalogs",
-            "app.catalogs_collection = mongo.db.catalogs if hasattr(mongo, 'db') else None"
+            "app.catalogs_collection = mongo.db.catalogs if hasattr(mongo, 'db') else None",
         )
 
         content = content.replace(
             "app.users_collection = mongo.db.users",
-            "app.users_collection = mongo.db.users if hasattr(mongo, 'db') else None"
+            "app.users_collection = mongo.db.users if hasattr(mongo, 'db') else None",
         )
     else:
         # Restaurar el comportamiento original desde el backup
-        backup_files = [f for f in os.listdir(os.path.dirname(app_path)) if f.startswith(os.path.basename(app_path) + '.bak')]
+        backup_files = [
+            f
+            for f in os.listdir(os.path.dirname(app_path))
+            if f.startswith(os.path.basename(app_path) + ".bak")
+        ]
         if backup_files:
             # Usar el backup más reciente
             latest_backup = sorted(backup_files)[-1]
@@ -251,18 +273,21 @@ for retry in range(max_retries):
                 content = f.read()
 
     # Guardar los cambios
-    with open(app_path, 'w') as f:
+    with open(app_path, "w") as f:
         f.write(content)
 
     print(f"Archivo {app_path} actualizado correctamente")
     return True
+
 
 def restart_gunicorn():
     """Reinicia el servidor Gunicorn"""
     print("Reiniciando el servidor Gunicorn...")
     try:
         # Intentar usar systemctl
-        result = subprocess.run(["systemctl", "restart", "edefrutos2025"], capture_output=True, text=True)
+        result = subprocess.run(
+            ["systemctl", "restart", "edefrutos2025"], capture_output=True, text=True
+        )
         if result.returncode == 0:
             print("Servidor Gunicorn reiniciado correctamente mediante systemctl")
             return True
@@ -270,19 +295,26 @@ def restart_gunicorn():
             print(f"Error al reiniciar Gunicorn mediante systemctl: {result.stderr}")
 
             # Intentar usar el script de reinicio
-            restart_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "restart_server.sh")
+            restart_script = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "restart_server.sh"
+            )
             if os.path.exists(restart_script):
-                result = subprocess.run([restart_script], capture_output=True, text=True)
+                result = subprocess.run(
+                    [restart_script], capture_output=True, text=True
+                )
                 if result.returncode == 0:
                     print("Servidor Gunicorn reiniciado correctamente mediante script")
                     return True
                 else:
-                    print(f"Error al reiniciar Gunicorn mediante script: {result.stderr}")
+                    print(
+                        f"Error al reiniciar Gunicorn mediante script: {result.stderr}"
+                    )
 
             return False
     except Exception as e:
         print(f"Error al reiniciar Gunicorn: {str(e)}")
         return False
+
 
 def main():
     # Cargar variables de entorno
@@ -303,18 +335,22 @@ def main():
     if os.path.exists(backup_env):
         with open(backup_env) as f:
             content = f.read()
-            mongo_uri_match = re.search(r'^MONGO_URI\s*=\s*(.*)$', content, re.MULTILINE)
+            mongo_uri_match = re.search(
+                r"^MONGO_URI\s*=\s*(.*)$", content, re.MULTILINE
+            )
             if mongo_uri_match:
                 original_uri = mongo_uri_match.group(1).strip()
 
     if not original_uri:
-        print("No se pudo encontrar la URI de MongoDB original. Utilizando la URI predeterminada.")
+        print(
+            "No se pudo encontrar la URI de MongoDB original. Utilizando la URI predeterminada."
+        )
         original_uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
 
     print(f"URI de MongoDB original: {original_uri[:20]}...")
 
     # Extraer el hostname de la URI
-    hostname_match = re.search(r'mongodb\+srv://[^@]+@([^/]+)', original_uri)
+    hostname_match = re.search(r"mongodb\+srv://[^@]+@([^/]+)", original_uri)
     if not hostname_match:
         print("Error: No se pudo extraer el hostname de la URI de MongoDB")
         sys.exit(1)
@@ -334,7 +370,9 @@ def main():
     # Probar conectividad a servicios comunes
     dns_google = check_network_connectivity("8.8.8.8", 53)  # DNS de Google
     dns_cloudflare = check_network_connectivity("1.1.1.1", 53)  # DNS de Cloudflare
-    mongodb_website = check_network_connectivity("mongodb.com", 443)  # Sitio web de MongoDB
+    mongodb_website = check_network_connectivity(
+        "mongodb.com", 443
+    )  # Sitio web de MongoDB
 
     # Probar conectividad a los servidores de MongoDB
     mongodb_servers_reachable = []
@@ -348,19 +386,27 @@ def main():
     print_header("DETERMINANDO LA MEJOR SOLUCIÓN")
 
     if dns_success and srv_success and mongodb_servers_reachable:
-        print("Los servidores de MongoDB Atlas son accesibles. Intentando crear una URI directa.")
+        print(
+            "Los servidores de MongoDB Atlas son accesibles. Intentando crear una URI directa."
+        )
         direct_uri = create_direct_mongodb_uri(original_uri, mongodb_servers_reachable)
         if direct_uri:
             print(f"URI directa creada: {direct_uri[:20]}...")
             update_env_file(env_path, new_uri=direct_uri)
         else:
-            print("No se pudo crear una URI directa. Utilizando la URI original con lógica de reintento.")
+            print(
+                "No se pudo crear una URI directa. Utilizando la URI original con lógica de reintento."
+            )
             update_env_file(env_path, new_uri=original_uri)
     elif dns_success and srv_success:
-        print("Los registros SRV se resuelven pero no se puede conectar a los servidores. Utilizando la URI original con lógica de reintento.")
+        print(
+            "Los registros SRV se resuelven pero no se puede conectar a los servidores. Utilizando la URI original con lógica de reintento."
+        )
         update_env_file(env_path, new_uri=original_uri)
     else:
-        print("No se pueden resolver los registros SRV. Utilizando MongoDB local temporalmente.")
+        print(
+            "No se pueden resolver los registros SRV. Utilizando MongoDB local temporalmente."
+        )
         update_env_file(env_path, use_local_mongodb=True)
 
     # Añadir lógica de reintento a app.py
@@ -372,11 +418,18 @@ def main():
     restart_gunicorn()
 
     print_header("SOLUCIÓN COMPLETADA")
-    print("Se ha implementado una solución para los problemas de conexión a MongoDB Atlas.")
-    print("La aplicación ahora intentará conectarse a MongoDB Atlas con lógica de reintento.")
-    print("Si la conexión falla, utilizará datos simulados para mantener la aplicación funcionando.")
+    print(
+        "Se ha implementado una solución para los problemas de conexión a MongoDB Atlas."
+    )
+    print(
+        "La aplicación ahora intentará conectarse a MongoDB Atlas con lógica de reintento."
+    )
+    print(
+        "Si la conexión falla, utilizará datos simulados para mantener la aplicación funcionando."
+    )
     print("\nPara revertir a la configuración original, ejecute:")
     print(f"python3 {os.path.abspath(__file__)} --revert")
+
 
 if __name__ == "__main__":
     # Verificar si se debe revertir los cambios

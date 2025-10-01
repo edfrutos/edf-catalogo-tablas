@@ -8,7 +8,7 @@
 from datetime import datetime
 
 
-def datetimeformat(value, format='%Y-%m-%d %H:%M'):
+def datetimeformat(value, format="%Y-%m-%d %H:%M"):
     """Format a datetime object or timestamp string."""
     if value is None:
         return ""
@@ -16,7 +16,7 @@ def datetimeformat(value, format='%Y-%m-%d %H:%M'):
         # Try to parse the string as a datetime
         try:
             # Try ISO format
-            value = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
         except ValueError:
             try:
                 # Try parsing as timestamp
@@ -32,6 +32,7 @@ def datetimeformat(value, format='%Y-%m-%d %H:%M'):
 
     return value.strftime(format)
 
+
 def init_app(app):
     """Register filters with the Flask app."""
-    app.jinja_env.filters['datetimeformat'] = datetimeformat
+    app.jinja_env.filters["datetimeformat"] = datetimeformat

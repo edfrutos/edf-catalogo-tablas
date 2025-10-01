@@ -20,7 +20,8 @@ def check_packaged_environment():
 
     if is_frozen:
         print(
-            f"📁 Directorio base: {sys._MEIPASS}"  # pyright: ignore[reportAttributeAccessIssue]
+            # pyright: ignore[reportAttributeAccessIssue]
+            f"📁 Directorio base: {sys._MEIPASS}"
         )
         env_path = os.path.join(
             sys._MEIPASS, ".env"  # pyright: ignore[reportAttributeAccessIssue]

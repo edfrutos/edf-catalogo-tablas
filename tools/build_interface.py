@@ -4,6 +4,7 @@ Interfaz Web para Gestión de Scripts de Build - EDF CatalogoDeTablas
 Interfaz gráfica web para ejecutar scripts de build organizados por categorías
 """
 
+from build_scripts_manager import BuildScriptsManager
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -12,7 +13,6 @@ from flask import Flask, flash, jsonify, redirect, render_template, url_for
 
 # Agregar el directorio raíz al path para importar el gestor
 sys.path.append(str(Path(__file__).parent.parent))
-from build_scripts_manager import BuildScriptsManager
 
 app = Flask(__name__)
 app.secret_key = "build_scripts_interface_2025"

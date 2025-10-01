@@ -46,10 +46,11 @@ class User(UserMixin):
     def foto_perfil_url(self):
         """Obtiene la URL de la foto de perfil del usuario."""
         from flask import url_for
+
         if self.foto_perfil:
-            return url_for('static', filename=f'uploads/{self.foto_perfil}')
+            return url_for("static", filename=f"uploads/{self.foto_perfil}")
         else:
-            return url_for('static', filename='default_profile.png')
+            return url_for("static", filename="default_profile.png")
 
     def set_password(self, password):
         """Genera un hash de la contraseña y lo guarda."""
@@ -92,7 +93,7 @@ class User(UserMixin):
             user_data = g.users_collection.find_one({"_id": ObjectId(user_id)})
             if user_data:
                 return User(user_data)
-        except:
+        except BaseException:
             pass
         return None
 

@@ -24,6 +24,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def get_collections():
     """Obtener las colecciones de usuarios de forma segura"""
     try:
@@ -38,7 +39,7 @@ def get_collections():
 
         # Verificar si existe la colección users_unified
         collection_names = db.list_collection_names()
-        if 'users_unified' in collection_names:
+        if "users_unified" in collection_names:
             unified = db.users_unified
         else:
             logger.warning("La colección 'users_unified' no existe en la base de datos")
@@ -51,6 +52,7 @@ def get_collections():
     except Exception as e:
         logger.error(f"Error al conectar con la base de datos: {str(e)}")
         raise
+
 
 def check_users():
     """Verificar usuarios en ambas colecciones"""
@@ -67,7 +69,7 @@ def check_users():
                 print(f"Nombre: {user.get('nombre')}")
                 print(f"Role: {user.get('role')}")
                 # Verificar si existe password antes de mostrar
-                if user.get('password'):
+                if user.get("password"):
                     print(f"Password: {user.get('password')[:20]}...")
                 else:
                     print("Password: No definida")
@@ -90,7 +92,7 @@ def check_users():
                     print(f"Nombre: {user.get('nombre')}")
                     print(f"Role: {user.get('role')}")
                     # Verificar si existe password antes de mostrar
-                    if user.get('password'):
+                    if user.get("password"):
                         print(f"Password: {user.get('password')[:20]}...")
                     else:
                         print("Password: No definida")
@@ -110,7 +112,8 @@ def check_users():
         logger.error(f"Error al verificar usuarios: {str(e)}")
         raise
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     try:
         logger.info("Iniciando verificación de usuarios...")
         check_users()

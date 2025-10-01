@@ -1,5 +1,6 @@
 # Configuración del sistema de monitoreo
-# Este archivo permite controlar diferentes aspectos del monitoreo para optimizar recursos
+# Este archivo permite controlar diferentes aspectos del monitoreo para
+# optimizar recursos
 
 # Configuración general del monitoreo
 MONITORING_CONFIG = {
@@ -26,8 +27,10 @@ MONITORING_CONFIG = {
     "temp_files": {
         "enabled": True,
         "check_interval": 2,  # Verificar cada 2 ciclos (1 hora)
-        "file_count_threshold": 500,  # Solo alertar si hay más de 500 archivos (aumentado de 100)
-        "size_threshold_mb": 500,  # Solo alertar si ocupan más de 500 MB (aumentado de 100 MB)
+        # Solo alertar si hay más de 500 archivos (aumentado de 100)
+        "file_count_threshold": 500,
+        # Solo alertar si ocupan más de 500 MB (aumentado de 100 MB)
+        "size_threshold_mb": 500,
     },
     # Configuración de limpieza
     "cleanup": {

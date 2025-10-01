@@ -22,7 +22,7 @@ def check_blueprint_registration():
         "app/routes/scripts_tools_routes.py",
         "app/routes/script_routes.py",
         "tools/app/routes/scripts_routes.py",
-        "scripts/local/app/routes/scripts_routes.py"
+        "scripts/local/app/routes/scripts_routes.py",
     ]
 
     existing_files = []
@@ -35,16 +35,22 @@ def check_blueprint_registration():
 
     return existing_files
 
+
 def test_script_runner():
     """Prueba el script_runner directamente"""
     print("\n=== PRUEBA DE SCRIPT_RUNNER ===")
 
     try:
-        result = subprocess.run([
-            sys.executable,
-            "tools/script_runner.py",
-            "tools/local/db_utils/conexion_MongoDB.py"
-        ], capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "tools/script_runner.py",
+                "tools/local/db_utils/conexion_MongoDB.py",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
 
         print("✅ script_runner ejecutado exitosamente")
         print(f"   Código de salida: {result.returncode}")
@@ -65,6 +71,7 @@ def test_script_runner():
         print(f"❌ Error: {e}")
         return False
 
+
 def test_web_routes():
     """Prueba las rutas web"""
     print("\n=== PRUEBA DE RUTAS WEB ===")
@@ -73,7 +80,7 @@ def test_web_routes():
     routes_to_test = [
         "/admin/tools/",
         "/admin/tools/execute",
-        "/admin/scripts-tools-api/run"
+        "/admin/scripts-tools-api/run",
     ]
 
     session = requests.Session()
@@ -87,16 +94,16 @@ def test_web_routes():
                 response = session.post(
                     f"{base_url}{route}",
                     json={"script": "tools/local/db_utils/conexion_MongoDB.py"},
-                    headers={'Content-Type': 'application/json'},
-                    timeout=10
+                    headers={"Content-Type": "application/json"},
+                    timeout=10,
                 )
             elif route.endswith("/run"):
                 # POST request para run
                 response = session.post(
                     f"{base_url}{route}",
                     json={"path": "tools/local/db_utils/conexion_MongoDB.py"},
-                    headers={'Content-Type': 'application/json'},
-                    timeout=10
+                    headers={"Content-Type": "application/json"},
+                    timeout=10,
                 )
             else:
                 # GET request para otras rutas
@@ -106,18 +113,18 @@ def test_web_routes():
             print(f"   Content-Type: {response.headers.get('Content-Type', 'N/A')}")
 
             if response.status_code == 200:
-                content_type = response.headers.get('Content-Type', '')
-                if 'application/json' in content_type:
+                content_type = response.headers.get("Content-Type", "")
+                if "application/json" in content_type:
                     try:
                         json_response = response.json()
                         print("   ✅ Respuesta JSON válida")
                         return True
-                    except:
+                    except BaseException:
                         print("   ❌ Error parseando JSON")
                 else:
                     print("   ⚠️  Respuesta HTML (posiblemente página de login)")
             elif response.status_code == 302:
-                redirect_location = response.headers.get('Location', '')
+                redirect_location = response.headers.get("Location", "")
                 print(f"   ⚠️  Redirección a: {redirect_location}")
             elif response.status_code == 401:
                 print("   ❌ No autorizado")
@@ -128,6 +135,7 @@ def test_web_routes():
             print(f"   ❌ Error: {e}")
 
     return False
+
 
 def create_unified_script_route():
     """Crea una ruta unificada para scripts"""
@@ -159,13 +167,13 @@ def execute_script():
             script_path = data.get("script") or data.get("script_path") or ""
         else:
             script_path = request.form.get("script") or request.form.get("script_path") or ""
-        
+
         if not script_path:
             return jsonify({
                 "error": "Ruta del script no proporcionada",
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }), 400
-        
+
         # Validar ruta
         if ".." in script_path or script_path.startswith("/"):
             return jsonify({
@@ -173,34 +181,34 @@ def execute_script():
                 "script": script_path,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }), 400
-        
+
         # Construir ruta absoluta
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         script_abs_path = os.path.join(project_root, script_path)
-        
+
         if not os.path.exists(script_abs_path):
             return jsonify({
                 "error": f"Script no encontrado: {script_path}",
                 "script": script_path,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }), 404
-        
+
         # Ejecutar usando script_runner
         script_runner_path = os.path.join(project_root, "tools", "script_runner.py")
-        
+
         if not os.path.exists(script_runner_path):
             return jsonify({
                 "error": "script_runner.py no encontrado",
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }), 500
-        
+
         # Ejecutar el script
         result = subprocess.run([
             sys.executable,
             script_runner_path,
             script_path
         ], capture_output=True, text=True, timeout=60, cwd=project_root)
-        
+
         # Parsear la salida JSON del script_runner
         try:
             json_output = json.loads(result.stdout)
@@ -215,7 +223,7 @@ def execute_script():
                 "exit_code": result.returncode,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }), 500
-            
+
     except subprocess.TimeoutExpired:
         return jsonify({
             "error": "Timeout en la ejecución del script",
@@ -243,6 +251,7 @@ def tools_dashboard():
     print("✅ Archivo unified_scripts_routes.py creado")
     return True
 
+
 def update_app_registration():
     """Actualiza el registro de blueprints en la aplicación"""
     print("\n=== ACTUALIZANDO REGISTRO DE BLUEPRINTS ===")
@@ -261,13 +270,13 @@ def update_app_registration():
         # Comentar el registro existente
         content = content.replace(
             "app.register_blueprint(scripts_bp)",
-            "# app.register_blueprint(scripts_bp)  # Comentado para usar unified_scripts_bp"
+            "# app.register_blueprint(scripts_bp)  # Comentado para usar unified_scripts_bp",
         )
 
         # Agregar el nuevo registro
         content = content.replace(
             "# Registrar rutas de mantenimiento y API usando la función dedicada",
-            "# Registrar rutas de mantenimiento y API usando la función dedicada\n    from app.routes.unified_scripts_routes import unified_scripts_bp\n    app.register_blueprint(unified_scripts_bp)"
+            "# Registrar rutas de mantenimiento y API usando la función dedicada\n    from app.routes.unified_scripts_routes import unified_scripts_bp\n    app.register_blueprint(unified_scripts_bp)",
         )
 
         # Escribir el archivo actualizado
@@ -280,13 +289,15 @@ def update_app_registration():
         print("❌ No se encontró scripts_bp en main_app.py")
         return False
 
+
 def restart_server():
     """Reinicia el servidor"""
     print("\n=== REINICIANDO SERVIDOR ===")
 
     try:
-        result = subprocess.run(["systemctl", "restart", "edefrutos2025"],
-                              capture_output=True, text=True)
+        result = subprocess.run(
+            ["systemctl", "restart", "edefrutos2025"], capture_output=True, text=True
+        )
 
         if result.returncode == 0:
             print("✅ Servidor reiniciado exitosamente")
@@ -298,6 +309,7 @@ def restart_server():
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
+
 
 def main():
     """Función principal"""
@@ -330,6 +342,7 @@ def main():
 
         # Esperar un momento y probar de nuevo
         import time
+
         time.sleep(5)
 
         print("\n7. Probando rutas después de las correcciones...")
@@ -351,6 +364,7 @@ def main():
         print("Revisar los errores anteriores para más detalles.")
 
     return script_runner_ok and web_routes_ok
+
 
 if __name__ == "__main__":
     success = main()

@@ -16,14 +16,24 @@ import time
 import traceback
 from datetime import datetime
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from app.audit import audit_log
 from app.database import get_mongo_client, get_mongo_db
 from app.decorators import admin_required
 
-admin_database_bp = Blueprint('admin_database', __name__, url_prefix='/admin/db')
+admin_database_bp = Blueprint("admin_database", __name__, url_prefix="/admin/db")
 logger = logging.getLogger(__name__)
+
 
 @admin_database_bp.route("/status")
 @admin_required
@@ -78,13 +88,10 @@ def db_status():
 
     except Exception as e:
         status["error"] = f"Error al conectar con MongoDB: {str(e)}"
-        logger.error(
-            "Error en db_status: %s\n%s",
-            str(e),
-            traceback.format_exc()
-        )
+        logger.error("Error en db_status: %s\n%s", str(e), traceback.format_exc())
 
     return render_template("admin/db_status.html", status=status)
+
 
 @admin_database_bp.route("/monitor")
 @admin_required
@@ -111,8 +118,7 @@ def db_monitor():
                 status["stats"] = db.command("dbstats")
             except Exception as e:
                 logger.error(
-                    "Error al obtener estadísticas de la base de datos: %s",
-                    str(e)
+                    "Error al obtener estadísticas de la base de datos: %s", str(e)
                 )
                 status["error"] = f"Error al obtener estadísticas: {str(e)}"
 
@@ -142,13 +148,10 @@ def db_monitor():
 
     except Exception as e:
         status["error"] = f"Error al obtener estadísticas: {str(e)}"
-        logger.error(
-            "Error en db_monitor: %s\n%s",
-            str(e),
-            traceback.format_exc()
-        )
+        logger.error("Error en db_monitor: %s\n%s", str(e), traceback.format_exc())
 
     return render_template("admin/db_monitor.html", status=status)
+
 
 @admin_database_bp.route("/performance", methods=["GET", "POST"])
 @admin_required
@@ -249,12 +252,11 @@ def db_performance():
                 "traceback": traceback.format_exc(),
             }
             logger.error(
-                "Error en db_performance: %s\n%s",
-                str(e),
-                results['traceback']
+                "Error en db_performance: %s\n%s", str(e), results["traceback"]
             )
 
     return render_template("admin/db_performance.html", results=results)
+
 
 @admin_database_bp.route("/scripts", methods=["GET", "POST"])
 @admin_required
@@ -368,13 +370,13 @@ def db_scripts():
                             # Registrar en log de auditoría
                             audit_log(
                                 "db_script_execution",
-                                user_id=session.get('user_id'),
+                                user_id=session.get("user_id"),
                                 details={
                                     "script": selected_script,
                                     "args": args,
                                     "duration_seconds": duration,
-                                    "username": session.get('username', 'desconocido')
-                                }
+                                    "username": session.get("username", "desconocido"),
+                                },
                             )
 
                             # Añadir mensaje de éxito

@@ -3,8 +3,8 @@
 import logging
 import os
 import uuid
-from functools import wraps
 from datetime import datetime
+from functools import wraps
 
 try:
     import pandas as pd
@@ -27,10 +27,10 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from app.database import get_mongo_db
-from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
-from app.utils.s3_utils import get_s3_url, convert_s3_url_to_proxy
 from app.utils.image_utils import get_images_for_template, upload_image_to_s3
-from app.utils.upload_utils import handle_file_upload, get_upload_dir
+from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
+from app.utils.s3_utils import convert_s3_url_to_proxy, get_s3_url
+from app.utils.upload_utils import get_upload_dir, handle_file_upload
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +42,6 @@ def is_admin():
     return role == "admin"
 
 
-
-
 # Decorador para verificar permisos
 # Admin puede acceder a cualquier catálogo, usuarios solo a los suyos
 # El campo created_by se compara con el username de sesión
@@ -51,6 +49,7 @@ def is_admin():
 
 def check_catalog_permission(f):
     """Decorador para validar el acceso a un catálogo."""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # Protección: requerir login antes de cualquier otra comprobación
@@ -97,7 +96,7 @@ def check_catalog_permission(f):
 
             collection = db[collection_name]
             catalog = collection.find_one({"_id": object_id})
-            
+
             current_app.logger.info(f"[DEBUG] catalog from DB: {catalog}")
             current_app.logger.info(f"[DEBUG] catalog type from DB: {type(catalog)}")
 
@@ -106,39 +105,44 @@ def check_catalog_permission(f):
                 current_app.logger.error(f"Catálogo no encontrado: {catalog_id}")
                 flash("Catálogo no encontrado", "warning")
                 return redirect(url_for("catalogs.list"))
-            
+
             # En tests, si catalog es un MagicMock, necesitamos obtener el valor real
-            if hasattr(catalog, '__class__') and 'MagicMock' in str(type(catalog)):
+            if hasattr(catalog, "__class__") and "MagicMock" in str(type(catalog)):
                 # En tests, el mock debería devolver el valor real, pero si no lo hace,
                 # vamos a intentar obtenerlo del mock original
                 try:
                     # Si es un MagicMock, intentar obtener el valor real
-                    if hasattr(catalog, '_mock_return_value'):
+                    if hasattr(catalog, "_mock_return_value"):
                         catalog = catalog._mock_return_value
-                    elif hasattr(catalog, 'return_value'):
+                    elif hasattr(catalog, "return_value"):
                         catalog = catalog.return_value
                 except Exception as e:
-                    current_app.logger.info(f"[DEBUG] Error obteniendo valor real del mock: {e}")
+                    current_app.logger.info(
+                        f"[DEBUG] Error obteniendo valor real del mock: {e}"
+                    )
                     # Si no podemos obtener el valor real, usar un catálogo de prueba
                     catalog = {
-                        '_id': ObjectId(catalog_id),
-                        'name': 'Test Catalog',
-                        'headers': ['Header1', 'Header2'],
-                        'created_by': 'testuser',
-                        'data': [],
-                        'rows': []
+                        "_id": ObjectId(catalog_id),
+                        "name": "Test Catalog",
+                        "headers": ["Header1", "Header2"],
+                        "created_by": "testuser",
+                        "data": [],
+                        "rows": [],
                     }
-            
+
             # Asegurarse de que catalog es un diccionario válido
             if not isinstance(catalog, dict):
-                current_app.logger.error(f"Catalog no es un diccionario válido: {type(catalog)}")
+                current_app.logger.error(
+                    f"Catalog no es un diccionario válido: {type(catalog)}"
+                )
                 flash("Error interno del servidor", "danger")
                 return redirect(url_for("catalogs.list"))
-            
-            
+
             # Guardar la colección de origen para futuras operaciones
-            if not hasattr(catalog, '__class__') or 'MagicMock' not in str(type(catalog)):
-                catalog['collection_source'] = collection_name
+            if not hasattr(catalog, "__class__") or "MagicMock" not in str(
+                type(catalog)
+            ):
+                catalog["collection_source"] = collection_name
 
             # Verificar permisos de acceso al catálogo
             username = session.get("username")
@@ -147,14 +151,16 @@ def check_catalog_permission(f):
 
             # Debug: Verificar tipos de variables de sesión
             try:
-                username_str = str(username) if username is not None else 'None'
-                email_str = str(email) if email is not None else 'None'
-                role_str = str(role) if role is not None else 'None'
+                username_str = str(username) if username is not None else "None"
+                email_str = str(email) if email is not None else "None"
+                role_str = str(role) if role is not None else "None"
                 current_app.logger.info(
                     f"[DEBUG] Tipos de sesión - username: {type(username)} = {username_str}, email: {type(email)} = {email_str}, role: {type(role)} = {role_str}"
                 )
             except Exception as debug_error:
-                current_app.logger.error(f"Error en debug de sesión: {str(debug_error)}")
+                current_app.logger.error(
+                    f"Error en debug de sesión: {str(debug_error)}"
+                )
                 # Continuar sin el debug si hay error
 
             # Asegurar que las variables de sesión sean cadenas
@@ -178,17 +184,20 @@ def check_catalog_permission(f):
             # Obtener el creador del catálogo (puede estar en diferentes campos)
             # NOTA: La lógica para añadir 'created_by' si no existe se ha eliminado.
             # Esto debe hacerse en un script de mantenimiento, no en una operación de lectura.
-            # En tests, si catalog.get('created_by') es un MagicMock, usar el valor por defecto
+            # En tests, si catalog.get('created_by') es un MagicMock, usar el valor
+            # por defecto
             try:
                 catalog_owner = catalog.get("created_by")
-                if hasattr(catalog_owner, '__class__') and 'MagicMock' in str(type(catalog_owner)):
+                if hasattr(catalog_owner, "__class__") and "MagicMock" in str(
+                    type(catalog_owner)
+                ):
                     # En tests, usar el valor por defecto
                     catalog_owner = "testuser"
                 else:
                     pass  # Usar el valor real
             except Exception as e:
                 catalog_owner = "testuser"  # Valor por defecto para tests
-            
+
             # Si no hay catalog_owner, intentar con otros campos
             if not catalog_owner:
                 catalog_owner = catalog.get("owner") or catalog.get("email")
@@ -198,7 +207,9 @@ def check_catalog_permission(f):
                 catalog_owner = str(catalog_owner)
             elif catalog_owner is None:
                 catalog_owner = "Sin propietario"
-            elif hasattr(catalog_owner, '__class__') and 'MagicMock' in str(type(catalog_owner)):
+            elif hasattr(catalog_owner, "__class__") and "MagicMock" in str(
+                type(catalog_owner)
+            ):
                 # En tests, si es un MagicMock, usar el valor por defecto
                 catalog_owner = "Sin propietario"
 
@@ -207,14 +218,18 @@ def check_catalog_permission(f):
                 username_str = str(username) if username is not None else "sin_usuario"
                 email_str = str(email) if email is not None else "sin_email"
                 role_str = str(role) if role is not None else "user"
-                catalog_owner_str = str(catalog_owner) if catalog_owner is not None else "Sin propietario"
+                catalog_owner_str = (
+                    str(catalog_owner)
+                    if catalog_owner is not None
+                    else "Sin propietario"
+                )
             except Exception as e:
                 current_app.logger.error(f"Error convirtiendo variables a string: {e}")
                 username_str = "error_username"
                 email_str = "error_email"
                 role_str = "error_role"
                 catalog_owner_str = "error_owner"
-            
+
             current_app.logger.info(
                 f"Usuario: {username_str}, Email: {email_str}, Rol: {role_str}, Propietario del catálogo: {catalog_owner_str}"
             )
@@ -228,7 +243,8 @@ def check_catalog_permission(f):
                 or catalog.get("email") == email
             ):
                 # Usuario autorizado, pasar el catálogo a la función decorada
-                # Asegurar que el catálogo tenga la clave 'rows' correctamente inicializada
+                # Asegurar que el catálogo tenga la clave 'rows' correctamente
+                # inicializada
                 if "rows" not in catalog or catalog["rows"] is None:
                     current_app.logger.warning(
                         f"[PERMISOS] Catálogo {catalog_id} no tenía 'rows', se inicializa como lista vacía."
@@ -322,7 +338,8 @@ def list_catalogs():
                     # Para admins, aplicar solo el filtro de búsqueda
                     catalogs_cursor = collection.find(filter_query)
                 else:
-                    # Para usuarios normales, combinar el filtro de búsqueda con el filtro de usuario
+                    # Para usuarios normales, combinar el filtro de búsqueda con el
+                    # filtro de usuario
                     user_filter = {"created_by": username}
                     # Combinar filtros
                     if filter_query:
@@ -385,7 +402,8 @@ def list_catalogs():
                 # Formatear la fecha de creación
                 if "created_at" in catalog and catalog["created_at"]:
                     try:
-                        # Verificar si es un objeto datetime usando hasattr en lugar de isinstance
+                        # Verificar si es un objeto datetime usando hasattr en lugar de
+                        # isinstance
                         if hasattr(catalog["created_at"], "strftime"):
                             catalog["created_at_formatted"] = catalog[
                                 "created_at"
@@ -430,8 +448,12 @@ def list_catalogs():
             if catalog.get("miniatura") and catalog["miniatura"].strip():
                 # Convertir URL directa de S3 a URL del proxy si es necesario
                 miniatura_original = catalog["miniatura"]
-                if isinstance(miniatura_original, str) and ('s3.amazonaws.com' in miniatura_original or 'edf-catalogo-tablas.s3' in miniatura_original):
+                if isinstance(miniatura_original, str) and (
+                    "s3.amazonaws.com" in miniatura_original
+                    or "edf-catalogo-tablas.s3" in miniatura_original
+                ):
                     from app.utils.s3_utils import convert_s3_url_to_proxy
+
                     catalog["miniatura"] = convert_s3_url_to_proxy(miniatura_original)
                     current_app.logger.info(
                         f"[MINIATURA_CATALOGS] Usando miniatura personalizada (convertida): {catalog['miniatura']}"
@@ -482,7 +504,10 @@ def list_catalogs():
                                         == "true"
                                     )
                                     if use_s3:
-                                        from app.utils.s3_utils import get_s3_url, convert_s3_url_to_proxy
+                                        from app.utils.s3_utils import (
+                                            convert_s3_url_to_proxy,
+                                            get_s3_url,
+                                        )
 
                                         s3_url = get_s3_url(img)
                                         if s3_url:
@@ -502,10 +527,14 @@ def list_catalogs():
                 # Si encontramos una imagen, salir del bucle
                 if imagen_encontrada:
                     # Convertir URL directa de S3 a URL del proxy si es necesario
-                    if 's3.amazonaws.com' in imagen_encontrada or 'edf-catalogo-tablas.s3' in imagen_encontrada:
+                    if (
+                        "s3.amazonaws.com" in imagen_encontrada
+                        or "edf-catalogo-tablas.s3" in imagen_encontrada
+                    ):
                         from app.utils.s3_utils import convert_s3_url_to_proxy
+
                         imagen_encontrada = convert_s3_url_to_proxy(imagen_encontrada)
-                    
+
                     catalog["miniatura"] = imagen_encontrada
                     current_app.logger.info(
                         f"[MINIATURA_CATALOGS] Encontrada para catálogo {catalog.get('name', 'Sin nombre')}: {imagen_encontrada}"
@@ -547,7 +576,9 @@ def list():
 def view(catalog_id, catalog):
     try:
         current_app.logger.info(f"[CATALOGS_VIEW] Visualizando catálogo {catalog_id}")
-        current_app.logger.info(f"[CATALOGS_VIEW] Catálogo encontrado: {catalog.get('name', 'Sin nombre')}")
+        current_app.logger.info(
+            f"[CATALOGS_VIEW] Catálogo encontrado: {catalog.get('name', 'Sin nombre')}"
+        )
         if "headers" not in catalog or catalog["headers"] is None:
             catalog["headers"] = []
         # Asegurar que tenemos tanto rows como data disponibles
@@ -602,7 +633,11 @@ def view(catalog_id, catalog):
                         fila["_imagenes"] = imagenes_result.get("imagen_urls", [])
                     else:
                         fila["_imagenes"] = []
-                    nombre_fila = str(fila.get('Nombre', 'Sin nombre')) if fila.get('Nombre') is not None else 'Sin nombre'
+                    nombre_fila = (
+                        str(fila.get("Nombre", "Sin nombre"))
+                        if fila.get("Nombre") is not None
+                        else "Sin nombre"
+                    )
                     current_app.logger.info(
                         f"[DEBUG_CATALOGS_VIEW] Fila {i} ({nombre_fila}): {len(fila['_imagenes'])} imágenes → {fila['_imagenes']}"
                     )
@@ -675,14 +710,21 @@ def view(catalog_id, catalog):
                     # Convertir URLs directas de S3 a URLs del proxy para evitar CORS
                     imagenes_urls_proxy = []
                     for img_url in imagenes_urls:
-                        if isinstance(img_url, str) and ('s3.amazonaws.com' in img_url or 'edf-catalogo-tablas.s3' in img_url):
+                        if isinstance(img_url, str) and (
+                            "s3.amazonaws.com" in img_url
+                            or "edf-catalogo-tablas.s3" in img_url
+                        ):
                             proxy_url = convert_s3_url_to_proxy(img_url)
                             imagenes_urls_proxy.append(proxy_url)
                         else:
                             imagenes_urls_proxy.append(img_url)
-                    
+
                     fila["_imagenes"] = imagenes_urls_proxy
-                    nombre_fila = str(fila.get('Nombre', 'Sin nombre')) if fila.get('Nombre') is not None else 'Sin nombre'
+                    nombre_fila = (
+                        str(fila.get("Nombre", "Sin nombre"))
+                        if fila.get("Nombre") is not None
+                        else "Sin nombre"
+                    )
                     current_app.logger.info(
                         f"[DEBUG_CATALOGS_VIEW] Fila {i} ({nombre_fila}): {len(imagenes_urls_proxy)} imágenes → {imagenes_urls_proxy}"
                     )
@@ -691,12 +733,16 @@ def view(catalog_id, catalog):
         role = session.get("role", "user")
         current_app.logger.info(f"[CATALOGS_VIEW] Rol del usuario: {role}")
         if role == "admin":
-            current_app.logger.info("[CATALOGS_VIEW] Renderizando template catalogos/view.html")
+            current_app.logger.info(
+                "[CATALOGS_VIEW] Renderizando template catalogos/view.html"
+            )
             return render_template(
                 "catalogos/view.html", catalog=catalog, session=session
             )
         else:
-            current_app.logger.info("[CATALOGS_VIEW] Renderizando template ver_tabla.html")
+            current_app.logger.info(
+                "[CATALOGS_VIEW] Renderizando template ver_tabla.html"
+            )
             return render_template("ver_tabla.html", table=catalog, session=session)
     except Exception as e:
         current_app.logger.error(
@@ -856,10 +902,16 @@ def edit_row(catalog_id, row_index, catalog):
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     if request.method == "POST":
         current_app.logger.info(f"[EDIT_ROW] Procesando POST para fila {row_index}")
-        current_app.logger.info(f"[EDIT_ROW] Headers del catálogo: {catalog['headers']}")
-        current_app.logger.info(f"[EDIT_ROW] Form data keys: {[key for key in request.form.keys()]}")
-        current_app.logger.info(f"[EDIT_ROW] Files keys: {[key for key in request.files.keys()]}")
-        
+        current_app.logger.info(
+            f"[EDIT_ROW] Headers del catálogo: {catalog['headers']}"
+        )
+        current_app.logger.info(
+            f"[EDIT_ROW] Form data keys: {[key for key in request.form.keys()]}"
+        )
+        current_app.logger.info(
+            f"[EDIT_ROW] Files keys: {[key for key in request.files.keys()]}"
+        )
+
         # Procesar campos normales y especiales
         for header in catalog["headers"]:
             if header == "Multimedia":
@@ -876,60 +928,74 @@ def edit_row(catalog_id, row_index, catalog):
                     # Mantener valor existente si no hay cambios
                     row_data[header] = row_data.get(header, "")
 
-            elif header in ["Documentos", "Documentación"] or header.startswith("Documentación"):
+            elif header in ["Documentos", "Documentación"] or header.startswith(
+                "Documentación"
+            ):
                 # Manejar múltiples documentos por fila
                 documentos = []
-                
+
                 # Obtener documentos existentes (si los hay)
                 documentos_existentes = row_data.get(header, [])
                 # Verificar el tipo de manera segura
                 if isinstance(documentos_existentes, str):
                     # Si es un string (formato antiguo), convertirlo a array
-                    documentos_existentes = [documentos_existentes] if documentos_existentes else []
-                elif not hasattr(documentos_existentes, '__iter__') or isinstance(documentos_existentes, str):
+                    documentos_existentes = (
+                        [documentos_existentes] if documentos_existentes else []
+                    )
+                elif not hasattr(documentos_existentes, "__iter__") or isinstance(
+                    documentos_existentes, str
+                ):
                     # Si no es iterable o es string, inicializar como lista vacía
                     documentos_existentes = []
-                
+
                 # Obtener todos los documentos del formulario (URLs y archivos)
                 # Buscar campos con el patrón header_url_INDEX y header_file_INDEX
                 documento_urls = []
                 documento_files = []
-                
+
                 # Buscar todos los campos que coincidan con el patrón
                 for key, value in request.form.items():
                     if key.startswith(f"{header}_url_") and value.strip():
                         documento_urls.append(value.strip())
-                
+
                 for key, file in request.files.items():
                     if key.startswith(f"{header}_file_") and file.filename:
                         documento_files.append(file)
-                
+
                 # Procesar URLs de documentos
                 for url in documento_urls:
                     if url and url.strip():
                         documentos.append(url.strip())
-                
+
                 # Procesar archivos de documentos
                 for documento_file in documento_files:
                     if documento_file and documento_file.filename:
                         if uploaded_filename := handle_file_upload(documento_file):
                             documentos.append(uploaded_filename)
-                
+
                 # Si no hay documentos nuevos, mantener los existentes
                 if not documentos:
                     documentos = documentos_existentes
-                
-                current_app.logger.info(f"[EDIT_ROW] {header} - Documentos existentes: {documentos_existentes}")
-                current_app.logger.info(f"[EDIT_ROW] {header} - Documentos nuevos: {documentos}")
-                current_app.logger.info(f"[EDIT_ROW] {header} - Documentos finales: {documentos}")
-                
+
+                current_app.logger.info(
+                    f"[EDIT_ROW] {header} - Documentos existentes: {documentos_existentes}"
+                )
+                current_app.logger.info(
+                    f"[EDIT_ROW] {header} - Documentos nuevos: {documentos}"
+                )
+                current_app.logger.info(
+                    f"[EDIT_ROW] {header} - Documentos finales: {documentos}"
+                )
+
                 # Almacenar como array de documentos
                 row_data[header] = documentos
             elif header == "Fecha":
-                # Columna inteligente: mantener fecha existente o asignar nueva si está vacía
+                # Columna inteligente: mantener fecha existente o asignar nueva si está
+                # vacía
                 fecha_valor = request.form.get(header, "").strip()
                 if not fecha_valor:
-                    # Si no se proporciona fecha, mantener la existente o asignar fecha actual
+                    # Si no se proporciona fecha, mantener la existente o asignar fecha
+                    # actual
                     row_data[header] = row_data.get(header, "")
                     if not row_data[header]:
                         row_data[header] = datetime.now().strftime("%Y-%m-%d")
@@ -942,18 +1008,23 @@ def edit_row(catalog_id, row_index, catalog):
         # Manejar eliminación de documentos y multimedia
         deleted_documents = request.form.get("deleted_documents", "")
         deleted_multimedia = request.form.get("deleted_multimedia", "")
-        
+
         if deleted_documents:
             try:
                 import json
+
                 deleted_docs = json.loads(deleted_documents)
                 for deleted_doc in deleted_docs:
                     header = deleted_doc.get("header")
                     value = deleted_doc.get("value")
                     if header in row_data and row_data[header]:
-                        if hasattr(row_data[header], '__iter__') and not isinstance(row_data[header], str):
+                        if hasattr(row_data[header], "__iter__") and not isinstance(
+                            row_data[header], str
+                        ):
                             # Es una lista/array, remover de la lista
-                            row_data[header] = [doc for doc in row_data[header] if doc != value]
+                            row_data[header] = [
+                                doc for doc in row_data[header] if doc != value
+                            ]
                             # Si queda vacía, eliminar la clave
                             if not row_data[header]:
                                 row_data[header] = []
@@ -961,22 +1032,31 @@ def edit_row(catalog_id, row_index, catalog):
                             # Si es un valor único, eliminar la clave
                             if row_data[header] == value:
                                 row_data[header] = ""
-                current_app.logger.info(f"[EDIT_ROW] Documentos eliminados: {deleted_docs}")
+                current_app.logger.info(
+                    f"[EDIT_ROW] Documentos eliminados: {deleted_docs}"
+                )
             except Exception as e:
-                current_app.logger.error(f"[EDIT_ROW] Error procesando documentos eliminados: {e}")
-        
+                current_app.logger.error(
+                    f"[EDIT_ROW] Error procesando documentos eliminados: {e}"
+                )
+
         if deleted_multimedia:
             try:
                 import json
+
                 deleted_media = json.loads(deleted_multimedia)
                 for deleted_item in deleted_media:
                     header = deleted_item.get("header")
                     value = deleted_item.get("value")
                     if header in row_data and row_data[header] == value:
                         row_data[header] = ""
-                current_app.logger.info(f"[EDIT_ROW] Multimedia eliminado: {deleted_media}")
+                current_app.logger.info(
+                    f"[EDIT_ROW] Multimedia eliminado: {deleted_media}"
+                )
             except Exception as e:
-                current_app.logger.error(f"[EDIT_ROW] Error procesando multimedia eliminado: {e}")
+                current_app.logger.error(
+                    f"[EDIT_ROW] Error procesando multimedia eliminado: {e}"
+                )
 
         # Manejo de imágenes (mantener compatibilidad)
         if "images" in request.files:
@@ -994,16 +1074,23 @@ def edit_row(catalog_id, row_index, catalog):
             use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
             if use_s3:
                 from app.utils.s3_utils import delete_file_from_s3
+
                 for img_to_delete in delete_images:
                     try:
                         result = delete_file_from_s3(img_to_delete)
                         if result.get("success"):
-                            current_app.logger.info(f"Imagen eliminada de S3: {img_to_delete}")
+                            current_app.logger.info(
+                                f"Imagen eliminada de S3: {img_to_delete}"
+                            )
                         else:
-                            current_app.logger.warning(f"Error eliminando imagen de S3: {result.get('error', 'Error desconocido')}")
+                            current_app.logger.warning(
+                                f"Error eliminando imagen de S3: {result.get('error', 'Error desconocido')}"
+                            )
                     except Exception as e:
-                        current_app.logger.error(f"Error eliminando imagen de S3 {img_to_delete}: {e}")
-            
+                        current_app.logger.error(
+                            f"Error eliminando imagen de S3 {img_to_delete}: {e}"
+                        )
+
             # Actualizar la lista de imágenes en la base de datos
             row_data["images"] = [
                 img for img in row_data.get("images", []) if img not in delete_images
@@ -1109,7 +1196,11 @@ def edit_row(catalog_id, row_index, catalog):
                             )
 
         row_data["_imagenes"] = imagenes_urls
-        nombre_fila = str(row_data.get('Nombre', 'Sin nombre')) if row_data.get('Nombre') is not None else 'Sin nombre'
+        nombre_fila = (
+            str(row_data.get("Nombre", "Sin nombre"))
+            if row_data.get("Nombre") is not None
+            else "Sin nombre"
+        )
         current_app.logger.info(
             f"[DEBUG_EDIT_ROW] Fila {row_index} ({nombre_fila}): {len(imagenes_urls)} imágenes → {imagenes_urls}"
         )
@@ -1124,26 +1215,41 @@ def edit_row(catalog_id, row_index, catalog):
 def add_row(catalog_id, catalog):
     from datetime import datetime
 
-    current_app.logger.info(f"[add_row] Accediendo a add_row para catálogo {catalog_id}, método: {request.method}")
-    
+    current_app.logger.info(
+        f"[add_row] Accediendo a add_row para catálogo {catalog_id}, método: {request.method}"
+    )
+
     if not is_mongo_available():
         flash("Error de conexión a la base de datos.", "danger")
         current_app.logger.error("[add_row] Error de conexión a la base de datos.")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     if request.method == "POST":
         try:
-            current_app.logger.info(f"[add_row] Procesando POST para catálogo {catalog_id}")
-            current_app.logger.info(f"[add_row] Headers del catálogo: {catalog.get('headers', [])}")
-            
+            current_app.logger.info(
+                f"[add_row] Procesando POST para catálogo {catalog_id}"
+            )
+            current_app.logger.info(
+                f"[add_row] Headers del catálogo: {catalog.get('headers', [])}"
+            )
+
             # Verificar si la conexión está disponible antes de acceder a form/files
             try:
-                current_app.logger.info(f"[add_row] Form data available: {bool(request.form)}")
-                current_app.logger.info(f"[add_row] Files available: {bool(request.files)}")
+                current_app.logger.info(
+                    f"[add_row] Form data available: {bool(request.form)}"
+                )
+                current_app.logger.info(
+                    f"[add_row] Files available: {bool(request.files)}"
+                )
             except Exception as form_error:
-                current_app.logger.error(f"[add_row] Error accediendo a form/files: {str(form_error)}")
-                flash("Error al procesar el formulario. Verifica que los archivos no sean demasiado grandes.", "danger")
+                current_app.logger.error(
+                    f"[add_row] Error accediendo a form/files: {str(form_error)}"
+                )
+                flash(
+                    "Error al procesar el formulario. Verifica que los archivos no sean demasiado grandes.",
+                    "danger",
+                )
                 return redirect(url_for("catalogs.view", catalog_id=catalog_id))
-            
+
             # Procesar campos normales y especiales
             row = {}
             for header in catalog["headers"]:
@@ -1160,35 +1266,37 @@ def add_row(catalog_id, catalog):
                     else:
                         row[header] = ""
 
-                elif header in ["Documentos", "Documentación"] or header.startswith("Documentación"):
+                elif header in ["Documentos", "Documentación"] or header.startswith(
+                    "Documentación"
+                ):
                     # Manejar múltiples documentos por fila
                     documentos = []
-                
+
                     # Obtener todos los documentos (URLs y archivos)
                     # Buscar campos con el patrón header_url_INDEX y header_file_INDEX
                     documento_urls = []
                     documento_files = []
-                    
+
                     # Buscar todos los campos que coincidan con el patrón
                     for key, value in request.form.items():
                         if key.startswith(f"{header}_url_") and value.strip():
                             documento_urls.append(value.strip())
-                    
+
                     for key, file in request.files.items():
                         if key.startswith(f"{header}_file_") and file.filename:
                             documento_files.append(file)
-                    
+
                     # Procesar URLs de documentos
                     for url in documento_urls:
                         if url and url.strip():
                             documentos.append(url.strip())
-                    
+
                     # Procesar archivos de documentos
                     for documento_file in documento_files:
                         if documento_file and documento_file.filename:
                             if uploaded_filename := handle_file_upload(documento_file):
                                 documentos.append(uploaded_filename)
-                    
+
                     # Almacenar como array de documentos
                     row[header] = documentos
                 elif header == "Fecha":
@@ -1212,7 +1320,9 @@ def add_row(catalog_id, catalog):
                 row["images"] = []
                 for file in files:
                     if file and file.filename and allowed_image(file.filename):
-                        filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
+                        filename = secure_filename(
+                            f"{uuid.uuid4().hex}_{file.filename}"
+                        )
                         file_path = os.path.join(upload_dir, filename)
                         file.save(file_path)
                         row["images"].append(filename)
@@ -1234,11 +1344,15 @@ def add_row(catalog_id, catalog):
                         flash("Fila agregada correctamente", "success")
                         break
                 except Exception as e:
-                    current_app.logger.error(f"[add_row] Error al agregar fila: {str(e)}")
+                    current_app.logger.error(
+                        f"[add_row] Error al agregar fila: {str(e)}"
+                    )
                     flash(f"Error al agregar fila: {str(e)}", "danger")
             return redirect(url_for("catalogs.view", catalog_id=catalog_id))
         except Exception as e:
-            current_app.logger.error(f"[add_row] Error general en POST: {str(e)}", exc_info=True)
+            current_app.logger.error(
+                f"[add_row] Error general en POST: {str(e)}", exc_info=True
+            )
             flash(f"Error al procesar el formulario: {str(e)}", "danger")
             return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     return render_template("catalogos/add_row.html", catalog=catalog, session=session)
@@ -1252,7 +1366,8 @@ def delete_row(catalog_id, row_index, catalog):
         current_app.logger.error("[delete_row] Error de conexión a la base de datos.")
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     try:
-        # Refuerzo: recargar el catálogo desde la base de datos para evitar inconsistencias
+        # Refuerzo: recargar el catálogo desde la base de datos para evitar
+        # inconsistencias
         db = get_mongo_db()
         if db is None:
             flash("Error de conexión a la base de datos.", "danger")
@@ -1307,7 +1422,8 @@ def delete_catalog(catalog_id, catalog):
     current_app.logger.info(f"Método HTTP: {request.method}")
     current_app.logger.info(f"Datos del catálogo: {catalog}")
 
-    # Verificar que la solicitud sea POST para evitar eliminaciones accidentales por enlaces directos
+    # Verificar que la solicitud sea POST para evitar eliminaciones
+    # accidentales por enlaces directos
     if request.method != "POST":
         flash(
             "Método no permitido para eliminar catálogos. Use el formulario de confirmación.",
@@ -1316,7 +1432,8 @@ def delete_catalog(catalog_id, catalog):
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
 
     try:
-        # Guardar información del catálogo antes de eliminarlo para mostrar mensaje personalizado
+        # Guardar información del catálogo antes de eliminarlo para mostrar
+        # mensaje personalizado
         catalog_name = catalog.get("name", "Sin nombre")
         collection_source = catalog.get("collection_source", "spreadsheets")
 
@@ -1369,7 +1486,8 @@ def delete_catalog(catalog_id, catalog):
         )
         flash(f"Error al eliminar catálogo: {str(e)}", "danger")
 
-    # Forzar una redirección a la lista de catálogos para asegurar que se actualice la vista
+    # Forzar una redirección a la lista de catálogos para asegurar que se
+    # actualice la vista
     return redirect(url_for("catalogs.list"))
 
 
@@ -1382,9 +1500,8 @@ def create():
     if request.method == "POST":
         try:
             # Obtener datos del formulario
-            catalog_name = request.form.get(
-                "name", ""
-            ).strip()  # Cambiado de 'catalog_name' a 'name' para coincidir con el formulario
+            # Cambiado de 'catalog_name' a 'name' para coincidir con el formulario
+            catalog_name = request.form.get("name", "").strip()
             headers_str = request.form.get("headers", "").strip()
 
             if not catalog_name:
@@ -1434,7 +1551,8 @@ def create():
             )
             flash(f'Catálogo "{catalog_name}" creado correctamente', "success")
 
-            # Actualizar el catálogo con el ID como string para facilitar su uso en plantillas
+            # Actualizar el catálogo con el ID como string para facilitar su uso en
+            # plantillas
             _ = db.spreadsheets.update_one(
                 {"_id": result.inserted_id}, {"$set": {"_id_str": catalog_id}}
             )

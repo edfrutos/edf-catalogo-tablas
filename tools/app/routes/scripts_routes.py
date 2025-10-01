@@ -9,16 +9,16 @@ import sys
 from datetime import datetime
 from functools import wraps  # noqa: F811  # pyright: ignore[reportDuplicateImport]
 
+from flask import abort  # noqa: F401
+from flask import current_app  # noqa: F401
+from flask import send_file  # noqa: F401
 from flask import (
     Blueprint,
-    abort,  # noqa: F401
-    current_app,  # noqa: F401
     flash,
     jsonify,
     redirect,
     render_template,
     request,
-    send_file,  # noqa: F401
     session,
     url_for,
 )
@@ -179,14 +179,19 @@ def execute_script():
         # Validación estricta: solo rutas relativas, sin '..' ni barra inicial
         if not script_path or ".." in script_path or script_path.startswith("/"):
             print(f"[execute_script] Rechazado script_path no permitido: {script_path}")
-            return jsonify(
-                {
-                    "error": "Ruta no permitida (solo rutas relativas sin barra inicial)",
-                    "script": script_path,
-                }
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "error": "Ruta no permitida (solo rutas relativas sin barra inicial)",
+                        "script": script_path,
+                    }
+                ),
+                400,
+            )
 
-        print(f"\n=== Iniciando ejecución de script (método alternativo) ===")  # noqa: F541
+        print(
+            f"\n=== Iniciando ejecución de script (método alternativo) ==="
+        )  # noqa: F541
         print(f"Script solicitado (rel_path): {script_path}")
         abs_script_path = os.path.join(
             TOOLS_DIR if not os.path.isabs(script_path) else "", script_path
@@ -202,26 +207,34 @@ def execute_script():
 
         if not abs_script_path:
             print(f"\n❌ ERROR: Script no encontrado: {script_path}")
-            return jsonify(
-                {
-                    "script": os.path.basename(script_path)
-                    if script_path
-                    else "desconocido",
-                    "error": f"Script no encontrado: {script_path}",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                }
-            ), 404
+            return (
+                jsonify(
+                    {
+                        "script": (
+                            os.path.basename(script_path)
+                            if script_path
+                            else "desconocido"
+                        ),
+                        "error": f"Script no encontrado: {script_path}",
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                ),
+                404,
+            )
 
         # Verificar que el script existe y es ejecutable
         if not os.path.isfile(abs_script_path):
             print(f"\n❌ ERROR: No es un archivo regular: {abs_script_path}")
-            return jsonify(
-                {
-                    "script": os.path.basename(abs_script_path),
-                    "error": f"No es un archivo válido: {abs_script_path}",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                }
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "script": os.path.basename(abs_script_path),
+                        "error": f"No es un archivo válido: {abs_script_path}",
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                ),
+                400,
+            )
 
         if not os.access(abs_script_path, os.X_OK):
             print(f"\n❌ ERROR: Script no ejecutable: {abs_script_path}")
@@ -231,13 +244,16 @@ def execute_script():
                 print(f"Permisos corregidos para: {abs_script_path}")
             except Exception as e:
                 print(f"No se pudieron corregir los permisos: {str(e)}")
-                return jsonify(
-                    {
-                        "script": os.path.basename(abs_script_path),
-                        "error": f"Script no tiene permisos de ejecución: {abs_script_path}",
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    }
-                ), 403
+                return (
+                    jsonify(
+                        {
+                            "script": os.path.basename(abs_script_path),
+                            "error": f"Script no tiene permisos de ejecución: {abs_script_path}",
+                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        }
+                    ),
+                    403,
+                )
 
         # Establecer el tiempo máximo para la ejecución del script
         timeout = 60  # segundos
@@ -279,27 +295,35 @@ def execute_script():
             print(
                 f"\n❌ ERROR: Tiempo de ejecución excedido ({timeout}s): {abs_script_path}"
             )
-            return jsonify(
-                {
-                    "script": os.path.basename(abs_script_path),
-                    "error": f"Tiempo de ejecución excedido ({timeout}s)",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                }
-            ), 408
+            return (
+                jsonify(
+                    {
+                        "script": os.path.basename(abs_script_path),
+                        "error": f"Tiempo de ejecución excedido ({timeout}s)",
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                ),
+                408,
+            )
     except Exception as e:
         print(f"\n❌ Excepción al ejecutar el script: {str(e)}")
         import traceback
 
         traceback.print_exc()
-        return jsonify(
-            {
-                "script": os.path.basename(script_path)
-                if "script_path" in locals()
-                else "desconocido",
-                "error": f"Error al ejecutar el script: {str(e)}",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            }
-        ), 500
+        return (
+            jsonify(
+                {
+                    "script": (
+                        os.path.basename(script_path)
+                        if "script_path" in locals()
+                        else "desconocido"
+                    ),
+                    "error": f"Error al ejecutar el script: {str(e)}",
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
+            ),
+            500,
+        )
 
 
 def get_script_path(script_path):
@@ -317,15 +341,22 @@ def get_script_path(script_path):
         # Ruta directa
         os.path.join(ROOT_DIR, script_path),
         # En directorio tools
-        os.path.join(ROOT_DIR, 'tools', script_path),
+        os.path.join(ROOT_DIR, "tools", script_path),
         # En directorio scripts
-        os.path.join(ROOT_DIR, 'scripts', script_path),
+        os.path.join(ROOT_DIR, "scripts", script_path),
     ]
 
     # Buscar en subdirectorios comunes
-    for subdir in ['maintenance', 'admin_utils', 'backup', 'monitoring', 'security', 'database']:
-        possible_paths.append(os.path.join(ROOT_DIR, 'tools', subdir, script_path))
-        possible_paths.append(os.path.join(ROOT_DIR, 'scripts', subdir, script_path))
+    for subdir in [
+        "maintenance",
+        "admin_utils",
+        "backup",
+        "monitoring",
+        "security",
+        "database",
+    ]:
+        possible_paths.append(os.path.join(ROOT_DIR, "tools", subdir, script_path))
+        possible_paths.append(os.path.join(ROOT_DIR, "scripts", subdir, script_path))
 
     # Verificar cada ruta posible
     for path in possible_paths:
@@ -337,7 +368,8 @@ def get_script_path(script_path):
     print(f"Script no encontrado: {script_path}")
     return os.path.join(ROOT_DIR, script_path)
 
-def     view_script_content(script_path):
+
+def view_script_content(script_path):
     """Muestra el contenido de un script"""
     # Utilizar la función get_script_path para normalizar la ruta
     abs_script_path = get_script_path(script_path)
@@ -379,13 +411,13 @@ def tools_dashboard():
 
 @scripts_bp.route("/run/<path:script_path>", methods=["POST"])
 @admin_required
-@scripts_bp.route('/run/<path:script_path>', methods=['POST'])
+@scripts_bp.route("/run/<path:script_path>", methods=["POST"])
 @admin_required
-@scripts_bp.route('/run/<path:script_path>', methods=['POST'])
+@scripts_bp.route("/run/<path:script_path>", methods=["POST"])
 @admin_required
-@scripts_bp.route('/run/<path:script_path>', methods=['POST'])
+@scripts_bp.route("/run/<path:script_path>", methods=["POST"])
 @admin_required
-@scripts_bp.route('/run/<path:script_path>', methods=['POST'])
+@scripts_bp.route("/run/<path:script_path>", methods=["POST"])
 @admin_required
 def run_script(script_path):
     """Ejecuta un script y devuelve su salida"""
@@ -402,25 +434,31 @@ def run_script(script_path):
 
         if not abs_script_path:
             print(f"\n❌ ERROR: Script no encontrado: {script_path}")
-            return jsonify(
-                {
-                    "error": f"Script no encontrado: {script_path}",
-                    "script": os.path.basename(script_path),
-                }
-            ), 404
+            return (
+                jsonify(
+                    {
+                        "error": f"Script no encontrado: {script_path}",
+                        "script": os.path.basename(script_path),
+                    }
+                ),
+                404,
+            )
 
         # Verificar que el script está dentro del directorio del proyecto
         if not abs_script_path.startswith(ROOT_DIR):
             print(
                 f"\n❌ ERROR: Script fuera del directorio del proyecto: {abs_script_path}"
             )
-            return jsonify(
-                {
-                    "error": "Script fuera del directorio del proyecto: "
-                    + abs_script_path,
-                    "script": os.path.basename(script_path),
-                }
-            ), 404
+            return (
+                jsonify(
+                    {
+                        "error": "Script fuera del directorio del proyecto: "
+                        + abs_script_path,
+                        "script": os.path.basename(script_path),
+                    }
+                ),
+                404,
+            )
 
         # Verificar que el script tiene permisos de ejecución
         if not os.access(abs_script_path, os.X_OK):
@@ -430,12 +468,15 @@ def run_script(script_path):
                 print(f"Permisos de ejecución establecidos para: {abs_script_path}")
             except Exception as e:
                 print(f"\n❌ ERROR al establecer permisos: {str(e)}")
-                return jsonify(
-                    {
-                        "error": f"No se pudieron establecer permisos de ejecución: {str(e)}",
-                        "script": os.path.basename(script_path),
-                    }
-                ), 403
+                return (
+                    jsonify(
+                        {
+                            "error": f"No se pudieron establecer permisos de ejecución: {str(e)}",
+                            "script": os.path.basename(script_path),
+                        }
+                    ),
+                    403,
+                )
 
         # Determinar cómo ejecutar el script basado en su tipo
         script_ext = os.path.splitext(abs_script_path)[1].lower()

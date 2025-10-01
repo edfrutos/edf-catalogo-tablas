@@ -14,15 +14,25 @@ import platform
 from datetime import datetime
 
 import psutil
-from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from app.cache_system import get_cache_stats
 from app.monitoring import check_system_health, get_health_status
 from app.routes.maintenance_routes import admin_required
 from app.routes.temp_files_utils import delete_temp_files, list_temp_files
 
-admin_system_bp = Blueprint('admin_system', __name__, url_prefix='/admin/system')
+admin_system_bp = Blueprint("admin_system", __name__, url_prefix="/admin/system")
 logger = logging.getLogger(__name__)
+
 
 def get_system_status_data(full=False):
     """
@@ -53,7 +63,9 @@ def get_system_status_data(full=False):
         # Top 5 procesos por consumo de memoria
         all_procs = [
             p
-            for p in psutil.process_iter(["pid", "name", "memory_info", "memory_percent"])
+            for p in psutil.process_iter(
+                ["pid", "name", "memory_info", "memory_percent"]
+            )
             if p.info.get("memory_percent") is not None
         ]
         top_procs = sorted(
@@ -63,9 +75,11 @@ def get_system_status_data(full=False):
             {
                 "pid": p.info["pid"],
                 "name": p.info["name"],
-                "rss_mb": round(p.info["memory_info"].rss / 1024 / 1024, 2)
-                if p.info["memory_info"]
-                else None,
+                "rss_mb": (
+                    round(p.info["memory_info"].rss / 1024 / 1024, 2)
+                    if p.info["memory_info"]
+                    else None
+                ),
                 "mem_percent": round(p.info["memory_percent"], 2),
             }
             for p in top_procs
@@ -136,6 +150,7 @@ def get_system_status_data(full=False):
             "temp_files": [],
         }
 
+
 @admin_system_bp.route("/status")
 @admin_required
 def system_status():
@@ -173,6 +188,7 @@ def system_status():
         flash("Error al obtener el estado del sistema", "danger")
         return redirect(url_for("admin.dashboard_admin"))
 
+
 @admin_system_bp.route("/status/report")
 @admin_required
 def system_status_report():
@@ -181,13 +197,13 @@ def system_status_report():
     """
     data = get_system_status_data(full=True)
     response = current_app.response_class(
-        response=jsonify(data),
-        mimetype="application/json"
+        response=jsonify(data), mimetype="application/json"
     )
     response.headers["Content-Disposition"] = (
         "attachment; filename=system_status_report.json"
     )
     return response
+
 
 @admin_system_bp.route("/delete-temp-files", methods=["POST"])
 @admin_required
@@ -202,6 +218,7 @@ def delete_temp_files_route():
     removed = delete_temp_files(selected)
     flash(f"Archivos temporales eliminados: {removed}", "success")
     return redirect(url_for("admin.system_status"))
+
 
 def get_log_files(logs_dir):
     """
@@ -232,6 +249,7 @@ def get_log_files(logs_dir):
     except Exception as e:
         logger.error("Error al obtener archivos de log: %s", str(e), exc_info=True)
         return []
+
 
 def get_backup_files(backup_dir):
     """

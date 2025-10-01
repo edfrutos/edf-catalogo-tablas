@@ -25,15 +25,19 @@ MAX_LOG_SIZE = 10 * 1024 * 1024  # 10 MB
 
 # Inicializar archivo de log si no existe
 if not os.path.exists(LOG_FILE):
-    with open(LOG_FILE, 'w') as f:
-        f.write(f"# Log de monitoreo de MongoDB - Iniciado: {datetime.datetime.now()}\n")
+    with open(LOG_FILE, "w") as f:
+        f.write(
+            f"# Log de monitoreo de MongoDB - Iniciado: {datetime.datetime.now()}\n"
+        )
+
 
 def log(message):
     """Registra un mensaje en el archivo de log"""
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    with open(LOG_FILE, 'a') as f:
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(LOG_FILE, "a") as f:
         f.write(f"[{timestamp}] {message}\n")
     print(f"[{timestamp}] {message}")
+
 
 def rotate_log_if_needed(log_file):
     """Rota el archivo de log si excede el tamaño máximo"""
@@ -41,8 +45,9 @@ def rotate_log_if_needed(log_file):
         backup_file = f"{log_file}.{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
         os.rename(log_file, backup_file)
         log(f"Archivo de log rotado: {log_file} -> {backup_file}")
-        with open(log_file, 'w') as f:
+        with open(log_file, "w") as f:
             f.write(f"# Log rotado: {datetime.datetime.now()}\n")
+
 
 def check_mongodb_connection():
     """Verifica la conexión a MongoDB"""
@@ -55,7 +60,9 @@ def check_mongodb_connection():
     if os.path.exists(env_path):
         with open(env_path) as f:
             content = f.read()
-            mongo_uri_match = re.search(r'^MONGO_URI\s*=\s*(.*)$', content, re.MULTILINE)
+            mongo_uri_match = re.search(
+                r"^MONGO_URI\s*=\s*(.*)$", content, re.MULTILINE
+            )
             if mongo_uri_match:
                 mongo_uri = mongo_uri_match.group(1).strip()
 
@@ -69,9 +76,9 @@ def check_mongodb_connection():
     # Extraer el hostname
     hostname_match = None
     if is_srv:
-        hostname_match = re.search(r'mongodb\+srv://[^@]+@([^/]+)', mongo_uri)
+        hostname_match = re.search(r"mongodb\+srv://[^@]+@([^/]+)", mongo_uri)
     else:
-        hostname_match = re.search(r'mongodb://[^@]+@([^/:]+)', mongo_uri)
+        hostname_match = re.search(r"mongodb://[^@]+@([^/:]+)", mongo_uri)
 
     if not hostname_match:
         log("No se pudo extraer el hostname de la URI de MongoDB")
@@ -107,15 +114,15 @@ except Exception as e:
     sys.exit(1)
 """
         test_script_path = "/tmp/test_mongodb_connection.py"
-        with open(test_script_path, 'w') as f:
+        with open(test_script_path, "w") as f:
             f.write(test_script)
 
         # Ejecutar el script
-        result = subprocess.run([
-            "/.venv/bin/python",
-            test_script_path,
-            mongo_uri
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            ["/.venv/bin/python", test_script_path, mongo_uri],
+            capture_output=True,
+            text=True,
+        )
 
         # Eliminar el script temporal
         os.remove(test_script_path)
@@ -131,13 +138,16 @@ except Exception as e:
         log(f"Error al verificar la conexión a MongoDB: {e}")
         return False, str(e)
 
+
 def check_application_status():
     """Verifica el estado de la aplicación"""
     log("Verificando estado de la aplicación...")
 
     # Verificar si el servicio Gunicorn está en ejecución
     try:
-        result = subprocess.run(["systemctl", "is-active", "edefrutos2025"], capture_output=True, text=True)
+        result = subprocess.run(
+            ["systemctl", "is-active", "edefrutos2025"], capture_output=True, text=True
+        )
         service_status = result.stdout.strip()
 
         if service_status == "active":
@@ -171,7 +181,11 @@ def check_application_status():
 
         # Verificar si la aplicación responde
         try:
-            result = subprocess.run(["curl", "-s", "-I", "http://127.0.0.1:8002"], capture_output=True, text=True)
+            result = subprocess.run(
+                ["curl", "-s", "-I", "http://127.0.0.1:8002"],
+                capture_output=True,
+                text=True,
+            )
             if result.returncode == 0 and "200 OK" in result.stdout:
                 log("Aplicación responde correctamente")
             else:
@@ -186,6 +200,7 @@ def check_application_status():
     except Exception as e:
         log(f"Error al verificar el estado de la aplicación: {e}")
         return False, str(e)
+
 
 def analyze_logs():
     """Analiza los logs para detectar problemas"""
@@ -217,7 +232,12 @@ def analyze_logs():
             # Leer las últimas 200 líneas
             lines = f.readlines()[-200:]
             for line in lines:
-                if " 500 " in line or " 502 " in line or " 503 " in line or " 504 " in line:
+                if (
+                    " 500 " in line
+                    or " 502 " in line
+                    or " 503 " in line
+                    or " 504 " in line
+                ):
                     issues.append(f"Error HTTP: {line.strip()}")
 
     if issues:
@@ -226,6 +246,7 @@ def analyze_logs():
     else:
         log("No se encontraron problemas en los logs")
         return []
+
 
 def send_alert_email(subject, message):
     """Envía un correo electrónico de alerta"""
@@ -269,6 +290,7 @@ def send_alert_email(subject, message):
         log(f"Error al enviar alerta por correo: {e}")
         return False
 
+
 def fix_mongodb_connection():
     """Intenta corregir problemas de conexión a MongoDB"""
     log("Intentando corregir problemas de conexión a MongoDB...")
@@ -277,16 +299,17 @@ def fix_mongodb_connection():
         # Ejecutar el script de solución
         fix_script = "/tools/fix_mongodb_atlas.py"
         if os.path.exists(fix_script):
-            result = subprocess.run([
-                "/.venv/bin/python",
-                fix_script
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                ["/.venv/bin/python", fix_script], capture_output=True, text=True
+            )
 
             if result.returncode == 0:
                 log("Problemas de conexión a MongoDB corregidos correctamente")
                 return True, "Corrección exitosa"
             else:
-                log(f"Error al corregir problemas de conexión a MongoDB: {result.stderr.strip()}")
+                log(
+                    f"Error al corregir problemas de conexión a MongoDB: {result.stderr.strip()}"
+                )
                 return False, result.stderr.strip()
         else:
             log(f"No se encontró el script de solución: {fix_script}")
@@ -295,6 +318,7 @@ def fix_mongodb_connection():
     except Exception as e:
         log(f"Error al intentar corregir problemas de conexión a MongoDB: {e}")
         return False, str(e)
+
 
 def restart_application():
     """Reinicia la aplicación"""
@@ -314,18 +338,25 @@ def restart_application():
                 return False, result.stderr.strip()
         else:
             # Intentar reiniciar con systemctl
-            result = subprocess.run(["systemctl", "restart", "edefrutos2025"], capture_output=True, text=True)
+            result = subprocess.run(
+                ["systemctl", "restart", "edefrutos2025"],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 log("Aplicación reiniciada correctamente con systemctl")
                 return True, "Reinicio exitoso"
             else:
-                log(f"Error al reiniciar la aplicación con systemctl: {result.stderr.strip()}")
+                log(
+                    f"Error al reiniciar la aplicación con systemctl: {result.stderr.strip()}"
+                )
                 return False, result.stderr.strip()
 
     except Exception as e:
         log(f"Error al reiniciar la aplicación: {e}")
         return False, str(e)
+
 
 def main():
     """Función principal"""
@@ -394,12 +425,14 @@ Problemas en logs: {"❌ " + str(len(log_issues)) + " problemas encontrados" if 
         # Enviar alerta por correo
         send_alert_email(
             "⚠️ Alerta: Problemas detectados en la aplicación",
-            report + "\n\nSe han tomado medidas automáticas para solucionar los problemas."
+            report
+            + "\n\nSe han tomado medidas automáticas para solucionar los problemas.",
         )
     else:
         log("No se detectaron problemas. Todo funciona correctamente.")
 
     log("Monitoreo finalizado.")
+
 
 if __name__ == "__main__":
     main()

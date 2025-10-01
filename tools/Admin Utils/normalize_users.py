@@ -28,6 +28,8 @@ Autor: EDF Developer - 2025-06-09
 Versión: 1.0
 """
 
+from app.models import get_users_collection
+from app.maintenance import backup_users_to_json, normalize_users_in_db
 import os
 import pprint
 import sys
@@ -37,8 +39,6 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.maintenance import backup_users_to_json, normalize_users_in_db
-from app.models import get_users_collection
 
 if __name__ == "__main__":
     print("🔧 NORMALIZACIÓN DE USUARIOS EN MONGODB")

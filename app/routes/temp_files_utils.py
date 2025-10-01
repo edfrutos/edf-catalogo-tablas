@@ -13,7 +13,9 @@ from datetime import datetime
 from typing import Dict, List, Optional, Union
 
 
-def list_temp_files(prefix: str = "edefrutos2025_", directory: Optional[str] = None) -> List[Dict[str, Union[str, float]]]:
+def list_temp_files(
+    prefix: str = "edefrutos2025_", directory: Optional[str] = None
+) -> List[Dict[str, Union[str, float]]]:
     """
     Devuelve una lista de archivos temporales con detalles (nombre, tamaño MB, fecha modificación).
     Busca en múltiples ubicaciones según el sistema operativo.
@@ -100,7 +102,11 @@ def _scan_directory(directory: str, prefix: str) -> List[Dict[str, Union[str, fl
     return files
 
 
-def delete_temp_files(filenames: List[str], prefix: str = "edefrutos2025_", directory: Optional[str] = None) -> int:
+def delete_temp_files(
+    filenames: List[str],
+    prefix: str = "edefrutos2025_",
+    directory: Optional[str] = None,
+) -> int:
     """
     Elimina archivos temporales seleccionados por nombre.
     Busca en múltiples ubicaciones si no se especifica directorio.

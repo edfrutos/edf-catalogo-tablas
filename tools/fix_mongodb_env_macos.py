@@ -5,8 +5,8 @@ Autor: EDF Developer - 2025
 """
 
 import os
-import sys
 import shutil  # pyright: ignore[reportUnusedImport]
+import sys
 from pathlib import Path  # pyright: ignore[reportUnusedImport]
 
 
@@ -255,8 +255,8 @@ def test_env_loading():
 
             # Probar conexión a MongoDB
             try:
-                import pymongo
                 import certifi
+                import pymongo
 
                 config = {
                     "serverSelectionTimeoutMS": 5000,

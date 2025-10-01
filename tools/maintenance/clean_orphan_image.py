@@ -3,14 +3,14 @@
 Script para limpiar imagen huérfana de LabelPrint
 """
 
+from dotenv import load_dotenv
+from bson import ObjectId
+import pymongo
 import os
 import sys
 
 sys.path.append("/Users/edefrutos/edefrutos2025.xyz/edf_catalogotablas")
 
-import pymongo
-from bson import ObjectId
-from dotenv import load_dotenv
 
 # Cargar variables de entorno
 load_dotenv()

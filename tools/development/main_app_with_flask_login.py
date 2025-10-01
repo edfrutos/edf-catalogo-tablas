@@ -96,7 +96,9 @@ def leer_datos_excel(filepath: str) -> list[dict[str, Any]]:
     if hoja is None:
         wb.close()
         return []
-    headers = [cell.value for cell in next(hoja.iter_rows(min_row=1, max_row=1))]  # type: ignore
+    headers = [
+        cell.value for cell in next(hoja.iter_rows(min_row=1, max_row=1))
+    ]  # type: ignore
     data = []
     for row in hoja.iter_rows(min_row=2, values_only=True):  # type: ignore
         data.append(dict(zip(headers, row)))
@@ -263,26 +265,26 @@ def create_app():
     #     return wrapper
 
     # Registrar blueprints principales
-    from app.routes.admin_routes import (
+    from app.routes.admin_routes import (  # Importar también admin_logs_bp
         admin_bp,
         admin_logs_bp,
-    )  # Importar también admin_logs_bp
+    )
     from app.routes.catalog_images_routes import image_bp
     from app.routes.catalogs_routes import catalogs_bp
-    from app.routes.dev_template import (
+    from app.routes.dev_template import (  # Blueprint para plantilla de desarrollo
         bp_dev_template,
-    )  # Blueprint para plantilla de desarrollo
+    )
     from app.routes.emergency_access import emergency_bp
     from app.routes.error_routes import errors_bp
     from app.routes.main_routes import main_bp
-    from app.routes.maintenance_routes import (
+    from app.routes.maintenance_routes import (  # Blueprint para mantenimiento
         maintenance_bp,
-    )  # Blueprint para mantenimiento
+    )
 
     # Debug blueprints ya registrados en otras partes
-    from app.routes.scripts_routes import (
+    from app.routes.scripts_routes import (  # Blueprint para gestión de scripts
         scripts_bp,
-    )  # Blueprint para gestión de scripts
+    )
     from app.routes.usuarios_routes import usuarios_bp
 
     print("ANTES DE BLUEPRINTS", app.db)  # type: ignore
@@ -315,10 +317,14 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         from bson import ObjectId
+
         try:
             # Acceder a users_collection desde g para evitar error de tipo
             from flask import g
-            user_data = g.db["users"].find_one({"_id": ObjectId(user_id)}) if g.db else None
+
+            user_data = (
+                g.db["users"].find_one({"_id": ObjectId(user_id)}) if g.db else None
+            )
             if user_data:
                 return User(user_data)
         except Exception as e:

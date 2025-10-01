@@ -14,6 +14,7 @@ from app.models import get_users_collection
 
 logger = logging.getLogger(__name__)
 
+
 def normalize_user_fields(user):
     """Normaliza los campos username, email y nombre de un usuario (strip y lower)."""
     changed = {}
@@ -28,13 +29,17 @@ def normalize_user_fields(user):
                 user[field] = normalized
     return changed
 
+
 def backup_users_to_json(collection, backup_dir="backups"):
     os.makedirs(backup_dir, exist_ok=True)
     users = list(collection.find())
-    backup_file = os.path.join(backup_dir, f"users_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    backup_file = os.path.join(
+        backup_dir, f"users_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     with open(backup_file, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2, default=str)
     return backup_file, len(users)
+
 
 def normalize_users_in_db(apply_changes=False, logger=logger):
     """
@@ -53,12 +58,12 @@ def normalize_users_in_db(apply_changes=False, logger=logger):
     for user in users:
         changes = normalize_user_fields(user)
         if changes:
-            changed_users.append({
-                "_id": str(user["_id"]),
-                "changes": changes
-            })
+            changed_users.append({"_id": str(user["_id"]), "changes": changes})
             if apply_changes:
-                collection.update_one({"_id": user["_id"]}, {"$set": {k: v[1] for k, v in changes.items()}})
+                collection.update_one(
+                    {"_id": user["_id"]},
+                    {"$set": {k: v[1] for k, v in changes.items()}},
+                )
 
     summary = {
         "total_users": len(users),

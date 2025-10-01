@@ -8,23 +8,24 @@ Fecha: 2025-08-27
 Python: 3.10+
 """
 
+import json
+import logging
 import os  # pyright: ignore[reportUnusedImport]
 import sys
-import json
 import threading
 import time  # pyright: ignore[reportUnusedImport]
 from datetime import datetime
 from pathlib import Path
+
 from flask import (
     Flask,
-    render_template,
-    jsonify,
-    request,
     flash,
+    jsonify,
     redirect,
+    render_template,
+    request,
     url_for,
 )
-import logging
 
 # Agregar el directorio raíz al path
 sys.path.append(str(Path(__file__).parent.parent))

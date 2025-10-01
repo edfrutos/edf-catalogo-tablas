@@ -14,4 +14,10 @@ from .admin_main import admin_bp
 from .admin_system import admin_system_bp
 from .admin_users import admin_users_bp
 
-__all__ = ['admin_bp', 'admin_users_bp', 'admin_system_bp', 'admin_backups_bp', 'admin_database_bp']
+__all__ = [
+    "admin_bp",
+    "admin_users_bp",
+    "admin_system_bp",
+    "admin_backups_bp",
+    "admin_database_bp",
+]

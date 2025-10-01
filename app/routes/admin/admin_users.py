@@ -19,8 +19,9 @@ from app.audit import audit_log
 from app.database import get_users_collection
 from app.routes.maintenance_routes import admin_required
 
-admin_users_bp = Blueprint('admin_users', __name__, url_prefix='/admin/users')
+admin_users_bp = Blueprint("admin_users", __name__, url_prefix="/admin/users")
 logger = logging.getLogger(__name__)
+
 
 @admin_users_bp.route("/")
 @admin_required
@@ -92,21 +93,19 @@ def lista_usuarios():
                     total_count += count
                     logger.info(
                         "[ADMIN] Usuario %s tiene %s catálogos en %s",
-                        user.get('email'),
+                        user.get("email"),
                         count,
-                        collection_name
+                        collection_name,
                     )
                 except (AttributeError, KeyError, TypeError) as e:
                     logger.error(
-                        "Error al contar catálogos en %s: %s",
-                        collection_name,
-                        str(e)
+                        "Error al contar catálogos en %s: %s", collection_name, str(e)
                     )
             user["num_catalogs"] = total_count
             logger.info(
                 "[ADMIN] Usuario %s tiene un total de %s catálogos",
-                user.get('email'),
-                total_count
+                user.get("email"),
+                total_count,
             )
 
         # Calcular estadísticas
@@ -124,6 +123,7 @@ def lista_usuarios():
         flash(f"Error al cargar la lista de usuarios: {str(e)}", "error")
         return redirect(url_for("admin.dashboard_admin"))
 
+
 @admin_users_bp.route("/delete/<user_id>", methods=["POST"])
 @admin_required
 def eliminar_usuario(user_id):
@@ -137,6 +137,7 @@ def eliminar_usuario(user_id):
     else:
         flash("Error: No se pudo acceder a la colección de usuarios", "error")
     return redirect(url_for("admin.lista_usuarios"))
+
 
 @admin_users_bp.route("/edit/<user_id>", methods=["GET", "POST"])
 @admin_required
@@ -169,12 +170,12 @@ def editar_usuario(user_id):
                 # Registrar en el log de auditoría
                 audit_log(
                     "user_verified",
-                    user_id=session.get('user_id'),
+                    user_id=session.get("user_id"),
                     details={
-                        "verified_user_email": user.get('email'),
-                        "verified_by": session.get('username'),
-                        "verified_user_name": user.get('nombre', 'desconocido')
-                    }
+                        "verified_user_email": user.get("email"),
+                        "verified_by": session.get("username"),
+                        "verified_user_name": user.get("nombre", "desconocido"),
+                    },
                 )
                 return redirect(url_for("admin.verify_users"))
 
@@ -210,7 +211,7 @@ def editar_usuario(user_id):
                     logger.warning(
                         "Intento de actualizar usuario %s con email duplicado: %s",
                         user_id,
-                        email
+                        email,
                     )
 
             # Si se proporcionó una nueva contraseña
@@ -259,6 +260,7 @@ def editar_usuario(user_id):
         flash(f"Error al editar usuario: {str(e)}", "error")
         return redirect(url_for("admin.lista_usuarios"))
 
+
 @admin_users_bp.route("/create", methods=["GET", "POST"])
 @admin_required
 def crear_usuario():
@@ -298,7 +300,7 @@ def crear_usuario():
             "updated_at": None,
             "failed_attempts": 0,
             "locked_until": None,
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
         }
 
         users_col.insert_one(user_data)

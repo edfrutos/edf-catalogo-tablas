@@ -16,12 +16,10 @@ from werkzeug.utils import secure_filename
 
 from app import app, s3_client  # type: ignore
 from app.models import S3_BUCKET_NAME  # type: ignore
-from app.utils import (
-    allowed_file,  # type: ignore
-    eliminar_archivo_imagen,  # type: ignore
-    get_s3_url,  # type: ignore
-    upload_file_to_s3,  # type: ignore
-)
+from app.utils import allowed_file  # type: ignore
+from app.utils import eliminar_archivo_imagen  # type: ignore
+from app.utils import get_s3_url  # type: ignore
+from app.utils import upload_file_to_s3  # type: ignore
 
 uploads_bp = Blueprint("uploads", __name__)
 
@@ -106,8 +104,8 @@ def descargar_catalogo():
 
     return send_from_directory(
         directory=os.path.dirname(temp_zip.name),
-                               path=os.path.basename(temp_zip.name),
-                               as_attachment=True,
+        path=os.path.basename(temp_zip.name),
+        as_attachment=True,
         download_name="catalogo.zip",
     )
 

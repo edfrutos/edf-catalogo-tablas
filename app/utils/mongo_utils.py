@@ -15,6 +15,7 @@ from flask import current_app
 
 logger = logging.getLogger(__name__)
 
+
 def is_mongo_available():
     """
     Verifica si la conexión a MongoDB está disponible
@@ -23,11 +24,13 @@ def is_mongo_available():
         # Intentar una operación simple para verificar la conexión
         # Importamos mongo aquí para evitar importaciones circulares
         from app.extensions import mongo
-        info = mongo.db.command('serverStatus')
+
+        info = mongo.db.command("serverStatus")
         return True
     except Exception as e:
         logger.error(f"Error al verificar disponibilidad de MongoDB: {str(e)}")
         return False
+
 
 def is_valid_object_id(id_str):
     """

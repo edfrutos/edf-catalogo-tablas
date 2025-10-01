@@ -7,15 +7,15 @@ Autor: Sistema de limpieza automática
 Fecha: 2025-08-27
 """
 
-import os  # pyright: ignore[reportUnusedImport]
-import sys
 import json
+import logging
+import os  # pyright: ignore[reportUnusedImport]
 import shutil
 import subprocess  # pyright: ignore[reportUnusedImport]
-from pathlib import Path
+import sys
 from datetime import datetime
-from typing import List, Dict, Set  # pyright: ignore[reportUnusedImport]
-import logging
+from pathlib import Path
+from typing import Dict, List, Set  # pyright: ignore[reportUnusedImport]
 
 # Configurar logging
 logging.basicConfig(

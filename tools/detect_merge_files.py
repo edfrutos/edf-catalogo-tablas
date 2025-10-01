@@ -16,15 +16,12 @@ def run_git_command(command):
     """Ejecuta un comando de Git y retorna la salida."""
     try:
         result = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            cwd=os.getcwd()
+            command, shell=True, capture_output=True, text=True, cwd=os.getcwd()
         )
         return result.stdout.strip(), result.stderr.strip(), result.returncode
     except Exception as e:
         return "", str(e), 1
+
 
 def get_merge_commits():
     """Obtiene la lista de commits de merge."""
@@ -34,23 +31,27 @@ def get_merge_commits():
         return []
 
     merges = []
-    for line in stdout.split('\n'):
+    for line in stdout.split("\n"):
         if line.strip():
-            parts = line.split(' ', 1)
+            parts = line.split(" ", 1)
             if len(parts) == 2:
                 commit_hash, message = parts
                 merges.append((commit_hash, message))
 
     return merges
 
+
 def get_files_in_commit(commit_hash):
     """Obtiene los archivos modificados en un commit específico."""
-    stdout, stderr, returncode = run_git_command(f"git show --name-only --pretty=format: {commit_hash}")
+    stdout, stderr, returncode = run_git_command(
+        f"git show --name-only --pretty=format: {commit_hash}"
+    )
     if returncode != 0:
         return []
 
-    files = [f.strip() for f in stdout.split('\n') if f.strip()]
+    files = [f.strip() for f in stdout.split("\n") if f.strip()]
     return files
+
 
 def get_commit_details(commit_hash):
     """Obtiene detalles de un commit específico."""
@@ -59,6 +60,7 @@ def get_commit_details(commit_hash):
         return None
 
     return stdout
+
 
 def analyze_merge_files():
     """Analiza archivos modificados por merges."""
@@ -106,7 +108,7 @@ def analyze_merge_files():
             if ext:
                 file_types[ext].append(file_path)
             else:
-                file_types['sin_extension'].append(file_path)
+                file_types["sin_extension"].append(file_path)
 
         print("📁 Archivos por tipo:")
         for ext, files in sorted(file_types.items()):
@@ -139,6 +141,7 @@ def analyze_merge_files():
     else:
         print("✅ No se encontraron archivos modificados por merges")
 
+
 def check_current_conflicts():
     """Verifica si hay conflictos de merge actuales."""
     print("🔍 Verificando conflictos de merge actuales...")
@@ -150,11 +153,11 @@ def check_current_conflicts():
         return
 
     conflict_files = []
-    for line in stdout.split('\n'):
+    for line in stdout.split("\n"):
         if line.strip():
             status = line[:2]
             file_path = line[3:]
-            if 'U' in status or 'A' in status or 'D' in status:
+            if "U" in status or "A" in status or "D" in status:
                 conflict_files.append((status, file_path))
 
     if conflict_files:
@@ -163,6 +166,7 @@ def check_current_conflicts():
             print(f"   {status} {file_path}")
     else:
         print("✅ No hay conflictos de merge actuales")
+
 
 def main():
     """Función principal."""
@@ -186,6 +190,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("✅ Análisis completado")
+
 
 if __name__ == "__main__":
     main()

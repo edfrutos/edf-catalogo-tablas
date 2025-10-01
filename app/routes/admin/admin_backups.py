@@ -17,7 +17,17 @@ import os
 from datetime import datetime
 
 from bson import ObjectId
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, send_file, session, url_for
+from flask import (
+    Blueprint,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
 from werkzeug.utils import secure_filename
 
 from app.audit import audit_log
@@ -25,14 +35,16 @@ from app.database import get_catalogs_collection, get_mongo_client
 from app.decorators import admin_required
 from tools.db_utils.google_drive_utils import upload_to_drive
 
-admin_backups_bp = Blueprint('admin_backups', __name__, url_prefix='/admin/backups')
+admin_backups_bp = Blueprint("admin_backups", __name__, url_prefix="/admin/backups")
 logger = logging.getLogger(__name__)
+
 
 def get_backup_dir():
     """Obtiene el directorio de respaldos, asegurando que exista"""
     backup_dir = os.path.abspath(os.path.join(os.getcwd(), "backups"))
     os.makedirs(backup_dir, exist_ok=True)
     return backup_dir
+
 
 @admin_backups_bp.route("/json")
 @admin_required
@@ -69,12 +81,12 @@ def backup_json():
         )
         audit_log(
             "backup_json_uploaded_to_drive",
-            user_id=session.get('user_id'),
+            user_id=session.get("user_id"),
             details={
                 "filename": filename,
-                "username": session.get('username', 'desconocido'),
-                "drive_url": enlace_drive
-            }
+                "username": session.get("username", "desconocido"),
+                "drive_url": enlace_drive,
+            },
         )
     except Exception as e:
         flash(
@@ -83,13 +95,13 @@ def backup_json():
         )
         audit_log(
             "backup_json_upload_failed",
-            user_id=session.get('user_id'),
+            user_id=session.get("user_id"),
             details={
                 "filename": filename,
-                "username": session.get('username', 'desconocido'),
-                "error": str(e)
+                "username": session.get("username", "desconocido"),
+                "error": str(e),
             },
-            success=False
+            success=False,
         )
 
     # Permitir descarga directa
@@ -98,6 +110,7 @@ def backup_json():
         download_name="backup_catalog.json",
         as_attachment=True,
     )
+
 
 @admin_backups_bp.route("/csv")
 @admin_required
@@ -150,12 +163,12 @@ def backup_csv():
         )
         audit_log(
             "backup_csv_uploaded_to_drive",
-            user_id=session.get('user_id'),
+            user_id=session.get("user_id"),
             details={
                 "filename": filename,
-                "username": session.get('username', 'desconocido'),
-                "drive_url": enlace_drive
-            }
+                "username": session.get("username", "desconocido"),
+                "drive_url": enlace_drive,
+            },
         )
     except Exception as e:
         flash(
@@ -164,13 +177,13 @@ def backup_csv():
         )
         audit_log(
             "backup_csv_upload_failed",
-            user_id=session.get('user_id'),
+            user_id=session.get("user_id"),
             details={
                 "filename": filename,
-                "username": session.get('username', 'desconocido'),
-                "error": str(e)
+                "username": session.get("username", "desconocido"),
+                "error": str(e),
             },
-            success=False
+            success=False,
         )
 
     # Permitir descarga directa
@@ -179,6 +192,7 @@ def backup_csv():
         download_name="backup_catalog.csv",
         as_attachment=True,
     )
+
 
 @admin_backups_bp.route("/cleanup", methods=["POST"])
 @admin_required
@@ -235,15 +249,16 @@ def cleanup_old_backups():
     flash(f"Backups antiguos eliminados: {removed}", "info")
     audit_log(
         "backup_cleanup",
-        user_id=session.get('user_id'),
+        user_id=session.get("user_id"),
         details={
-            "username": session.get('username', 'desconocido'),
+            "username": session.get("username", "desconocido"),
             "days": days,
             "max_files": max_files,
-            "removed_count": removed
-        }
+            "removed_count": removed,
+        },
     )
     return redirect(url_for("maintenance.maintenance_dashboard"))
+
 
 @admin_backups_bp.route("/list", methods=["GET", "POST"])
 @admin_required
@@ -265,11 +280,11 @@ def backups_list():
                     flash(f"Backup {filename} eliminado correctamente", "success")
                     audit_log(
                         "backup_file_deleted_manually",
-                        user_id=session.get('user_id'),
+                        user_id=session.get("user_id"),
                         details={
                             "filename": filename,
-                            "username": session.get('username', 'desconocido')
-                        }
+                            "username": session.get("username", "desconocido"),
+                        },
                     )
                 except Exception as e:
                     flash(f"Error al eliminar el backup: {str(e)}", "danger")
@@ -280,6 +295,7 @@ def backups_list():
         return redirect(url_for("admin.backups_list"))
 
     return render_template("admin/backups_list.html", backup_files=backup_files)
+
 
 @admin_backups_bp.route("/download/<filename>")
 @admin_required
@@ -299,10 +315,14 @@ def download_backup(filename):
 
     audit_log(
         "backup_file_download",
-        user_id=session.get('user_id'),
-        details={"filename": filename, "username": session.get('username', 'desconocido')}
+        user_id=session.get("user_id"),
+        details={
+            "filename": filename,
+            "username": session.get("username", "desconocido"),
+        },
     )
     return send_file(file_path, as_attachment=True, download_name=filename)
+
 
 def get_backup_files(backup_dir):
     """

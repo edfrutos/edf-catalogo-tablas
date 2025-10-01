@@ -60,7 +60,9 @@ def get_unified_image_urls(row_data: Dict[str, Any]) -> List[str]:
         if not img or img == "N/A":
             continue
 
-        if isinstance(img, str) and (img.startswith("http") or img.startswith("/admin/s3/")):
+        if isinstance(img, str) and (
+            img.startswith("http") or img.startswith("/admin/s3/")
+        ):
             # URL externa o S3 - usar directamente
             image_urls.append(img)
         else:
@@ -75,11 +77,11 @@ def get_unified_image_urls(row_data: Dict[str, Any]) -> List[str]:
 def clear_s3_cache(filename: Optional[str] = None):
     """
     Limpia el cache de S3 para un archivo específico o todo el cache
-    
+
     Args:
         filename: Nombre del archivo específico a limpiar, o None para limpiar todo
     """
-    if hasattr(current_app, 's3_cache'):
+    if hasattr(current_app, "s3_cache"):
         if filename:
             cache_key = f"s3_exists_{filename}"
             if cache_key in current_app.s3_cache:
@@ -118,7 +120,8 @@ def get_image_fallback_url(filename: str) -> Optional[str]:
     # Usar verificación rápida sin reintentos para evitar lentitud
     try:
         from app.utils.s3_utils import check_s3_file_exists_fast
-        if hasattr(current_app, 's3_cache'):
+
+        if hasattr(current_app, "s3_cache"):
             # Usar cache si está disponible
             cache_key = f"s3_exists_{filename}"
             if cache_key in current_app.s3_cache:
@@ -126,22 +129,22 @@ def get_image_fallback_url(filename: str) -> Optional[str]:
                     return f"/admin/s3/{filename}"
                 else:
                     return None
-        
+
         # Verificación rápida de S3 (sin reintentos)
         s3_exists = check_s3_file_exists_fast(filename)
         if s3_exists:
             # Cachear resultado positivo
-            if not hasattr(current_app, 's3_cache'):
+            if not hasattr(current_app, "s3_cache"):
                 current_app.s3_cache = {}
             current_app.s3_cache[f"s3_exists_{filename}"] = True
             current_app.logger.debug(f"[IMAGE] Archivo S3 encontrado: {filename}")
             return f"/admin/s3/{filename}"
         else:
             # Cachear resultado negativo
-            if not hasattr(current_app, 's3_cache'):
+            if not hasattr(current_app, "s3_cache"):
                 current_app.s3_cache = {}
             current_app.s3_cache[f"s3_exists_{filename}"] = False
-            
+
     except Exception as e:
         current_app.logger.error(
             f"[IMAGE] Error verificando archivo S3 {filename}: {e}"

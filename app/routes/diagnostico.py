@@ -47,13 +47,16 @@ def auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user_id" not in session or not session.get("logged_in"):
-            return jsonify(
-                {
-                    "status": "error",
-                    "message": "Autenticación requerida",
-                    "redirect": url_for("auth.login"),
-                }
-            ), 401
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "Autenticación requerida",
+                        "redirect": url_for("auth.login"),
+                    }
+                ),
+                401,
+            )
         return f(*args, **kwargs)
 
     return decorated_function
@@ -171,14 +174,17 @@ def login_directo():
 def admin_check():
     """Verificar si el usuario tiene acceso de administrador"""
     if session.get("role") != "admin":
-        return jsonify(
-            {
-                "status": "error",
-                "message": "El usuario no tiene rol de administrador",
-                "role": session.get("role"),
-                "username": session.get("username"),
-            }
-        ), 403
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "El usuario no tiene rol de administrador",
+                    "role": session.get("role"),
+                    "username": session.get("username"),
+                }
+            ),
+            403,
+        )
 
     return jsonify(
         {
@@ -214,17 +220,23 @@ def fix_session():
         try:
             usuario = users_collection.find_one({"_id": ObjectId(user_id)})
         except Exception as e:
-            return jsonify(
-                {"status": "error", "message": f"Error al buscar usuario: {str(e)}"}
-            ), 500
+            return (
+                jsonify(
+                    {"status": "error", "message": f"Error al buscar usuario: {str(e)}"}
+                ),
+                500,
+            )
 
         if not usuario:
-            return jsonify(
-                {
-                    "status": "error",
-                    "message": "Usuario no encontrado en la base de datos",
-                }
-            ), 404
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "Usuario no encontrado en la base de datos",
+                    }
+                ),
+                404,
+            )
 
         # Restaurar datos de sesión
         session["email"] = usuario.get("email", "")

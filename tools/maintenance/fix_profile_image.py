@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 # Agregar el directorio actual al path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 def fix_profile_image():
     """Corrige la foto de perfil del usuario"""
 
@@ -44,7 +45,9 @@ def fix_profile_image():
                 # Buscar la imagen correcta
                 imagenes_path = "app/static/imagenes_subidas"
                 if os.path.exists(imagenes_path):
-                    miguel_images = [f for f in os.listdir(imagenes_path) if "Miguel" in f]
+                    miguel_images = [
+                        f for f in os.listdir(imagenes_path) if "Miguel" in f
+                    ]
                     if miguel_images:
                         correct_image = miguel_images[0]
                         print(f"   ✅ Imagen encontrada: {correct_image}")
@@ -52,7 +55,7 @@ def fix_profile_image():
                         # Actualizar la base de datos
                         result = users_collection.update_one(
                             {"_id": user["_id"]},
-                            {"$set": {"foto_perfil": correct_image}}
+                            {"$set": {"foto_perfil": correct_image}},
                         )
 
                         if result.modified_count > 0:
@@ -60,8 +63,12 @@ def fix_profile_image():
                             print(f"   📸 Nueva foto: {correct_image}")
 
                             # Verificar que se actualizó
-                            updated_user = users_collection.find_one({"_id": user["_id"]})
-                            print(f"   🔍 Verificación: {updated_user.get('foto_perfil')}")
+                            updated_user = users_collection.find_one(
+                                {"_id": user["_id"]}
+                            )
+                            print(
+                                f"   🔍 Verificación: {updated_user.get('foto_perfil')}"
+                            )
 
                             return True
                         else:
@@ -80,8 +87,10 @@ def fix_profile_image():
     except Exception as e:
         print(f"   ❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def main():
     """Función principal"""
@@ -99,6 +108,7 @@ def main():
     else:
         print("\n❌ Error en la corrección")
         return False
+
 
 if __name__ == "__main__":
     main()

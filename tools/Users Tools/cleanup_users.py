@@ -11,26 +11,33 @@ from pymongo import MongoClient
 load_dotenv()
 
 # Conectar a MongoDB
-client = MongoClient(os.getenv('MONGO_URI'), tlsCAFile=certifi.where())
-db = client['app_catalogojoyero_nueva']
-users_collection = db['users']
-spreadsheets_collection = db['spreadsheets']
+client = MongoClient(os.getenv("MONGO_URI"), tlsCAFile=certifi.where())
+db = client["app_catalogojoyero_nueva"]
+users_collection = db["users"]
+spreadsheets_collection = db["spreadsheets"]
+
 
 def is_random_name(name):
     # Patrones que sugieren nombres aleatorios
     patterns = [
-        r'^[A-Z]{2,}$',  # Todas mayúsculas
-        r'[0-9]{4,}',    # Muchos números seguidos
-        r'[A-Z]{3,}[a-z]{3,}[A-Z]{3,}',  # Mezcla inusual de mayúsculas/minúsculas
-        r'^[a-zA-Z0-9]{10,}$'  # Cadenas largas sin espacios
+        r"^[A-Z]{2,}$",  # Todas mayúsculas
+        r"[0-9]{4,}",  # Muchos números seguidos
+        r"[A-Z]{3,}[a-z]{3,}[A-Z]{3,}",  # Mezcla inusual de mayúsculas/minúsculas
+        r"^[a-zA-Z0-9]{10,}$",  # Cadenas largas sin espacios
     ]
     return any(re.search(pattern, name) for pattern in patterns)
+
 
 # 1. Asignar rol normal a Julia
 print("\n=== Asignando rol normal a Julia ===")
 result = users_collection.update_one(
     {"email": "j.g.1991@hotmail.es"},
-    {"$set": {"role": "normal", "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}
+    {
+        "$set": {
+            "role": "normal",
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+    },
 )
 print(f"Actualización de Julia: {result.modified_count} documento(s) modificado(s)")
 
@@ -39,7 +46,7 @@ print("\n=== Limpiando tabla de Felipe ===")
 felipe_table = spreadsheets_collection.find_one({"owner": "Felipe"})
 if felipe_table:
     print(f"Eliminando tabla: {felipe_table.get('name')}")
-    result = spreadsheets_collection.delete_one({"_id": felipe_table.get('_id')})
+    result = spreadsheets_collection.delete_one({"_id": felipe_table.get("_id")})
     print(f"Eliminación de tabla: {result.deleted_count} documento(s) eliminado(s)")
 
 # 3. Investigar usuarios sospechosos
@@ -48,7 +55,7 @@ all_users = list(users_collection.find())
 suspicious_users = []
 
 for user in all_users:
-    nombre = user.get('nombre', '')
+    nombre = user.get("nombre", "")
     if nombre and is_random_name(nombre):
         print("\nUsuario sospechoso encontrado:")
         print(f"Email: {user.get('email')}")
@@ -57,7 +64,7 @@ for user in all_users:
         print(f"Fecha de registro: {user.get('created_at', 'No especificada')}")
 
         # Verificar si tiene tablas
-        tables = list(spreadsheets_collection.find({"owner": user.get('username', '')}))
+        tables = list(spreadsheets_collection.find({"owner": user.get("username", "")}))
         if tables:
             print(f"Tablas asociadas: {len(tables)}")
             for table in tables:
@@ -65,7 +72,7 @@ for user in all_users:
         else:
             print("No tiene tablas asociadas")
 
-        suspicious_users.append(user.get('_id'))
+        suspicious_users.append(user.get("_id"))
 
 print(f"\nTotal de usuarios sospechosos encontrados: {len(suspicious_users)}")
 

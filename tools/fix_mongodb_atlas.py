@@ -27,7 +27,9 @@ def backup_file(file_path):
     if os.path.exists(file_path):
         # Crear directorio de backup si no existe
         backup_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            ),
             "backups",
             "automated",
         )
@@ -127,7 +129,9 @@ def create_direct_mongodb_uri(srv_uri, servers):
     return direct_uri
 
 
-def update_env_file(env_path, new_uri=None, use_direct_uri=False, use_local_mongodb=False):
+def update_env_file(
+    env_path, new_uri=None, use_direct_uri=False, use_local_mongodb=False
+):
     """Actualiza el archivo .env con la nueva URI de MongoDB"""
     if not os.path.exists(env_path):
         print(f"Error: No se encontró el archivo {env_path}")
@@ -165,7 +169,10 @@ def update_env_file(env_path, new_uri=None, use_direct_uri=False, use_local_mong
         # Reemplazar la URI existente o añadir una nueva
         if mongo_uri_match:
             content = re.sub(
-                r"^MONGO_URI\s*=.*$", f"MONGO_URI={new_uri}", content, flags=re.MULTILINE
+                r"^MONGO_URI\s*=.*$",
+                f"MONGO_URI={new_uri}",
+                content,
+                flags=re.MULTILINE,
             )
         else:
             content += f"\nMONGO_URI={new_uri}\n"
@@ -233,7 +240,8 @@ for retry in range(max_retries):
                 mongo = None""",
             )
 
-        # Modificar las asignaciones de colecciones para manejar el caso cuando mongo es None
+        # Modificar las asignaciones de colecciones para manejar el caso cuando
+        # mongo es None
         content = content.replace(
             "app.spreadsheets_collection = mongo.db.spreadsheets",
             "app.spreadsheets_collection = mongo.db.spreadsheets if hasattr(mongo, 'db') else None",
@@ -290,12 +298,16 @@ def restart_gunicorn():
                 os.path.dirname(os.path.abspath(__file__)), "restart_server.sh"
             )
             if os.path.exists(restart_script):
-                result = subprocess.run([restart_script], capture_output=True, text=True)
+                result = subprocess.run(
+                    [restart_script], capture_output=True, text=True
+                )
                 if result.returncode == 0:
                     print("Servidor Gunicorn reiniciado correctamente mediante script")
                     return True
                 else:
-                    print(f"Error al reiniciar Gunicorn mediante script: {result.stderr}")
+                    print(
+                        f"Error al reiniciar Gunicorn mediante script: {result.stderr}"
+                    )
 
             return False
     except Exception as e:
@@ -322,12 +334,16 @@ def main():
     if os.path.exists(backup_env):
         with open(backup_env) as f:
             content = f.read()
-            mongo_uri_match = re.search(r"^MONGO_URI\s*=\s*(.*)$", content, re.MULTILINE)
+            mongo_uri_match = re.search(
+                r"^MONGO_URI\s*=\s*(.*)$", content, re.MULTILINE
+            )
             if mongo_uri_match:
                 original_uri = mongo_uri_match.group(1).strip()
 
     if not original_uri:
-        print("No se pudo encontrar la URI de MongoDB original. Utilizando la URI predeterminada.")
+        print(
+            "No se pudo encontrar la URI de MongoDB original. Utilizando la URI predeterminada."
+        )
         original_uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
 
     print(f"URI de MongoDB original: {original_uri[:20]}...")
@@ -353,7 +369,9 @@ def main():
     # Probar conectividad a servicios comunes
     dns_google = check_network_connectivity("8.8.8.8", 53)  # DNS de Google
     dns_cloudflare = check_network_connectivity("1.1.1.1", 53)  # DNS de Cloudflare
-    mongodb_website = check_network_connectivity("mongodb.com", 443)  # Sitio web de MongoDB
+    mongodb_website = check_network_connectivity(
+        "mongodb.com", 443
+    )  # Sitio web de MongoDB
 
     # Probar conectividad a los servidores de MongoDB
     mongodb_servers_reachable = []
@@ -367,7 +385,9 @@ def main():
     print_header("DETERMINANDO LA MEJOR SOLUCIÓN")
 
     if dns_success and srv_success and mongodb_servers_reachable:
-        print("Los servidores de MongoDB Atlas son accesibles. Intentando crear una URI directa.")
+        print(
+            "Los servidores de MongoDB Atlas son accesibles. Intentando crear una URI directa."
+        )
         direct_uri = create_direct_mongodb_uri(original_uri, mongodb_servers_reachable)
         if direct_uri:
             print(f"URI directa creada: {direct_uri[:20]}...")
@@ -383,7 +403,9 @@ def main():
         )
         update_env_file(env_path, new_uri=original_uri)
     else:
-        print("No se pueden resolver los registros SRV. Utilizando MongoDB local temporalmente.")
+        print(
+            "No se pueden resolver los registros SRV. Utilizando MongoDB local temporalmente."
+        )
         update_env_file(env_path, use_local_mongodb=True)
 
     # Añadir lógica de reintento a app.py
@@ -395,8 +417,12 @@ def main():
     restart_gunicorn()
 
     print_header("SOLUCIÓN COMPLETADA")
-    print("Se ha implementado una solución para los problemas de conexión a MongoDB Atlas.")
-    print("La aplicación ahora intentará conectarse a MongoDB Atlas con lógica de reintento.")
+    print(
+        "Se ha implementado una solución para los problemas de conexión a MongoDB Atlas."
+    )
+    print(
+        "La aplicación ahora intentará conectarse a MongoDB Atlas con lógica de reintento."
+    )
     print(
         "Si la conexión falla, utilizará datos simulados para mantener la aplicación funcionando."
     )

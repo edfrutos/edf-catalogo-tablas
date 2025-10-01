@@ -10,68 +10,56 @@ from pathlib import Path
 
 # Definir categorías y sus archivos correspondientes
 CATEGORIES = {
-    'setup': [
-        'README.md',
-        'local_development_setup.md',
-        'configuracion_despliegue.md',
-        'CRON_SETUP.md',
-        'Creacion_y_distribucion_profesional_app_macOS.md',
-        'mongodb_whitelist_instructions.md',
-        'mongodb_solution_summary.md',
-        'aws_instructions.md',
-        'preferencias_comunicacion.md'
+    "setup": [
+        "README.md",
+        "local_development_setup.md",
+        "configuracion_despliegue.md",
+        "CRON_SETUP.md",
+        "Creacion_y_distribucion_profesional_app_macOS.md",
+        "mongodb_whitelist_instructions.md",
+        "mongodb_solution_summary.md",
+        "aws_instructions.md",
+        "preferencias_comunicacion.md",
     ],
-
-    'maintenance': [
-        'Checklist de Mantenimiento, Seguridad y Backups.md',
-        'Checklist de Mantenimiento, Seguridad.md',
-        'Comandos útiles para mantenimiento.md',
-        'cleanup_plan.md',
-        'CLEANUP_SUMMARY.md',
-        'AUDITORIA_RESUMEN_20250618.md',
-        'Análisis Sistema Catálogos Tablas.md',
-        'Archivo de rutas Python.md'
+    "maintenance": [
+        "Checklist de Mantenimiento, Seguridad y Backups.md",
+        "Checklist de Mantenimiento, Seguridad.md",
+        "Comandos útiles para mantenimiento.md",
+        "cleanup_plan.md",
+        "CLEANUP_SUMMARY.md",
+        "AUDITORIA_RESUMEN_20250618.md",
+        "Análisis Sistema Catálogos Tablas.md",
+        "Archivo de rutas Python.md",
     ],
-
-    'development': [
-        'testing_ui.md',
-        'TESTING_GUIDE.md',
-        'INSTRUCCIONES_IA.md',
-        'README_cabeceras.md',
-        'README_headers_EN.md',
-        'inserción de cabecera en tu flujo de trabajo.md'
+    "development": [
+        "testing_ui.md",
+        "TESTING_GUIDE.md",
+        "INSTRUCCIONES_IA.md",
+        "README_cabeceras.md",
+        "README_headers_EN.md",
+        "inserción de cabecera en tu flujo de trabajo.md",
     ],
-
-    'deployment': [
-        'configuracion_despliegue.md',
-        'SOLUCION_PAGINA_MANTENIMIENTO.md',
-        '🌿 **Estado de las Ramas del Proyecto.md',
-        '🔧 **Migración a Rama \'main\'**.md',
-        '🔧 Actualización de pip.md',
-        '🔧 Correcciones Google Drive Backup.md'
+    "deployment": [
+        "configuracion_despliegue.md",
+        "SOLUCION_PAGINA_MANTENIMIENTO.md",
+        "🌿 **Estado de las Ramas del Proyecto.md",
+        "🔧 **Migración a Rama 'main'**.md",
+        "🔧 Actualización de pip.md",
+        "🔧 Correcciones Google Drive Backup.md",
     ],
-
-    'tutorials': [
-        'GEMINI_CLI_TUTORIAL.md',
-        'GUIA_INTERFAZ_WEB_GEMINI.md'
+    "tutorials": ["GEMINI_CLI_TUTORIAL.md", "GUIA_INTERFAZ_WEB_GEMINI.md"],
+    "troubleshooting": [
+        "⚠️ Error de Instalación Detectado.md",
+        "⚠️ Error Persistente: Marcadores de Git Restantes.md",
+        "resolucion_problemas_edefrutos2025.md",
+        "RESUMEN_CONVERSACION.md",
     ],
-
-    'troubleshooting': [
-        '⚠️ Error de Instalación Detectado.md',
-        '⚠️ Error Persistente: Marcadores de Git Restantes.md',
-        'resolucion_problemas_edefrutos2025.md',
-        'RESUMEN_CONVERSACION.md'
-    ],
-
-    'security': [
-        'auth_implementation.md'
-    ]
+    "security": ["auth_implementation.md"],
 }
 
 # Archivos que deben permanecer en docs/ raíz
-ROOT_FILES = [
-    'docs/README.md'
-]
+ROOT_FILES = ["docs/README.md"]
+
 
 def get_file_category(filename):
     """Determina la categoría de un archivo basándose en su nombre y contenido"""
@@ -84,45 +72,54 @@ def get_file_category(filename):
                 return category
 
     # Categorización por palabras clave en el nombre
-    if any(word in filename_lower for word in ['setup', 'config', 'install', 'setup']):
-        return 'setup'
-    elif any(word in filename_lower for word in ['maintenance', 'backup', 'cleanup', 'audit']):
-        return 'maintenance'
-    elif any(word in filename_lower for word in ['test', 'dev', 'development', 'guide']):
-        return 'development'
-    elif any(word in filename_lower for word in ['deploy', 'production', 'server']):
-        return 'deployment'
-    elif any(word in filename_lower for word in ['tutorial', 'guide', 'howto']):
-        return 'tutorials'
-    elif any(word in filename_lower for word in ['error', 'problem', 'trouble', 'fix']):
-        return 'troubleshooting'
-    elif any(word in filename_lower for word in ['auth', 'security', 'login']):
-        return 'security'
+    if any(word in filename_lower for word in ["setup", "config", "install", "setup"]):
+        return "setup"
+    elif any(
+        word in filename_lower for word in ["maintenance", "backup", "cleanup", "audit"]
+    ):
+        return "maintenance"
+    elif any(
+        word in filename_lower for word in ["test", "dev", "development", "guide"]
+    ):
+        return "development"
+    elif any(word in filename_lower for word in ["deploy", "production", "server"]):
+        return "deployment"
+    elif any(word in filename_lower for word in ["tutorial", "guide", "howto"]):
+        return "tutorials"
+    elif any(word in filename_lower for word in ["error", "problem", "trouble", "fix"]):
+        return "troubleshooting"
+    elif any(word in filename_lower for word in ["auth", "security", "login"]):
+        return "security"
 
     # Por defecto, ir a development
-    return 'development'
+    return "development"
+
 
 def migrate_md_files():
     """Migra los archivos .md a la estructura de docs/ organizados por categorías"""
 
     # Obtener todos los archivos .md relevantes
     md_files = []
-    for root, dirs, files in os.walk('.'):
+    for root, dirs, files in os.walk("."):
         # Excluir directorios no relevantes
-        dirs[:] = [d for d in dirs if d not in ['node_modules', 'venv310', '.git', 'discarded_files']]
+        dirs[:] = [
+            d
+            for d in dirs
+            if d not in ["node_modules", "venv310", ".git", "discarded_files"]
+        ]
 
         for file in files:
-            if file.endswith('.md'):
+            if file.endswith(".md"):
                 file_path = os.path.join(root, file)
                 # Excluir archivos en node_modules y venv310
-                if 'node_modules' not in file_path and 'venv310' not in file_path:
+                if "node_modules" not in file_path and "venv310" not in file_path:
                     md_files.append(file_path)
 
     print(f"📁 Encontrados {len(md_files)} archivos .md")
 
     # Crear directorios de categorías si no existen
     for category in CATEGORIES.keys():
-        os.makedirs(f'docs/{category}', exist_ok=True)
+        os.makedirs(f"docs/{category}", exist_ok=True)
 
     # Migrar archivos
     migrated_count = 0
@@ -138,7 +135,7 @@ def migrate_md_files():
         category = get_file_category(filename)
 
         # Crear nuevo path
-        new_path = f'docs/{category}/{filename}'
+        new_path = f"docs/{category}/{filename}"
 
         # Evitar sobrescribir archivos existentes
         if os.path.exists(new_path):
@@ -146,7 +143,7 @@ def migrate_md_files():
             ext = os.path.splitext(filename)[1]
             counter = 1
             while os.path.exists(new_path):
-                new_path = f'docs/{category}/{base_name}_{counter}{ext}'
+                new_path = f"docs/{category}/{base_name}_{counter}{ext}"
                 counter += 1
 
         try:
@@ -161,6 +158,7 @@ def migrate_md_files():
 
     # Crear índice de documentación
     create_docs_index()
+
 
 def create_docs_index():
     """Crea un índice de documentación en docs/README.md"""
@@ -218,10 +216,11 @@ Para actualizar esta documentación:
 *Última actualización: $(date)*
 """
 
-    with open('docs/README.md', 'w', encoding='utf-8') as f:
+    with open("docs/README.md", "w", encoding="utf-8") as f:
         f.write(index_content)
 
     print("📝 Índice de documentación creado en docs/README.md")
+
 
 if __name__ == "__main__":
     print("🚀 Iniciando migración de archivos .md...")

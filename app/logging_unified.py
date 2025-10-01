@@ -46,7 +46,8 @@ class UnifiedLogger:
         elif app and hasattr(app, "config") and app.config.get("LOG_DIR"):
             self.log_dir = Path(app.config["LOG_DIR"])
         else:
-            # Directorio por defecto - usar ruta relativa para evitar problemas de permisos
+            # Directorio por defecto - usar ruta relativa para evitar problemas de
+            # permisos
             try:
                 # Usar directorio del archivo actual para evitar problemas de permisos
                 base_dir = Path(__file__).parent.parent

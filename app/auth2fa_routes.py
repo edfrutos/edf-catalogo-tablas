@@ -4,7 +4,16 @@ import io
 import pyotp
 import qrcode  # type: ignore
 from bson.objectid import ObjectId
-from flask import Blueprint, flash, redirect, render_template, request, send_file, session, url_for
+from flask import (
+    Blueprint,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
 
 from app.models import users_collection  # type: ignore
 

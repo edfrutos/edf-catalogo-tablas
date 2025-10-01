@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # scripts/maintenance/run_maintenance.py
 
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
 from datetime import datetime
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde .env
@@ -134,8 +135,9 @@ def main():
         if args.task in ["all", "logs"]:
             # Si se pasan start/end, usar rango
             if args.start_datetime and args.end_datetime:
-                from scripts.maintenance.clean_old_logs import LogCleaner
                 from datetime import datetime
+
+                from scripts.maintenance.clean_old_logs import LogCleaner
 
                 dt_start = datetime.fromisoformat(args.start_datetime)
                 dt_end = datetime.fromisoformat(args.end_datetime)
@@ -152,11 +154,12 @@ def main():
                 clean_old_logs(logger, args.days)
 
         if args.task in ["all", "disk"]:
-            import platform
             import getpass
-            import psutil
             import json
+            import platform
             import time
+
+            import psutil
 
             # System info
             system_info = {

@@ -12,10 +12,12 @@ import sys
 # Definir el directorio raíz
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+
 def print_header(message):
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print(f" {message} ".center(80, "="))
-    print("="*80)
+    print("=" * 80)
+
 
 def check_file_permissions(file_path):
     """Verifica y muestra los permisos de un archivo"""
@@ -38,8 +40,11 @@ def check_file_permissions(file_path):
         "group": group,
         "is_executable": is_executable,
         "size": st.st_size,
-        "modified": datetime.datetime.fromtimestamp(st.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+        "modified": datetime.datetime.fromtimestamp(st.st_mtime).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
     }
+
 
 def fix_permissions(file_path):
     """Intenta corregir los permisos de un archivo"""
@@ -53,13 +58,11 @@ def fix_permissions(file_path):
     except Exception as e:
         return f"Error al corregir permisos: {str(e)}"
 
+
 def test_script(script_path):
     """Prueba la ejecución de un script y muestra el resultado"""
     if not os.path.exists(script_path):
-        return {
-            "success": False,
-            "error": f"El script no existe: {script_path}"
-        }
+        return {"success": False, "error": f"El script no existe: {script_path}"}
 
     # Verificar y corregir permisos si es necesario
     if not os.access(script_path, os.X_OK):
@@ -67,10 +70,10 @@ def test_script(script_path):
 
     # Determinar el comando según la extensión
     _, ext = os.path.splitext(script_path)
-    if ext == '.py':
+    if ext == ".py":
         cmd = [sys.executable, script_path]
-    elif ext == '.sh':
-        cmd = ['/bin/bash', script_path]
+    elif ext == ".sh":
+        cmd = ["/bin/bash", script_path]
     else:
         cmd = [script_path]
 
@@ -81,7 +84,7 @@ def test_script(script_path):
             capture_output=True,
             text=True,
             timeout=10,
-            cwd=os.path.dirname(script_path)
+            cwd=os.path.dirname(script_path),
         )
 
         return {
@@ -89,39 +92,41 @@ def test_script(script_path):
             "output": process.stdout,
             "error": process.stderr,
             "exit_code": process.returncode,
-            "command": " ".join(cmd)
+            "command": " ".join(cmd),
         }
     except subprocess.TimeoutExpired:
         return {
             "success": False,
             "error": "El script tardó demasiado tiempo en ejecutarse (más de 10 segundos)",
-            "command": " ".join(cmd)
+            "command": " ".join(cmd),
         }
     except Exception as e:
         return {
             "success": False,
             "error": f"Error al ejecutar el script: {str(e)}",
-            "command": " ".join(cmd)
+            "command": " ".join(cmd),
         }
+
 
 def check_web_server_permissions():
     """Verifica los permisos y usuario del servidor web"""
     try:
         # Intentar obtener el usuario actual
-        process = subprocess.run(['whoami'], capture_output=True, text=True)
+        process = subprocess.run(["whoami"], capture_output=True, text=True)
         current_user = process.stdout.strip()
 
         # Obtener información sobre el proceso del servidor web
-        ps_process = subprocess.run(['ps', 'aux', '|', 'grep', 'gunicorn'], shell=True, capture_output=True, text=True)
+        ps_process = subprocess.run(
+            ["ps", "aux", "|", "grep", "gunicorn"],
+            shell=True,
+            capture_output=True,
+            text=True,
+        )
 
-        return {
-            "current_user": current_user,
-            "web_server_processes": ps_process.stdout
-        }
+        return {"current_user": current_user, "web_server_processes": ps_process.stdout}
     except Exception as e:
-        return {
-            "error": f"Error al verificar permisos del servidor web: {str(e)}"
-        }
+        return {"error": f"Error al verificar permisos del servidor web: {str(e)}"}
+
 
 def main():
     print_header("DIAGNÓSTICO DE SCRIPTS EN PRODUCCIÓN")
@@ -140,7 +145,7 @@ def main():
     test_scripts = [
         os.path.join(ROOT_DIR, "tools", "test_script.sh"),
         os.path.join(ROOT_DIR, "tools", "simple_test.sh"),
-        os.path.join(ROOT_DIR, "tools", "test_scripts", "simple_test.py")
+        os.path.join(ROOT_DIR, "tools", "test_scripts", "simple_test.py"),
     ]
 
     print_header("VERIFICACIÓN DE PERMISOS DE SCRIPTS")
@@ -163,17 +168,28 @@ def main():
             print(f"  Comando: {result.get('command', 'N/A')}")
             print(f"  Éxito: {'Sí' if result.get('success', False) else 'No'}")
             print(f"  Código de salida: {result.get('exit_code', 'N/A')}")
-            print(f"  Salida: {result.get('output', '')[:100]}..." if len(result.get('output', '')) > 100 else f"  Salida: {result.get('output', '')}")
-            if result.get('error'):
+            print(
+                f"  Salida: {result.get('output', '')[:100]}..."
+                if len(result.get("output", "")) > 100
+                else f"  Salida: {result.get('output', '')}"
+            )
+            if result.get("error"):
                 print(f"  Error: {result.get('error')}")
             print()
 
     print_header("RECOMENDACIONES PARA PRODUCCIÓN")
-    print("1. Asegúrese de que todos los scripts tengan permisos de ejecución (chmod +x)")
-    print("2. Verifique que el usuario del servidor web tenga permisos para ejecutar los scripts")
+    print(
+        "1. Asegúrese de que todos los scripts tengan permisos de ejecución (chmod +x)"
+    )
+    print(
+        "2. Verifique que el usuario del servidor web tenga permisos para ejecutar los scripts"
+    )
     print("3. Utilice rutas absolutas en lugar de relativas en entornos de producción")
     print("4. Asegúrese de que los scripts estén en las ubicaciones correctas")
-    print("5. Verifique los logs de Gunicorn y Flask para obtener más información sobre errores")
+    print(
+        "5. Verifique los logs de Gunicorn y Flask para obtener más información sobre errores"
+    )
+
 
 if __name__ == "__main__":
     main()

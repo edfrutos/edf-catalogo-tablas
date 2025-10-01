@@ -23,11 +23,12 @@ def test_supervision_script():
 
     try:
         # Ejecutar con timeout más largo (5 segundos en lugar de 30)
-        result = subprocess.run([
-            sys.executable,
-            "tools/script_runner.py",
-            script_path
-        ], capture_output=True, text=True, timeout=5)
+        result = subprocess.run(
+            [sys.executable, "tools/script_runner.py", script_path],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
 
         print("✅ Script ejecutado")
         print(f"   Código de salida: {result.returncode}")
@@ -38,7 +39,7 @@ def test_supervision_script():
                 print("   ✅ JSON válido recibido")
                 print(f"   Script: {json_output.get('script', 'N/A')}")
                 print(f"   Exit code: {json_output.get('exit_code', 'N/A')}")
-                if json_output.get('error'):
+                if json_output.get("error"):
                     print(f"   Error: {json_output['error']}")
                 return True
             except json.JSONDecodeError:
@@ -56,12 +57,13 @@ def test_supervision_script():
         print(f"   ❌ Error: {e}")
         return False
 
+
 def create_quick_test_script():
     """Crea un script de prueba rápida para supervisión"""
     print("\n🔧 CREANDO SCRIPT DE PRUEBA RÁPIDA")
     print("=" * 50)
 
-    test_script_content = '''#!/bin/bash
+    test_script_content = """#!/bin/bash
 # Script de prueba rápida para supervisión
 echo "=== PRUEBA DE SUPERVISIÓN ==="
 echo "Fecha: $(date)"
@@ -69,7 +71,7 @@ echo "Usuario: $(whoami)"
 echo "Directorio: $(pwd)"
 echo "Proceso: $$"
 echo "=== FIN DE PRUEBA ==="
-'''
+"""
 
     test_script_path = "scripts/production/maintenance/test_supervision.sh"
 
@@ -83,11 +85,12 @@ echo "=== FIN DE PRUEBA ==="
 
     # Probar el script
     try:
-        result = subprocess.run([
-            sys.executable,
-            "tools/script_runner.py",
-            test_script_path
-        ], capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            [sys.executable, "tools/script_runner.py", test_script_path],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
 
         if result.returncode == 0:
             try:
@@ -105,6 +108,7 @@ echo "=== FIN DE PRUEBA ==="
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
+
 
 def main():
     """Función principal"""
@@ -131,6 +135,7 @@ def main():
         print("\n⚠️  Algunos problemas detectados.")
 
     return supervision_ok and test_script_ok
+
 
 if __name__ == "__main__":
     success = main()

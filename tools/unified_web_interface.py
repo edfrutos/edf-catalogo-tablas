@@ -4,6 +4,7 @@ Interfaz Web Unificada para Gestión de Scripts - EDF CatalogoDeTablas
 Combina funcionalidades de spell check y build scripts en una interfaz web
 """
 
+from unified_scripts_manager import UnifiedScriptsManager
 import json
 import subprocess
 import sys
@@ -19,7 +20,6 @@ app = Flask(__name__)
 app.secret_key = "unified_scripts_interface_2025"
 
 # Importar el gestor unificado
-from unified_scripts_manager import UnifiedScriptsManager
 
 # Inicializar el gestor
 scripts_manager = UnifiedScriptsManager()
@@ -29,7 +29,7 @@ scripts_manager = UnifiedScriptsManager()
 def index():
     """Página principal con resumen de categorías"""
     categories_summary = {}
-    
+
     for category, info in scripts_manager.categories.items():
         script_count = len(info["scripts"])
         categories_summary[category] = {
@@ -37,9 +37,9 @@ def index():
             "description": info["description"],
             "icon": info["icon"],
             "script_count": script_count,
-            "scripts": []
+            "scripts": [],
         }
-        
+
         # Obtener información básica de cada script
         for script_name, script_info in info["scripts"].items():
             script_path = scripts_manager.get_script_path(category, script_name)
@@ -49,10 +49,10 @@ def index():
                 "description": script_info["description"],
                 "type": script_info["type"],
                 "exists": script_path.exists(),
-                "category": category
+                "category": category,
             }
             categories_summary[category]["scripts"].append(script_summary)
-    
+
     return render_template("unified_interface.html", categories=categories_summary)
 
 
@@ -75,7 +75,7 @@ def category_detail(category):
             "type": script_info["type"],
             "exists": script_path.exists(),
             "category": category,
-            "path": str(script_path)
+            "path": str(script_path),
         }
         scripts.append(script_detail)
 
@@ -94,14 +94,14 @@ def spell_check_dashboard():
     """Dashboard específico para spell check"""
     # Obtener configuración actual
     config = scripts_manager.get_spell_check_config()
-    
+
     # Calcular estadísticas
     total_words = (
-        len(config["pyproject_toml"]["words"]) +
-        len(config["vscode_settings"]["words"]) +
-        len(config["cspell_json"]["words"])
+        len(config["pyproject_toml"]["words"])
+        + len(config["vscode_settings"]["words"])
+        + len(config["cspell_json"]["words"])
     )
-    
+
     stats = {
         "total_words": total_words,
         "pyproject_words": len(config["pyproject_toml"]["words"]),
@@ -109,28 +109,30 @@ def spell_check_dashboard():
         "cspell_words": len(config["cspell_json"]["words"]),
         "pyproject_exists": config["pyproject_toml"]["exists"],
         "vscode_exists": config["vscode_settings"]["exists"],
-        "cspell_exists": config["cspell_json"]["exists"]
+        "cspell_exists": config["cspell_json"]["exists"],
     }
-    
+
     # Obtener scripts de spell check
     spell_check_scripts = []
     if "spell-check" in scripts_manager.categories:
-        for script_name, script_info in scripts_manager.categories["spell-check"]["scripts"].items():
+        for script_name, script_info in scripts_manager.categories["spell-check"][
+            "scripts"
+        ].items():
             script_path = scripts_manager.get_script_path("spell-check", script_name)
             script_detail = {
                 "name": script_name,
                 "display_name": script_info["name"],
                 "description": script_info["description"],
                 "exists": script_path.exists(),
-                "path": str(script_path)
+                "path": str(script_path),
             }
             spell_check_scripts.append(script_detail)
-    
+
     return render_template(
         "spell_check_dashboard.html",
         stats=stats,
         scripts=spell_check_scripts,
-        config=config
+        config=config,
     )
 
 
@@ -208,7 +210,7 @@ def api_scripts():
                     "type": script_info["type"],
                     "exists": script_path.exists(),
                     "category": category,
-                    "path": str(script_path)
+                    "path": str(script_path),
                 }
 
                 result[category]["scripts"].append(script_detail)
@@ -241,11 +243,13 @@ def health_check():
 
         # Verificar configuración de spell check
         spell_check_config = scripts_manager.get_spell_check_config()
-        spell_check_healthy = any([
-            spell_check_config["pyproject_toml"]["exists"],
-            spell_check_config["vscode_settings"]["exists"],
-            spell_check_config["cspell_json"]["exists"]
-        ])
+        spell_check_healthy = any(
+            [
+                spell_check_config["pyproject_toml"]["exists"],
+                spell_check_config["vscode_settings"]["exists"],
+                spell_check_config["cspell_json"]["exists"],
+            ]
+        )
 
         return jsonify(
             {

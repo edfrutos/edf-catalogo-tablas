@@ -69,7 +69,9 @@ def extract_mongo_host_port(mongo_uri):
     """Extrae el host y puerto de la URI de MongoDB"""
     try:
         # Extraer host y puerto usando expresiones regulares
-        match = re.search(r"mongodb(?:\+srv)?://(?:[^:@]+:[^@]+@)?([^/:]+)(?::(\d+))?", mongo_uri)
+        match = re.search(
+            r"mongodb(?:\+srv)?://(?:[^:@]+:[^@]+@)?([^/:]+)(?::(\d+))?", mongo_uri
+        )
         if match:
             host = match.group(1)
             port = int(match.group(2)) if match.group(2) else 27017
@@ -105,7 +107,9 @@ def check_network_connectivity(host, port):
             sock.close()
             return True
         else:
-            print(f"  ❌ No se pudo conectar a {host}:{port} (código de error: {result})")
+            print(
+                f"  ❌ No se pudo conectar a {host}:{port} (código de error: {result})"
+            )
             sock.close()
             return False
     except Exception as e:
@@ -140,7 +144,9 @@ def check_mongodb_status():
             )
 
             if "MongoDB connection error" in tail_result.stdout:
-                print("  ❌ Se encontraron errores de conexión a MongoDB en los logs recientes")
+                print(
+                    "  ❌ Se encontraron errores de conexión a MongoDB en los logs recientes"
+                )
                 return False
             elif "Connected to MongoDB" in tail_result.stdout:
                 print(

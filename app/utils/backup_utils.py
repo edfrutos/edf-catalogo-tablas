@@ -286,7 +286,7 @@ class FileProcessor:
         try:
             delimiter = sniffer.sniff(sample).delimiter
             return delimiter
-        except:
+        except BaseException:
             # Fallback a coma
             return ","
 
@@ -630,7 +630,7 @@ class GoogleDriveManager:
         try:
             client = self.get_client()
             return client is not None and self._authenticated
-        except:
+        except BaseException:
             return False
 
     def list_backups(self, folder_name: str = None) -> List[Dict[str, Any]]:

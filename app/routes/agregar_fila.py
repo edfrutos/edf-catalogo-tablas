@@ -10,8 +10,8 @@ from datetime import datetime  # noqa: F401
 from typing import Any
 
 from bson.objectid import ObjectId
+from flask import Blueprint  # noqa: F401
 from flask import (
-    Blueprint,  # noqa: F401
     current_app,
     flash,
     redirect,
@@ -54,7 +54,8 @@ def agregar_fila_route(main_bp):
                 for header in tabla.get("headers", []):
                     nueva_fila[header] = request.form.get(header, "")
 
-                # Agregar la fila a la tabla (actualizar tanto data como rows para compatibilidad)
+                # Agregar la fila a la tabla (actualizar tanto data como rows para
+                # compatibilidad)
                 current_app.spreadsheets_collection.update_one(  # type: ignore
                     {"_id": ObjectId(tabla_id)},
                     {
