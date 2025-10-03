@@ -1,9 +1,11 @@
-{% block scripts %}
-    <script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
-    <script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
-    <script src="{{ url_for('static', filename='js/mp4-debug-fila5.js') }}?v={{ range(1, 10000) | random }}"></script>
-{% endblock %}
 {% extends 'base.html' %}
+
+{% block extra_head %}
+    <!-- modal-functions-UNIFIED.js ya está cargado en base.html -->
+    <script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <!-- Scripts MP4 ya cargados en base.html -->
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid mt-4">
     <div class="row justify-content-center">
@@ -54,7 +56,9 @@
                                                         <a href="{{ row[header] }}" target="_blank">{{ row[header] }}</a>
                                                     </div>
                                                     <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            onclick="removeMultimedia('{{ header }}', '{{ row[header] }}', this)">
+                                                            data-header="{{ header }}"
+                                                            data-value="{{ row[header] }}"
+                                                            onclick="removeMultimedia(this.dataset.header, this.dataset.value, this)">
                                                         <i class="fas fa-trash"></i> Eliminar
                                                     </button>
                                                 </div>
@@ -68,7 +72,9 @@
                                                         </a>
                                                     </div>
                                                     <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            onclick="removeMultimedia('{{ header }}', '{{ row[header] }}', this)">
+                                                            data-header="{{ header }}"
+                                                            data-value="{{ row[header] }}"
+                                                            onclick="removeMultimedia(this.dataset.header, this.dataset.value, this)">
                                                         <i class="fas fa-trash"></i> Eliminar
                                                     </button>
                                                 </div>
@@ -95,7 +101,7 @@
                                                     <div class="input-group mb-2 flex-wrap">
                                                         <input type="url" class="form-control" name="{{ header }}_url_{{ loop.index0 }}" 
                                                                value="{{ doc }}" placeholder="https://ejemplo.com/documento.pdf">
-                                                        <button type="button" class="btn btn-outline-danger" onclick="removeUrlField(this)">
+                                                        <button type="button" class="btn btn-outline-danger" data-action="remove-url">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </div>
@@ -106,7 +112,7 @@
                                             <div class="input-group mb-2 flex-wrap">
                                                 <input type="url" class="form-control" name="{{ header }}_url_{{ loop.index0 }}" 
                                                        value="{{ row[header] }}" placeholder="https://ejemplo.com/documento.pdf">
-                                                <button type="button" class="btn btn-outline-danger" onclick="removeUrlField(this)">
+                                                <button type="button" class="btn btn-outline-danger" data-action="remove-url">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -115,7 +121,10 @@
                                             <div class="input-group mb-2 flex-wrap">
                                                 <input type="url" class="form-control" name="{{ header }}_url_{{ loop.index0 }}" 
                                                        placeholder="https://ejemplo.com/documento.pdf">
-                                                <button type="button" class="btn btn-outline-success" onclick="addUrlField('urls-container-{{ loop.index0 }}', '{{ header }}_url_{{ loop.index0 }}')">
+                                                <button type="button" class="btn btn-outline-success" 
+                                                        data-container-id="urls-container-{{ loop.index0 }}"
+                                                        data-field-name="{{ header }}_url_{{ loop.index0 }}"
+                                                        onclick="addUrlField(this.dataset.containerId, this.dataset.fieldName)">
                                                     <i class="fas fa-plus"></i>
                                                 </button>
                                             </div>
@@ -149,7 +158,9 @@
                                                                 </a>
                                                             </div>
                                                             <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                                    onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
+                                                                    data-header="{{ header }}"
+                                                                    data-value="{{ doc }}"
+                                                                    onclick="removeDocument(this.dataset.header, this.dataset.value, this)">
                                                                 <i class="fas fa-trash"></i> Eliminar
                                                             </button>
                                                         </div>
@@ -163,7 +174,9 @@
                                                                 </a>
                                                             </div>
                                                             <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                                    onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
+                                                                    data-header="{{ header }}"
+                                                                    data-value="{{ doc }}"
+                                                                    onclick="removeDocument(this.dataset.header, this.dataset.value, this)">
                                                                 <i class="fas fa-trash"></i> Eliminar
                                                             </button>
                                                         </div>
@@ -179,7 +192,9 @@
                                                         </a>
                                                     </div>
                                                     <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            onclick="removeDocument('{{ header }}', '{{ row[header] }}', this)">
+                                                            data-header="{{ header }}"
+                                                            data-value="{{ row[header] }}"
+                                                            onclick="removeDocument(this.dataset.header, this.dataset.value, this)">
                                                         <i class="fas fa-trash"></i> Eliminar
                                                     </button>
                                                 </div>
@@ -194,7 +209,9 @@
                                                         </a>
                                                     </div>
                                                     <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            onclick="removeDocument('{{ header }}', '{{ row[header] }}', this)">
+                                                            data-header="{{ header }}"
+                                                            data-value="{{ row[header] }}"
+                                                            onclick="removeDocument(this.dataset.header, this.dataset.value, this)">
                                                         <i class="fas fa-trash"></i> Eliminar
                                                     </button>
                                                 </div>
@@ -244,7 +261,9 @@
                             <input type="url" class="form-control" name="imagen_url" value="{{ row.Imagen }}" placeholder="https://ejemplo.com/imagen.jpg">
                             <div class="mt-2">
                                 <img src="{{ row.Imagen }}" alt="Imagen externa" class="img-thumbnail" style="height:100px; cursor: pointer;"
-                                     onclick="showImageModal('{{ row.Imagen }}', 'Imagen externa')">
+                                     data-image-url="{{ row.Imagen }}"
+                                     data-image-title="Imagen externa"
+                                     onclick="showImageModal(this.dataset.imageUrl, this.dataset.imageTitle)">
                             </div>
                         </div>
                         {% endif %}
@@ -261,7 +280,9 @@
                                              alt="Imagen {{ loop.index }}" 
                                              class="img-thumbnail" 
                                              style="height:100px; cursor: pointer;"
-                                             onclick="showImageModal('{{ img_url }}', 'Imagen {{ loop.index }}')">
+                                             data-image-url="{{ img_url }}"
+                                             data-image-title="Imagen {{ loop.index }}"
+                                             onclick="showImageModal(this.dataset.imageUrl, this.dataset.imageTitle)">
                                         {% if not img_url.startswith('http') or 'amazonaws' in img_url %}
                                             <input type="checkbox" name="delete_images" value="{{ img_filename }}" class="position-absolute top-0 end-0 m-1" style="transform: scale(1.5);">
                                             <label class="d-block text-center small mt-1">Eliminar</label>
@@ -494,7 +515,7 @@ function addUrlField(containerId, fieldName) {
     newField.innerHTML = `
         <input type="url" class="form-control" name="${fieldName}" 
                placeholder="https://ejemplo.com/documento.pdf">
-        <button type="button" class="btn btn-outline-danger" onclick="removeUrlField(this)">
+        <button type="button" class="btn btn-outline-danger" data-action="remove-url">
             <i class="fas fa-trash"></i>
         </button>
     `;
@@ -573,6 +594,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const modal = new bootstrap.Modal(document.getElementById('imageModal'));
     const modalImage = document.getElementById('modalImage');
     
+    // Event listener para botones de eliminar URL (usando delegación de eventos)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-action="remove-url"]')) {
+            e.target.closest('.input-group').remove();
+        }
+    });
+    
     document.querySelectorAll('.img-thumbnail').forEach(img => {
         img.classList.add('clickable'); // Añadir clase para estilo hover
         img.addEventListener('click', function(e) {
@@ -594,14 +622,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// Forzar recarga tras guardar (solo si hay mensaje de éxito)
+// Forzar recarga tras guardar (solo si hay mensaje de éxito real tras una operación)
 document.addEventListener('DOMContentLoaded', function() {
+    // Solo ejecutar redirección si hay parámetros POST (indicando que se guardó algo)
+    // o si hay un mensaje flash específico de éxito
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasSuccessParam = urlParams.has('success') || urlParams.has('saved');
+    
+    // Buscar alertas de éxito que contengan texto específico de operación completada
     const alerts = document.querySelectorAll('.alert-success');
-    if (alerts.length > 0) {
+    let hasRealSuccessMessage = false;
+    
+    alerts.forEach(alert => {
+        const text = alert.textContent.toLowerCase();
+        if (text.includes('guardado') || text.includes('actualizado') || text.includes('éxito')) {
+            hasRealSuccessMessage = true;
+        }
+    });
+    
+    // Solo redirigir si realmente hubo una operación de guardado exitosa
+    if ((hasSuccessParam || hasRealSuccessMessage) && window.location.pathname.includes('/edit-row/')) {
         setTimeout(function() {
-            window.location.href = window.location.origin + window.location.pathname.replace('/edit-row', '/view');
-        }, 800); // Redirige tras 0.8s
+            // Extraer el catalog_id de la URL actual: /catalogs/edit-row/CATALOG_ID/ROW_INDEX
+            const pathParts = window.location.pathname.split('/');
+            const catalogId = pathParts[3]; // Índice 3 después de ['', 'catalogs', 'edit-row', 'CATALOG_ID']
+            if (catalogId) {
+                console.log('🔄 Redirigiendo tras guardado exitoso a:', '/catalogs/' + catalogId);
+                window.location.href = window.location.origin + '/catalogs/' + catalogId;
+            } else {
+                // Fallback al método anterior si no se puede extraer el catalogId
+                window.location.href = window.location.origin + '/catalogs/';
+            }
+        }, 1200); // Aumentado a 1.2s para dar tiempo al usuario a ver el mensaje
     }
 });
 </script>
+{% endblock %}
+
+{% block scripts %}
+<!-- JavaScript adicional ya incluido arriba -->
 {% endblock %}

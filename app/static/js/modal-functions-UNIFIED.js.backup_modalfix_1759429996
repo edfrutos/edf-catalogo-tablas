@@ -36,7 +36,6 @@ log("[MODAL-UNIFIED] 🔍 Verificando funciones disponibles...");
 
 // Usar la variable global establecida por pywebview_compatibility.js (evitar redeclaración)
 // isPyWebView es declarada por pywebview_compatibility.js, la usamos directamente
-// eslint-disable-next-line no-unused-vars
 const isWebApp = !window.isPyWebView;
 
 log("[MODAL-UNIFIED] 🔍 Entorno detectado:", {
@@ -163,7 +162,7 @@ function showDocumentModal(documentSrc, documentTitle) {
               <a href="${documentSrc}" target="_blank" class="btn btn-primary">
                 <i class="fas fa-external-link-alt"></i> Abrir en Nueva Pestaña
               </a>
-              <button type="button" class="btn btn-outline-primary" data-action="download-s3-file" data-document-src="${documentSrc}" data-document-title="${documentTitle}">
+              <button type="button" class="btn btn-outline-primary" onclick="downloadS3File('${documentSrc}', '${documentTitle}')">
                 <i class="fas fa-download"></i> Descargar
               </button>
             </div>
@@ -203,7 +202,7 @@ function showDocumentModal(documentSrc, documentTitle) {
               <a href="${documentSrc}" target="_blank" class="btn btn-primary">
                 <i class="fas fa-external-link-alt"></i> Abrir en Nueva Pestaña
               </a>
-              <button type="button" class="btn btn-outline-primary" data-action="download-s3-file" data-document-src="${documentSrc}" data-document-title="${documentTitle}">
+              <button type="button" class="btn btn-outline-primary" onclick="downloadS3File('${documentSrc}', '${documentTitle}')">
                 <i class="fas fa-download"></i> Descargar
               </button>
             </div>
@@ -250,7 +249,7 @@ function showDocumentModal(documentSrc, documentTitle) {
               <a href="${documentSrc}" target="_blank" class="btn btn-primary">
                 <i class="fas fa-external-link-alt"></i> Abrir en Nueva Pestaña
               </a>
-              <button type="button" class="btn btn-outline-primary" data-action="download-local-file" data-document-src="${documentSrc}" data-document-title="${documentTitle}">
+              <button type="button" class="btn btn-outline-primary" onclick="downloadLocalFile('${documentSrc}', '${documentTitle}')">
                 <i class="fas fa-download"></i> Descargar
               </button>
             </div>
@@ -290,7 +289,7 @@ function showDocumentModal(documentSrc, documentTitle) {
               <a href="${documentSrc}" target="_blank" class="btn btn-primary">
                 <i class="fas fa-external-link-alt"></i> Abrir en Nueva Pestaña
               </a>
-              <button type="button" class="btn btn-outline-primary" data-action="download-local-file" data-document-src="${documentSrc}" data-document-title="${documentTitle}">
+              <button type="button" class="btn btn-outline-primary" onclick="downloadLocalFile('${documentSrc}', '${documentTitle}')">
                 <i class="fas fa-download"></i> Descargar
               </button>
             </div>
@@ -461,7 +460,7 @@ function showTextInModal(textUrl, textTitle) {
             <a href="${finalUrl}" target="_blank" class="btn btn-primary">
               <i class="fas fa-external-link-alt"></i> Abrir en Nueva Pestaña
             </a>
-            <button type="button" class="btn btn-outline-primary" data-action="download-local-file" data-document-src="${finalUrl}" data-document-title="${textTitle}">
+            <button type="button" class="btn btn-outline-primary" onclick="downloadLocalFile('${finalUrl}', '${textTitle}')">
               <i class="fas fa-download"></i> Descargar
             </button>
           </div>
@@ -546,7 +545,6 @@ async function checkImageExists(imageSrc) {
 }
 
 // Función para limpiar imágenes y multimedia rotos en la página
-// eslint-disable-next-line no-unused-vars
 async function cleanupBrokenImages() {
   log("[MODAL-UNIFIED] 🧹 Iniciando limpieza de imágenes y multimedia rotos...");
   
@@ -786,10 +784,10 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
             <i class="fas fa-external-link-alt"></i> Abrir en Nueva Pestaña
           </a>
           ${isS3File ? 
-            `<button type="button" class="btn btn-outline-primary" data-action="download-s3-file" data-document-src="${cleanMultimediaSrc}" data-document-title="${multimediaTitle}">
+            `<button type="button" class="btn btn-outline-primary" onclick="downloadS3File('${cleanMultimediaSrc}', '${multimediaTitle}')">
               <i class="fas fa-download"></i> Descargar
             </button>` : 
-            `<button type="button" class="btn btn-outline-primary" data-action="download-local-file" data-document-src="${cleanMultimediaSrc}" data-document-title="${multimediaTitle}">
+            `<button type="button" class="btn btn-outline-primary" onclick="downloadLocalFile('${cleanMultimediaSrc}', '${multimediaTitle}')">
               <i class="fas fa-download"></i> Descargar
             </button>`
           }
@@ -1013,24 +1011,3 @@ log("  - hideImageLoadingSpinner:", typeof window.hideImageLoadingSpinner);
 //   // Si el DOM ya está cargado, ejecutar inmediatamente
 //   setTimeout(cleanupBrokenImages, 1000); // Esperar 1 segundo para que las imágenes se carguen
 // }
-
-// Event listeners para data-action download
-document.addEventListener('click', function(e) {
-    const action = e.target.dataset.action;
-    
-    if (action === 'download-s3-file') {
-        const documentSrc = e.target.dataset.documentSrc;
-        const documentTitle = e.target.dataset.documentTitle;
-        if (documentSrc && documentTitle) {
-            downloadS3File(documentSrc, documentTitle);
-        }
-    }
-    
-    if (action === 'download-local-file') {
-        const documentSrc = e.target.dataset.documentSrc;
-        const documentTitle = e.target.dataset.documentTitle;
-        if (documentSrc && documentTitle) {
-            downloadLocalFile(documentSrc, documentTitle);
-        }
-    }
-});

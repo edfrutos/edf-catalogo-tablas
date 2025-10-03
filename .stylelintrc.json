@@ -1,0 +1,16 @@
+{
+  "extends": [
+    "stylelint-config-standard"
+  ],
+  "rules": {
+    "selector-id-pattern": null,
+    "keyframes-name-pattern": null,
+    "no-duplicate-selectors": null,
+    "no-descending-specificity": null
+  },
+  "ignoreFiles": [
+    "**/*.min.css",
+    "**/vendor/**/*.css",
+    "**/node_modules/**/*.css"
+  ]
+}

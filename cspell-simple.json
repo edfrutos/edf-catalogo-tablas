@@ -1,0 +1,77 @@
+{
+  "version": "0.2",
+  "language": "en,es",
+  "dictionaries": [
+    "en_us",
+    "es",
+    "project-words",
+    "technical-terms"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "project-words",
+      "path": "./project-words.txt",
+      "addWords": true
+    },
+    {
+      "name": "technical-terms",
+      "path": "./technical-terms.txt", 
+      "addWords": true
+    }
+  ],
+  "words": [
+    "catalogos",
+    "catalogotablas",
+    "edefrutos",
+    "edf",
+    "configuración",
+    "funcionalidad",
+    "aplicación"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".git/**",
+    "venv/**",
+    "__pycache__/**",
+    "*.pyc",
+    "build/**",
+    "dist/**",
+    "*.egg-info/**",
+    ".venv/**",
+    "backups/**",
+    "logs/**",
+    "*.log",
+    ".cursorrules",
+    "tools/build/**",
+    "tools/discarded_files_*/**",
+    "app_data/**",
+    "instance/**",
+    "flask_session/**",
+    "uploads/**",
+    "static/uploads/**",
+    "spreadsheets/**",
+    "exportados/**",
+    "imagenes/**",
+    "static/imagenes/**"
+  ],
+  "ignoreRegExpList": [
+    "https?://[^\\s]+",
+    "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+    "[a-fA-F0-9]{32,}",
+    "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+    "\\$\\{[^}]+\\}",
+    "\\{\\{[^}]+\\}\\}",
+    "[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|gif|pdf|mp4|mp3|csv|xlsx|docx)\\b",
+    "[A-Z0-9]{20,}",
+    "console\\.(log|error|warn|info)",
+    "\\[MODAL-UNIFIED\\]",
+    "\\[.*\\]\\s*\\w+:",
+    "data-[a-z-]+",
+    "aria-[a-z-]+",
+    "onclick=",
+    "href=",
+    "src="
+  ],
+  "allowCompoundWords": false,
+  "minWordLength": 3
+}

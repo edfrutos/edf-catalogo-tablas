@@ -1,7 +1,9 @@
 /* CSS DE EMERGENCIA PARA MODALES */
+
 /* Fuerza la visibilidad de elementos del modal */
 
 /* Modal principal */
+
 .modal {
     z-index: 9999 !important;
 }
@@ -11,6 +13,7 @@
 }
 
 /* Imagen en el modal */
+
 #modalImage {
     display: block !important;
     visibility: visible !important;
@@ -21,31 +24,35 @@
     height: auto !important;
     margin: 0 auto !important;
     object-fit: contain !important;
-    background: rgba(255, 0, 0, 0.1) !important; /* Fondo rojo muy suave para debugging */
+    background: rgb(255 0 0 / 10%) !important; /* Fondo rojo muy suave para debugging */
     border: 2px solid red !important; /* Borde rojo para ver si está ahí */
 }
 
 /* Contenedor de la imagen */
+
 .modal-body {
     text-align: center !important;
     padding: 20px !important;
     min-height: 200px !important;
-    background: rgba(0, 255, 0, 0.1) !important; /* Fondo verde suave para debugging */
+    background: rgb(0 255 0 / 10%) !important; /* Fondo verde suave para debugging */
 }
 
 /* Modal dialog */
+
 .modal-dialog {
     max-width: 90% !important;
     margin: 30px auto !important;
 }
 
 /* Modal content */
+
 .modal-content {
     background: white !important;
     border: 2px solid blue !important; /* Borde azul para debugging */
 }
 
 /* Contenido multimedia */
+
 #multimediaContent {
     display: block !important;
     visibility: visible !important;
@@ -53,20 +60,23 @@
     text-align: center !important;
     min-height: 100px !important;
     padding: 20px !important;
-    background: rgba(255, 255, 0, 0.1) !important; /* Fondo amarillo para debugging */
+    background: rgb(255 255 0 / 10%) !important; /* Fondo amarillo para debugging */
 }
 
 /* Spinner de carga */
+
 .spinner-border {
     display: none !important; /* Ocultar spinner para ver si hay algo detrás */
 }
 
 /* Asegurar que no hay elementos ocultos */
+
 .modal * {
     visibility: visible !important;
 }
 
 /* Backdrop */
+
 .modal-backdrop {
     z-index: 9998 !important;
 }

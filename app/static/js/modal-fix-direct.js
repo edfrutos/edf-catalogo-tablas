@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // FUNCIÓN DIRECTA PARA IMAGEN - Sobrescribir completamente
-    window.showImageModal = function(imageUrl, title, catalogName) {
+    window.showImageModal = function(imageUrl, title, _catalogName) {
         console.log("🔧 MODAL-FIX: showImageModal llamada directamente", { imageUrl, title });
         
         try {
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // FUNCIÓN DIRECTA PARA MULTIMEDIA - Sobrescribir completamente
-    window.showMultimediaModal = function(multimediaUrl, title, catalogName) {
+    window.showMultimediaModal = function(multimediaUrl, title, _catalogName) {
         console.log("🔧 MODAL-FIX: showMultimediaModal llamada directamente", { multimediaUrl, title });
         
         try {
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // FUNCIÓN DIRECTA PARA DOCUMENTO - Sobrescribir completamente
-    window.showDocumentModal = function(documentUrl, title, catalogName) {
+    window.showDocumentModal = function(documentUrl, title, _catalogName) {
         console.log("🔧 MODAL-FIX: showDocumentModal llamada directamente", { documentUrl, title });
         
         try {
@@ -178,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Test imagen
         setTimeout(() => {
             console.log("🔧 MODAL-FIX: Probando modal de imagen...");
+            // eslint-disable-next-line no-undef
             showImageModal('https://via.placeholder.com/400x300/0066cc/ffffff?text=TEST', 'Imagen de Prueba');
         }, 1000);
         
@@ -189,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (imageModal) imageModal.hide();
             
             setTimeout(() => {
+                // eslint-disable-next-line no-undef
                 showMultimediaModal('https://www.w3schools.com/html/mov_bbb.mp4', 'Video de Prueba');
             }, 500);
         }, 3000);

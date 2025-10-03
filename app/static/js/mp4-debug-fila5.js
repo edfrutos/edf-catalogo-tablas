@@ -6,7 +6,8 @@ function debugMP4Fila5() {
     
     // Verificar si window.catalogData existe
     if (!window.catalogData) {
-        console.error('❌ window.catalogData no existe');
+        console.warn('⚠️ window.catalogData no existe aún. Reintentando en 2 segundos...');
+        setTimeout(debugMP4Fila5, 2000);
         return;
     }
     
@@ -119,13 +120,47 @@ function forceRenderMP4Fila5() {
     }
 }
 
-// Auto-ejecutar el debug cuando se carga la página
+// Función de debug con reintentos inteligentes
+function debugMP4Fila5WithRetry(maxRetries = 3, currentRetry = 0) {
+    if (currentRetry >= maxRetries) {
+        console.warn('⚠️ window.catalogData no disponible después de ' + maxRetries + ' intentos - página sin datos de catálogo');
+        return;
+    }
+    
+    if (!window.catalogData) {
+        console.log(`🔄 Intento ${currentRetry + 1}/${maxRetries}: esperando window.catalogData...`);
+        // Aumentar el tiempo de espera gradualmente
+        const waitTime = 500 + (currentRetry * 500);
+        setTimeout(() => debugMP4Fila5WithRetry(maxRetries, currentRetry + 1), waitTime);
+        return;
+    }
+    
+    // Si llegamos aquí, window.catalogData existe
+    console.log('✅ window.catalogData encontrado, ejecutando debug...');
+    debugMP4Fila5();
+}
+
+// Auto-ejecutar el debug cuando se carga la página (solo si estamos en una página de catálogo)
 document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(debugMP4Fila5, 1000);
+    // Verificar si estamos en una página que debería tener catalogData
+    const isRelevantPage = window.location.pathname.includes('/catalogs/') || 
+                          window.location.pathname.includes('/ver_tabla/') ||
+                          document.querySelector('[data-catalog-id]') ||
+                          document.querySelector('.catalog-container') ||
+                          document.querySelector('#catalog-data');
+    
+    if (isRelevantPage) {
+        console.log('🔍 Página de catálogo detectada, iniciando debug MP4...');
+        // Primer intento inmediato
+        setTimeout(debugMP4Fila5WithRetry, 500);
+    } else {
+        console.log('📄 No es página de catálogo, omitiendo debug MP4 fila #5');
+    }
 });
 
 // Hacer funciones globales para uso en consola
 window.debugMP4Fila5 = debugMP4Fila5;
 window.forceRenderMP4Fila5 = forceRenderMP4Fila5;
+window.debugMP4Fila5WithRetry = debugMP4Fila5WithRetry;
 
-console.log('🎬 Debug MP4 Fila #5 listo. Usa debugMP4Fila5() y forceRenderMP4Fila5()');
+// console.log('🎬 Debug MP4 Fila #5 listo. Usa debugMP4Fila5() y forceRenderMP4Fila5()');

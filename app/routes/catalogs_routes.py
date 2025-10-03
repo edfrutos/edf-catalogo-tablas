@@ -1,4 +1,15 @@
 # app/routes/catalogs_routes.py
+"""
+Rutas y controladores para la gestión de catálogos.
+
+Este módulo contiene todas las rutas relacionadas con la creación, edición,
+visualización y gestión de catálogos de tablas. Incluye funcionalidades para:
+- Listado de catálogos
+- Creación y edición de catálogos
+- Gestión de permisos de acceso
+- Importación y exportación de datos
+- Manejo de imágenes y archivos multimedia
+"""
 
 import logging
 import os
@@ -35,8 +46,12 @@ from app.utils.upload_utils import get_upload_dir, handle_file_upload
 logger = logging.getLogger(__name__)
 
 
-# Función para verificar si el usuario es administrador
 def is_admin():
+    """Verificar si el usuario actual tiene permisos de administrador.
+    
+    Returns:
+        bool: True si el usuario es administrador, False en caso contrario.
+    """
     role = session.get("role")
     current_app.logger.info(f"Rol en sesión: {role}")
     return role == "admin"
@@ -275,6 +290,14 @@ ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
 def allowed_image(filename):
+    """Verificar si el archivo tiene una extensión de imagen permitida.
+    
+    Args:
+        filename (str): Nombre del archivo a verificar
+        
+    Returns:
+        bool: True si la extensión es permitida, False en caso contrario
+    """
     return (
         "." in filename
         and filename.rsplit(".", 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
@@ -283,6 +306,15 @@ def allowed_image(filename):
 
 @catalogs_bp.route("/")
 def list_catalogs():
+    """Mostrar la lista de catálogos disponibles para el usuario actual.
+    
+    Filtra los catálogos según los permisos del usuario:
+    - Los administradores pueden ver todos los catálogos
+    - Los usuarios normales solo ven sus propios catálogos
+    
+    Returns:
+        str: Template HTML con la lista de catálogos
+    """
     db = get_mongo_db()
     if db is None:
         flash("No se pudo acceder a la base de datos.", "danger")
@@ -568,12 +600,26 @@ def list_catalogs():
 # Alias para la función list_catalogs para mantener compatibilidad con las plantillas
 @catalogs_bp.route("/")
 def list():
+    """Alias para la función list_catalogs para mantener compatibilidad.
+    
+    Returns:
+        str: Template HTML con la lista de catálogos
+    """
     return list_catalogs()
 
 
 @catalogs_bp.route("/<catalog_id>")
 @check_catalog_permission
 def view(catalog_id, catalog):
+    """Mostrar la vista detallada de un catálogo específico.
+    
+    Args:
+        catalog_id (str): ID del catálogo a visualizar
+        catalog (dict): Datos del catálogo obtenidos por el decorador
+        
+    Returns:
+        str: Template HTML con los detalles del catálogo
+    """
     try:
         current_app.logger.info(f"[CATALOGS_VIEW] Visualizando catálogo {catalog_id}")
         current_app.logger.info(
@@ -755,6 +801,15 @@ def view(catalog_id, catalog):
 @catalogs_bp.route("/<catalog_id>/edit", methods=["GET", "POST"])
 @check_catalog_permission
 def edit(catalog_id, catalog):
+    """Editar los metadatos de un catálogo (nombre, encabezados, miniatura).
+    
+    Args:
+        catalog_id (str): ID del catálogo a editar
+        catalog (dict): Datos del catálogo obtenidos por el decorador
+        
+    Returns:
+        str: Template HTML del formulario de edición o redirección tras guardar
+    """
     if request.method == "POST":
         try:
             # Obtener los datos del formulario
@@ -886,6 +941,16 @@ def edit(catalog_id, catalog):
 @catalogs_bp.route("/edit-row/<catalog_id>/<int:row_index>", methods=["GET", "POST"])
 @check_catalog_permission
 def edit_row(catalog_id, row_index, catalog):
+    """Editar una fila específica de un catálogo.
+    
+    Args:
+        catalog_id (str): ID del catálogo
+        row_index (int): Índice de la fila a editar
+        catalog (dict): Datos del catálogo obtenidos por el decorador
+        
+    Returns:
+        str: Template HTML del formulario de edición de fila o redirección
+    """
     from datetime import datetime
 
     if not is_mongo_available():
@@ -1213,6 +1278,15 @@ def edit_row(catalog_id, row_index, catalog):
 @catalogs_bp.route("/add-row/<catalog_id>", methods=["GET", "POST"])
 @check_catalog_permission
 def add_row(catalog_id, catalog):
+    """Agregar una nueva fila a un catálogo.
+    
+    Args:
+        catalog_id (str): ID del catálogo
+        catalog (dict): Datos del catálogo obtenidos por el decorador
+        
+    Returns:
+        str: Template HTML del formulario para agregar fila o redirección
+    """
     from datetime import datetime
 
     current_app.logger.info(
@@ -1361,6 +1435,16 @@ def add_row(catalog_id, catalog):
 @catalogs_bp.route("/delete-row/<catalog_id>/<int:row_index>", methods=["POST"])
 @check_catalog_permission
 def delete_row(catalog_id, row_index, catalog):
+    """Eliminar una fila específica de un catálogo.
+    
+    Args:
+        catalog_id (str): ID del catálogo
+        row_index (int): Índice de la fila a eliminar
+        catalog (dict): Datos del catálogo obtenidos por el decorador
+        
+    Returns:
+        redirect: Redirección a la vista del catálogo
+    """
     if not is_mongo_available():
         flash("Error de conexión a la base de datos.", "danger")
         current_app.logger.error("[delete_row] Error de conexión a la base de datos.")
@@ -1413,6 +1497,15 @@ def delete_row(catalog_id, row_index, catalog):
 @catalogs_bp.route("/delete/<catalog_id>", methods=["GET", "POST"])
 @check_catalog_permission
 def delete_catalog(catalog_id, catalog):
+    """Eliminar completamente un catálogo y todos sus datos.
+    
+    Args:
+        catalog_id (str): ID del catálogo a eliminar
+        catalog (dict): Datos del catálogo obtenidos por el decorador
+        
+    Returns:
+        redirect: Redirección a la lista de catálogos
+    """
     if not is_mongo_available():
         flash("Error de conexión a la base de datos.", "danger")
         return redirect(url_for("catalogs.list"))
@@ -1493,6 +1586,11 @@ def delete_catalog(catalog_id, catalog):
 
 @catalogs_bp.route("/create", methods=["GET", "POST"])
 def create():
+    """Crear un nuevo catálogo vacío.
+    
+    Returns:
+        str: Template HTML del formulario de creación o redirección tras crear
+    """
     if "username" not in session:
         flash("Debe iniciar sesión para crear catálogos", "warning")
         return redirect(url_for("auth.login"))
@@ -1583,6 +1681,11 @@ def create():
 
 @catalogs_bp.route("/import", methods=["GET", "POST"])
 def import_catalog():
+    """Importar un catálogo desde un archivo CSV o Excel.
+    
+    Returns:
+        str: Template HTML del formulario de importación o redirección tras importar
+    """
     db = get_mongo_db()
     if db is None:
         flash("No se pudo acceder a la base de datos.", "danger")
@@ -1766,3 +1869,22 @@ def view_markdown(filename):
             f"Error al servir archivo Markdown {filename}: {str(e)}"
         )
         return "Error interno del servidor", 500
+
+
+# Ruta de redirección para URLs incorrectas que pueden estar en caché del navegador
+@catalogs_bp.route("/view/<catalog_id>")
+@catalogs_bp.route("/view/<catalog_id>/<int:extra_param>")
+def redirect_old_view_url(catalog_id, extra_param=None):
+    """
+    Redirige URLs incorrectas del formato /catalogs/view/CATALOG_ID o /catalogs/view/CATALOG_ID/NUMERO
+    a la URL correcta /catalogs/CATALOG_ID
+
+    Esta ruta maneja URLs que pueden estar en el caché del navegador o generadas incorrectamente.
+    """
+    current_app.logger.warning(
+        f"Redirigiendo URL incorrecta: /catalogs/view/{catalog_id}"
+        + (f"/{extra_param}" if extra_param else "")
+        + f" -> /catalogs/{catalog_id}"
+    )
+    flash("URL redirigida al formato correcto", "info")
+    return redirect(url_for("catalogs.view", catalog_id=catalog_id))

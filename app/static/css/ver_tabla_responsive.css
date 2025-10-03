@@ -1,16 +1,19 @@
 /* ===== DISEÑO RESPONSIVE Y ESTÉTICA MEJORADA ===== */
+
 /* Versión: 2025-01-11-17:40 */
 
 /* Contenedor principal responsive */
+
 .table-container {
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgb(0 0 0 / 8%);
     overflow: hidden;
     margin-bottom: 2rem;
 }
 
 /* Header de la tabla con gradiente */
+
 .table-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -25,22 +28,23 @@
 }
 
 .table-header .btn {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    background: rgb(255 255 255 / 90%);
+    border: 1px solid rgb(255 255 255 / 80%);
     color: #495057;
     font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .table-header .btn:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(255, 255, 255, 1);
+    background: rgb(255 255 255 / 100%);
+    border-color: rgb(255 255 255 / 100%);
     color: #212529;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
 /* Tabla responsive con scroll horizontal */
+
 .table-responsive-custom {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -49,6 +53,7 @@
 }
 
 /* Estilos de la tabla */
+
 #tablaFilas {
     margin: 0;
     border-collapse: separate;
@@ -58,6 +63,7 @@
 }
 
 /* Headers de la tabla */
+
 #tablaFilas thead th {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border: none;
@@ -70,11 +76,12 @@
     z-index: 10;
     white-space: normal;
     min-width: 120px;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
     line-height: 1.3;
 }
 
 /* Headers sortables */
+
 .sortable {
     cursor: pointer;
     user-select: none;
@@ -85,7 +92,7 @@
 .sortable:hover {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
 
 .sortable .sort-icon {
@@ -98,13 +105,14 @@
 }
 
 /* Celdas de la tabla */
+
 #tablaFilas tbody td {
     padding: 0.75rem;
     border: none;
     border-bottom: 1px solid #f1f3f4;
     vertical-align: middle;
     transition: background-color 0.2s ease;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
     white-space: normal;
     line-height: 1.4;
 }
@@ -114,6 +122,7 @@
 }
 
 /* Columna de número de fila */
+
 #tablaFilas tbody td:first-child {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     font-weight: 600;
@@ -127,6 +136,7 @@
 }
 
 /* Columnas de acciones e imágenes */
+
 #tablaFilas td:nth-last-child(1) {
     white-space: nowrap;
     width: 200px;
@@ -147,6 +157,7 @@
 }
 
 /* Botones de acción */
+
 #tablaFilas td:nth-last-child(1) .btn {
     display: inline-block;
     margin: 2px;
@@ -158,10 +169,11 @@
 
 #tablaFilas td:nth-last-child(1) .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
 /* Contenedor de acciones */
+
 #tablaFilas td:last-child {
     display: flex;
     gap: 5px;
@@ -171,6 +183,7 @@
 }
 
 /* Estilos para documentos */
+
 .documento-item .btn {
     border-radius: 20px;
     font-size: 0.75rem;
@@ -181,10 +194,11 @@
 
 .documento-item .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 10px rgb(0 0 0 / 20%);
 }
 
 /* Estilos para multimedia */
+
 .video-thumbnail-container,
 .audio-thumbnail {
     transition: all 0.3s ease;
@@ -195,7 +209,7 @@
 .video-thumbnail-container:hover,
 .audio-thumbnail:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px rgb(0 0 0 / 20%);
 }
 
 .video-thumbnail-container video,
@@ -211,17 +225,19 @@
 }
 
 /* Play button overlay */
+
 .play-button-overlay {
     transition: all 0.3s ease;
     border-radius: 50%;
 }
 
 .video-thumbnail-container:hover .play-button-overlay {
-    background: rgba(0, 123, 255, 0.9) !important;
+    background: rgb(0 123 255 / 90%) !important;
     transform: scale(1.1);
 }
 
 /* Barra de búsqueda mejorada */
+
 .search-container {
     background: #f8f9fa;
     padding: 1rem;
@@ -239,11 +255,11 @@
 
 .search-container .form-control:focus {
     border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(102 126 234 / 25%);
 }
 
 /* Responsive breakpoints */
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .table-header h2 {
         font-size: 1.4rem;
     }
@@ -268,7 +284,7 @@
     }
 }
 
-@media (max-width: 576px) {
+@media (width <= 576px) {
     .table-header h2 {
         font-size: 1.2rem;
     }
@@ -301,6 +317,7 @@
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -312,6 +329,7 @@
 }
 
 /* Scrollbar personalizado */
+
 .table-responsive-custom::-webkit-scrollbar {
     height: 8px;
 }

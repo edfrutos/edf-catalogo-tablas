@@ -3,18 +3,85 @@ target-version = "py38"
 line-length = 120
 
 [tool.cspell]
-words = [ "api", "aws", "backup", "backups", "bcrypt", "black", "boto3", "catalogos", "catalogotablas", "catálogo", "catálogos", "configuración", "configurar", "cors", "cryptography", "csrf", "diagnosticar", "diagnóstico", "dotenv", "edefrutos", "edf", "escalabilidad", "escalable", "flake8", "flask", "gcp", "gunicorn", "herramientas", "http", "httpdocs", "jinja2", "json", "jwt", "linting", "matplotlib", "migración", "migrar", "mongodb", "monitorear", "monitoreo", "mypy", "métricas", "numpy", "oauth", "pandas", "pillow", "pyc", "pycharm", "pyd", "pymongo", "pyo", "pyright", "pytest", "redirección", "redis", "requests", "restauración", "restore", "ruff", "s3", "sql", "ssl", "tablas", "templates", "testing", "tls", "utilidades", "venv", "verificación", "verificar", "vhosts", "werkzeug", "xml", "xyz",]
-ignorePaths = [ "node_modules/**", ".git/**", "venv/**", "__pycache__/**", "*.pyc", "build/**", "dist/**", "*.egg-info/**", ".venv/**", "backups/**", "logs/**", "*.log", "*.md", "*.txt", ".cursorrules", "tools/build/**", "tools/discarded_files_*/**", "app_data/**", "instance/**", "flask_session/**", "uploads/**", "static/uploads/**", "spreadsheets/**", "exportados/**", "imagenes/**", "static/imagenes/**",]
+# Diccionarios a usar (inglés y español)
+language = "en,es"
+languageSettings = [
+    { languageId = "en", dictionaries = ["en_US", "companies", "softwareTerms", "misc"] },
+    { languageId = "es", dictionaries = ["es_ES", "companies", "softwareTerms", "misc"] }
+]
+
+# Diccionarios personalizados
+dictionaries = ["project-words", "technical-terms"]
+
+# Palabras personalizadas del proyecto
+words = [ 
+    # Términos técnicos generales
+    "api", "aws", "backup", "backups", "bcrypt", "black", "boto3", "cors", "cryptography", "csrf", 
+    "dotenv", "flake8", "flask", "gcp", "gunicorn", "http", "httpdocs", "jinja2", "json", "jwt", 
+    "linting", "matplotlib", "mongodb", "mypy", "numpy", "oauth", "pandas", "pillow", "pyc", 
+    "pycharm", "pyd", "pymongo", "pyo", "pyright", "pytest", "redis", "requests", "restore", 
+    "ruff", "s3", "sql", "ssl", "templates", "testing", "tls", "venv", "werkzeug", "xml", "xyz",
+    
+    # Términos específicos del proyecto
+    "catalogos", "catalogotablas", "edefrutos", "edf", "tablas", "utilidades", "vhosts",
+    "imagenes", "exportados", "spreadsheets",
+    
+    # Términos en español
+    "catálogo", "catálogos", "configuración", "configurar", "diagnosticar", "diagnóstico", 
+    "escalabilidad", "escalable", "herramientas", "migración", "migrar", "monitorear", 
+    "monitoreo", "métricas", "redirección", "restauración", "verificación", "verificar"
+]
+
+# Rutas a ignorar
+ignorePaths = [ 
+    "node_modules/**", ".git/**", "venv/**", "__pycache__/**", "*.pyc", "build/**", 
+    "dist/**", "*.egg-info/**", ".venv/**", "backups/**", "logs/**", "*.log", 
+    ".cursorrules", "tools/build/**", "tools/discarded_files_*/**", "app_data/**", 
+    "instance/**", "flask_session/**", "uploads/**", "static/uploads/**", 
+    "spreadsheets/**", "exportados/**", "imagenes/**", "static/imagenes/**"
+]
+
+# Archivos a incluir en la verificación
+includeRegExpList = [
+    ".*\\.(py|js|ts|html|css|md|txt|json|yaml|yml|toml)$"
+]
+
+# Patrones a ignorar en el contenido
+ignoreRegExpList = [
+    # URLs y emails
+    "https?://[^\\s]+",
+    "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+    
+    # Hashes y UUIDs
+    "[a-fA-F0-9]{32,}",
+    "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+    
+    # Cadenas de configuración
+    "\\$\\{[^}]+\\}",
+    "\\{\\{[^}]+\\}\\}",
+    
+    # Nombres de archivos con extensiones
+    "[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|gif|pdf|mp4|mp3|csv|xlsx|docx)\\b",
+    
+    # Tokens y claves
+    "[A-Z0-9]{20,}"
+]
+
+# Configuración avanzada
+caseSensitive = false
+allowCompoundWords = true
+minWordLength = 3
 
 [tool.ruff.lint]
 select = [ "E", "W", "F", "I", "B", "C4", "UP",]
-ignore = [ "E501", "F401", "F841", "F811", "B008", "B006", "C901", "E203", "E731", "I001", "UP032", "F541", "F821", "B904", "F841",]
+ignore = [ "E501", "F401", "F841", "F811", "B008", "B006", "C901", "E203", "E731", "I001", "UP032", "F541", "F821", "B904", "F841", "W293" ]
 
 [tool.ruff.lint.per-file-ignores]
 "app/routes/admin_routes.py" = [ "F401", "F841", "F811", "E501", "I001", "UP032", "F541",]
 "tools/test_spell_check_utilities.py" = [ "F401", "F541",]
 "tools/quick_test_spell_check_integration.py" = [ "F401", "F541", "UP032",]
 "__init__.py" = ["F401"]
+"test_correcciones.ipynb" = ["W293"]
 
 [tool.ruff.lint.isort]
 known-first-party = [ "app", "tools", "scripts",]

@@ -8,7 +8,23 @@ max-line-length = 120
 exclude = .git,__pycache__,.venv,node_modules,.mypy_cache,.ruff_cache,build,dist,*.egg-info,backups,logs,uploads,static/uploads,imagenes,exportados,spreadsheets,.cursorrules,tools/project_backup_interface.py
 
 # Ignorar errores específicos
-ignore = F841,F541,E722,E501,B007,F401,F821,F811,B904,W503
+ignore = F841,F541,E722,E501,B007,F401,F821,F811,B904,W503,W293,E203,E402
+
+# Configuración específica por archivo
+per-file-ignores = 
+    # Jupyter Notebooks
+    *.ipynb:W293,E402,F401,E501
+    # Archivos de test
+    test_*.py:F401,E501
+    # Archivos de debug y scripts temporales
+    debug_*.py:F401,E501,W293
+    # Archivos de configuración
+    config.py:F401
+    # Scripts específicos del proyecto
+    test_correcciones.ipynb:W293,E402,F401
+
+# Complejidad ciclomática máxima
+max-complexity = 12
 
 # Estadísticas
 statistics = True

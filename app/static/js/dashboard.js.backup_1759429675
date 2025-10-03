@@ -5,8 +5,7 @@ $(function () {
   console.log("🔧 Inicializando dashboard completo...");
 
   // Variables globales para Google Drive
-  // eslint-disable-next-line no-unused-vars
-  let _allBackups = []; // Variable global necesaria para compatibilidad
+  let allBackups = [];
   let selectedBackups = new Set();
 
   // Sistema de eliminación automática de alertas duplicadas
@@ -319,7 +318,7 @@ $(function () {
                 • Documentos: ${response.total_documents}<br>
                 • Colecciones: ${response.total_collections}<br>
                 • Fecha: ${new Date().toLocaleString()}<br>
-                <button class="btn btn-sm btn-outline-success mt-2" data-action="download-backup" data-filename="${response.filename}">
+                <button class="btn btn-sm btn-outline-success mt-2" onclick="downloadBackup('${response.filename}')">
                   <i class="bi bi-download"></i> Descargar Backup
                 </button>
               </small>
@@ -397,7 +396,7 @@ $(function () {
                   <a href="${response.drive_info.web_view_url}" target="_blank" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-google"></i> Ver en Google Drive
                   </a>
-                  <button class="btn btn-sm btn-outline-success ms-2" data-action="download-backup" data-filename="${response.filename}">
+                  <button class="btn btn-sm btn-outline-success ms-2" onclick="downloadBackup('${response.filename}')">
                     <i class="bi bi-download"></i> Descargar Copia Local
                   </button>
                 </div>
@@ -429,7 +428,7 @@ $(function () {
                 • <strong>Colecciones:</strong> ${response.total_collections}<br>
                 • <strong>Fecha:</strong> ${new Date().toLocaleString()}<br>
                 <div class="mt-3">
-                  <button class="btn btn-sm btn-outline-success" data-action="download-backup" data-filename="${response.filename}">
+                  <button class="btn btn-sm btn-outline-success" onclick="downloadBackup('${response.filename}')">
                     <i class="bi bi-download"></i> Descargar Backup Local
                   </button>
                 </div>
@@ -473,8 +472,7 @@ $(function () {
   }
 
   // Función legacy (mantener por compatibilidad pero no usar)
-  // eslint-disable-next-line no-unused-vars
-  function _initializeBackupEventsLegacy() {
+  function initializeBackupEventsLegacy() {
     console.log("⚠️ Función legacy - no debería ejecutarse");
     
     $("#backupBtn")
@@ -809,7 +807,7 @@ $(function () {
           selectedBackups.clear();
           loadDriveBackups();
         })
-        .catch((_error) => {
+        .catch((error) => {
           showAlert("Error al eliminar algunos backups", "danger");
         })
         .finally(() => {
@@ -837,7 +835,7 @@ $(function () {
         $("#driveBackupsLoading").hide();
 
         if (response.success && response.backups && response.backups.length > 0) {
-          _allBackups = response.backups;
+          allBackups = response.backups;
           displayDriveBackups(response.backups);
           $("#driveBackupsContent").show();
         } else {
@@ -1083,7 +1081,7 @@ $(function () {
         url: "/admin/maintenance/export/csv",
         method: "POST",
         xhrFields: { withCredentials: true },
-        success: function (response, _status, _xhr) {
+        success: function (response, status, xhr) {
           console.log("📊 Respuesta CSV:", response);
           
           // Manejar respuesta JSON
@@ -1133,20 +1131,20 @@ $(function () {
                     showAlert(`📁 Para ver el archivo:<br><br>1. Abre Finder<br>2. Ve a "Descargas"<br>3. Busca: ${filename}`, "info");
                   }
                 })
-                .catch(_error => {
+                .catch(error => {
                   showAlert(`📁 Para ver el archivo:<br><br>1. Abre Finder<br>2. Ve a "Descargas"<br>3. Busca: ${filename}`, "info");
                 });
               }, 2000);
             })
-            .catch(_error => {
-              console.error("Error descargando archivo:", _error);
+            .catch(error => {
+              console.error("Error descargando archivo:", error);
               showAlert("Error al descargar el archivo CSV", "danger");
             });
           } else {
             showAlert("Error en la respuesta del servidor: " + (response.error || "Respuesta inválida"), "danger");
           }
         },
-        error: function (xhr, _status, _error) {
+        error: function (xhr, status, error) {
           console.error("❌ Error exportando CSV:", xhr);
           const errorMsg = xhr.responseJSON ? xhr.responseJSON.error : "Error al exportar CSV";
           showAlert(`Error al exportar CSV: ${errorMsg}`, "danger");
@@ -1213,7 +1211,7 @@ $(function () {
           showModalAlert("Error al cargar backups: " + (response.error || "Respuesta inválida"), "danger");
         }
       },
-      error: function(xhr, _status, _error) {
+      error: function(xhr, status, error) {
         console.error("❌ Error cargando backups locales:", xhr);
         $("#localBackupsLoading").hide();
         $("#localBackupsContent").show();
@@ -1345,8 +1343,7 @@ $(function () {
   });
 
   // Acciones masivas - Se registrarán cuando el modal se abra
-  // eslint-disable-next-line no-unused-vars
-  function _initializeLocalBackupsMassiveActions() {
+  function initializeLocalBackupsMassiveActions() {
     console.log("🔧 Inicializando acciones masivas de backups locales...");
 
     // Verificar que los elementos existan antes de registrar eventos
@@ -1781,13 +1778,4 @@ $(function () {
 
   // Iniciar verificación de elementos
   waitForElements();
-});
-// Event listener para data-action="download-backup"
-document.addEventListener('click', function(e) {
-    if (e.target.dataset.action === 'download-backup') {
-        const filename = e.target.dataset.filename;
-        if (filename) {
-            downloadBackup(filename);
-        }
-    }
 });

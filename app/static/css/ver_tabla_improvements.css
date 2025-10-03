@@ -1,10 +1,12 @@
 /* ===== MEJORAS ESPECÍFICAS PARA VER_TABLA.HTML ===== */
+
 /* Versión: 2025-01-16-12:15 - Headers corregidos para mostrar en línea */
 
 /* 1. HEADERS CON COLOR DE FONDO DESTACADO */
+
 #tablaFilas thead th {
     background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important;
-    color: #ffffff !important;
+    color: #fff !important;
     border: none !important;
     padding: 1rem 0.75rem !important;
     font-weight: 600 !important;
@@ -13,12 +15,13 @@
     top: 0 !important;
     z-index: 10 !important;
     white-space: nowrap !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 15%) !important;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 30%) !important;
     border-bottom: 2px solid #343a40 !important;
 }
 
 /* 2. CONTENEDOR DE BÚSQUEDA MEJORADO */
+
 .search-container {
     width: 100% !important; /* Mismo ancho que la ventana de filas */
     max-width: 100% !important;
@@ -28,7 +31,7 @@
 }
 
 .search-container .input-group {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%) !important;
     border-radius: 8px !important;
     overflow: hidden !important;
 }
@@ -43,7 +46,7 @@
 
 .search-container .form-control:focus {
     border-color: #007bff !important;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 25%) !important;
 }
 
 .search-container .input-group-text {
@@ -54,6 +57,7 @@
 }
 
 /* 3. ANCHOS ESPECÍFICOS PARA COLUMNAS */
+
 #tablaFilas th:nth-child(1), /* Columna # */
 #tablaFilas td:nth-child(1) {
     width: 60px !important;
@@ -62,6 +66,7 @@
 }
 
 /* Columna Fecha - una sola línea */
+
 #tablaFilas th:nth-child(2), /* Columna Fecha */
 #tablaFilas td:nth-child(2) {
     width: 140px !important;
@@ -73,6 +78,7 @@
 }
 
 /* Columnas Título_* - más anchas */
+
 #tablaFilas th:nth-child(3), /* Título_1 */
 #tablaFilas td:nth-child(3),
 #tablaFilas th:nth-child(5), /* Título_2 */
@@ -82,11 +88,12 @@
     width: 250px !important;
     min-width: 250px !important;
     max-width: 250px !important;
-    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
     line-height: 1.4 !important;
 }
 
 /* Columnas Documentación_* - anchos estándar */
+
 #tablaFilas th:nth-child(4), /* Documentación_1 */
 #tablaFilas td:nth-child(4),
 #tablaFilas th:nth-child(6), /* Documentación_2 */
@@ -100,6 +107,7 @@
 }
 
 /* Columna Multimedia */
+
 #tablaFilas th:nth-child(9),
 #tablaFilas td:nth-child(9) {
     width: 120px !important;
@@ -109,6 +117,7 @@
 }
 
 /* Columna Imágenes */
+
 #tablaFilas th:nth-child(10),
 #tablaFilas td:nth-child(10) {
     width: 150px !important;
@@ -118,6 +127,7 @@
 }
 
 /* Columna Acciones - asegurar que siempre sea visible */
+
 #tablaFilas th:nth-child(11),
 #tablaFilas td:nth-child(11) {
     width: 200px !important;
@@ -131,7 +141,7 @@
 }
 
 /* 4. RESPONSIVIDAD MEJORADA */
-@media (max-width: 1200px) {
+@media (width <= 1200px) {
     .search-container {
         width: 100% !important;
         max-width: 100% !important;
@@ -149,7 +159,7 @@
     }
 }
 
-@media (max-width: 992px) {
+@media (width <= 992px) {
     .search-container {
         width: 100% !important;
         max-width: 100% !important;
@@ -174,7 +184,7 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .search-container {
         width: 100% !important;
         max-width: 100% !important;
@@ -200,7 +210,7 @@
     }
 }
 
-@media (max-width: 576px) {
+@media (width <= 576px) {
     .search-container {
         width: 100% !important;
         max-width: 100% !important;
@@ -226,19 +236,21 @@
 }
 
 /* 5. MEJORAS ADICIONALES PARA RESPONSIVIDAD */
+
 .table-responsive-custom {
     border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 10%) !important;
+    overflow: auto visible !important;
 }
 
 /* Asegurar que la tabla tenga scroll horizontal cuando sea necesario */
+
 #tablaFilas {
     min-width: 1400px !important; /* Ajustado para incluir todas las columnas más anchas */
 }
 
 /* 6. ESTILOS PARA BOTONES DE ACCIONES */
+
 #tablaFilas td:nth-child(11) .btn {
     margin: 2px !important;
     font-size: 0.85rem !important;
@@ -246,6 +258,7 @@
 }
 
 /* 7. MEJORAS EN EL CONTENIDO DE CELDAS */
+
 #tablaFilas tbody td {
     vertical-align: middle !important;
     padding: 0.75rem 0.5rem !important;
@@ -253,16 +266,18 @@
 }
 
 /* 8. HOVER EFFECTS MEJORADOS */
+
 #tablaFilas tbody tr:hover {
     background-color: #f8f9fa !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%) !important;
     transition: all 0.2s ease !important;
 }
 
 /* 9. ESTILOS PARA ICONOS DE ORDENAMIENTO */
+
 #tablaFilas thead th .sort-icon {
-    color: #ffffff !important;
+    color: #fff !important;
     opacity: 0.7 !important;
     transition: opacity 0.2s ease !important;
     margin-left: 8px !important;
@@ -275,6 +290,7 @@
 }
 
 /* Asegurar que el texto y el icono estén alineados */
+
 #tablaFilas thead th {
     display: table-cell !important;
     vertical-align: middle !important;
@@ -282,6 +298,7 @@
 }
 
 /* 10. MEJORAS EN EL CONTENIDO DE FECHA */
+
 #tablaFilas td:nth-child(2) {
     font-family: 'Courier New', monospace !important;
     font-size: 0.9rem !important;

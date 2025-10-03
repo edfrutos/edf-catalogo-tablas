@@ -1,9 +1,10 @@
-{% block scripts %}
-    <script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
-    <script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
-    <script src="{{ url_for('static', filename='js/mp4-debug-fila5.js') }}?v={{ range(1, 10000) | random }}"></script>
-{% endblock %}
 {% extends 'base.html' %}
+
+{% block extra_head %}
+    <!-- modal-functions-UNIFIED.js ya está cargado en base.html -->
+    <script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
+    <!-- Scripts MP4 ya cargados en base.html -->
+{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -91,6 +92,18 @@
         white-space: nowrap;
     }
     
+    /* Estilo para botón de audio */
+    .audio-thumbnail-btn {
+        width: 80px; 
+        height: 60px; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        border-radius: 4px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        cursor: pointer;
+    }
+    
     @media (max-width: 768px) {
         .table td {
             max-width: 150px;
@@ -144,7 +157,7 @@
                 <tr>
                     <th style="width: 60px;">
                         #
-                        <span class="sort-icon" data-column="0" data-type="number" onclick="sortTable(this.dataset.column, this.dataset.type)">
+                        <span class="sort-icon" data-column="0" data-type="number" data-action="sort" data-sort="table"set.column, this.dataset.type)">
                             <i class="bi bi-chevron-expand" id="sort-icon-0"></i>
                         </span>
                     </th>
@@ -157,7 +170,7 @@
                         {% else %}
                         {{ header }}
                         {% endif %}
-                        <span class="sort-icon" data-column="{{ loop.index }}" data-type="text" onclick="sortTable(this.dataset.column, this.dataset.type)">
+                        <span class="sort-icon" data-column="{{ loop.index }}" data-type="text" data-action="sort">
                             <i class="bi bi-chevron-expand" id="sort-icon-{{ loop.index }}"></i>
                         </span>
                     </th>
@@ -189,10 +202,14 @@
                                                 <img src="{{ multimedia_data }}" 
                                                      alt="Multimedia" 
                                                      class="img-thumbnail multimedia-thumbnail"
-                                                     onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}')">
+                                                     data-media-url="{{ multimedia_data }}"
+                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"
+                                                     data-action="show-multimedia-modal">
                                             {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
                                                 <div class="multimedia-thumbnail-container" 
-                                                     onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}')"
+                                                     data-media-url="{{ multimedia_data }}"
+                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"
+                                                     data-action="show-multimedia-modal"
                                                      style="cursor: pointer; position: relative; display: inline-block;">
                                                     <video class="multimedia-thumbnail" 
                                                            style="pointer-events: none;">
@@ -205,7 +222,9 @@
                                                 </div>
                                             {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
                                                 <div class="multimedia-thumbnail-container" 
-                                                     onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}')"
+                                                     data-media-url="{{ multimedia_data }}"
+                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"
+                                                     data-action="show-multimedia-modal"
                                                      style="cursor: pointer; position: relative; display: inline-block;">
                                                     <audio class="multimedia-thumbnail" 
                                                            style="pointer-events: none;">
@@ -218,7 +237,9 @@
                                                 </div>
                                             {% else %}
                                                 <a href="#" 
-                                                   onclick="showMultimediaModal('{{ multimedia_data }}', '{{ multimedia_data.split('/')[-1] }}'); return false;"
+                                                   data-media-url="{{ multimedia_data }}"
+                                                   data-media-name="{{ multimedia_data.split('/')[-1] }}"
+                                                   data-action="show-multimedia-modal"
                                                    class="btn btn-sm btn-outline-secondary">
                                                     <i class="fas fa-play"></i> Reproducir
                                                 </a>
@@ -256,8 +277,10 @@
                                           <!-- Imagen -->
                                           <img src="{{ media_proxy }}" 
                                                alt="Multimedia" 
+                                               data-image-url="{{ media_proxy }}"
+                                               data-image-name="{{ media_filename }}"
                                                style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                                               onclick="showImageModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
+                                               onclick="showImageModal(this.dataset.imageUrl, this.dataset.imageName); return false;"
                                                onmouseover="this.style.opacity='0.8'"
                                                onmouseout="this.style.opacity='1'">
                                         {% elif media_filename.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
@@ -265,8 +288,10 @@
                                           <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
                                             <video 
                                               src="{{ media_proxy }}" 
+                                              data-media-url="{{ media_proxy }}"
+                                              data-media-name="{{ media_filename }}"
                                               style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                                              onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
+                                              data-action="show-multimedia-modal"
                                               onmouseover="this.style.opacity='0.8'"
                                               onmouseout="this.style.opacity='1'"
                                               preload="metadata">
@@ -278,14 +303,21 @@
                                         {% elif media_filename.lower().endswith(('.mp3', '.wav', '.ogg')) %}
                                           <!-- Audio -->
                                           <div class="audio-thumbnail" style="display: inline-block; text-align: center;">
-                                            <div style="width: 80px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;">
+                                            <div class="audio-thumbnail-btn" 
+                                                 data-media-url="{{ media_proxy }}"
+                                                 data-media-name="{{ media_filename }}"
+                                                 data-action="show-multimedia-modal">
                                               <i class="fas fa-music" style="color: white; font-size: 18px;"></i>
                                             </div>
                                             <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
                                           </div>
                                                                                 {% else %}
                                                                                     <!-- Otro tipo de archivo -->
-                                                                                    <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary me-2">
+                                                                                    <a href="#" 
+                                                                                       data-media-url="{{ media_proxy }}"
+                                                                                       data-media-name="{{ media_filename }}"
+                                                                                       data-action="show-multimedia-modal" 
+                                                                                       class="btn btn-sm btn-outline-secondary me-2">
                                                                                         <i class="fas fa-file"></i> Ver Archivo
                                                                                     </a>
                                                                                     <a href="{{ media_proxy }}" target="_blank" class="btn btn-sm btn-outline-primary">
@@ -411,8 +443,10 @@
                                     <img src="{{ img_url }}" 
                                          alt="Imagen {{ loop.index }}" 
                                          class="img-thumbnail catalog-preview-img" 
+                                         data-image-url="{{ img_url }}"
+                                         data-image-name="Imagen {{ loop.index }}"
                                          style="width: 60px; height: 60px; object-fit: cover; margin-right: 4px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;"
-                                         onclick="showImageModal('{{ img_url }}', 'Imagen {{ loop.index }}')"
+                                         onclick="showImageModal(this.dataset.imageUrl, this.dataset.imageName)"
                                          onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'"
                                          loading="lazy">
                                 {% endif %}
@@ -518,6 +552,8 @@
 </div>
 
 <script>
+/* Cache buster: 20251002_195903 */
+
 // FUNCIÓN COMENTADA - Ahora usa la del modal-functions-UNIFIED.js que tiene mejor manejo de errores
 /*
 function showImageModal(imageSrc, imageTitle) {
@@ -534,7 +570,7 @@ function confirmDeleteRow(catalogId, rowIndex) {
         // Crear formulario para enviar POST
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `{{ url_for('catalogs.delete_row', catalog_id='PLACEHOLDER', row_index=0) }}`.replace('PLACEHOLDER', catalogId).replace('0', rowIndex);
+        form.action = "{{ url_for('catalogs.delete_row', catalog_id='PLACEHOLDER', row_index=0) }}".replace('PLACEHOLDER', catalogId).replace('0', rowIndex);
         
         // Agregar token CSRF si existe
         const csrfToken = document.querySelector('meta[name=csrf-token]');
@@ -556,5 +592,68 @@ function sortTable(column, type) {
     // Implementar lógica de ordenamiento si es necesario
     console.log('Ordenando por columna:', column, 'tipo:', type);
 }
+
+// Funciones de DEBUG
+function debugRow(rowNumber) {
+    console.log('=== DEBUG FILA #' + rowNumber + ' ===');
+    const fila = document.getElementById('fila-' + rowNumber);
+    if (fila) {
+        console.log('Elemento fila encontrado:', fila);
+        console.log('Contenido de la fila:', fila.innerHTML);
+    } else {
+        console.log('ERROR: No se encontró la fila #' + rowNumber);
+    }
+}
+
+function debugAllRows() {
+    console.log('=== DEBUG TODAS LAS FILAS ===');
+    const tbody = document.getElementById('tabla-body');
+    if (tbody) {
+        const filas = tbody.querySelectorAll('tr');
+        console.log('Total de filas encontradas:', filas.length);
+        filas.forEach((fila, index) => {
+            console.log('Fila ' + (index + 1) + ':', fila);
+        });
+    } else {
+        console.log('ERROR: No se encontró el tbody de la tabla');
+    }
+}
+
+function findMultimediaFiles() {
+    console.log('=== BUSCAR ARCHIVOS MULTIMEDIA ===');
+    const multimedia = document.querySelectorAll('video, audio, img[src*="mp4"], img[src*="mp3"]');
+    console.log('Archivos multimedia encontrados:', multimedia.length);
+    multimedia.forEach((item, index) => {
+        console.log('Multimedia ' + (index + 1) + ':', item.src || item.getAttribute('src'));
+    });
+}
+
+function checkS3Files() {
+    console.log('=== VERIFICAR ARCHIVOS S3 ===');
+    const s3Links = document.querySelectorAll('a[href*="s3"], img[src*="s3"], video[src*="s3"], audio[src*="s3"]');
+    console.log('Enlaces S3 encontrados:', s3Links.length);
+    s3Links.forEach((item, index) => {
+        const url = item.href || item.src || item.getAttribute('href') || item.getAttribute('src');
+        console.log('S3 ' + (index + 1) + ':', url);
+    });
+}
+document.addEventListener('DOMContentLoaded', function() {
+    // Event listener para modales multimedia
+    document.addEventListener('click', function(e) {
+        const multimediaElement = e.target.closest('[data-action="show-multimedia-modal"]');
+        if (multimediaElement) {
+            e.preventDefault();
+            const mediaUrl = multimediaElement.dataset.mediaUrl;
+            const mediaName = multimediaElement.dataset.mediaName;
+            
+            if (mediaUrl && mediaName && typeof showMultimediaModal === 'function') {
+                showMultimediaModal(mediaUrl, mediaName);
+            } else {
+                console.error('[MULTIMEDIA] showMultimediaModal no disponible o datos faltantes');
+            }
+        }
+    });
+});
+
 </script>
 {% endblock %}

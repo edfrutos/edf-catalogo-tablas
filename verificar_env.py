@@ -25,24 +25,22 @@ def main():
     # Cargar variables
     try:
         from dotenv import load_dotenv
-
         load_dotenv()
         print("✅ Variables de entorno cargadas")
     except ImportError:
         print("⚠️  python-dotenv no instalado. Instalando...")
         os.system("pip install python-dotenv")
         from dotenv import load_dotenv
-
         load_dotenv()
 
     # Variables críticas a verificar
     critical_vars = {
-        "SECRET_KEY": "Clave secreta de Flask",
-        "MONGO_URI": "URI de MongoDB",
-        "BREVO_SMTP_USERNAME": "Usuario SMTP Brevo",
-        "BREVO_SMTP_PASSWORD": "Password SMTP Brevo",
-        "NOTIFICATION_EMAIL_1": "Email de notificación 1",
-        "NOTIFICATION_EMAIL_2": "Email de notificación 2",
+        'SECRET_KEY': 'Clave secreta de Flask',
+        'MONGO_URI': 'URI de MongoDB',
+        'BREVO_SMTP_USERNAME': 'Usuario SMTP Brevo',
+        'BREVO_SMTP_PASSWORD': 'Password SMTP Brevo',
+        'NOTIFICATION_EMAIL_1': 'Email de notificación 1',
+        'NOTIFICATION_EMAIL_2': 'Email de notificación 2'
     }
 
     print("\n📋 VERIFICACIÓN DE VARIABLES CRÍTICAS:")
@@ -53,7 +51,7 @@ def main():
         value = os.getenv(var)
         if value:
             # Mostrar solo parte de valores sensibles
-            if "PASSWORD" in var or "SECRET" in var or "KEY" in var:
+            if 'PASSWORD' in var or 'SECRET' in var or 'KEY' in var:
                 display_value = f"{value[:8]}...***"
             else:
                 display_value = value
@@ -66,20 +64,20 @@ def main():
     print("\n🚨 VERIFICACIÓN DE SEGURIDAD:")
     print("-" * 40)
 
-    secret_key = os.getenv("SECRET_KEY", "")
-    if "clave-secreta" in secret_key.lower():
+    secret_key = os.getenv('SECRET_KEY', '')
+    if 'clave-secreta' in secret_key.lower():
         print("⚠️  SECRET_KEY usando valor por defecto")
     else:
         print("✅ SECRET_KEY personalizada")
 
-    brevo_password = os.getenv("BREVO_SMTP_PASSWORD", "")
-    if "Rmp3UXwsIkvA0c1d" in brevo_password:
+    brevo_password = os.getenv('BREVO_SMTP_PASSWORD', '')
+    if 'Rmp3UXwsIkvA0c1d' in brevo_password:
         print("🚨 BREVO_SMTP_PASSWORD usando credencial comprometida")
     else:
         print("✅ BREVO_SMTP_PASSWORD actualizada")
 
-    brevo_api = os.getenv("BREVO_API_KEY", "")
-    if "tu-nueva-brevo" in brevo_api:
+    brevo_api = os.getenv('BREVO_API_KEY', '')
+    if 'tu-nueva-brevo' in brevo_api:
         print("⚠️  BREVO_API_KEY necesita configuración")
     else:
         print("✅ BREVO_API_KEY configurada")
@@ -90,11 +88,10 @@ def main():
 
     try:
         import pymongo
-
-        mongo_uri = os.getenv("MONGO_URI")
+        mongo_uri = os.getenv('MONGO_URI')
         if mongo_uri:
             client = pymongo.MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
-            client.admin.command("ismaster")
+            client.admin.command('ismaster')
             print("✅ MongoDB conectado correctamente")
         else:
             print("❌ MONGO_URI no definida")
@@ -114,3 +111,5 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+# python3 verificar_env.py  # noqa: W292
