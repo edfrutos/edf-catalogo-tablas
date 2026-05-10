@@ -277,7 +277,6 @@ modal_fix_simple.js
 # ---------------------------------------------------------
 # Documentación local generada / informes temporales
 # ---------------------------------------------------------
-docs/
 docs_md/
 *.txt
 !requirements*.txt
@@ -350,3 +349,11 @@ app/templates/view_row.html
 
 # Cuarentena local de limpieza
 _cuarentena_limpieza/
+
+# Fuentes antiguas de documentación, solo archivo local
+docs/_fuentes_originales_md/
+# Documentación binaria/local no versionada
+docs/*.pdf
+
+# Script temporal usado para generar documentación consolidada
+crear_docs_limpios.py
