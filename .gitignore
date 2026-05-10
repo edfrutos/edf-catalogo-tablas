@@ -1,284 +1,50 @@
-# -------------------------------------------
-# IGNORAR DIRECTORIOS ORIGINALES (BACKUP)
-# -------------------------------------------
-tools/original/
-scripts/original/
-tests/original/
-.01_Proyecto_backup/
-*_Proyecto_backup/
-*_backup/
-backup_*/
-backup_completo_*/
-edf_catalogotablas_backup_*/
-edf_catalogotablas_OPTIMIZED_*/
+# =========================================================
+# EDF Catálogo de Tablas - .gitignore
+# =========================================================
 
-# -------------------------------------------
-# ARCHIVOS SENSIBLES - SEGURIDAD CRÍTICA
-# -------------------------------------------
-server_logs.txt
-*.log
-logs/
-# Excluir archivos .txt excepto requirements
-*.txt
-!requirements*.txt
-
-# -------------------------------------------
-# IGNORAR ENTORNOS VIRTUALES
-# -------------------------------------------
+# ---------------------------------------------------------
+# Entornos virtuales / Python
+# ---------------------------------------------------------
 .venv/
 venv/
-.venv_clean/
-ENV/
 env/
+ENV/
+.venv_clean/
 .venv310/
 venv310/
-setup.py
-run.py
-*.pyc
 __pycache__/
+*.py[cod]
+*$py.class
 *.pyo
 *.pyd
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.tox/
+.coverage
+coverage.xml
+htmlcov/
 
-# -------------------------------------------
-# IGNORAR ENTORNOS IDE
-# -------------------------------------------
-.blackboxrules
-.eslintignore
-.prettierignore
-.prettierrc.json
-.spellright.dict
-.windwurf-setting.json
-.windsurf-settings.json
-.pylintrc
-.pylintrc.bak
-.pylintrc.backup
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE CONFIGURACIÓN SENSIBLES
-# -------------------------------------------
+# ---------------------------------------------------------
+# Configuración local, secretos y credenciales
+# ---------------------------------------------------------
 .env
 .env.*
 *.env
-backups/.env*
-backups/*/.env*
-# Ignorar cualquier archivo que pueda contener claves API o credenciales
-*credentials*
-*secret*
-*api_key*
-*apikey*
-*password*
-*token*
-/app/templates/dev_template/tests/legacy/config_debug.py
-logs/gunicorn_access.log
-logs/flask_debug.log
-logs/gunicorn_error.log
-sensitive_backup/
-
-# Archivos de credenciales específicos
-tools/db_utils/credentials.json
-tools/db_utils/token.pickle
-tools/maintenance/mi_config.json
-tools/production/db_utils/credentials.json
-tools/production/db_utils/token.json
-tools/production/db_utils/token.pickle
-cookies.txt
-credentials_all_users.txt
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS Y CARPETAS TEMPORALES
-# -------------------------------------------
-*.sqlite3
-*.log
-*.zip
-*.tar.gz
-*.bak*
-*.bak.*
-*.tmp
-.DS_Store
-Thumbs.db
-temp_files_to_remove/
-flask_session/
-logs/*
-flask.log
-exportados/
-docs/
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE MÉTRICAS Y MONITOREO
-# -------------------------------------------
-app_data/edefrutos2025_metrics.json
-app_data/*.json
-*_metrics.json
-*_stats.json
-app_data/edefrutos2025_users_fallback.json
-app_data/edefrutos2025_notifications_config.json
-setup_github_secrets_manual.sh
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE CONSTRUCCIÓN Y DISTRIBUCIÓN
-# -------------------------------------------
-build/
-dist/
-*.spec
-*.pyc
-__pycache__/
-*.pyo
-*.pyd
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE SISTEMA
-# -------------------------------------------
-.DS_Store
-Thumbs.db
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE REGISTRO
-# -------------------------------------------
-logs/*
-*.log
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE ENTRENAMIENTO Y DATOS
-# -------------------------------------------
-*.csv
-*.xlsx
-*.xls
-*.db
-*.sqlite3
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE RESPALDO Y TEMPORALES ESPECÍFICOS
-# -------------------------------------------
-**/scripts_routes.py.bak.*
-app.py.bak.*
-.env.bak.*
-wsgi.py.bak.*
-=*
-*.pid
-journal*.txt
-*.backup
-*.backup.*
-backup_*.py
-*_backup_*.py
-*_backup_*.sh
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS Y CARPETAS DE DEPLOYMENT
-# -------------------------------------------
-instance/
-uploads/
-imagenes_subidas/
-spreadsheets/
-mi_config.json
-token.pickle
-*.pickle
-tools/basura/
-mcp-server-demo/
-node_modules/
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE IDEs (Visual Studio Code, PyCharm, etc.)
-# -------------------------------------------
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-.windsurf-settings.json
-
-# -------------------------------------------
-# IGNORAR TEST OUTPUTS
-# -------------------------------------------
-htmlcov/
-coverage.xml
-.tox/
-.pytest_cache/
-.pixi/
-
-# -------------------------------------------
-# IGNORAR ARCHIVOS DE AWS (si usas SAM o CDK)
-# -------------------------------------------
-.aws-sam/
-.cdk.staging/
-.qodo
-
-tools/_backup_scripts/
-
-# PyInstaller
-build/
-dist/
-*.spec
-
-# Respaldos automáticos y carpetas de backup
-backups/
-tools_backup_*/
-
-# Archivo basura temporal de limpieza
-basura/
-
-# Archivos temporales y de subida
-app/static/uploads/
-app/static/imagenes_subidas/
-tools/image_utils/app/static/uploads/
-
-# Archivos de testeo y debug (ya incluidos en sección específica)
-# test_*.py
-# debug_*.py
-# *_test.*
-# *_debug.*
-test_*.js
-test_*.html
-test_*.json
-modal_test.html
-tests_blueprint.py
-
-# Archivos de distribución grandes
-*.dmg
-dist/
-build/
-
-# Logs adicionales
-scripts/logs/
-scripts/maintenance/logs/
-tools/maintenance/logs/
-tools/db_utils/mongodb_backup.log
-
-# Archivos de prueba y limpieza
-clean_project.py
-app/static/___prueba_cascade.txt
-cookies.txt
-
-# Archivos temporales y de estructura grandes
-estriuctura_buid.txt
-estriuctura
-
-# Logs generales
-*.log
-
-# Archivos grandes generados
-generated-docs/
-
-# Archivos temporales de Git
-.git-rewrite/
-
-# -------------------------------------------
-# IGNORAR GEMINI CLI
-# -------------------------------------------
-gemini-cli/
-
-# -------------------------------------------
-# ARCHIVOS ADICIONALES DE IDE Y EDITORES
-# -------------------------------------------
-*.swp
-*.swo
-*~
-.vim/
-.emacs.d/
-.atom/
-.brackets.json
-
-# -------------------------------------------
-# ARCHIVOS DE CERTIFICADOS Y CLAVES
-# -------------------------------------------
+.env.local
+.env.development
+.env.test
+.env.production
+config.local.*
+settings.local.*
 *.pem
 *.key
 *.p12
@@ -288,145 +54,200 @@ gemini-cli/
 *.crt
 *.cer
 *.der
+*credentials*
+*secret*
+*api_key*
+*apikey*
+*password*
+*token*
+credentials*.json
+token*.json
+token*.pickle
+token.pickle
+client_secret*.json
+cookies.txt
+credentials_all_users.txt
+mi_config.json
+config/mongodb_config.json
+mongodb_diagnostic_report_*.json
+setup_github_secrets_manual.sh
+setup_known_passwords.py
+load_env.py
+config.py
 
-# -------------------------------------------
-# ARCHIVOS DE CONFIGURACIÓN ADICIONALES
-# -------------------------------------------
-.env.local
-.env.development
-.env.test
-.env.production
-config.local.*
-settings.local.*
+# Credenciales concretas del proyecto
+tools/db_utils/credentials.json
+tools/db_utils/token.json
+tools/db_utils/token.pickle
+tools/db_utils/auth_manual_google_drive.py
+tools/maintenance/mi_config.json
+tools/production/db_utils/credentials.json
+tools/production/db_utils/token.json
+tools/production/db_utils/token.pickle
+/app/templates/dev_template/tests/legacy/config_debug.py
 
-# -------------------------------------------
-# ARCHIVOS DE HERRAMIENTAS DE DESARROLLO
-# -------------------------------------------
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.coverage
-htmlcov/
-.nyc_output/
-coverage/
+# ---------------------------------------------------------
+# Logs, sesiones, métricas y datos locales
+# ---------------------------------------------------------
+*.log
+*.log.*
+*.log.bak
+*.log.old
+logs/
+scripts/logs/
+scripts/maintenance/logs/
+tools/maintenance/logs/
+tools/db_utils/mongodb_backup.log
+server_logs.txt
+journal*.txt
+flask.log
+flask_session/
+*.pid
+*.lock
+app_data/*.json
+!app_data/*.example.json
+app_data/edefrutos2025_*.json
+!app_data/edefrutos2025_notifications_config.example.json
+*_metrics.json
+*_stats.json
 
-# -------------------------------------------
-# ARCHIVOS DE TOURS Y DOCUMENTACIÓN GENERADA
-# -------------------------------------------
-.tours/
-generated-docs/
-*.drawio.bkp
-*.drawio~
+# ---------------------------------------------------------
+# Bases de datos, hojas, exportaciones y subidas
+# ---------------------------------------------------------
+*.sqlite3
+*.db
+*.csv
+*.xlsx
+*.xls
+exportados/
+uploads/
+imagenes_subidas/
+spreadsheets/
+app/static/uploads/
+app/static/imagenes_subidas/
+tools/image_utils/app/static/uploads/
 
-# -------------------------------------------
-# ARCHIVOS DE CONFIGURACIÓN DE PYTHON Y LINTING
-# -------------------------------------------
+# ---------------------------------------------------------
+# Backups, snapshots y copias temporales
+# ---------------------------------------------------------
+backups/
+backup_*/
+backup_completo_*/
+*_backup/
+*_Proyecto_backup/
+.01_Proyecto_backup/
+edf_catalogotablas_backup_*/
+edf_catalogotablas_OPTIMIZED_*/
+_backups_limpieza_*/
+_snapshots_funcionales/
+sensitive_backup/
+tools_backup_*/
+tools/_backup_scripts/
+tools/db_utils/backups/
+tools/db_utils/backups/*.json
+*.bak
+*.bak.*
+*.bak_*
+*.backup
+*.backup.*
+*.backup_*
+backup_*.py
+*_backup_*.py
+*_backup_*.sh
+*.tmp
+*.cache
+.cache/
+.git-rewrite/
+=*
+basura/
+tools/basura/
+temp_files_to_remove/
+
+# Copias anidadas accidentales
+edf_catalogotablas/
+
+# ---------------------------------------------------------
+# IDEs, editores y asistentes
+# ---------------------------------------------------------
+.cursor/
+.vscode/
+.idea/
+.windsurf-settings.json
+.windwurf-setting.json
+.blackboxrules
+.eslintignore
+.prettierignore
+.prettierrc.json
+.spellright.dict
+.cspell.json
+pyrightconfig.json
+.flake8
+.markdownlint.json
+.pylintrc
 .pylintrc.bak
 .pylintrc.backup
-pyrightconfig.json.bak
-pyrightconfig.json.backup
-mypy.ini
-pyproject.toml.bak
-setup.cfg.bak
-
-# -------------------------------------------
-# ARCHIVOS TEMPORALES DE DIAGNÓSTICO Y DEBUG
-# -------------------------------------------
-# debug_*.py (ya incluido en sección específica)
-# test_*.py (ya incluido en sección específica)
-# *_debug.* (ya incluido en sección específica)
-# *_test.* (ya incluido en sección específica)
-debug_*.html
-debug_*.js
-debug_*.json
-
-# -------------------------------------------
-# ARCHIVOS DE CONFIGURACIÓN DE VS CODE/CURSOR
-# -------------------------------------------
-.vscode/settings.json.bak
-.vscode/launch.json.bak
-.vscode/tasks.json.bak
-.vscode/extensions.json.bak
-
-# -------------------------------------------
-# EXTENSIONES DE CURSOR/VS CODE
-# -------------------------------------------
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.vim/
+.emacs.d/
+.atom/
+.brackets.json
 backups/cursor_extensions/
 .vscode/extensions/
 .cursor/extensions/
 extensions/
 *.vsix
+.qodo
+.pixi/
 
-# -------------------------------------------
-# ARCHIVOS DE CACHE Y TEMPORALES ADICIONALES
-# -------------------------------------------
-*.cache
-.cache/
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# ---------------------------------------------------------
+# Node, front-end y herramientas externas
+# ---------------------------------------------------------
+node_modules/
+gemini-cli/
+mcp-server-demo/
+.nyc_output/
+coverage/
 
-# -------------------------------------------
-# ARCHIVOS DE LOGS Y MONITOREO ADICIONALES
-# -------------------------------------------
-*.log.*
-*.log.bak
-*.log.old
-logs/*.log
-logs/*.txt
-*.pid
-*.lock
+# ---------------------------------------------------------
+# Build, distribución y PyInstaller
+# ---------------------------------------------------------
+build/
+dist/
+*.spec
+*.dmg
+*.icns
+edf_developer.iconset/
 
-# -------------------------------------------
-# ARCHIVOS DE CONFIGURACIÓN DE MONGODB Y DATABASES
-# -------------------------------------------
-config/mongodb_config.json
-tools/db_utils/backups/
-tools/db_utils/mongodb_backup.log
-tools/db_utils/backups/*.json
-
-# -------------------------------------------
-# ARCHIVOS DE SPELL CHECK Y REPORTES
-# -------------------------------------------
+# ---------------------------------------------------------
+# Archivos generados, salida local y pruebas sueltas
+# ---------------------------------------------------------
+output.html
+page.html
+*_backup*.html
+*_clean.html
+test_*.html
+test_*.json
+test_*.js
+debug_*.html
+debug_*.js
+debug_*.json
 spell_check_report_*.json
 spell_check_results_*.json
 *_spell_check_*.json
+app/static/___prueba_cascade.txt
+estriuctura_buid.txt
+estriuctura
+generated-docs/
+.tours/
+*.drawio.bkp
+*.drawio~
 
-# -------------------------------------------
-# ARCHIVOS DE CONFIGURACIÓN DE SERVICIOS
-# -------------------------------------------
-*service*
-*2025.service*
-systemd_*.log
-gunicorn_*.log
-
-# -------------------------------------------
-# ARCHIVOS DE CONFIGURACIÓN DE PASSWORD Y USUARIOS
-# -------------------------------------------
-*password*.py
-*reset_password*.py
-*temp_password*.py
-*_password_*.py
-
-# -------------------------------------------
-# ARCHIVOS SENSIBLES ADICIONALES IDENTIFICADOS
-# -------------------------------------------
-# Archivos de diagnóstico y reportes de MongoDB
-mongodb_diagnostic_report_*.json
-
-# Archivos de configuración de Cursor/VS Code
-.cspell.json
-pyrightconfig.json
-.flake8
-.markdownlint.json
-
-# Archivos de testeo y debug específicos
+# Scripts locales de prueba, diagnóstico o reparación
+# OJO: si alguno debe versionarse, añádelo explícitamente con git add -f.
 test_*.py
 debug_*.py
 *_test.*
@@ -439,8 +260,6 @@ verify_*.py
 diagnose_*.py
 simulate_*.py
 recreate_*.py
-
-# Archivos de launcher y scripts de desarrollo
 launcher_*.py
 launch_*.sh
 init_*.sh
@@ -449,16 +268,19 @@ clean_*.sh
 fix_*.sh
 verify_*.sh
 diagnose_*.sh
+clear_flash_messages.py
+config_check.py
+validate_templates.py
+logging_filters.py
+modal_fix_simple.js
 
-# Archivos de configuración de PyInstaller
-*.spec
-*.dmg
-
-# Archivos de iconos y recursos grandes
-*.icns
-edf_developer.iconset/
-
-# Archivos de documentación de desarrollo
+# ---------------------------------------------------------
+# Documentación local generada / informes temporales
+# ---------------------------------------------------------
+docs/
+docs_md/
+*.txt
+!requirements*.txt
 COMPENDIO_FINAL_SOLUCIONES_ACTUALIZADO.md
 LIMPEZA_DOCUMENTACION_COMPLETADA.md
 SOLUCION_FINAL_ICONO_Y_LOGIN.md
@@ -482,51 +304,46 @@ DOSSIER_*.md
 INFORME_*.md
 MANUAL_*.md
 README_*.md
+CLAUDE.md
+INFO_BACKUP.md
+LIMPIEZA_PROYECTO_COMPLETADA.md
+PYINSTALLER_TROUBLESHOOTING.md
+RECONSTRUCCION_COMPLETADA.md
+RESUMEN_INTERFAZ_BACKUPS.md
 
-# Archivos de configuración de entorno
-load_env.py
-start_app.py
-run_server.py
-
-# Archivos de configuración de base de datos
-config.py
-
-# Archivos de configuración de servicios
-setup_github_secrets_manual.sh
-setup_known_passwords.py
-
-# Archivos de configuración de desarrollo
-pyproject.toml
-requirements_*.txt
-!requirements.txt
-
-# Archivos de configuración de IDE
-.vscode/settings.json
-
-# Archivos de cache de Python
-.mypy_cache/
-
-# Archivos de logs específicos
-logs/flask_debug.log
-logs/app.log
-logs/*.backup.*
-logs/temp_passwords_*.txt
-logs/*.pid
-logs/cursor_extensions_*.json
-logs/functionality_check_*.json
-
-# Archivos de datos de aplicación
-app_data/edefrutos2025_*.json
-!app_data/edefrutos2025_notifications_config.example.json
-
-# Archivos de documentación de desarrollo
-docs/*.md
-docs/*.pdf
-!docs/README.md
-
-# Archivos de herramientas de desarrollo
+# ---------------------------------------------------------
+# Herramientas internas no versionadas
+# ---------------------------------------------------------
+tools/original/
+scripts/original/
+tests/original/
 tools/*.py
 tools/*.sh
 tools/*.json
 tools/README_*.md
 tools/launch_*.sh
+
+# ---------------------------------------------------------
+# Configuración de packaging/desarrollo local
+# ---------------------------------------------------------
+pyproject.toml
+pyproject.toml.bak
+setup.py
+setup.cfg.bak
+run.py
+start_app.py
+run_server.py
+requirements_*.txt
+!requirements.txt
+
+# ---------------------------------------------------------
+# Sistema operativo
+# ---------------------------------------------------------
+.DS_Store
+Thumbs.db
+# Plantillas sueltas no usadas / duplicadas pendientes de revisar
+app/templates/catalogs/
+app/templates/edit_row.html
+app/templates/lista_catalogos.html
+app/templates/ver_fila.html
+app/templates/view_row.html

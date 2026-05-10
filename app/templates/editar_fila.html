@@ -1,11 +1,61 @@
 {% extends "base.html" %}
 <!-- eslint-disable -->
-{% block title %}Editar Fila{% endblock %}
+{% block title %}Editar Fila
+
+
+{% endblock %}
 {% block content %}
 <div class="container mt-4">
     <h1>Editar Fila de "{{ catalog.name }}"</h1>
     
     <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="deleted_documents" id="deleted_documents" value="[]">
+
+<script>
+function removeDocument(header, value, button) {
+    let deletedField = document.getElementById('deleted_documents');
+
+    if (!deletedField) {
+        deletedField = document.createElement('input');
+        deletedField.type = 'hidden';
+        deletedField.name = 'deleted_documents';
+        deletedField.id = 'deleted_documents';
+        deletedField.value = '[]';
+
+        const form = button.closest('form');
+        if (form) {
+            form.appendChild(deletedField);
+        }
+    }
+
+    let deleted = [];
+
+    try {
+        deleted = JSON.parse(deletedField.value || '[]');
+    } catch (e) {
+        deleted = [];
+    }
+
+    deleted.push({
+        header: header,
+        value: value
+    });
+
+    deletedField.value = JSON.stringify(deleted);
+
+    const box = button.closest('.alert');
+    if (box) {
+        box.style.opacity = '0.45';
+        box.style.textDecoration = 'line-through';
+        box.classList.add('border-danger');
+    }
+
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-check"></i> Marcado';
+}
+
+window.removeDocument = removeDocument;
+</script>
         {% for header in headers %}
         {% if header == 'Multimedia' %}
             <!-- Campo especial para Multimedia -->
@@ -83,7 +133,7 @@
                 {% endif %}
             </div>
             
-        {% elif header == 'Documentación' or header.startswith('Documentación') %}
+        {% elif header in ['Documentación', 'Documentos'] or header.startswith('Documentación') or header.startswith('Documentos') %}
             <!-- Campo especial para Documentos/Documentación -->
             <div class="mb-3">
                 <label class="form-label fw-bold">
@@ -123,7 +173,7 @@
                                                 </a>
                                             </div>
                                             <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                    onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
+                                                    data-header="{{ header }}" data-value="{{ doc|e }}" onclick="removeDocument(this.dataset.header, this.dataset.value, this)">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </button>
                                         </div>
@@ -146,7 +196,7 @@
                                                 </div>
                                             </div>
                                             <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                    onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
+                                                    data-header="{{ header }}" data-value="{{ doc|e }}" onclick="removeDocument(this.dataset.header, this.dataset.value, this)">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </button>
                                         </div>
@@ -545,25 +595,6 @@ function eliminarImagen(imagen, indice) {
 let documentosAEliminar = [];
 let multimediaAEliminar = [];
 
-function removeDocument(header, doc, element) {
-  console.log(`Marcando para eliminar documento: ${doc} de la columna ${header}`);
-
-  // Agregar el documento al array de documentos a eliminar
-  if (!documentosAEliminar.includes(doc)) {
-    documentosAEliminar.push(doc);
-  }
-
-  // Actualizar el campo oculto
-  document.getElementById('documentos_a_eliminar').value = JSON.stringify(documentosAEliminar);
-
-  // Ocultar visualmente el elemento del documento
-  const documentContainer = element.closest('.alert');
-  if (documentContainer) {
-    documentContainer.style.display = 'none';
-  }
-
-  console.log('Documento marcado para eliminación:', doc);
-}
 
 function confirmarEliminarDocumento(documento, columnIndex) {
   // Configurar el modal de confirmación
@@ -645,3 +676,6 @@ function confirmarEliminarFila(tablaId, filaIndex) {
 <script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
 <!-- Cache buster: {{ range(1000000, 9999999) | random }} -->
 {% endblock %}
+
+
+

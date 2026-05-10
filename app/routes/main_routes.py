@@ -489,12 +489,15 @@ def editar(id):
     # GET: mostrar formulario de edición
     return render_template("editar_tabla.html", table=table_info)
 
-
 @main_bp.route("/ver_tabla/<table_id>")
 @login_required
 def ver_tabla(table_id):
     try:
         table = g.spreadsheets_collection.find_one({"_id": ObjectId(table_id)})
+
+        if not table:
+            flash("Tabla no encontrada.", "error")
+            return redirect(url_for("main.dashboard_user"))
 
         # Asegurarse de que el propietario esté disponible
         if "owner" not in table and "owner_name" in table:
@@ -522,26 +525,32 @@ def ver_tabla(table_id):
             current_app.logger.info(
                 "[DEBUG][VISIONADO] No se encontraron datos en la tabla"
             )
-        if not table:
-            flash("Tabla no encontrada.", "error")
-            return redirect(url_for("main.dashboard_user"))
 
         # Log de sesión y permisos
         current_app.logger.info(f"[DEBUG][VISIONADO] Sesión: {dict(session)}")
         current_app.logger.info(
-            f"[DEBUG][VISIONADO] table.owner: {table.get('owner')}, session.username: {session.get('username')}, session.role: {session.get('role')}"
+            f"[DEBUG][VISIONADO] table.owner: {table.get('owner')}, "
+            f"table.owner_name: {table.get('owner_name')}, "
+            f"table.created_by: {table.get('created_by')}, "
+            f"table.email: {table.get('email')}, "
+            f"session.username: {session.get('username')}, "
+            f"session.nombre: {session.get('nombre')}, "
+            f"session.email: {session.get('email')}, "
+            f"session.role: {session.get('role')}"
         )
 
         # Normalizar el campo owner si está vacío o es usuario_predeterminado
-        username = session.get("username")
-        role = session.get("role", "user")
+        username = str(session.get("username") or "").strip()
+        nombre = str(session.get("nombre") or "").strip()
+        email = str(session.get("email") or "").strip().lower()
+        user_id = str(session.get("user_id") or "").strip()
+        role = str(session.get("role", "user") or "user").strip().lower()
 
         if (
             "owner" not in table
             or not table["owner"]
             or table["owner"] == "usuario_predeterminado"
         ):
-            # Buscar el propietario en otros campos
             if "created_by" in table and table["created_by"]:
                 table["owner"] = table["created_by"]
                 current_app.logger.info(
@@ -553,20 +562,41 @@ def ver_tabla(table_id):
                     f"[DEBUG][VISIONADO] Usando username como owner: {table['owner']}"
                 )
             else:
-                # Si no hay información de propietario, asignar al usuario actual
                 g.spreadsheets_collection.update_one(
-                    {"_id": ObjectId(table_id)}, {"$set": {"owner": username}}
+                    {"_id": ObjectId(table_id)},
+                    {"$set": {"owner": username, "email": email, "user_id": user_id}},
                 )
                 table["owner"] = username
+                table["email"] = email
+                table["user_id"] = user_id
                 current_app.logger.info(
                     f"[DEBUG][VISIONADO] Actualizado propietario de tabla {table_id} a {username}"
                 )
 
-        # Verificar permisos: solo el propietario o admin puede ver la tabla
-        if role != "admin" and table.get("owner") != username:
+        # Verificar permisos: propietario por nombre, nombre completo, email o admin
+        table_owner = str(table.get("owner") or "").strip()
+        table_owner_name = str(table.get("owner_name") or "").strip()
+        table_created_by = str(table.get("created_by") or "").strip()
+        table_email = str(table.get("email") or "").strip().lower()
+        
+        username = str(session.get("username") or "").strip()
+        nombre = str(session.get("nombre") or "").strip()
+        email = str(session.get("email") or "").strip().lower()
+        role = str(session.get("role", "user") or "user").strip().lower()
+        
+        is_owner = (
+            role == "admin"
+            or (table_email and email and table_email == email)
+            or username in {table_owner, table_owner_name, table_created_by}
+            or nombre in {table_owner, table_owner_name, table_created_by}
+        )
+        
+        if not is_owner:
             mensaje = (
                 f"No tiene permisos para ver esta tabla. "
-                f"(owner={table.get('owner')}, username={username}, role={role})"
+                f"(owner={table_owner}, owner_name={table_owner_name}, "
+                f"created_by={table_created_by}, email_tabla={table_email}, "
+                f"username={username}, nombre={nombre}, email_sesion={email}, role={role})"
             )
             current_app.logger.warning(f"[DEBUG][VISIONADO] {mensaje}")
             flash(mensaje, "warning")
@@ -608,7 +638,7 @@ def ver_tabla(table_id):
             from app.utils.s3_utils import get_s3_url
 
             for key, value in row.items():
-                if key.startswith("Documentación_") and value:
+                if (key.startswith("Documentación_") or key.startswith("Documentos_")) and value:
                     current_app.logger.info(
                         f"[DEBUG][VISIONADO] Procesando documento {key}: {value}"
                     )
@@ -738,6 +768,12 @@ def ver_tabla(table_id):
                             f"[DEBUG][VISIONADO] Usando URL local para multimedia: {multimedia_value} -> {local_url}"
                         )
 
+        # Sincronizar rows con data antes de enviar al template
+        # para evitar que la plantilla use datos antiguos.
+        table["rows"] = table.get("data", [])
+        table["row_count"] = len(table["data"])
+        table["num_rows"] = len(table["data"])
+
         return render_template("ver_tabla.html", table=table)
     except BuildError as e:
         logger.error(f"BuildError en ver_tabla: {str(e)}", exc_info=True)
@@ -770,36 +806,76 @@ def select_table(table_id):
             return redirect(url_for("main.tables"))
 
         # Verificar permisos: administradores pueden ver todas las tablas,
-        # usuarios solo las suyas
+        # usuarios solo las suyas. Se compara por username, nombre, owner_name,
+        # created_by, email y user_id para evitar falsos negativos.
         if role != "admin":
-            # Normalizar el campo owner si está vacío o es usuario_predeterminado
             if (
                 "owner" not in table
                 or not table["owner"]
                 or table["owner"] == "usuario_predeterminado"
             ):
-                if "created_by" in table and table["created_by"]:
+                if table.get("created_by"):
                     table["owner"] = table["created_by"]
-                elif "username" in table and table["username"]:
+                elif table.get("owner_name"):
+                    table["owner"] = table["owner_name"]
+                elif table.get("username"):
                     table["owner"] = table["username"]
                 else:
-                    # Si no hay información de propietario, asignar al usuario actual
                     g.spreadsheets_collection.update_one(
-                        {"_id": ObjectId(table_id)}, {"$set": {"owner": username}}
+                        {"_id": ObjectId(table_id)},
+                        {
+                            "$set": {
+                                "owner": username,
+                                "email": session.get("email", ""),
+                                "user_id": session.get("user_id", ""),
+                            }
+                        },
                     )
                     table["owner"] = username
+                    table["email"] = session.get("email", "")
+                    table["user_id"] = session.get("user_id", "")
                     logger.info(
                         f"Actualizado propietario de tabla {table_id} a {username}"
                     )
 
-            # Verificar si el usuario actual es el propietario
-            if table["owner"] != username:
+            session_username = str(session.get("username") or "").strip()
+            session_nombre = str(session.get("nombre") or "").strip()
+            session_email = str(session.get("email") or "").strip().lower()
+            session_user_id = str(session.get("user_id") or "").strip()
+
+            owner_aliases = {
+                str(table.get("owner") or "").strip(),
+                str(table.get("owner_name") or "").strip(),
+                str(table.get("created_by") or "").strip(),
+                str(table.get("username") or "").strip(),
+            }
+            owner_aliases = {value for value in owner_aliases if value}
+
+            table_email = str(table.get("email") or "").strip().lower()
+            table_user_id = str(table.get("user_id") or "").strip()
+            is_owner = (
+                session_username in owner_aliases
+                or session_nombre in owner_aliases
+                or (session_email and table_email and session_email == table_email)
+                or (session_user_id and table_user_id and session_user_id == table_user_id)
+            )
+
+            if not is_owner:
                 logger.warning(
-                    f"Usuario {username} intentó acceder a tabla {table_id} propiedad de {table['owner']}"
+                    "Usuario sin permisos para tabla %s. owner_aliases=%s, "
+                    "table_email=%s, table_user_id=%s, session_username=%s, "
+                    "session_nombre=%s, session_email=%s, session_user_id=%s",
+                    table_id,
+                    sorted(owner_aliases),
+                    table_email,
+                    table_user_id,
+                    session_username,
+                    session_nombre,
+                    session_email,
+                    session_user_id,
                 )
                 flash("No tiene permisos para ver esta tabla.", "warning")
                 return redirect(url_for("main.tables"))
-
         # Guardar información de la tabla en la sesión
         session["selected_table"] = table.get("filename", "")
         session["selected_table_id"] = str(table["_id"])
@@ -1058,7 +1134,7 @@ def editar_fila(tabla_id, fila_index):
     from datetime import datetime
 
     print(f"🔥🔥🔥 EDITAR_FILA EJECUTADO: tabla_id={tabla_id}, fila_index={fila_index}")
-    current_app.logger.error(
+    current_app.logger.debug(
         f"🔥🔥🔥 EDITAR_FILA EJECUTADO: tabla_id={tabla_id}, fila_index={fila_index}"
     )
     current_app.logger.info(
@@ -1146,7 +1222,7 @@ def editar_fila(tabla_id, fila_index):
         # Si es un diccionario, usar la clave string
         data_key = str(fila_index)
         if data_key not in data:
-            current_app.logger.error(
+            current_app.logger.debug(
                 f"[DEBUG] Fila no encontrada: clave {data_key} no existe en data"
             )
             flash("Fila no encontrada.", "error")
@@ -1157,7 +1233,7 @@ def editar_fila(tabla_id, fila_index):
         # Si es una lista, usar el índice numérico
         data_length = len(data)
         if fila_index >= data_length:
-            current_app.logger.error(
+            current_app.logger.debug(
                 f"[DEBUG] Fila no encontrada: índice {fila_index} >= longitud {data_length}"
             )
             flash("Fila no encontrada.", "error")
@@ -1248,7 +1324,7 @@ def editar_fila(tabla_id, fila_index):
     current_app.logger.info(
         f"[DEBUG_EDIT] IMÁGENES EXISTENTES: {len(imagenes_existentes)} → {imagenes_existentes}"
     )
-    current_app.logger.error(
+    current_app.logger.debug(
         f"[DEBUG_EDIT] TEMPLATE CONTEXT: Todos los keys de fila = {list(fila.keys())}"
     )
     headers = table_info.get("headers", [])
@@ -1269,8 +1345,11 @@ def editar_fila(tabla_id, fila_index):
             for key, file in request.files.items():
                 current_app.logger.info(f"[DEBUG_EDIT] Procesando archivo: {key}")
                 # Detectar archivos de documentos con formato Documentación_X_file_Y
-                is_document_file = key.startswith("Documentación_file_") or (
-                    key.startswith("Documentación_") and "_file_" in key
+                is_document_file = (
+                    key.startswith("Documentación_file_")
+                    or key.startswith("Documentos_file_")
+                    or (key.startswith("Documentación_") and "_file_" in key)
+                    or (key.startswith("Documentos_") and "_file_" in key)
                 )
                 current_app.logger.info(
                     f"[DEBUG_EDIT] ¿Es archivo de documento? {is_document_file} para {key}"
@@ -1281,16 +1360,17 @@ def editar_fila(tabla_id, fila_index):
                     )
                     # Extraer el índice del nombre del campo
                     if key.startswith("Documentación_file_"):
-                        # Formato: Documentación_file_X
                         index_str = key.replace("Documentación_file_", "")
+                    elif key.startswith("Documentos_file_"):
+                        index_str = key.replace("Documentos_file_", "")
                     else:
                         # Formato: Documentación_X_file_Y
                         # Extraer el número después de Documentación_ y antes de _file_
                         parts = key.split("_")
-                        if len(parts) >= 3 and parts[0] == "Documentación":
+                        if len(parts) >= 3 and parts[0] in ("Documentación", "Documentos"):
                             index_str = parts[1]
                         else:
-                            current_app.logger.error(
+                            current_app.logger.debug(
                                 f"[DEBUG_EDIT] No se pudo extraer índice de {key}"
                             )
                             continue
@@ -1332,13 +1412,13 @@ def editar_fila(tabla_id, fila_index):
                                         if result
                                         else "Resultado None"
                                     )
-                                    current_app.logger.error(
+                                    current_app.logger.debug(
                                         f"Error subiendo documento a S3: {error_msg}"
                                     )
                                     # Si falla S3, mantener archivo local
                                     campo_valor = filename
                             except Exception as e:
-                                current_app.logger.error(
+                                current_app.logger.debug(
                                     f"Error subiendo documento a S3 {filename}: {e}"
                                 )
                                 # Si falla S3, mantener archivo local
@@ -1347,38 +1427,73 @@ def editar_fila(tabla_id, fila_index):
                             campo_valor = filename
 
                         # Guardar en el campo específico Documentación_X
-                        header_name = f"Documentación_{column_index}"
+                        if key.startswith("Documentos"):
+                            header_name = f"Documentos_{column_index}"
+                        else:
+                            header_name = f"Documentación_{column_index}"
                         update_data[f"data.{fila_index}.{header_name}"] = campo_valor
                         current_app.logger.info(
                             f"[DEBUG_EDIT] Documento guardado en {header_name}: {campo_valor}"
                         )
 
                     except ValueError:
-                        current_app.logger.error(
+                        current_app.logger.debug(
                             f"Índice inválido en campo de documento: {key}"
                         )
         except Exception as e:
-            current_app.logger.error(
+            current_app.logger.debug(
                 f"[DEBUG_EDIT] Error en procesamiento de archivos: {e}"
             )
 
         # Procesar URLs de documentos
+        # Guarda la URL tanto en el campo principal Documentos/Documentación
+        # como en el campo auxiliar Documentos_X/Documentación_X para compatibilidad.
         for key, value in request.form.items():
-            if key.startswith("Documentación_url_") and value.strip():
-                # Extraer el índice del nombre del campo
-                index_str = key.replace("Documentación_url_", "")
+            if (
+                key.startswith("Documentación_url_")
+                or key.startswith("Documentos_url_")
+            ) and value.strip():
+
+                nueva_url = value.strip()
+
+                if key.startswith("Documentación_url_"):
+                    index_str = key.replace("Documentación_url_", "")
+                    base_header = "Documentación"
+                elif key.startswith("Documentos_url_"):
+                    index_str = key.replace("Documentos_url_", "")
+                    base_header = "Documentos"
+                else:
+                    index_str = ""
+                    base_header = ""
+
                 try:
                     column_index = int(index_str)
+                    header_name = f"{base_header}_{column_index}"
 
-                    # Guardar en el campo específico Documentación_X
-                    header_name = f"Documentación_{column_index}"
-                    update_data[f"data.{fila_index}.{header_name}"] = value.strip()
+                    # 1) Campo auxiliar, por compatibilidad con lógica antigua
+                    update_data[f"data.{fila_index}.{header_name}"] = nueva_url
+
+                    # 2) Campo principal, que es el que deben leer visor y modal
+                    documentos_actuales = fila.get(base_header, [])
+
+                    if isinstance(documentos_actuales, str):
+                        documentos_actuales = [documentos_actuales] if documentos_actuales else []
+                    elif isinstance(documentos_actuales, list):
+                        documentos_actuales = list(documentos_actuales)
+                    else:
+                        documentos_actuales = []
+
+                    if nueva_url not in documentos_actuales:
+                        documentos_actuales.append(nueva_url)
+
+                    update_data[f"data.{fila_index}.{base_header}"] = documentos_actuales
+
                     current_app.logger.info(
-                        f"[DEBUG_EDIT] URL de documento guardada en {header_name}: {value.strip()}"
+                        f"[DEBUG_EDIT] URL de documento guardada en {base_header} y {header_name}: {nueva_url}"
                     )
 
                 except ValueError:
-                    current_app.logger.error(
+                    current_app.logger.debug(
                         f"Índice inválido en campo de documento: {key}"
                     )
 
@@ -1403,8 +1518,9 @@ def editar_fila(tabla_id, fila_index):
                     # Mantener valor existente si no hay cambios
                     campo_valor = fila.get(header, "")
 
-            elif header == "Documentación":
-                # Los documentos ya se procesaron arriba, saltar
+            elif header in ("Documentación", "Documentos"):
+                # Los documentos ya se procesaron arriba; preservar el valor existente
+                campo_valor = fila.get(header, "")
                 continue
 
             elif header == "Fecha":
@@ -1568,70 +1684,92 @@ def editar_fila(tabla_id, fila_index):
             except Exception as e:
                 logger.error(f"Error al procesar imágenes a eliminar: {str(e)}")
 
-        # Procesar documentos a eliminar
-        documentos_a_eliminar = request.form.get("documentos_a_eliminar", "")
-        if documentos_a_eliminar and documentos_a_eliminar.strip():
+        # Procesar documentos a eliminar.
+        # Compatibilidad:
+        # - documentos_a_eliminar: formato antiguo/lista simple
+        # - deleted_documents: formato nuevo [{header, value}]
+        documentos_a_eliminar_raw = (
+            request.form.get("deleted_documents", "")
+            or request.form.get("documentos_a_eliminar", "")
+        )
+
+        if documentos_a_eliminar_raw and documentos_a_eliminar_raw.strip():
             try:
                 import json
 
-                documentos_a_eliminar = json.loads(documentos_a_eliminar)
-                # Solo procesar si realmente hay documentos para eliminar
+                documentos_a_eliminar = json.loads(documentos_a_eliminar_raw)
+
+                # Normalizar formato nuevo [{header, value}] a lista simple de valores
+                if isinstance(documentos_a_eliminar, list):
+                    documentos_a_eliminar = [
+                        item.get("value") if isinstance(item, dict) else item
+                        for item in documentos_a_eliminar
+                        if item
+                    ]
+
                 if documentos_a_eliminar and len(documentos_a_eliminar) > 0:
                     logger.info(f"Documentos a eliminar: {documentos_a_eliminar}")
 
-                    # Eliminar los documentos de S3
                     use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
                     if use_s3:
                         from app.utils.s3_utils import delete_file_from_s3
 
                         for doc_a_eliminar in documentos_a_eliminar:
+                            if isinstance(doc_a_eliminar, str) and doc_a_eliminar.startswith("http"):
+                                logger.info(f"No se borra de S3 porque es URL externa: {doc_a_eliminar}")
+                                continue
+
                             try:
                                 delete_file_from_s3(doc_a_eliminar)
-                                logger.info(
-                                    f"Documento eliminado de S3: {doc_a_eliminar}"
-                                )
+                                logger.info(f"Documento eliminado de S3: {doc_a_eliminar}")
                             except Exception as e:
                                 logger.error(
                                     f"Error eliminando documento de S3 {doc_a_eliminar}: {e}"
                                 )
 
-                    # Actualizar los documentos individuales en la fila
-                    # Buscar campos Documentación_0, Documentación_1, Documentación_2,
-                    # etc.
+                    # Campos individuales Documentación_X / Documentos_X
                     for key, value in fila.items():
-                        if key.startswith("Documentación_") and isinstance(value, str):
-                            if value in documentos_a_eliminar:
-                                update_data[f"data.{fila_index}.{key}"] = ""
+                        if (
+                            isinstance(value, str)
+                            and (
+                                key.startswith("Documentación_")
+                                or key.startswith("Documentos_")
+                            )
+                            and value in documentos_a_eliminar
+                        ):
+                            update_data[f"data.{fila_index}.{key}"] = ""
+                            logger.info(f"Documento elimina del campo {key}: {value}")
+
+                    # Campos principales Documentación / Documentos
+                    for docs_field in ("Documentación", "Documentos"):
+                        if docs_field in fila:
+                            if isinstance(fila[docs_field], list):
+                                documentos_actualizados = [
+                                    doc
+                                    for doc in fila[docs_field]
+                                    if doc not in documentos_a_eliminar
+                                ]
+                                update_data[f"data.{fila_index}.{docs_field}"] = documentos_actualizados
                                 logger.info(
-                                    f"Documento eliminado del campo {key}: {value}"
+                                    f"Lista {docs_field} actualizada: {documentos_actualizados}"
                                 )
 
-                    # También manejar el campo Documentación original si existe
-                    if "Documentación" in fila and isinstance(
-                        fila["Documentación"], list
-                    ):
-                        documentos_actualizados = [
-                            doc
-                            for doc in fila["Documentación"]
-                            if doc not in documentos_a_eliminar
-                        ]
-                        update_data[f"data.{fila_index}.Documentación"] = (
-                            documentos_actualizados
-                        )
-                        logger.info(
-                            f"Lista de documentos actualizada: {documentos_actualizados}"
-                        )
+                            elif isinstance(fila[docs_field], str):
+                                if fila[docs_field] in documentos_a_eliminar:
+                                    update_data[f"data.{fila_index}.{docs_field}"] = ""
+                                    logger.info(
+                                        f"Documento eliminado del campo {docs_field}: {fila[docs_field]}"
+                                    )
+
                 else:
-                    logger.info(
-                        "Campo documentos_a_eliminar está vacío, no se eliminan documentos"
-                    )
+                    logger.info("Campo de documentos a eliminar vacío")
 
             except json.JSONDecodeError as e:
-                logger.error(f"Error decodificando documentos_a_eliminar: {e}")
+                logger.error(f"Error decodificando documentos a eliminar: {e}")
             except Exception as e:
                 logger.error(f"Error procesando documentos a eliminar: {e}")
         else:
-            logger.info("No se proporcionó campo documentos_a_eliminar o está vacío")
+            logger.info("No se proporcionó campo de documentos a eliminar o está vacío")
 
         # Procesar multimedia a eliminar
         multimedia_a_eliminar = request.form.get("multimedia_a_eliminar", "")
@@ -1813,6 +1951,14 @@ def editar_fila(tabla_id, fila_index):
         g.spreadsheets_collection.update_one(
             {"_id": ObjectId(tabla_id)}, {"$set": mongo_update}
         )
+
+        # Sincronizar rows con data para evitar que el visionado use datos antiguos
+        tabla_actualizada = g.spreadsheets_collection.find_one({"_id": ObjectId(tabla_id)})
+        if tabla_actualizada and tabla_actualizada.get("data") is not None:
+            g.spreadsheets_collection.update_one(
+                {"_id": ObjectId(tabla_id)},
+                {"$set": {"rows": tabla_actualizada.get("data", [])}}
+            )
 
         flash("Fila actualizada correctamente.", "success")
 
@@ -2021,11 +2167,11 @@ def agregar_fila(tabla_id):
                                         if result
                                         else "Resultado None"
                                     )
-                                    current_app.logger.error(
+                                    current_app.logger.debug(
                                         f"[AGREGAR_FILA] Error subiendo documento a S3: {error_msg}"
                                     )
                             except Exception as e:
-                                current_app.logger.error(
+                                current_app.logger.debug(
                                     f"[AGREGAR_FILA] Error subiendo documento a S3 {filename}: {e}"
                                 )
 
@@ -2185,7 +2331,7 @@ def agregar_fila(tabla_id):
                 )
             else:
                 flash("Error al agregar la fila", "error")
-                current_app.logger.error("[AGREGAR_FILA] No se pudo agregar la fila")
+                current_app.logger.debug("[AGREGAR_FILA] No se pudo agregar la fila")
 
             return redirect(url_for("main.ver_tabla", table_id=tabla_id))
 
@@ -2470,7 +2616,7 @@ def editar_tabla(id):
                                     f"[EDITAR_TABLA] Miniatura subida a S3: {nueva_miniatura}"
                                 )
                             else:
-                                current_app.logger.error(
+                                current_app.logger.debug(
                                     f"[EDITAR_TABLA] Error al subir miniatura a S3: {result.get('error')}"
                                 )
                                 # Usar URL local como fallback
@@ -2478,7 +2624,7 @@ def editar_tabla(id):
                                     "static", filename=f"uploads/{filename}"
                                 )
                         except Exception as e:
-                            current_app.logger.error(
+                            current_app.logger.debug(
                                 f"[EDITAR_TABLA] Error al procesar subida a S3: {str(e)}"
                             )
                             # Usar URL local como fallback
@@ -2495,7 +2641,7 @@ def editar_tabla(id):
                         f"[EDITAR_TABLA] Miniatura procesada: {nueva_miniatura}"
                     )
                 except Exception as e:
-                    current_app.logger.error(
+                    current_app.logger.debug(
                         f"[EDITAR_TABLA] Error al procesar archivo de miniatura: {str(e)}"
                     )
                     flash(
@@ -2575,16 +2721,20 @@ def editar_tabla(id):
                         if h not in new_row:
                             new_row[h] = ""
 
-                    # Mantener campos especiales como 'imagenes'
-                    if "imagenes" in row:
-                        new_row["imagenes"] = row["imagenes"]
+                    # Mantener campos especiales aunque no estén en headers
+                    for special_field in ("imagenes", "images", "imagen_data", "imagen_urls", "tiene_imagenes", "num_imagenes", "Imagen"):
+                        if special_field in row and special_field not in new_row:
+                            new_row[special_field] = row[special_field]
+
+                    # Mantener documentos dinámicos aunque no coincidan con headers visibles
+                    for special_key, special_value in row.items():
+                        if (special_key.startswith("Documentos_") or special_key.startswith("Documentación_")) and special_key not in new_row:
+                            new_row[special_key] = special_value
 
                     new_data.append(new_row)
 
-                update_data["data"] = new_data
-
                 # Manejar actualización de imágenes
-                nuevas_imagenes = request.files.getlist("imagenes")
+                nuevas_imagenes = request.files.getlist("imagenes") + request.files.getlist("images")
                 if nuevas_imagenes:
                     logger.info(f"Nuevas imágenes a guardar: {nuevas_imagenes}")
 
@@ -2647,9 +2797,24 @@ def editar_tabla(id):
                                 "Actualizando campo imagen_data con las mismas imágenes"
                             )
 
-                # Actualizar la tabla
+                # Preparar actualización sincronizada para MongoDB
+                mongo_update_sync = dict(mongo_update)
+                
+                for key, value in list(mongo_update.items()):
+                    if key.startswith("data."):
+                        rows_key = key.replace("data.", "rows.", 1)
+                        mongo_update_sync[rows_key] = value
+                
+                    elif key.startswith("rows."):
+                        data_key = key.replace("rows.", "data.", 1)
+                        mongo_update_sync[data_key] = value
+                
+                current_app.logger.info(
+                    f"Actualizando documento con datos sincronizados: {mongo_update_sync}"
+                )
+                
                 g.spreadsheets_collection.update_one(
-                    {"_id": ObjectId(id)}, {"$set": update_data}
+                    {"_id": ObjectId(tabla_id)}, {"$set": mongo_update_sync}
                 )
 
                 # Los headers cambiaron, se actualizó todo
@@ -2715,7 +2880,7 @@ def delete_row(tabla_id, fila_index):
     # Verificar que el índice sea válido
     if fila_index < 0 or fila_index >= len(current_rows):
         flash(f"Índice de fila inválido: {fila_index}.", "danger")
-        current_app.logger.error(
+        current_app.logger.debug(
             f"[DELETE_ROW] Índice inválido: {fila_index} >= {len(current_rows)}"
         )
         return redirect(url_for("main.ver_tabla", table_id=tabla_id))
@@ -2747,7 +2912,7 @@ def delete_row(tabla_id, fila_index):
             flash("No se pudo eliminar la fila.", "warning")
 
     except Exception as e:
-        current_app.logger.error(f"[DELETE_ROW] Error: {str(e)}")
+        current_app.logger.debug(f"[DELETE_ROW] Error: {str(e)}")
         flash(f"Error al eliminar fila: {str(e)}", "danger")
 
     return redirect(url_for("main.ver_tabla", table_id=tabla_id))
@@ -2949,7 +3114,7 @@ def get_catalog_images(catalog_id):
         return {"images": unique_images}
 
     except Exception as e:
-        current_app.logger.error(f"Error al obtener imágenes del catálogo: {str(e)}")
+        current_app.logger.debug(f"Error al obtener imágenes del catálogo: {str(e)}")
         return {"error": "Error interno del servidor"}, 500
 
 
@@ -2977,7 +3142,7 @@ def serve_s3_public(filename):
         )
 
         if not all([aws_key, aws_secret, aws_bucket]):
-            current_app.logger.error("[S3-PUBLIC] ❌ Configuración S3 incompleta")
+            current_app.logger.debug("[S3-PUBLIC] ❌ Configuración S3 incompleta")
             return "Configuración S3 incompleta", 500
 
         # Crear cliente S3
@@ -3015,7 +3180,7 @@ def serve_s3_public(filename):
 
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
-            current_app.logger.error(
+            current_app.logger.debug(
                 f"[S3-PUBLIC] ❌ Error S3: {error_code} - {filename}"
             )
 
@@ -3025,7 +3190,7 @@ def serve_s3_public(filename):
                 return f"Error al acceder al archivo: {error_code}", 500
 
     except Exception as e:
-        current_app.logger.error(
+        current_app.logger.debug(
             f"[S3-PUBLIC] ❌ Error inesperado: {str(e)}", exc_info=True
         )
         return "Error interno del servidor", 500

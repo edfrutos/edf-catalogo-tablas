@@ -9,6 +9,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
                         {% for header in catalog.headers %}
                         <div class="mb-3">
                             {% if header == 'Multimedia' %}

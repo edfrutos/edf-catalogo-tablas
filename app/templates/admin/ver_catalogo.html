@@ -538,12 +538,128 @@
     .table-responsive-custom::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
+
+/* === Ajuste EDF: documentos e imágenes en línea === */
+
+.table-container {
+    overflow: hidden !important;
+}
+
+.table-responsive-custom {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+#tablaFilas {
+    width: 100% !important;
+    table-layout: auto !important;
+}
+
+#tablaFilas th,
+#tablaFilas td {
+    vertical-align: middle !important;
+}
+
+.documento-item {
+    display: inline-flex !important;
+    margin: 0 4px 4px 0 !important;
+    vertical-align: middle !important;
+}
+
+.documento-item .btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    padding: 0.25rem 0.5rem !important;
+}
+
+.admin-images-inline {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: cent !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    max-width: 260px !important;
+    overflow: hidden !important;
+}
+
+.admin-image-thumb-link {
+    display: inline-flex !important;
+    flex: 0 0 36px !important;
+    width: 36px !important;
+    height: 36px !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    background: #f8f9fa !important;
+    text-decoration: none !important;
+}
+
+.admin-image-thumb {
+    width: 36px !important;
+    height: 36px !important;
+    object-fit: cover !important;
+    display: block !important;
+}
+
+.admin-images-count {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 26px !important;
+    height: 24px !important;
+    padding: 0 7px !important;
+    border-radius: 999px !important;
+    background: #eef5ff !important;
+    color: #0d6efd !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+
+/* === Ajuste EDF: metadatos del catálogo más legibles === */
+
+.catalog-meta-panel {
+    padding: 1rem 1.25rem !important;
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+.catalog-meta-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #343a40 !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    line-height: 1.7 !important;
+}
+
+.catalog-meta-item i {
+    color: #0d6efd !important;
+    font-size: 1rem !important;
+    opacity: 0.9 !important;
+}
+
+.catalog-meta-item strong {
+    color: #212529 !important;
+    font-weight: 700 !important;
+}
+
+.catalog-meta-item span {
+    color: #343a40 !important;
+}
+
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- TEMPLATE ACTUALIZADO: 2025-09-15 -->
-<div class="container mt-4" style="min-width: 1420px;">
+<div class="container-fluid mt-4" style="max-width: 1580px; width: 96vw;">
   <div class="table-container">
     <div class="table-header">
       <div class="d-flex justify-content-between align-items-center">
@@ -554,31 +670,46 @@
             </div>
     </div>
     
-    <div class="p-3 bg-light">
-      <div class="row">
+    <div class="catalog-meta-panel">
+      <div class="row g-3 align-items-center">
         <div class="col-md-6">
-          <small class="text-muted">
-            <i class="bi bi-calendar"></i> <strong>Creada:</strong> {{ catalog.created_at }}<br>
-            <i class="bi bi-person"></i> <strong>Propietario:</strong> {{ catalog.owner }}
-          </small>
+          <div class="catalog-meta-item">
+            <i class="bi bi-calendar"></i>
+            <span><strong>Creada:</strong> {{ catalog.created_at }}</span>
+          </div>
+          <div class="catalog-meta-item">
+            <i class="bi bi-person"></i>
+            <span><strong>Propietario:</strong> {{ catalog.owner }}</span>
+          </div>
         </div>
+
         <div class="col-md-6">
-          <small class="text-muted">
-            <i class="bi bi-list-ul"></i> <strong>Columnas:</strong> {{ catalog.headers|length }}<br>
-            <i class="bi bi-bar-chart"></i> <strong>Filas:</strong> {{ catalog.data|length }}
-          </small>
+          <div class="catalog-meta-item">
+            <i class="bi bi-list-ul"></i>
+            <span><strong>Columnas:</strong> {{ catalog.headers|length }}</span>
+          </div>
+          <div class="catalog-meta-item">
+            <i class="bi bi-bar-chart"></i>
+            <span><strong>Filas:</strong> {{ catalog.data|length }}</span>
+          </div>
         </div>
       </div>
     </div>
     
     {% if session.role == 'admin' %}
-      <div class="p-3 border-bottom">
-        <a href="{{ url_for('admin.editar_catalogo_admin', collection_source=catalog.collection_source, catalog_id=catalog._id_str) }}" class="btn btn-success">
-          <i class="bi bi-plus-circle"></i> Editar Catálogo
-                </a>
-            </div>
-    {% endif %}
+      <div class="p-3 border-bottom d-flex gap-2 flex-wrap align-items-center">
+        <a href="{{ url_for('admin.editar_catalogo_admin', collection_source=catalog.collection_source, catalog_id=catalog._id_str) }}"
+           class="btn btn-success">
+          <i class="bi bi-pencil-square"></i> Editar Catálogo
+        </a>
     
+        <a href="{{ url_for('catalogs.add_row', catalog_id=catalog._id_str, next=url_for('admin.ver_catalogo_unificado', collection_source=catalog.collection_source, catalog_id=catalog._id_str)) }}"
+           class="btn btn-primary">
+          <i class="bi bi-plus-circle"></i> Añadir Fila
+        </a>
+    
+    {% endif %}
+
     {% if catalog.data and catalog.headers %}
       <div class="search-container p-3">
         <div class="input-group">
@@ -615,202 +746,209 @@
             <tr data-row-index="{{ loop.index0 }}">
               <td>{{ loop.index }}</td>
               {%- for header in catalog.headers -%}
-                <td>
-                  {% set cell_data = row.get(header, '') %}
-                  
-                  {# === LÓGICA UNIFICADA PARA ARCHIVOS === #}
-                  {% if header.lower().startswith('document') %}
-                    {% set doc_data = row.get(header, '') %}
-                    {% if doc_data %}
-                      {% if doc_data is iterable and doc_data is not string %}
-                        {% for doc_item in doc_data %}
-                          <div class="documento-item mb-1">
-                            {% if doc_item is string and doc_item.startswith('http') %}
-                              {% if doc_item.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                                {% set doc_proxy = '/admin/s3/' + doc_item.split('/')[-1] %}
-                                {% set doc_filename = doc_item.split('/')[-1] %}
-                              {% else %}
-                                {% set doc_proxy = doc_item %}
-                                {% set doc_filename = doc_item.split('/')[-1] %}
-                              {% endif %}
-                            {% else %}
-                              {# Sistema híbrido: S3 primero, luego local #}
-                              {% if doc_item is string and '_' in doc_item and doc_item.split('_')[0]|length == 32 %}
-                                {# Archivo S3 - patrón: hash_32_chars_nombre_archivo #}
-                                {% set doc_proxy = '/admin/s3/' + doc_item %}
-                                {% set doc_filename = doc_item %}
-                              {% else %}
-                                {# Archivo local - buscar en app/static/uploads/ #}
-                                {% set doc_proxy = '/static/uploads/' + doc_item %}
-                                {% set doc_filename = doc_item %}
-                              {% endif %}
-                            {% endif %}
-                            
-                            {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
-                            {% if file_extension == 'pdf' %}
-                              {% set doc_type = 'PDF' %}
-                            {% elif file_extension == 'txt' %}
-                              {% set doc_type = 'TXT' %}
-                            {% elif file_extension == 'md' %}
-                              {% set doc_type = 'MD' %}
-                            {% elif file_extension == 'doc' or file_extension == 'docx' %}
-                              {% set doc_type = 'DOC' %}
-                                                {% else %}
-                              {% set doc_type = file_extension.upper() %}
-                                                {% endif %}
-                            
-                                                                                <a href="#" 
-                               class="btn btn-sm btn-outline-info"
-                               onclick="event.preventDefault(); showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}');">
-                              <i class="fas fa-file-{{ 'pdf' if file_extension == 'pdf' else 'alt' }}"></i> {{ doc_type }}
-                            </a>
-                          </div>
-                        {% endfor %}
-                                                                            {% else %}
+              <td>
+                {% set cell_data = row.get(header, '') %}
+            
+                {# ==========================================================
+                   DOCUMENTOS / DOCUMENTACIÓN
+                   Soporta:
+                   - row["Documentos"]
+                   - row["Documentación"]
+                   - row["Documentos_3"], row["Documentos_4"], etc.
+                   - row["Documentación_3"], etc.
+                   - listas o strings individuales
+                   ========================================================== #}
+                {% if header in ['Documentos', 'Documentación'] or header.startswith('Documentos') or header.startswith('Documentación') %}
+            
+                  {% set ns = namespace(doc_data=cell_data) %}
+            
+                  {# Campo dinámico según la posición real de la columna en headers #}
+                  {% set dynamic_doc_key = header ~ '_' ~ loop.index0 %}
+                  {% if not ns.doc_data and row.get(dynamic_doc_key) %}
+                    {% set ns.doc_data = row.get(dynamic_doc_key) %}
+                  {% endif %}
+            
+                  {# Fallback: buscar cualquier Documentos_X / Documentación_X con contenido #}
+                  {% if not ns.doc_data %}
+                    {% for field_name, field_value in row.items() %}
+                      {% if not ns.doc_data and field_value and (field_name.startswith('Documentos_') or field_name.startswith('Documentación_')) %}
+                        {% set ns.doc_data = field_value %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+            
+                  {% set doc_data = ns.doc_data %}
+            
+                  {% if doc_data %}
+                    {% if doc_data is iterable and doc_data is not string %}
+                      {% set documentos_lista = doc_data %}
+                    {% else %}
+                      {% set documentos_lista = [doc_data] %}
+                    {% endif %}
+            
+                    {% for doc_item in documentos_lista %}
+                      {% if doc_item %}
                         <div class="documento-item mb-1">
-                          {% if doc_data is string and doc_data.startswith('http') %}
-                            {% if doc_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                              {% set doc_proxy = '/admin/s3/' + doc_data.split('/')[-1] %}
-                              {% set doc_filename = doc_data.split('/')[-1] %}
+            
+                          {% if doc_item is string and doc_item.startswith('http') %}
+                            {% if doc_item.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
+                              {% set doc_proxy = url_for('uploaded_images.uploaded_images', filename=doc_item.split('/')[-1]) %}
+                              {% set doc_filename = doc_item.split('/')[-1] %}
                             {% else %}
-                              {% set doc_proxy = doc_data %}
-                              {% set doc_filename = doc_data.split('/')[-1] %}
+                              {% set doc_proxy = doc_item %}
+                              {% set doc_filename = doc_item.split('/')[-1] %}
                             {% endif %}
+            
+                          {% elif doc_item is string and (doc_item.startswith('/admin/s3/') or doc_item.startswith('/s3/') or doc_item.startswith('/imagenes_subidas/')) %}
+                            {% set doc_proxy = doc_item %}
+                            {% set doc_filename = doc_item.split('/')[-1] %}
+            
+                          {% elif doc_item is string and '_' in doc_item and doc_item.split('_')[0]|length == 32 %}
+                            {% set doc_proxy = url_for('uploaded_images.uploaded_images', filename=doc_item) %}
+                            {% set doc_filename = doc_item %}
+            
                           {% else %}
-                            {# Sistema híbrido: S3 primero, luego local #}
-                            {% if doc_data is string and '_' in doc_data and doc_data.split('_')[0]|length == 32 %}
-                              {# Archivo S3 - patrón: hash_32_chars_nombre_archivo #}
-                              {% set doc_proxy = '/admin/s3/' + doc_data %}
-                              {% set doc_filename = doc_data %}
-                            {% else %}
-                              {# Archivo local - buscar en app/static/uploads/ #}
-                              {% set doc_proxy = '/static/uploads/' + doc_data %}
-                              {% set doc_filename = doc_data %}
-                            {% endif %}
+                            {% set doc_proxy = '/static/uploads/' ~ doc_item %}
+                            {% set doc_filename = doc_item %}
                           {% endif %}
-                          
+            
                           {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
+            
                           {% if file_extension == 'pdf' %}
                             {% set doc_type = 'PDF' %}
-                          {% elif file_extension == 'txt' %}
-                            {% set doc_type = 'TXT' %}
-                          {% elif file_extension == 'md' %}
-                            {% set doc_type = 'MD' %}
-                          {% elif file_extension == 'doc' or file_extension == 'docx' %}
+                            {% set icon_class = 'fa-file-pdf' %}
+                          {% elif file_extension in ['doc', 'docx'] %}
                             {% set doc_type = 'DOC' %}
-                                                                {% else %}
+                            {% set icon_class = 'fa-file-word' %}
+                          {% elif file_extension in ['xls', 'xlsx'] %}
+                            {% set doc_type = 'EXCEL' %}
+                            {% set icon_class = 'fa-file-excel' %}
+                          {% elif file_extension in ['txt', 'rtf', 'md'] %}
                             {% set doc_type = file_extension.upper() %}
-                                                                {% endif %}
-                          
-                                                            <a href="#" 
-                                                               class="btn btn-sm btn-outline-info"
+                            {% set icon_class = 'fa-file-alt' %}
+                          {% else %}
+                            {% set doc_type = file_extension.upper() %}
+                            {% set icon_class = 'fa-file' %}
+                          {% endif %}
+            
+                          <a href="#"
+                             class="btn btn-sm btn-outline-info"
                              onclick="event.preventDefault(); showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}');">
-                            <i class="fas fa-file-{{ 'pdf' if file_extension == 'pdf' else 'alt' }}"></i> {{ doc_type }}
+                            <i class="fas {{ icon_class }}"></i> {{ doc_type }}
                           </a>
+            
                         </div>
-                                                        {% endif %}
-                                                    {% else %}
-                      <span class="text-muted">-</span>
-                                        {% endif %}
-                  
-                  {% elif header == 'Multimedia' %}
-                    <!-- Columna Multimedia - manejar archivo multimedia -->
-                    {% set multimedia_data = row[header] if row[header] is defined else '' %}
-                    {% if multimedia_data %}
-                      <div class="multimedia-preview">
-                        <!-- Determinar si es URL S3 o archivo local -->
-                        {% if multimedia_data is string and multimedia_data.startswith('http') %}
-                          <!-- URL S3 o externa -->
-                          {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                            <!-- Archivo en S3 - usar proxy -->
-                            {% set media_proxy = '/admin/s3/' + multimedia_data.split('/')[-1] %}
-                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                          {% else %}
-                            <!-- URL externa real -->
-                            {% set media_proxy = multimedia_data %}
-                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                          {% endif %}
-                        {% else %}
-                          <!-- Archivo local -->
-                          {% if multimedia_data.startswith('/admin/s3/') %}
-                            <!-- Ya es una URL proxy S3 -->
-                            {% set media_proxy = multimedia_data %}
-                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                          {% else %}
-                            <!-- Solo nombre de archivo, crear URL proxy S3 -->
-                            {% set media_proxy = '/admin/s3/' + multimedia_data %}
-                            {% set media_filename = multimedia_data %}
-                          {% endif %}
-                        {% endif %}
-                        
-                        <!-- Mostrar miniatura según tipo de archivo -->
-                        {% if media_filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                          <!-- Imagen -->
-                          <img src="{{ media_proxy }}" 
-                               alt="Multimedia" 
-                               style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                               onclick="showImageModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
-                               onmouseover="this.style.opacity='0.8'"
-                               onmouseout="this.style.opacity='1'">
-                        {% elif media_filename.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
-                          <!-- Video -->
-                          <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
-                            <video 
-                              src="{{ media_proxy }}" 
-                              style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                              onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
-                              onmouseover="this.style.opacity='0.8'"
-                              onmouseout="this.style.opacity='1'"
-                              preload="metadata">
-                            </video>
-                            <div class="play-button-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                              <i class="fas fa-play" style="font-size: 8px;"></i>
-                            </div>
+                      {% endif %}
+                    {% endfor %}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+            
+                {# ==========================================================
+                   MULTIMEDIA
+                   ========================================================== #}
+                {% elif header == 'Multimedia' %}
+            
+                  {% set multimedia_data = row.get(header, '') %}
+            
+                  {% if multimedia_data %}
+                    <div class="multimedia-preview">
+            
+                      {% if multimedia_data is string and multimedia_data.startswith('http') %}
+                        {% set media_proxy = multimedia_data %}
+                        {% set media_filename = multimedia_data.split('/')[-1] %}
+            
+                      {% elif multimedia_data is string and (multimedia_data.startswith('/admin/s3/') or multimedia_data.startswith('/s3/') or multimedia_data.startswith('/imagenes_subidas/') or multimedia_data.startswith('/static/uploads/')) %}
+                        {% set media_proxy = multimedia_data %}
+                        {% set media_filename = multimedia_data.split('/')[-1] %}
+            
+                      {% else %}
+                        {% set media_proxy = url_for('uploaded_images.uploaded_images', filename=multimedia_data) %}
+                        {% set media_filename = multimedia_data %}
+                      {% endif %}
+            
+                      {% if media_filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
+                        <img src="{{ media_proxy }}"
+                             alt="Multimedia"
+                             style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                             onclick="showImageModal('{{ media_proxy }}', '{{ media_filename }}'); return false;">
+            
+                      {% elif media_filename.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
+                        <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
+                          <video src="{{ media_proxy }}"
+                                 style="width: 50px; height: 38px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                                 onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;"
+                                 preload="metadata">
+                          </video>
+                          <div class="play-button-overlay"
+                               style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                                      background: rgba(0,0,0,0.7); color: white; border-radius: 50%;
+                                      width: 24px; height: 24px; display: flex; align-items: center;
+                                      justify-content: center; pointer-events: none;">
+                            <i class="fas fa-play" style="font-size: 8px;"></i>
                           </div>
-                        {% elif media_filename.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                          <!-- Audio -->
-                          <div class="audio-thumbnail" style="display: inline-block; text-align: center;">
-                            <div style="width: 50px; height: 38px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;">
-                              <i class="fas fa-music" style="color: white; font-size: 14px;"></i>
-                            </div>
-                            <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
-                          </div>
-                        {% else %}
-                          <!-- Otro tipo de archivo -->
-                          <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-file"></i> Ver Archivo
+                        </div>
+            
+                      {% elif media_filename.lower().endswith(('.mp3', '.wav', '.ogg')) %}
+                        <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary">
+                          <i class="fas fa-music"></i> Audio
+                        </a>
+            
+                      {% else %}
+                        <a href="#" onclick="showMultimediaModal('{{ media_proxy }}', '{{ media_filename }}'); return false;" class="btn btn-sm btn-outline-secondary">
+                          <i class="fas fa-file"></i> Ver archivo
+                        </a>
+                      {% endif %}
+            
+                    </div>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+            
+                {# ==========================================================
+                   RESTO DE CAMPOS
+                   ========================================================== #}
+                {% else %}
+            
+                  {% if cell_data %}
+                    {{ cell_data }}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+            
+                {% endif %}
+              </td>
+            {%- endfor -%}
+              <td style="text-align: center;">
+                  {% if row.imagen_urls and row.imagen_urls|length > 0 %}
+                    <div class="admin-images-inline">
+                      {% for img_url in row.imagen_urls %}
+                        {% if loop.index <= 5 %}
+                          <a href="#"
+                             class="admin-image-thumb-link"
+                             onclick="showImageModal('{{ img_url }}', '{{ img_url.split('/')[-1] }}'); return false;"
+                             title="Ver imagen {{ loop.index }}">
+                            <img src="{{ img_url }}"
+                                 alt="Imagen {{ loop.index }}"
+                                 class="admin-image-thumb"
+                                 onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIGZpbGw9IiNGNUY1RjUiLz48Y2lyY2xlIGN4PSIxOCIgY3k9IjE0IiByPSI0IiBmaWxsPSIjQ0NDIi8+PHBhdGggZD0iTTggMjhMMTYgMjBMMjIgMjZMMjggMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0NDQyIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+';">
                           </a>
                         {% endif %}
-                      </div>
-                    {% else %}
-                      <span class="text-muted">-</span>
-                    {% endif %}
+                      {% endfor %}
 
-                  {% elif cell_data is string and cell_data.startswith('http') %}
-                    <a href="{{ cell_data }}" target="_blank" class="btn btn-sm btn-outline-warning">
-                      <i class="fas fa-external-link-alt"></i> Enlace
-                    </a>
-
-                                            {% else %}
-                    {{ cell_data }}
-                                            {% endif %}
-                                        </td>
-              {%- endfor -%}
-              <td>
-                {% if row.imagen_urls and row.imagen_urls|length > 0 %}
-                  <div class="d-flex flex-wrap justify-content-center gap-1">
-                    {% for img_url in row.imagen_urls %}
-                      <a href="#" onclick="showImageModal('{{ img_url }}', '{{ img_url.split('/')[-1] }}'); return false;">
-                        <img src="{{ img_url }}" alt="Imagen" class="image-gallery-thumbnail"
-                             onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzUiIGhlaWdodD0iMzUiIHZpZXdCb3g9IjAgMCAzNSAzNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjM1IiBoZWlnaHQ9IjM1IiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNy41IDEwQzE5LjQzIDEwIDIxIDExLjU3IDIxIDEzLjVDMjEgMTUuNDMgMTkuNDMgMTcgMTcuNSAxN0MxNS41NyAxNyAxNCAxNS40MyAxNCAxMy41QzE0IDExLjU3IDE1LjU3IDEwIDE3LjUgMTBaIiBmaWxsPSIjQ0NDQ0NDIi8+CjxwYXRoIGQ9Ik0xMCAyMkMyMCAyMiAyMCAyMiAyMCAyMkgxMEMxMCAyMiAxMCAyMiAxMCAyMloiIGZpbGw9IiNDQ0NDQ0MiLz4KPC9zdmc+'; this.style.opacity='0.5';">
-                      </a>
-                                            {% endfor %}
-                    <small class="text-muted w-100 mt-1">({{ row.imagen_urls|length }} imágenes)</small>
-                  </div>
-                                        {% else %}
-                  <span class="text-muted">Sin imágenes</span>
-                                        {% endif %}
-                                    </td>
+                      {% if row.imagen_urls|length > 5 %}
+                        <a href="#"
+                           class="admin-images-count"
+                           onclick="showImageModal('{{ row.imagen_urls[5] }}', '{{ row.imagen_urls[5].split('/')[-1] }}'); return false;"
+                           title="Ver imagen 6">
+                          +{{ row.imagen_urls|length - 5 }}
+                        </a>
+                      {% endif %}
+                    </div>
+                  {% else %}
+                    <span class="text-muted">Sin imágenes</span>
+                  {% endif %}
+               </td>
               {%- if session.role == 'admin' -%}
                                     <td>
                   <div class="d-flex gap-1 justify-content-center">

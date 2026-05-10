@@ -103,7 +103,45 @@ def serve_s3_file(filename: str):
 
     except ClientError as e:
         current_app.logger.error(f"Error descargando archivo S3 {filename}: {e}")
-        return jsonify({"error": "Archivo no encontrado en S3"}), 404
+
+        # Fallback local real: buscar físicamente en app/static/uploads
+        import os
+        from flask import send_from_directory
+
+        uploads_dir = current_app.config.get("UPLOAD_FOLDER")
+
+        if not uploads_dir:
+            uploads_dir = os.path.join(current_app.root_path, "static", "uploads")
+
+        # Si filename llega con ruta, quedarnos solo con el nombre final
+        safe_filename = os.path.basename(filename)
+
+        local_path = os.path.join(uploads_dir, safe_filename)
+
+        current_app.logger.info(
+            f"[S3-PROXY] 🔄 Archivo no encontrado en S3, buscando fallback local físico: {local_path}"
+        )
+
+        if os.path.exists(local_path):
+            current_app.logger.info(
+                f"[S3-PROXY] ✅ Archivo local encontrado: {local_path}"
+            )
+
+            return send_from_directory(
+                uploads_dir,
+                safe_filename,
+                as_attachment=False,
+            )
+
+        current_app.logger.error(
+            f"[S3-PROXY] ❌ Archivo no encontrado ni en S3 ni localmente: {safe_filename}"
+        )
+
+        return {
+            "error": "Archivo no encontrado en S3 ni localmente",
+            "filename": safe_filename,
+            "local_path_checked": local_path,
+        }, 404
     except Exception as e:
         current_app.logger.error(
             f"Error inesperado sirviendo archivo S3 {filename}: {e}"
@@ -234,35 +272,67 @@ def serve_s3_proxy(filename):
 
     except ClientError as e:
         current_app.logger.error(f"Error descargando archivo S3 {filename}: {e}")
-        # Si el archivo no existe en S3, intentar servir desde ruta local
-        current_app.logger.info(
-            f"[S3-PROXY] 🔄 Archivo no encontrado en S3, intentando ruta local: /static/uploads/{filename}"
-        )
-        try:
-            import os
 
-            from flask import send_from_directory
+        import os
+        import mimetypes
+        from flask import send_file
 
-            uploads_dir = os.path.join(current_app.root_path, "..", "uploads")
-            return send_from_directory(uploads_dir, filename)
-        except Exception as local_error:
-            current_app.logger.error(
-                f"Error sirviendo archivo local {filename}: {local_error}"
+        safe_filename = os.path.basename(filename)
+
+        candidate_dirs = []
+
+        configured_upload = current_app.config.get("UPLOAD_FOLDER")
+        if configured_upload:
+            candidate_dirs.append(configured_upload)
+
+        candidate_dirs.extend([
+            os.path.join(current_app.root_path, "static", "uploads"),
+            os.path.join(os.getcwd(), "app", "static", "uploads"),
+            os.path.join(os.getcwd(), "static", "uploads"),
+        ])
+
+        checked_paths = []
+
+        for folder in candidate_dirs:
+            local_path = os.path.abspath(os.path.join(folder, safe_filename))
+            checked_paths.append(local_path)
+
+            current_app.logger.info(
+                f"[S3-PROXY] 🔄 Comprobando fallback local físico: {local_path}"
             )
-            return jsonify({"error": "Archivo no encontrado en S3 ni localmente"}), 404
+
+            if os.path.exists(local_path):
+                mime_type, _ = mimetypes.guess_type(local_path)
+                mime_type = mime_type or "application/octet-stream"
+
+                current_app.logger.info(
+                    f"[S3-PROXY] ✅ Archivo local encontrado: {local_path} ({mime_type})"
+                )
+
+                return send_file(
+                    local_path,
+                    mimetype=mime_type,
+                    as_attachment=False,
+                    download_name=safe_filename,
+                    conditional=True,
+                )
+
+        current_app.logger.error(
+            f"[S3-PROXY] ❌ Archivo no encontrado ni en S3 ni localmente. Rutas comprobadas: {checked_paths}"
+        )
+
+        return {
+            "error": "Archivo no encontrado en S3 ni localmente",
+            "filename": safe_filename,
+            "checked_paths": checked_paths,
+        }, 404
+
+
     except Exception as e:
         current_app.logger.error(
             f"Error inesperado sirviendo archivo S3 {filename}: {e}"
         )
         return jsonify({"error": "Error interno del servidor"}), 500
-
-
-# @admin_bp.route("/scripts-tools")
-# def scripts_tools_overview():
-#     # Esta ruta está comentada para evitar conflictos con scripts_bp
-#     # La funcionalidad de scripts y herramientas ahora está en /admin/tools/
-#     pass
-
 
 @admin_bp.route("/")
 @admin_required
@@ -2598,14 +2668,18 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
         else:
             catalog["created_at_formatted"] = "Fecha desconocida"
 
-        if "rows" in catalog and catalog["rows"] is not None:
-            catalog["row_count"] = len(catalog["rows"])
+        # Fuente oficial de filas: data.
+        # rows queda solo como compatibilidad, pero no debe machacar data.
+        if "data" in catalog and catalog["data"] is not None:
+            catalog["row_count"] = len(catalog["data"])
+            catalog["rows"] = catalog["data"]
+        elif "rows" in catalog and catalog["rows"] is not None:
             catalog["data"] = catalog["rows"]
-        elif "data" in catalog and catalog["data"] is not None:
             catalog["row_count"] = len(catalog["data"])
         else:
-            catalog["row_count"] = 0
             catalog["data"] = []
+            catalog["rows"] = []
+            catalog["row_count"] = 0
 
         logger.info(
             f"[ADMIN] Mostrando catálogo desde {collection_source}: {catalog.get('name', 'Sin nombre')}"

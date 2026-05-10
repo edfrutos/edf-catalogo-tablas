@@ -297,3 +297,74 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log("🔧 MODAL-FORCE: Sistema de forzado inicializado completamente");
 });
+/* =========================================================
+   EDF FIX - Documentos externos
+   Evita que URLs tipo https://platform.openai.com/docs/... se traten como S3/local.
+   ========================================================= */
+window.addEventListener('load', function () {
+    window.showDocumentModal = function (documentUrl, documentName) {
+        const safeUrl = String(documentUrl || '');
+        const safeName = documentName || safeUrl.split('/').pop() || 'Documento';
+
+        if (!safeUrl) {
+            alert('No hay URL de documento.');
+            return false;
+        }
+
+        const modalEl = document.getElementById('documentModal');
+        const titleEl = document.getElementById('documentTitle');
+        const contentEl = document.getElementById('documentContent');
+
+        if (!modalEl || !contentEl) {
+            window.open(safeUrl, '_blank', 'noopener,noreferrer');
+            return false;
+        }
+
+        const isExternal = /^https?:\/\//i.test(safeUrl);
+        const cleanUrl = safeUrl.split('?')[0].split('#')[0].toLowerCase();
+
+        const isPdf = cleanUrl.endsWith('.pdf');
+        const isTxt = cleanUrl.endsWith('.txt');
+        const isMd = cleanUrl.endsWith('.md');
+        const isPreviewableExternalDocument = isExternal && (isPdf || isTxt || isMd);
+
+        if (titleEl) {
+            titleEl.textContent = safeName;
+        }
+
+        if (isExternal && !isPreviewableExternalDocument) {
+            contentEl.innerHTML = `
+                <div class="alert alert-info mb-0">
+                    <h5 class="mb-3">
+                        <i class="fas fa-external-link-alt"></i> Documento externo
+                    </h5>
+                    <p>
+                        Esta URL apunta a una página web externa. Muchas webs no permiten mostrarse dentro de un modal por seguridad del navegador.
+                    </p>
+                    <p class="small text-muted" style="word-break: break-all;">
+                        ${saferl}
+                    </p>
+                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
+                    </a>
+                </div>
+            `;
+        } else {
+            contentEl.innerHTML = `
+                <iframe src="${safeUrl}"
+                        style="width: 100%; height: 70vh; border: 1px solid #ddd; border-radius: 6px;">
+                </iframe>
+                <div class="mt-3">
+                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
+                    </a>
+                </div>
+            `;
+        }
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+
+        return false;
+    };
+});

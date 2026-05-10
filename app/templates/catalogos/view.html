@@ -115,6 +115,96 @@
             padding: 0.25rem 0.5rem;
         }
     }
+    
+    /* === Ajuste final tabla vista usuario catálogo === */
+
+#tabla-body tr {
+    height: auto !important;
+}
+
+#tabla-body td {
+    vertical-align: middle !important;
+}
+
+.catalog-images-cell {
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+    vertical-align: middle !important;
+    text-align: center !important;
+}
+
+.catalog-images-inline {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    max-width: 180px !important;
+    overflow: hidden !important;
+    padding: 2px 0 !important;
+}
+
+.catalog-image-thumb-link {
+    display: inline-flex !important;
+    flex: 0 0 42px !important;
+    width: 42px !important;
+    height: 42px !important;
+    border: 1px solid #dee2e6 !imporant;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    background: #f8f9fa !important;
+    text-decoration: none !important;
+}
+
+.catalog-image-thumb {
+    width: 42px !important;
+    height: 42px !important;
+    object-fit: cover !important;
+    display: block !important;
+}
+
+.catalog-images-count {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    padding: 0 6px !important;
+    border-radius: 999px !important;
+    background: #eef5ff !important;
+    color: #0d6efd !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+}
+
+.catalog-actions-cell {
+    width: 170px !important;
+    min-width: 170px !important;
+    max-width: 170px !important;
+    vertical-align: middle !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+.catalog-actions-inline {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+}
+
+.catalog-actions-inline .btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+}
+
 </style>
 {% endblock %}
 
@@ -150,7 +240,8 @@
         </div>
     </div>
 
-    {% if catalog.rows %}
+    {% set filas_catalogo = catalog.rows if catalog.rows else (catalog.data if catalog.data else []) %}
+    {% if filas_catalogo %}
     <div class="table-responsive">
         <table class="table table-striped table-hover" id="catalogTable">
             <thead class="table-dark">
@@ -180,303 +271,108 @@
                 </tr>
             </thead>
             <tbody id="tabla-body">
-                {% for row in catalog.rows %}
+                {% for row in filas_catalogo %}
                 <tr id="fila-{{ loop.index }}">
                     <td class="fw-bold text-primary">{{ loop.index }}</td>
                     {% for header in catalog.headers %}
                     <td>
-                        {% if header == 'Multimedia' %}
-                                                        <!-- Columna Multimedia -->
-                                                        {% if row[header] %}
-                                                                {% set multimedia_data = row[header] %}
-                                                                {# Si no es string o no tiene extensión reconocida, mostrar advertencia #}
-                                                                {% if not (multimedia_data is string and (multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.avi', '.mov', '.wmv', '.mp3', '.wav', '.ogg')))) %}
-                                                                    <span class="badge bg-warning text-dark">Valor multimedia no reconocido: <code>{{ multimedia_data }}</code></span>
-                                                                {% endif %}
-                                                                {% if multimedia_data is string and multimedia_data.startswith('http') %}
-                                    <!-- URL externa o S3 -->
-                                    {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or multimedia_data.startswith('/admin/s3/') %}
-                                        <!-- Archivo en S3 -->
-                                        <div class="multimedia-preview">
-                                            {% if multimedia_data is string and multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                                                <img src="{{ multimedia_data }}" 
-                                                     alt="Multimedia" 
-                                                     class="img-thumbnail multimedia-thumbnail"
-                                                     data-media-url="{{ multimedia_data }}"
-                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"
-                                                     data-action="show-multimedia-modal">
-                                            {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
-                                                <div class="multimedia-thumbnail-container" 
-                                                     data-media-url="{{ multimedia_data }}"
-                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"
-                                                     data-action="show-multimedia-modal"
-                                                     style="cursor: pointer; position: relative; display: inline-block;">
-                                                    <video class="multimedia-thumbnail" 
-                                                           style="pointer-events: none;">
-                                                        <source src="{{ multimedia_data }}" type="video/mp4">
-                                                        Tu navegador no soporta el elemento video.
-                                                    </video>
-                                                    <div class="play-overlay">
-                                                        <i class="fas fa-play text-white"></i>
-                                                    </div>
-                                                </div>
-                                            {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                                                <div class="multimedia-thumbnail-container" 
-                                                     data-media-url="{{ multimedia_data }}"
-                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"
-                                                     data-action="show-multimedia-modal"
-                                                     style="cursor: pointer; position: relative; display: inline-block;">
-                                                    <audio class="multimedia-thumbnail" 
-                                                           style="pointer-events: none;">
-                                                        <source src="{{ multimedia_data }}" type="audio/mpeg">
-                                                        Tu navegador no soporta el elemento audio.
-                                                    </audio>
-                                                    <div class="play-overlay">
-                                                        <i class="fas fa-music text-white"></i>
-                                                    </div>
-                                                </div>
-                                            {% else %}
-                                                <a href="#" 
-                                                   data-media-url="{{ multimedia_data }}"
-                                                   data-media-name="{{ multimedia_data.split('/')[-1] }}"
-                                                   data-action="show-multimedia-modal"
-                                                   class="btn btn-sm btn-outline-secondary">
-                                                    <i class="fas fa-play"></i> Reproducir
-                                                </a>
-                                            {% endif %}
-                                        </div>
-                                    {% else %}
-                                        <!-- URL externa -->
-                                        <a href="{{ multimedia_data }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-external-link-alt"></i> Ver Multimedia
-                                        </a>
-                                    {% endif %}
-                                {% else %}
-                                    <!-- Archivo local -->
-                                    <div class="multimedia-preview">
-                                        <!-- Determinar si es URL S3 o archivo local -->
-                                        {% if multimedia_data is string and multimedia_data.startswith('http') %}
-                                          <!-- URL S3 o externa -->
-                                          {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                                            <!-- Archivo en S3 - usar proxy -->
-                                            {% set media_proxy = '/admin/s3/' + multimedia_data.split('/')[-1] %}
-                                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                                          {% else %}
-                                            <!-- URL externa real -->
-                                            {% set media_proxy = multimedia_data %}
-                                            {% set media_filename = multimedia_data.split('/')[-1] %}
-                                          {% endif %}
-                                        {% else %}
-                                          <!-- Archivo local -->
-                                          {% set media_proxy = '/admin/s3/' + multimedia_data %}
-                                          {% set media_filename = multimedia_data %}
-                                        {% endif %}
-                                        
-                                        <!-- Mostrar miniatura según tipo de archivo -->
-                                        {% if media_filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
-                                          <!-- Imagen -->
-                                          <img src="{{ media_proxy }}" 
-                                               alt="Multimedia" 
-                                               data-image-url="{{ media_proxy }}"
-                                               data-image-name="{{ media_filename }}"
-                                               style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                                               onclick="showImageModal(this.dataset.imageUrl, this.dataset.imageName); return false;"
-                                               onmouseover="this.style.opacity='0.8'"
-                                               onmouseout="this.style.opacity='1'">
-                                        {% elif media_filename.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}
-                                          <!-- Video -->
-                                          <div class="video-thumbnail-container" style="position: relative; display: inline-block;">
-                                            <video 
-                                              src="{{ media_proxy }}" 
-                                              data-media-url="{{ media_proxy }}"
-                                              data-media-name="{{ media_filename }}"
-                                              style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                                              data-action="show-multimedia-modal"
-                                              onmouseover="this.style.opacity='0.8'"
-                                              onmouseout="this.style.opacity='1'"
-                                              preload="metadata">
-                                            </video>
-                                            <div class="play-button-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-                                              <i class="fas fa-play" style="font-size: 10px;"></i>
-                                            </div>
-                                          </div>
-                                        {% elif media_filename.lower().endswith(('.mp3', '.wav', '.ogg')) %}
-                                          <!-- Audio -->
-                                          <div class="audio-thumbnail" style="display: inline-block; text-align: center;">
-                                            <div class="audio-thumbnail-btn" 
-                                                 data-media-url="{{ media_proxy }}"
-                                                 data-media-name="{{ media_filename }}"
-                                                 data-action="show-multimedia-modal">
-                                              <i class="fas fa-music" style="color: white; font-size: 18px;"></i>
-                                            </div>
-                                            <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>
-                                          </div>
-                                                                                {% else %}
-                                                                                    <!-- Otro tipo de archivo -->
-                                                                                    <a href="#" 
-                                                                                       data-media-url="{{ media_proxy }}"
-                                                                                       data-media-name="{{ media_filename }}"
-                                                                                       data-action="show-multimedia-modal" 
-                                                                                       class="btn btn-sm btn-outline-secondary me-2">
-                                                                                        <i class="fas fa-file"></i> Ver Archivo
-                                                                                    </a>
-                                                                                    <a href="{{ media_proxy }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                                                        <i class="fas fa-external-link-alt"></i> Abrir URL
-                                                                                    </a>
-                                                                                {% endif %}
-                                    </div>
-                                {% endif %}
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
-                        {% elif header in ['Documentos', 'Documentación'] or header.startswith('Documentación') %}
-                            <!-- Columna Documentos/Documentación - manejar diferentes formatos -->
-                            {% if header.startswith('Documentación') %}
-                                <!-- Headers como Documentación_1, Documentación_2, etc. -->
-                                {% set doc_data = row[header] if row[header] is defined else '' %}
-                            {% else %}
-                                <!-- Headers como Documentos, Documentación -->
-                                {% set field_name = header + '_' + loop.index0|string %}
-                                {% set doc_data = row[field_name] if row[field_name] is defined else '' %}
-                            {% endif %}
-                            {% if doc_data %}
-                              <div class="documento-item mb-1">
-                                {% if doc_data is iterable and doc_data is not string %}
-                                  <!-- Múltiples documentos (formato nuevo) -->
-                                  {% for doc in doc_data %}
-                                    {% if doc %}
-                                      <!-- Determinar si es URL S3 o archivo local -->
-                                      {% if doc is string and doc.startswith('http') %}
-                                        <!-- URL S3 o externa -->
-                                        {% if doc.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}
-                                          <!-- Archivo en S3 - usar proxy -->
-                                          {% set doc_proxy = '/admin/s3/' + doc.split('/')[-1] %}
-                                          {% set doc_filename = doc.split('/')[-1] %}
-                                        {% else %}
-                                          <!-- URL externa real -->
-                                          {% set doc_proxy = doc %}
-                                          {% set doc_filename = doc.split('/')[-1] %}
-                                        {% endif %}
-                                      {% else %}
-                                        <!-- Archivo local -->
-                                        {% set doc_proxy = '/admin/s3/' + doc %}
-                                        {% set doc_filename = doc %}
-                                      {% endif %}
-                                      
-                                      {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}
-                                      {% if file_extension == 'pdf' %}
-                                          {% set doc_type = 'PDF' %}
-                                      {% elif file_extension == 'txt' %}
-                                          {% set doc_type = 'TXT' %}
-                                      {% elif file_extension == 'md' %}
-                                          {% set doc_type = 'MD' %}
-                                      {% elif file_extension in ['doc', 'docx'] %}
-                                          {% set doc_type = 'WORD' %}
-                                      {% elif file_extension in ['xls', 'xlsx'] %}
-                                          {% set doc_type = 'EXCEL' %}
-                                      {% elif file_extension == 'rtf' %}
-                                          {% set doc_type = 'RTF' %}
-                                      {% else %}
-                                          {% set doc_type = file_extension.upper() %}
-                                      {% endif %}
-                                      <a href="#" 
-                                         class="btn btn-sm btn-outline-info"
-                                         onclick="
-                                             event.preventDefault(); 
-                                             if (typeof showPyWebViewDocument !== 'undefined') { 
-                                                 showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                             } else { 
-                                                 showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}'); 
-                                             }
-                                         ">
-                                          <i class="fas fa-external-link-alt"></i> {{ doc_type }}
-                                      </a>
-                                    {% endif %}
-                                  {% endfor %}
-                                {% else %}
-                                  <!-- Documento único (formato antiguo) -->
-                                  <!-- Archivo en S3 - usar proxy -->
-                                  {% set doc_proxy = '/admin/s3/' + doc_data %}
-                                  {% set file_extension = doc_data.split('.')[-1].lower() if '.' in doc_data else 'unknown' %}
-                                  {% if file_extension == 'pdf' %}
-                                      {% set doc_type = 'PDF' %}
-                                  {% elif file_extension == 'txt' %}
-                                      {% set doc_type = 'TXT' %}
-                                  {% elif file_extension == 'md' %}
-                                      {% set doc_type = 'MD' %}
-                                  {% elif file_extension in ['doc', 'docx'] %}
-                                      {% set doc_type = 'WORD' %}
-                                  {% elif file_extension in ['xls', 'xlsx'] %}
-                                      {% set doc_type = 'EXCEL' %}
-                                  {% elif file_extension == 'rtf' %}
-                                      {% set doc_type = 'RTF' %}
-                                  {% else %}
-                                      {% set doc_type = file_extension.upper() %}
-                                  {% endif %}
-                                  <a href="#" 
-                                     class="btn btn-sm btn-outline-info"
-                                     onclick="
-                                         event.preventDefault(); 
-                                         if (typeof showPyWebViewDocument !== 'undefined') { 
-                                             showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_data }}'); 
-                                         } else { 
-                                             showDocumentModal('{{ doc_proxy }}', '{{ doc_data }}'); 
-                                         }
-                                     ">
-                                      <i class="fas fa-external-link-alt"></i> {{ doc_type }}
-                                  </a>
-                                {% endif %}
-                              </div>
-                            {% else %}
-                              <span class="text-muted">-</span>
-                            {% endif %}
+                        {% if header == 'Multimedia' %}                                                        <!-- Columna Multimedia -->                                                        {% if row[header] %}                                                                {% set multimedia_data = row[header] %}                                                                {# Si no es string o no tiene extensión reconocida, mostrar advertencia #}                                                                {% if not (multimedia_data is string and (multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.avi', '.mov', '.wmv', '.mp3', '.wav', '.ogg')))) %}                                                                    <span class="badge bg-warning text-dark">Valor multimedia no reconocido: <code>{{ multimedia_data }}</code></span>                                                                {% endif %}                                                                {% if multimedia_data is string and multimedia_data.startswith('http') %}                                    <!-- URL externa o S3 -->                                    {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') or multimedia_data.startswith('/admin/s3/') %}                                        <!-- Archivo en S3 -->                                        <div class="multimedia-preview">                                            {% if multimedia_data is string and multimedia_data.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}                                                <img src="{{ multimedia_data }}"                                                      alt="Multimedia"                                                      class="img-thumbnail multimedia-thumbnail"                                                     data-media-url="{{ multimedia_data }}"                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"                                                     data-action="show-multimedia-modal">                                            {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}                                                <div class="multimedia-thumbnail-container"                                                      data-media-url="{{ multimedia_data }}"                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"                                                     data-action="show-multimedia-modal"                                                     style="cursor: pointer; position: relative; display: inline-block;">                                                    <video class="multimedia-thumbnail"                                                            style="pointer-events: none;">                                                        <source src="{{ multimedia_data }}" type="video/mp4">                                                        Tu navegador no soporta el elemento video.                                                    </video>                                                    <div class="play-overlay">                                                        <i class="fas fa-play text-white"></i>                                                    </div>                                                </div>                                            {% elif multimedia_data is string and multimedia_data.lower().endswith(('.mp3', '.wav', '.ogg')) %}                                                <div class="multimedia-thumbnail-container"                                                      data-media-url="{{ multimedia_data }}"                                                     data-media-name="{{ multimedia_data.split('/')[-1] }}"                                                     data-action="show-multimedia-modal"                                                     style="cursor: pointer; position: relative; display: inline-block;">                                                    <audio class="multimedia-thumbnail"                                                            style="pointer-events: none;">                                                        <source src="{{ multimedia_data }}" type="audio/mpeg">                                                        Tu navegador no soporta el elemento audio.                                                    </audio>                                                    <div class="play-overlay">                                                        <i class="fas fa-music text-white"></i>                                                    </div>                                                </div>                                            {% else %}                                                <a href="#"                                                    data-media-url="{{ multimedia_data }}"                                                   data-media-name="{{ multimedia_data.split('/')[-1] }}"                                                   data-action="show-multimedia-modal"                                                   class="btn btn-sm btn-outline-secondary">                                                    <i class="fas fa-play"></i> Reproducir                                                </a>                                            {% endif %}                                        </div>                                    {% else %}                                        <!-- URL externa -->                                        <a href="{{ multimedia_data }}" target="_blank" class="btn btn-sm btn-outline-primary">                                            <i class="fas fa-external-link-alt"></i> Ver Multimedia                                        </a>                                    {% endif %}                                {% else %}                                    <!-- Archivo local -->                                    <div class="multimedia-preview">                                        <!-- Determinar si es URL S3 o archivo local -->                                        {% if multimedia_data is string and multimedia_data.startswith('http') %}                                          <!-- URL S3 o externa -->                                          {% if multimedia_data.startswith('https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/') %}                                            <!-- Archivo en S3 - usar proxy -->                                            {% set media_proxy = '/admin/s3/' + multimedia_data.split('/')[-1] %}                                            {% set media_filename = multimedia_data.split('/')[-1] %}                                          {% else %}                                            <!-- URL externa real -->                                            {% set media_proxy = multimedia_data %}                                            {% set media_filename = multimedia_data.split('/')[-1] %}                                          {% endif %}                                        {% else %}                                          <!-- Archivo local -->                                          {% set media_proxy = '/admin/s3/' + multimedia_data %}                                          {% set media_filename = multimedia_data %}                                        {% endif %}                                                                                <!-- Mostrar miniatura según tipo de archivo -->                                        {% if media_filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}                                          <!-- Imagen -->                                          <img src="{{ media_proxy }}"                                                alt="Multimedia"                                                data-image-url="{{ media_proxy }}"                                               data-image-name="{{ media_filename }}"                                               style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"                                               onclick="showImageModal(this.dataset.imageUrl, this.dataset.imageName); return false;"                                               onmouseover="this.style.opacity='0.8'"                                               onmouseout="this.style.opacity='1'">                                        {% elif media_filename.lower().endswith(('.mp4', '.avi', '.mov', '.wmv')) %}                                          <!-- Video -->                                          <div class="video-thumbnail-container" style="position: relative; display: inline-block;">                                            <video                                               src="{{ media_proxy }}"                                               data-media-url="{{ media_proxy }}"                                              data-media-name="{{ media_filename }}"                                              style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"                                              data-action="show-multimedia-modal"                                              onmouseover="this.style.opacity='0.8'"                                              onmouseout="this.style.opacity='1'"                                              preload="metadata">                                            </video>                                            <div class="play-button-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; pointer-events: none;">                                              <i class="fas fa-play" style="font-size: 10px;"></i>                                            </div>                                          </div>                                        {% elif media_filename.lower().endswith(('.mp3', '.wav', '.ogg')) %}                                          <!-- Audio -->                                          <div class="audio-thumbnail" style="display: inline-block; text-align: center;">                                            <div class="audio-thumbnail-btn"                                                  data-media-url="{{ media_proxy }}"                                                 data-media-name="{{ media_filename }}"                                                 data-action="show-multimedia-modal">                                              <i class="fas fa-music" style="color: white; font-size: 18px;"></i>                                            </div>                                            <small style="display: block; margin-top: 2px; font-size: 9px; color: #666;">Audio</small>                                          </div>                                                                                {% else %}                                                                                    <!-- Otro tipo de archivo -->                                                                                    <a href="#"                                                                                        data-media-url="{{ media_proxy }}"                                                                                       data-media-name="{{ media_filename }}"                                                                                       data-action="show-multimedia-modal"                                                                                        class="btn btn-sm btn-outline-secondary me-2">                                                                                        <i class="fas fa-file"></i> Ver Archivo                                                                                    </a>                                                                                    <a href="{{ media_proxy }}" target="_blank" class="btn btn-sm btn-outline-primary">                                                                                        <i class="fas fa-external-link-alt"></i> Abrir URL                                                                                    </a>                                                                                {% endif %}                                    </div>                                {% endif %}                            {% else %}                                <span class="text-muted">-</span>                            {% endif %}                        {% elif header in ['Documentos', 'Documentación'] or header.startswith('Documentación') or header.startswith('Documentos') %}
+    <!-- Columna Documentos/Documentación - manejar diferentes formatos -->
+
+    {% if header.startswith('Documentación') %}
+        <!-- Headers como Documentación_1, Documentación_2, etc. -->
+        {% set doc_data = row[header] if row[header] is defined else '' %}
+    {% else %}
+        <!-- Headers como Documentos, Documentación -->
+        {% set field_name = header + '_' + loop.index0|string %}
+        {% if row[header] is defined and row[header] %}
+            {% set doc_data = row[header] %}
+        {% elif row[field_name] is defined and row[field_name] %}
+            {% set doc_data = row[field_name] %}
+        {% else %}
+            {% set doc_data = '' %}
+        {% endif %}
+    {% endif %}
+    {% if doc_data %}        <div class="documento-item mb-1">            {% if doc_data is iterable and doc_data is not string %}                {% set documentos_lista = doc_data %}            {% else %}                {% set documentos_lista = [doc_data] %}            {% endif %}            {% for doc in documentos_lista %}                {% if doc %}                    {% set doc_filename = doc.split('/')[-1] if doc is string else doc %}                    {% if doc is string and doc.startswith('http') %}                        {% if 's3.' in doc or 'amazonaws.com' in doc %}                            {% set doc_proxy = url_for('uploaded_images.uploaded_images', filename=doc.split('/')[-1]) %}                        {% else %}                            {% set doc_proxy = doc %}                        {% endif %}                    {% elif doc is string and (doc.startswith('/admin/s3/') or doc.startswith('/s3/')) %}                        {% set doc_proxy = doc %}                    {% elif doc is string and (doc.startswith('/static/uploads/') or doc.startswith('/imagenes_subidas/')) %}                        {% set doc_proxy = doc %}                    {% else %}                        {% set doc_proxy = url_for('uploaded_images.uploaded_images', filename=doc_filename) %}                    {% endif %}                    {% set file_extension = doc_filename.split('.')[-1].lower() if '.' in doc_filename else 'unknown' %}                    {% if file_extension == 'pdf' %}                        {% set doc_type = 'PDF' %}                    {% elif file_extension == 'txt' %}                        {% set doc_type = 'TXT' %}                    {% elif file_extension == 'md' %}                        {% set doc_type = 'MD' %}                    {% elif file_extension in ['doc', 'docx'] %}                        {% set doc_type = 'WORD' %}                    {% elif file_extension in ['xls', 'xlsx'] %}                        {% set doc_type = 'EXCEL' %}                    {% elif file_extension == 'rtf' %}                        {% set doc_type = 'RTF' %}                    {% else %}                        {% set doc_type = file_extension.upper() %}                    {% endif %}                    <a href="#"                       class="btn btn-sm btn-outline-info mb-1"                       onclick="                           event.preventDefault();                           if (typeof showPyWebViewDocument !== 'undefined') {                               showPyWebViewDocument('{{ doc_proxy }}', '{{ doc_filename }}');                           } else {                               showDocumentModal('{{ doc_proxy }}', '{{ doc_filename }}');                           }                       ">                        <i class="fas fa-file-alt"></i> {{ doc_type }}                    </a>                {% endif %}            {% endfor %}        </div>    {% else %}        <span class="text-muted">-</span>    {% endif %}
                         {% else %}
                             {{ row[header] or '-' }}
                         {% endif %}
                     </td>
                     {% endfor %}
-                    <td>
-                        <!-- Usar imágenes procesadas por el backend -->
-                        {% if row is mapping and row.get('_imagenes') and row._imagenes %}
-                            {% for img_url in row._imagenes %}
-                                {% if loop.index <= 3 %}
-                                    <img src="{{ img_url }}" 
-                                         alt="Imagen {{ loop.index }}" 
-                                         class="img-thumbnail catalog-preview-img" 
-                                         data-image-url="{{ img_url }}"
-                                         data-image-name="Imagen {{ loop.index }}"
-                                         style="width: 60px; height: 60px; object-fit: cover; margin-right: 4px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;"
-                                         onclick="showImageModal(this.dataset.imageUrl, this.dataset.imageName)"
-                                         onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'"
-                                         loading="lazy">
-                                {% endif %}
-                            {% endfor %}
-                            {% if row._imagenes|length > 3 %}
-                                <div class="d-inline-block" style="width: 60px; height: 60px; background: #f8f9fa; border: 1px solid #ccc; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6c757d;">
-                                    +{{ row._imagenes|length - 3 }}
-                                </div>
-                            {% endif %}
-                        {% else %}
-                            <span class="text-muted">-</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="btn-group-vertical btn-group-sm d-flex flex-column flex-md-row" role="group">
-                            <a href="{{ url_for('catalogs.edit_row', catalog_id=catalog._id, row_index=loop.index0) }}" 
-                               class="btn btn-sm btn-outline-primary mb-1 mb-md-0 me-md-1" 
-                               title="Editar fila">
-                                <i class="fas fa-edit"></i>
-                                <span class="d-none d-sm-inline">Editar</span>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger" 
-                                    data-catalog-id="{{ catalog._id }}" data-row-index="{{ loop.index0 }}"
-                                    onclick="confirmDeleteRow(this.dataset.catalogId, parseInt(this.dataset.rowIndex))" 
-                                    title="Eliminar fila">
-                                <i class="fas fa-trash"></i>
-                                <span class="d-none d-sm-inline">Eliminar</span>
-                            </button>
-                        </div>
-                    </td>
+                    <td class="catalog-images-cell"
+    style="width: 190px !important; min-width: 190px !important; max-width: 190px !important; text-align: center !important; vertical-align: middle !important; overflow: hidden !important;">
+
+    {% if row._imagenes and row._imagenes|length > 0 %}
+        <div class="catalog-images-inline"
+             style="display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: center !important; gap: 6px !important; width: 180px !important; max-width: 180px !important; overflow: hidden !important;">
+
+            {% for img_url in row._imagenes %}
+                {% if loop.index <= 3 %}
+                    <a href="#"
+                       class="catalog-image-thumb-link"
+                       onclick="showImageModal('{{ img_url }}', 'Imagen {{ loop.index }}'); return false;"
+                       title="Ver imagen {{ loop.index }}"
+                       style="display: inline-flex !important; width: 42px !important; height: 42px !important; min-width: 42px !important; max-width: 42px !important; flex: 0 0 42px !important; overflow: hidden !important; border: 1px solid #dee2e6 !important; border-radius: 6px !important; background: #f8f9fa !important; text-decoration: none !important;">
+
+                        <img src="{{ img_url }}"
+                             alt="Imagen {{ loop.index }}"
+                             class="catalog-image-thumb"
+                             style="width: 42px !important; height: 42px !important; min-width: 42px !important; max-width: 42px !important; object-fit: cover !important; display: block !important;"
+                             onerror="this.src='{{ url_for('static', filename='img/image-error.svg') }}'"
+                             loading="lazy">
+                    </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if row._imagenes|length > 3 %}
+                <a href="#"
+                   class="catalog-images-count"
+                   onclick="showImageModal('{{ row._imagenes[3] }}', 'Imagen 4'); return false;"
+                   title="Ver imagen 4"
+                   style="display: inline-flex !important; align-items: center !important; justify-content: center !important; min-width: 24px !important; height: 24px !important; padding: 0 6px !important; border-radius: 999px !important; background: #eef5ff !important; color: #0d6efd !important; font-size: 0.75rem !important; font-weight: 600 !important; text-decoration: none !important;">
+                    +{{ row._imagenes|length - 3 }}
+                </a>
+            {% else %}
+                <span class="catalog-images-count"
+                      style="display: inline-flex !important; align-items: center !important; justify-content: center !important; min-width: 24px !important; height: 24px !important; padding: 0 6px !important; border-radius: 999px !important; background: #eef5ff !important; color: #0d6efd !important; font-size: 0.75rem !important; font-weight: 600 !important;">
+                    {{ row._imagenes|length }}
+                </span>
+            {% endif %}
+        </div>
+    {% else %}
+        <span class="text-muted">-</span>
+    {% endif %}
+</td>
+
+<td class="catalog-actions-cell"
+    style="width: 170px !important; min-width: 170px !important; max-width: 170px !important; text-align: center !important; vertical-align: middle !important; white-space: nowrap !important;">
+
+    <div class="catalog-actions-inline"
+         role="group"
+         style="display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 6px !important; width: auto !important; white-space: nowrap !important;">
+
+        <a href="{{ url_for('catalogs.edit_row', catalog_id=catalog._id, row_index=loop.index0) }}"
+           class="btn btn-sm btn-outline-primary"
+           title="Editar fila"
+           style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px !important; white-space: nowrap !important; width: auto !important; min-width: auto !important;">
+            <i class="fas fa-edit"></i>
+            <span>Editar</span>
+        </a>
+
+        <button type="button"
+                class="btn btn-sm btn-outline-danger"
+                data-catalog-id="{{ catalog._id }}"
+                data-row-index="{{ loop.index0 }}"
+                onclick="confirmDeleteRow(this.dataset.catalogId, parseInt(this.dataset.rowIndex))"
+                title="Eliminar fila"
+                style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px !important; white-space: nowrap !important; width: auto !important; min-width: auto !important;">
+            <i class="fas fa-trash"></i>
+            <span>Eliminar</span>
+        </button>
+    </div>
+</td>
+
+
                 </tr>
                 {% endfor %}
             </tbody>
