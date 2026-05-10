@@ -357,3 +357,13 @@ docs/*.pdf
 
 # Script temporal usado para generar documentación consolidada
 crear_docs_limpios.py
+
+
+
+# Cachés de herramientas de análisis Python
+.mypy_cache/
+**/.mypy_cache/
+.pytest_cache/
+**/.pytest_cache/
+.ruff_cache/
+**/.ruff_cache/
