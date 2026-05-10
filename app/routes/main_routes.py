@@ -28,6 +28,7 @@ from werkzeug.utils import secure_filename
 from app import notifications
 from app.database import get_mongo_db
 from app.decorators import login_required
+from app.utils.catalog_utils import normalize_catalog_rows
 from app.utils.image_utils import get_images_for_template
 
 
@@ -239,15 +240,7 @@ def dashboard_user():
                 f"[DEBUG_TABLA_INDIVIDUAL] Procesando tabla: {t.get('name', 'Sin nombre')}"
             )
             t["tipo"] = "spreadsheet"
-            # Unificación: sincronizar 'rows' y 'data'
-            if "rows" in t and t["rows"] is not None:
-                t["data"] = t["rows"]
-            elif "data" in t and t["data"] is not None:
-                t["rows"] = t["data"]
-            else:
-                t["data"] = []
-                t["rows"] = []
-            t["row_count"] = len(t["rows"])
+            normalize_catalog_rows(t)
             t["_id"] = safe_str(t.get("_id"))
             t["created_at"] = safe_str(t.get("created_at"))
             t["owner"] = (
@@ -346,15 +339,7 @@ def dashboard_user():
                 )
         for c in catalogos:
             c["tipo"] = "catalog"
-            # Unificación: sincronizar 'rows' y 'data'
-            if "rows" in c and c["rows"] is not None:
-                c["data"] = c["rows"]
-            elif "data" in c and c["data"] is not None:
-                c["rows"] = c["data"]
-            else:
-                c["data"] = []
-                c["rows"] = []
-            c["row_count"] = len(c["rows"])
+            normalize_catalog_rows(c)
             c["_id"] = safe_str(c.get("_id"))
             c["created_at"] = safe_str(c.get("created_at"))
             c["owner"] = (
@@ -768,11 +753,7 @@ def ver_tabla(table_id):
                             f"[DEBUG][VISIONADO] Usando URL local para multimedia: {multimedia_value} -> {local_url}"
                         )
 
-        # Sincronizar rows con data antes de enviar al template
-        # para evitar que la plantilla use datos antiguos.
-        table["rows"] = table.get("data", [])
-        table["row_count"] = len(table["data"])
-        table["num_rows"] = len(table["data"])
+        normalize_catalog_rows(table)
 
         return render_template("ver_tabla.html", table=table)
     except BuildError as e:
