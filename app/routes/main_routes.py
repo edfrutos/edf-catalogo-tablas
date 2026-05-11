@@ -1157,21 +1157,7 @@ def editar_fila(tabla_id, fila_index):
         f"[DEBUG_EDIT] ANTES sincronización - data tiene {len(table_info.get('data', []))} filas, rows tiene {len(table_info.get('rows', []))} filas"
     )
 
-    # Solo sincronizar si data está vacío pero rows tiene datos
-    if (
-        not table_info.get("data") or len(table_info.get("data", [])) == 0
-    ) and table_info.get("rows"):
-        current_app.logger.info("[DEBUG_EDIT] Copiando rows → data (data estaba vacío)")
-        table_info["data"] = table_info["rows"]
-    elif table_info.get("data") and (
-        not table_info.get("rows") or len(table_info.get("rows", [])) == 0
-    ):
-        current_app.logger.info("[DEBUG_EDIT] Copiando data → rows (rows estaba vacío)")
-        table_info["rows"] = table_info["data"]
-    else:
-        current_app.logger.info("[DEBUG_EDIT] PRESERVANDO data original con imágenes")
-
-    table_info["row_count"] = len(table_info.get("data", []))
+    normalize_catalog_rows(table_info)
 
     # Verificar permisos: solo el propietario o admin puede editar filas
     username = session.get("username")
