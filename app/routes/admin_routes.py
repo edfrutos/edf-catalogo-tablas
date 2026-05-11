@@ -22,10 +22,8 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-import boto3
 import psutil
 import requests  # pyright: ignore[reportDuplicateImport]
-from botocore.exceptions import ClientError
 from bson import ObjectId
 from flask import (
     Blueprint,
