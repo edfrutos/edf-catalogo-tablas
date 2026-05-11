@@ -28,7 +28,7 @@ from werkzeug.utils import secure_filename
 from app import notifications
 from app.database import get_mongo_db
 from app.decorators import login_required
-from app.utils.catalog_utils import normalize_catalog_rows, sync_row_update_paths
+from app.utils.catalog_utils import normalize_catalog_rows, sync_row_push_paths, sync_row_update_paths
 from app.utils.image_utils import get_images_for_template
 
 
@@ -1900,12 +1900,12 @@ def editar_fila(tabla_id, fila_index):
             {"_id": ObjectId(tabla_id)}, {"$set": mongo_update}
         )
 
-        # Sincronizar rows con data para evitar que el visionado use datos antiguos
+        # Sincronizar rows desde data para compatibilidad
         tabla_actualizada = g.spreadsheets_collection.find_one({"_id": ObjectId(tabla_id)})
         if tabla_actualizada and tabla_actualizada.get("data") is not None:
             g.spreadsheets_collection.update_one(
                 {"_id": ObjectId(tabla_id)},
-                {"$set": {"rows": tabla_actualizada.get("data", [])}}
+                {"$set": sync_row_update_paths({"data": tabla_actualizada.get("data", [])})},
             )
 
         flash("Fila actualizada correctamente.", "success")
@@ -2254,15 +2254,14 @@ def agregar_fila(tabla_id):
                 logger.info(f"Imágenes agregadas a la nueva fila: {imagenes}")
                 nueva_fila["num_imagenes"] = len(imagenes)
 
-            # Agregar la fila a la tabla (actualizar tanto data como rows para
-            # compatibilidad)
+            # Agregar la fila a la tabla manteniendo compatibilidad data/rows
             current_app.logger.info(
                 f"[AGREGAR_FILA] Guardando nueva fila en BD: {nueva_fila}"
             )
             result = g.spreadsheets_collection.update_one(
                 {"_id": ObjectId(tabla_id)},
                 {
-                    "$push": {"data": nueva_fila, "rows": nueva_fila},
+                    "$push": sync_row_push_paths(nueva_fila),
                     "$inc": {"num_rows": 1},
                     "$set": {"updated_at": datetime.utcnow()},
                 },
@@ -2827,8 +2826,7 @@ def delete_row(tabla_id, fila_index):
             {"_id": ObjectId(tabla_id)},
             {
                 "$set": {
-                    "data": current_rows,
-                    "rows": current_rows,
+                    **sync_row_update_paths({"data": current_rows}),
                     "num_rows": len(current_rows),
                     "updated_at": datetime.utcnow(),
                 }

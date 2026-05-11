@@ -90,3 +90,8 @@ def sync_row_update_paths(update_data: dict[str, Any]) -> dict[str, Any]:
 
     update_data.update(extra_updates)
     return update_data
+
+
+def sync_row_push_paths(row: Any) -> dict[str, Any]:
+    """Devuelve un $push compatible para añadir una fila a data y rows."""
+    return {"data": row, "rows": row}

@@ -1,3 +1,4 @@
+from app.utils.catalog_utils import sync_row_push_paths
 # Script: agregar_fila.py
 # Descripción: [Explica brevemente qué hace el script]
 # Uso: python3 agregar_fila.py [opciones]
@@ -54,12 +55,11 @@ def agregar_fila_route(main_bp):
                 for header in tabla.get("headers", []):
                     nueva_fila[header] = request.form.get(header, "")
 
-                # Agregar la fila a la tabla (actualizar tanto data como rows para
-                # compatibilidad)
+                # Agregar la fila a la tabla manteniendo compatibilidad data/rows
                 current_app.spreadsheets_collection.update_one(  # type: ignore
                     {"_id": ObjectId(tabla_id)},
                     {
-                        "$push": {"data": nueva_fila, "rows": nueva_fila},
+                        "$push": sync_row_push_paths(nueva_fila),
                         "$inc": {"num_rows": 1},
                         "$set": {"updated_at": datetime.utcnow()},
                     },
