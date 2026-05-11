@@ -8,6 +8,7 @@
 from app.routes.admin.admin_system import admin_system_bp
 from app.routes.admin.admin_s3 import admin_s3_bp
 from app.routes.admin.admin_logs import get_log_files
+from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
 import csv
 import io
 import json
@@ -475,71 +476,6 @@ def get_system_status_data(full: bool = False) -> Dict[str, Any]:
 
 
 # ...
-
-
-def get_backup_files(backup_dir: str) -> List[Dict[str, Any]]:
-    """Obtiene la lista de archivos de backup disponibles (máx 20 más recientes, sin recursividad)"""
-    try:
-        logger.info(f"Buscando archivos de backup en: {backup_dir}")
-        if not os.path.exists(backup_dir):
-            logger.warning(f"El directorio de backups no existe: {backup_dir}")
-            os.makedirs(backup_dir, exist_ok=True)
-            logger.info(f"Directorio de backups creado: {backup_dir}")
-            return []
-        backup_files = []
-        for file in os.listdir(backup_dir):
-            if file.startswith("."):
-                continue
-            full_path = os.path.join(backup_dir, file)
-            if not os.path.isfile(full_path):
-                continue
-            # Solo archivos de backup por extensión
-            if not any(
-                file.endswith(ext)
-                for ext in [
-                    ".bak",
-                    ".backup",
-                    ".zip",
-                    ".tar",
-                    ".gz",
-                    ".json.gz",  # Agregar extensión específica para backups comprimidos
-                    ".sql",
-                    ".dump",
-                    ".old",
-                    ".back",
-                    ".tmp",
-                    ".swp",
-                    "~",
-                    ".csv",
-                    ".json",
-                ]
-            ):
-                continue
-            stats = os.stat(full_path)
-            size_bytes = stats.st_size
-            if size_bytes < 1024:
-                size_str = f"{size_bytes} bytes"
-            elif size_bytes < 1024 * 1024:
-                size_str = f"{size_bytes / 1024:.2f} KB"
-            else:
-                size_str = f"{size_bytes / (1024 * 1024):.2f} MB"
-            mod_time = datetime.fromtimestamp(stats.st_mtime).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-            backup_files.append(
-                {
-                    "name": file,
-                    "size": size_str,
-                    "modified": mod_time,
-                    "path": full_path,
-                }
-            )
-        # Ordenar y limitar a 20 más recientes
-        backup_files.sort(key=lambda x: x["modified"], reverse=True)
-        return backup_files[:20]
-    except (OSError, PermissionError) as e:
-        logger.error(f"Error al obtener archivos de backup: {str(e)}", exc_info=True)
-        return []
 
 
 @admin_bp.route("/usuarios")
@@ -3880,23 +3816,6 @@ def get_db_ops():
             ),
             500,
         )
-
-
-def get_backup_dir() -> str:
-    """Obtiene el directorio de respaldos, asegurando que exista"""
-    # Usar la ruta absoluta basada en el directorio raíz del proyecto
-    # El archivo está en app/routes/, necesitamos ir 3 niveles arriba para llegar a la raíz
-    # app/routes/ -> app/ -> edf_catalogotablas/
-    project_root = os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    )
-    backup_dir = os.path.join(project_root, "backups")
-
-    # Log para depuración
-    current_app.logger.info(f"Directorio de backup configurado: {backup_dir}")
-
-    os.makedirs(backup_dir, exist_ok=True)
-    return backup_dir
 
 
 @admin_bp.route("/db/backup", methods=["GET", "POST"])
