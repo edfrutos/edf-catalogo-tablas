@@ -422,3 +422,40 @@ def register_admin_backup_routes(admin_bp) -> None:
             },
         )
         return send_file(file_path, as_attachment=True, download_name=filename)
+
+    @admin_bp.route("/db/backup/download/<filename>")
+    @admin_required
+    def download_backup_alt(filename: str):
+        """Descarga un archivo de respaldo (ruta alternativa para db_backup)"""
+        try:
+            backup_dir = get_backup_dir()
+            file_path = os.path.join(backup_dir, filename)
+
+            if not os.path.exists(file_path):
+                return (
+                    jsonify(
+                        {"status": "error", "message": "El archivo de respaldo no existe"}
+                    ),
+                    404,
+                )
+
+            audit_log(
+                "backup_file_download",
+                user_id=session.get("user_id"),
+                details={
+                    "filename": filename,
+                    "username": session.get("username", "desconocido"),
+                },
+            )
+            return send_file(file_path, as_attachment=True, download_name=filename)
+        except Exception as e:
+            current_app.logger.error(f"Error al descargar backup {filename}: {str(e)}")
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": f"Error al descargar el archivo: {str(e)}",
+                    }
+                ),
+                500,
+            )

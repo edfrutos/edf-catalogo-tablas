@@ -3687,44 +3687,6 @@ def db_performance():
     return render_template("admin/db_performance.html", results=results)
 
 
-@admin_bp.route("/db/backup/download/<filename>")
-@admin_required
-def download_backup_alt(filename: str):
-    """Descarga un archivo de respaldo (ruta alternativa para db_backup)"""
-    try:
-        backup_dir = get_backup_dir()
-        file_path = os.path.join(backup_dir, filename)
-
-        if not os.path.exists(file_path):
-            return (
-                jsonify(
-                    {"status": "error", "message": "El archivo de respaldo no existe"}
-                ),
-                404,
-            )
-
-        audit_log(
-            "backup_file_download",
-            user_id=session.get("user_id"),
-            details={
-                "filename": filename,
-                "username": session.get("username", "desconocido"),
-            },
-        )
-        return send_file(file_path, as_attachment=True, download_name=filename)
-    except Exception as e:
-        current_app.logger.error(f"Error al descargar backup {filename}: {str(e)}")
-        return (
-            jsonify(
-                {
-                    "status": "error",
-                    "message": f"Error al descargar el archivo: {str(e)}",
-                }
-            ),
-            500,
-        )
-
-
 @admin_bp.route("/restore-local-backup", methods=["POST"])
 @admin_required
 def restore_local_backup():
