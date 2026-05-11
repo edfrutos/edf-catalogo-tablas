@@ -38,7 +38,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from app.database import get_mongo_db
-from app.utils.catalog_utils import normalize_catalog_rows
+from app.utils.catalog_utils import get_catalog_rows, normalize_catalog_rows, sync_row_update_paths
 from app.utils.image_utils import get_images_for_template, upload_image_to_s3
 from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
 from app.utils.s3_utils import convert_s3_url_to_proxy, get_s3_url
@@ -687,7 +687,7 @@ def view(catalog_id, catalog):
                     )
 
             # Asegurar que ambos arrays están sincronizados
-            # El template usa 'rows', así que sincronizamos desde 'data' procesado
+            # Mantener rows sincronizado desde data para compatibilidad con plantillas
             catalog["rows"] = filas_a_procesar
             catalog["data"] = filas_a_procesar
         except ImportError:
@@ -966,7 +966,7 @@ def edit_row(catalog_id, row_index, catalog):
         return redirect(url_for("catalogs.view", catalog_id=catalog_id))
     # Obtener datos de la fila desde 'data' que contiene las imágenes reales
     # NO usar 'rows' porque puede estar desactualizado
-    catalog_data = catalog.get("data", catalog.get("rows", []))
+    catalog_data = get_catalog_rows(catalog)
     row_data = catalog_data[row_index] if 0 <= row_index < len(
         catalog_data) else None
     if not row_data:
@@ -1186,10 +1186,9 @@ def edit_row(catalog_id, row_index, catalog):
                 result = db[coll_name].update_one(
                     {"_id": catalog["_id"]},
                     {
-                        "$set": {
-                            f"rows.{row_index}": row_data,
+                        "$set": sync_row_update_paths({
                             f"data.{row_index}": row_data,
-                        }
+                        })
                     },
                 )
                 if result.matched_count > 0:
@@ -1465,7 +1464,7 @@ def delete_row(catalog_id, row_index, catalog):
         current_rows.pop(row_index)
         result = db["spreadsheets"].update_one(
             {"_id": ObjectId(catalog_id)},
-            {"$set": {"rows": current_rows, "data": current_rows}},
+            {"$set": sync_row_update_paths({"data": current_rows})},
         )
         current_app.logger.info(
             f"[delete_row] Estado de filas después de eliminar: {len(current_rows)} filas. Modificados: {result.modified_count}"
