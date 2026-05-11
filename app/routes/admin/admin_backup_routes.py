@@ -613,3 +613,74 @@ def register_admin_backup_routes(admin_bp) -> None:
                 title="Respaldo en Google Drive",
                 active_page="drive_backups",
             )
+
+    @admin_bp.route("/backup/delete-local/<filename>", methods=["DELETE"])
+    @admin_required
+    def delete_local_backup_route(filename: str):
+        """Eliminar un backup local"""
+        try:
+            backup_dir = get_backup_dir()
+            backup_file = os.path.join(backup_dir, filename)
+
+            # Verificar que el archivo existe
+            if not os.path.exists(backup_file):
+                return jsonify({"success": False, "error": "Archivo no encontrado"}), 404
+
+            # Verificar que es un archivo de backup válido (usar la misma lógica que
+            # get_backup_files)
+            valid_extensions = [
+                ".bak",
+                ".backup",
+                ".zip",
+                ".tar",
+                ".gz",
+                ".json.gz",
+                ".sql",
+                ".dump",
+                ".old",
+                ".back",
+                ".tmp",
+                ".swp",
+                "~",
+                ".csv",
+                ".json",
+            ]
+
+            # Verificar que el archivo tiene una extensión válida
+            if not any(filename.endswith(ext) for ext in valid_extensions):
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": "Archivo no válido - extensión no permitida",
+                        }
+                    ),
+                    400,
+                )
+
+            # Verificar que no contiene caracteres peligrosos
+            if ".." in filename or "/" in filename or "\\" in filename:
+                return (
+                    jsonify(
+                        {"success": False, "error": "Archivo no válido - nombre inseguro"}
+                    ),
+                    400,
+                )
+
+            # Eliminar el archivo
+            os.remove(backup_file)
+            current_app.logger.info(f"Backup local eliminado: {filename}")
+
+            # Registrar en auditoría
+            audit_log("database_backup_deleted", details={"filename": filename})
+
+            return jsonify(
+                {"success": True, "message": f"Backup {filename} eliminado exitosamente"}
+            )
+
+        except Exception as e:
+            current_app.logger.error(f"Error al eliminar backup local {filename}: {str(e)}")
+            return (
+                jsonify({"success": False, "error": f"Error al eliminar backup: {str(e)}"}),
+                500,
+            )
