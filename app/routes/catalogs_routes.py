@@ -38,6 +38,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from app.database import get_mongo_db
+from app.utils.catalog_utils import normalize_catalog_rows
 from app.utils.image_utils import get_images_for_template, upload_image_to_s3
 from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
 from app.utils.s3_utils import convert_s3_url_to_proxy, get_s3_url
@@ -433,42 +434,30 @@ def list_catalogs():
                 # Asegurarse de que _id_str existe y es correcto
                 catalog["_id_str"] = str(original_id)
 
-                # Calcular el número de filas del catálogo
-                if "rows" in catalog and catalog["rows"] is not None:
-                    catalog["row_count"] = len(catalog["rows"])
-                elif "data" in catalog and catalog["data"] is not None:
-                    catalog["row_count"] = len(catalog["data"])
-                else:
-                    catalog["row_count"] = 0
+                # Asegurarse de que todos los campos necesarios existan
+                if "headers" not in catalog or catalog["headers"] is None:
+                    catalog["headers"] = []
 
                 # Formatear la fecha de creación
                 if "created_at" in catalog and catalog["created_at"]:
                     try:
-                        # Verificar si es un objeto datetime usando hasattr en lugar de
-                        # isinstance
                         if hasattr(catalog["created_at"], "strftime"):
                             catalog["created_at_formatted"] = catalog[
                                 "created_at"
                             ].strftime("%d/%m/%Y %H:%M")
                         else:
-                            # Si ya es una cadena, usarla directamente
                             catalog["created_at_formatted"] = str(
-                                catalog["created_at"])
+                                catalog["created_at"]
+                            )
                     except Exception as e:
                         current_app.logger.error(
-                            f"Error al formatear fecha: {str(e)}")
-                        catalog["created_at_formatted"] = str(
-                            catalog["created_at"])
+                            f"Error al formatear fecha: {str(e)}"
+                        )
+                        catalog["created_at_formatted"] = str(catalog["created_at"])
                 else:
                     catalog["created_at_formatted"] = "N/A"
 
-                # Asegurarse de que todos los campos necesarios existan
-                if "headers" not in catalog or catalog["headers"] is None:
-                    catalog["headers"] = []
-                if "data" not in catalog and "rows" not in catalog:
-                    catalog["data"] = []
-                elif "rows" in catalog and "data" not in catalog:
-                    catalog["data"] = catalog["rows"]
+                normalize_catalog_rows(catalog)
 
                 # Asegurarse de que hay un creador/propietario
                 if "created_by" not in catalog or not catalog["created_by"]:
@@ -647,19 +636,7 @@ def view(catalog_id, catalog):
         )
         if "headers" not in catalog or catalog["headers"] is None:
             catalog["headers"] = []
-        # Asegurar que tenemos tanto rows como data disponibles
-        # IMPORTANTE: NO sobrescribir data con rows (rows puede estar desactualizado)
-        if "data" in catalog and catalog["data"] is not None:
-            # data es la fuente de verdad, sincronizar rows desde data
-            # NO hacer esto al revés porque data tiene las imágenes reales
-            if not catalog.get("rows"):
-                catalog["rows"] = catalog["data"]
-        elif "rows" in catalog and catalog["rows"] is not None:
-            # Solo usar rows si no hay data
-            catalog["data"] = catalog["rows"]
-        else:
-            catalog["data"] = []
-            catalog["rows"] = []
+        normalize_catalog_rows(catalog)
         catalog["_id_str"] = str(catalog["_id"])
         if "updated_at" in catalog and catalog["updated_at"]:
             if hasattr(catalog["updated_at"], "strftime"):
