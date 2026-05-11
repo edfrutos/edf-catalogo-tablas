@@ -17,7 +17,8 @@ from flask_login import LoginManager
 from app.filters import init_app as init_filters
 
 from .error_handlers import errors_bp
-from .routes.admin_routes import admin_bp, admin_logs_bp
+from .routes.admin_routes import admin_bp
+from .routes.admin.admin_logs import admin_logs_bp
 from .routes.auth_routes import auth_bp
 from .routes.catalog_images_routes import image_bp
 
