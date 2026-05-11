@@ -6,13 +6,19 @@ import csv
 import io
 import json
 import logging
+import traceback
 import os
 from datetime import datetime
 
 from flask import current_app, flash, jsonify, redirect, render_template, request, send_file, session, url_for
 
 from app.audit import audit_log
-from app.database import get_catalogs_collection
+from app.database import (
+    get_audit_logs_collection,
+    get_catalogs_collection,
+    get_mongo_client,
+    get_mongo_db,
+)
 from app.decorators import admin_required
 from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
 from tools.db_utils.google_drive_utils import upload_to_drive
@@ -20,6 +26,39 @@ from tools.db_utils.google_drive_utils import list_files_in_folder
 
 
 logger = logging.getLogger(__name__)
+
+
+def backup_log_action(
+    action: str,
+    message: str,
+    details: dict | None = None,
+    user_id: str | None = None,
+    collection: str | None = None,
+) -> None:
+    """Registra acciones administrativas de backup sin depender de admin_routes.py."""
+    try:
+        if not user_id and hasattr(current_user, "id"):
+            user_id = str(current_user.id)
+
+        log_entry = {
+            "action": action,
+            "message": message,
+            "details": details or {},
+            "user_id": user_id,
+            "collection": collection,
+            "timestamp": datetime.utcnow(),
+            "source": "admin_backup_routes",
+        }
+
+        audit_logs = get_audit_logs_collection()
+        if audit_logs is not None:
+            audit_logs.insert_one(log_entry)
+
+        logger.info("[AUDIT][BACKUP] %s: %s", action, message)
+
+    except (AttributeError, TypeError, ValueError) as e:
+        logger.error("Error al registrar auditoría de backup: %s", str(e), exc_info=True)
+
 
 
 def register_admin_backup_routes(admin_bp) -> None:
@@ -682,5 +721,322 @@ def register_admin_backup_routes(admin_bp) -> None:
             current_app.logger.error(f"Error al eliminar backup local {filename}: {str(e)}")
             return (
                 jsonify({"success": False, "error": f"Error al eliminar backup: {str(e)}"}),
+                500,
+            )
+
+    @admin_bp.route("/backup/upload-to-drive/<filename>", methods=["POST"])
+    @admin_required
+    def upload_backup_to_drive(filename: str):
+        """
+        Sube un archivo de respaldo a Google Drive y lo elimina localmente si tiene éxito.
+
+        Args:
+            filename (str): Nombre del archivo de respaldo a subir
+
+        Returns:
+            JSON: Respuesta con el resultado de la operación
+        """
+        import os
+        import sys
+
+        from flask import current_app, jsonify
+        from werkzeug.utils import secure_filename
+
+        # Agregar la ruta de tools/db_utils al path (compatible con aplicaciones
+        # empaquetadas)
+        if getattr(sys, "frozen", False):
+            # Aplicación empaquetada - buscar en el bundle
+            app_dir = os.path.dirname(sys.executable)
+            db_utils_paths = [
+                os.path.join(app_dir, "..", "Frameworks", "tools", "db_utils"),
+                os.path.join(app_dir, "tools", "db_utils"),
+            ]
+            # Usar la primera ruta que exista
+            db_utils_path = None
+            for path in db_utils_paths:
+                if os.path.exists(path):
+                    db_utils_path = path
+                    break
+        else:
+            # Aplicación normal
+            db_utils_path = os.path.join(
+                os.path.dirname(__file__), "..", "..", "tools", "db_utils"
+            )
+
+        if db_utils_path and db_utils_path not in sys.path:
+            sys.path.insert(0, db_utils_path)
+
+        try:
+            from google_drive_utils import (
+                # pyright: ignore[reportMissingModuleSource]
+                upload_file_to_drive as upload_to_drive,
+            )
+        except ImportError:
+            # Si no se puede importar, Google Drive no estará disponible
+            current_app.logger.warning(
+                "Google Drive no disponible: no se puede importar google_drive_utils"
+            )
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Google Drive no disponible",
+                        "message": "Las credenciales de Google Drive no están configuradas correctamente.",
+                    }
+                ),
+                503,
+            )
+
+        try:
+            # Validar el nombre del archivo
+            if ".." in filename or "/" in filename:
+                current_app.logger.warning(
+                    f"Intento de acceso a ruta no permitida: {filename}"
+                )
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": "Nombre de archivo no válido",
+                            "message": "El nombre del archivo contiene caracteres no permitidos.",
+                        }
+                    ),
+                    400,
+                )
+
+            # Construir la ruta completa del archivo usando la función get_backup_dir()
+            backup_dir = get_backup_dir()
+            file_path = os.path.join(backup_dir, secure_filename(filename))
+
+            # Verificar que el archivo existe
+            if not os.path.exists(file_path):
+                current_app.logger.warning(f"Archivo no encontrado: {file_path}")
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "status": "error",
+                            "error": "Archivo no encontrado",
+                            "message": f"El archivo {filename} no existe en el servidor.",
+                        }
+                    ),
+                    404,
+                )
+
+            # Obtener información del archivo local
+            file_size = os.path.getsize(file_path)
+            file_info = {
+                "filename": filename,
+                "file_size": file_size,
+                "local_path": file_path,
+                "last_modified": os.path.getmtime(file_path),
+            }
+
+            current_app.logger.info(f"Iniciando subida a Google Drive: {file_info}")
+
+            # Subir a Google Drive
+            result = upload_to_drive(file_path, "Backups_CatalogoTablas")
+
+            if result.get("success"):
+                # Obtener la URL de descarga directa
+                file_id = result.get("file_id")
+                download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+                web_view_url = result.get(
+                    "file_url"
+                )  # Usar la URL de vista web que ya viene de upload_to_drive
+
+                # Guardar metadatos en la base de datos
+                backup_metadata = {
+                    "filename": filename,
+                    "file_id": file_id,
+                    "file_size": file_size,
+                    "download_url": download_url,
+                    "web_view_url": web_view_url,
+                    "uploaded_at": datetime.utcnow(),
+                    "uploaded_by": (
+                        current_user.id
+                        if hasattr(current_user, "is_authenticated")
+                        and current_user.is_authenticated
+                        else None
+                    ),
+                    "status": "uploaded",
+                    "folder_name": result.get("folder_name", "Backups_CatalogoTablas"),
+                }
+
+                # Insertar en la colección de respaldos
+                db = get_mongo_db()
+                if db is not None:
+                    db.backups.insert_one(backup_metadata)
+
+                # Eliminar el archivo local si la subida fue exitosa
+                try:
+                    os.remove(file_path)
+                    current_app.logger.info(
+                        f"Archivo {filename} eliminado localmente después de subir a Google Drive"
+                    )
+
+                    # Registrar la acción en el log de auditoría
+                    backup_log_action(
+                        action="backup_uploaded_to_drive",
+                        message=f"Backup subido a Google Drive: {filename} ({file_size / 1024 / 1024:.2f} MB)",
+                        details={
+                            "file_id": file_id,
+                            "file_name": filename,
+                            "file_size": file_size,
+                            "drive_folder": result.get(
+                                "folder_name", "Backups_CatalogoTablas"
+                            ),
+                            "download_url": download_url,
+                            "web_view_url": web_view_url,
+                        },
+                        user_id=(
+                            current_user.id
+                            if hasattr(current_user, "is_authenticated")
+                            and current_user.is_authenticated
+                            else None
+                        ),
+                        collection="backups",
+                    )
+
+                    # Preparar respuesta exitosa
+                    response_data = {
+                        "success": True,
+                        "message": "El respaldo se ha subido correctamente a Google Drive y se ha eliminado localmente.",
+                        "file_info": {
+                            "filename": filename,
+                            "file_id": file_id,
+                            "file_size": file_size,
+                            "file_size_mb": round(file_size / (1024 * 1024), 2),
+                            "download_url": download_url,
+                            "web_view_url": web_view_url,
+                            "uploaded_at": backup_metadata["uploaded_at"].isoformat(),
+                            "folder_name": result.get(
+                                "folder_name", "Backups_CatalogoTablas"
+                            ),
+                        },
+                    }
+
+                    current_app.logger.info(
+                        f"Subida a Google Drive completada: {response_data}"
+                    )
+                    return jsonify(response_data)
+
+                except (OSError, PermissionError) as e:
+                    error_msg = f"Error al eliminar el archivo local {filename}: {str(e)}"
+                    current_app.logger.error(error_msg, exc_info=True)
+
+                    # Registrar el error en el log de auditoría
+                    backup_log_action(
+                        action="backup_upload_error",
+                        message=f"Error al eliminar archivo local después de subir a Google Drive: {filename}",
+                        details={
+                            "error": str(e),
+                            "file_name": filename,
+                            "file_size": file_size,
+                            "drive_folder": result.get(
+                                "folder_name", "Backups_CatalogoTablas"
+                            ),
+                        },
+                        user_id=(
+                            current_user.id
+                            if hasattr(current_user, "is_authenticated")
+                            and current_user.is_authenticated
+                            else None
+                        ),
+                        collection="backups",
+                    )
+
+                    # Si falla la eliminación local, la subida a Drive fue exitosa, así que
+                    # lo consideramos un éxito parcial
+                    return (
+                        jsonify(
+                            {
+                                "success": True,
+                                "warning": "El archivo se subió a Google Drive pero no se pudo eliminar localmente.",
+                                "error": error_msg,
+                                "file_info": {
+                                    "filename": result.get("filename"),
+                                    "file_id": result.get("file_id"),
+                                    "download_url": result.get("download_url"),
+                                    "web_view_url": result.get("web_view_url"),
+                                    "folder_name": result.get("folder_name"),
+                                },
+                            }
+                        ),
+                        207,
+                    )  # Código 207 Multi-Status para éxito parcial
+
+            else:
+                error_msg = f"Error al subir a Google Drive: {result.get('error')}"
+                current_app.logger.error(error_msg)
+
+                # Registrar el error en el log de auditoría
+                backup_log_action(
+                    action="backup_upload_failed",
+                    message=f"Error al subir archivo a Google Drive: {filename}",
+                    details={
+                        "error": result.get("error", "Error desconocido"),
+                        "file_name": filename,
+                        "file_size": file_size,
+                    },
+                    user_id=(
+                        current_user.id
+                        if hasattr(current_user, "is_authenticated")
+                        and current_user.is_authenticated
+                        else None
+                    ),
+                    collection="backups",
+                )
+
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": result.get("error", "Error desconocido"),
+                            "message": "El archivo no se pudo subir a Google Drive. Por favor, inténtalo de nuevo.",
+                        }
+                    ),
+                    500,
+                )
+
+        except (
+            ConnectionError,
+            TimeoutError,
+            OSError,
+            ValueError,
+            AttributeError,
+            KeyError,
+            TypeError,
+        ) as e:
+            error_msg = f"Error inesperado en upload_backup_to_drive: {str(e)}"
+            current_app.logger.error(error_msg, exc_info=True)
+
+            # Registrar el error inesperado en el log de auditoría
+            backup_log_action(
+                action="backup_upload_error",
+                message=f"Error inesperado al subir archivo a Google Drive: {filename}",
+                details={
+                    "error": str(e),
+                    "file_name": filename,
+                    "traceback": traceback.format_exc(),
+                },
+                user_id=(
+                    current_user.id
+                    if hasattr(current_user, "is_authenticated")
+                    and current_user.is_authenticated
+                    else None
+                ),
+                collection="backups",
+            )
+
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Error interno del servidor",
+                        "message": "Ocurrió un error inesperado al procesar la solicitud.",
+                        "details": str(e) if current_app.config.get("DEBUG") else None,
+                    }
+                ),
                 500,
             )
