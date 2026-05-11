@@ -1133,13 +1133,6 @@ def editar_fila(tabla_id, fila_index):
 
     normalize_catalog_rows(table_info)
 
-    # 🚨 NO SOBRESCRIBIR DATA CON ROWS - data tiene las imágenes actualizadas
-    current_app.logger.info(
-        f"[DEBUG_EDIT] ANTES sincronización - data tiene {len(table_info.get('data', []))} filas, rows tiene {len(table_info.get('rows', []))} filas"
-    )
-
-    normalize_catalog_rows(table_info)
-
     # Verificar permisos: solo el propietario o admin puede editar filas
     username = session.get("username")
     role = session.get("role", "user")
