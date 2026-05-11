@@ -28,7 +28,7 @@ from werkzeug.utils import secure_filename
 from app import notifications
 from app.database import get_mongo_db
 from app.decorators import login_required
-from app.utils.catalog_utils import normalize_catalog_rows
+from app.utils.catalog_utils import normalize_catalog_rows, sync_row_update_paths
 from app.utils.image_utils import get_images_for_template
 
 
@@ -2746,17 +2746,8 @@ def editar_tabla(id):
                             )
 
                 # Preparar actualización sincronizada para MongoDB
-                mongo_update_sync = dict(mongo_update)
-                
-                for key, value in list(mongo_update.items()):
-                    if key.startswith("data."):
-                        rows_key = key.replace("data.", "rows.", 1)
-                        mongo_update_sync[rows_key] = value
-                
-                    elif key.startswith("rows."):
-                        data_key = key.replace("rows.", "data.", 1)
-                        mongo_update_sync[data_key] = value
-                
+                mongo_update_sync = sync_row_update_paths(mongo_update)
+
                 current_app.logger.info(
                     f"Actualizando documento con datos sincronizados: {mongo_update_sync}"
                 )
