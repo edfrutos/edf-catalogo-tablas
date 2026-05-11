@@ -9,13 +9,14 @@ import logging
 import os
 from datetime import datetime
 
-from flask import flash, jsonify, redirect, render_template, request, send_file, session, url_for
+from flask import current_app, flash, jsonify, redirect, render_template, request, send_file, session, url_for
 
 from app.audit import audit_log
 from app.database import get_catalogs_collection
 from app.decorators import admin_required
 from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
 from tools.db_utils.google_drive_utils import upload_to_drive
+from tools.db_utils.google_drive_utils import list_files_in_folder
 
 
 logger = logging.getLogger(__name__)
@@ -458,4 +459,157 @@ def register_admin_backup_routes(admin_bp) -> None:
                     }
                 ),
                 500,
+            )
+
+    @admin_bp.route("/drive-backups")
+    @admin_required
+    def list_drive_backups():
+        """
+        Muestra una lista de todos los respaldos almacenados en Google Drive.
+        Devuelve JSON si se solicita via AJAX, HTML si es una petición normal.
+        """
+        try:
+            # Verificar si existen las credenciales antes de intentar listar
+            credentials_path = os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "tools",
+                "db_utils",
+                "credentials.json",
+            )
+            if not os.path.exists(credentials_path):
+                # Si es una petición AJAX, devolver JSON informativo
+                if request.headers.get(
+                    "X-Requested-With"
+                ) == "XMLHttpRequest" or "application/json" in request.headers.get(
+                    "Accept", ""
+                ):
+                    return jsonify(
+                        {
+                            "status": "success",
+                            "backups": [
+                                {
+                                    "_id": "no-credentials",
+                                    "filename": "Google Drive no configurado",
+                                    "file_size": 0,
+                                    "uploaded_at": "",
+                                    "uploaded_by_name": "Sistema",
+                                    "download_url": "",
+                                    "web_view_url": "",
+                                    "is_placeholder": True,
+                                }
+                            ],
+                            "message": "Las credenciales de Google Drive no están configuradas",
+                        }
+                    )
+
+            # Listar archivos reales en Google Drive
+            files = list_files_in_folder("Backups_CatalogoTablas")
+
+            # ... existing code ...
+            processed_backups = []
+            for file_info in files:
+                # Convertir la fecha de string a datetime si es necesario
+                uploaded_at = file_info.get("modified", "")
+                if uploaded_at and isinstance(uploaded_at, str):
+                    try:
+                        from datetime import datetime
+
+                        # Intentar parsear la fecha en diferentes formatos
+                        for fmt in [
+                            "%Y-%m-%dT%H:%M:%S.%fZ",
+                            "%Y-%m-%dT%H:%M:%SZ",
+                            "%Y-%m-%d %H:%M:%S",
+                        ]:
+                            try:
+                                uploaded_at = datetime.strptime(uploaded_at, fmt)
+                                break
+                            except ValueError:
+                                continue
+                        else:
+                            # Si no se puede parsear, mantener como string
+                            uploaded_at = uploaded_at
+                    except Exception:
+                        uploaded_at = uploaded_at
+
+                backup = {
+                    "_id": file_info["id"],
+                    "filename": file_info["name"],
+                    "file_size": file_info["size"],
+                    "uploaded_at": uploaded_at,
+                    "uploaded_by_name": "Google Drive",
+                    "download_url": file_info.get("download_url", ""),
+                    "web_view_url": file_info.get("download_url", ""),
+                    "is_placeholder": False,
+                }
+                processed_backups.append(backup)
+
+            # Si es una petición AJAX, devolver JSON
+            if request.headers.get(
+                "X-Requested-With"
+            ) == "XMLHttpRequest" or "application/json" in request.headers.get(
+                "Accept", ""
+            ):
+                return jsonify({"status": "success", "backups": processed_backups})
+
+            # ... existing code for HTML response ...
+            # Si es una petición normal, devolver HTML
+            return render_template(
+                "admin/drive_backups.html",
+                backups=processed_backups,
+                title="Respaldo en Google Drive",
+                active_page="drive_backups",
+            )
+        except Exception as e:
+            current_app.logger.error(
+                f"Error al listar respaldos de Google Drive: {str(e)}", exc_info=True
+            )
+
+            # Si es una petición AJAX, devolver JSON de error más informativo
+            if request.headers.get(
+                "X-Requested-With"
+            ) == "XMLHttpRequest" or "application/json" in request.headers.get(
+                "Accept", ""
+            ):
+                return jsonify(
+                    {
+                        "status": "success",
+                        "backups": [
+                            {
+                                "_id": "error",
+                                "filename": "Error de configuración",
+                                "file_size": 0,
+                                "uploaded_at": "",
+                                "uploaded_by_name": "Sistema",
+                                "download_url": "",
+                                "web_view_url": "",
+                                "is_placeholder": True,
+                                "error_message": str(e),
+                            }
+                        ],
+                        "message": "Error al acceder a Google Drive. Verifica la configuración.",
+                    }
+                )
+
+            flash("Error al cargar la lista de respaldos de Google Drive", "error")
+            # En lugar de redirigir, mostrar la página de Google Drive con un mensaje
+            # de error
+            return render_template(
+                "admin/drive_backups.html",
+                backups=[
+                    {
+                        "_id": "error",
+                        "filename": "Error de configuración",
+                        "file_size": 0,
+                        "uploaded_at": "",
+                        "uploaded_by_name": "Sistema",
+                        "download_url": "",
+                        "web_view_url": "",
+                        "is_placeholder": True,
+                        "error_message": str(e),
+                    }
+                ],
+                title="Respaldo en Google Drive",
+                active_page="drive_backups",
             )
