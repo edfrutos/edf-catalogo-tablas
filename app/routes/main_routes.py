@@ -499,17 +499,7 @@ def ver_tabla(table_id):
             f"[DEBUG][VISIONADO] Campos de la tabla: {list(table.keys())}"
         )
 
-        # Asegurarse de que los datos estén disponibles
-        if "data" not in table and "rows" in table:
-            table["data"] = table["rows"]
-            current_app.logger.info(
-                f"[DEBUG][VISIONADO] Usando 'rows' como 'data', filas: {len(table['data'])}"
-            )
-        elif "data" not in table:
-            table["data"] = []
-            current_app.logger.info(
-                "[DEBUG][VISIONADO] No se encontraron datos en la tabla"
-            )
+        normalize_catalog_rows(table)
 
         # Log de sesión y permisos
         current_app.logger.info(f"[DEBUG][VISIONADO] Sesión: {dict(session)}")
@@ -1141,16 +1131,7 @@ def editar_fila(tabla_id, fila_index):
     elif "owner" not in table_info:
         table_info["owner"] = "Usuario desconocido"
 
-    # Asegurarse de que los datos estén disponibles (igual que ver_tabla)
-    if "data" not in table_info:
-        if "rows" in table_info:
-            table_info["data"] = table_info["rows"]
-            current_app.logger.info(
-                f"[DEBUG_EDIT] Usando 'rows' como 'data', filas: {len(table_info['data'])}"
-            )
-        else:
-            table_info["data"] = []
-            current_app.logger.info("[DEBUG_EDIT] No se encontraron datos en la tabla")
+    normalize_catalog_rows(table_info)
 
     # 🚨 NO SOBRESCRIBIR DATA CON ROWS - data tiene las imágenes actualizadas
     current_app.logger.info(
@@ -2832,14 +2813,7 @@ def delete_row(tabla_id, fila_index):
         flash("No tienes permisos para eliminar filas de esta tabla.", "warning")
         return redirect(url_for("main.ver_tabla", table_id=tabla_id))
 
-    # Sincronizar 'rows' y 'data'
-    if "rows" in table_info and table_info["rows"] is not None:
-        table_info["data"] = table_info["rows"]
-    elif "data" in table_info and table_info["data"] is not None:
-        table_info["rows"] = table_info["data"]
-    else:
-        table_info["data"] = []
-        table_info["rows"] = []
+    normalize_catalog_rows(table_info)
 
     current_rows = table_info.get("data", [])
     current_app.logger.info(f"[DELETE_ROW] Filas actuales: {len(current_rows)}")
