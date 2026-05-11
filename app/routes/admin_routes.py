@@ -44,6 +44,7 @@ import app.monitoring as monitoring
 import app.notifications as notifications
 from app.audit import audit_log
 from app.cache_system import clear_cache, get_cache_stats
+from app.utils.catalog_utils import get_catalog_rows, normalize_catalog_rows
 from app.database import (
     get_audit_logs_collection,
     get_catalogs_collection,
@@ -388,10 +389,10 @@ def dashboard_admin():
             catalogos = []
         for t in tablas:
             t["tipo"] = "spreadsheet"
-            t["data"] = t.get("data", [])
+            normalize_catalog_rows(t)
         for c in catalogos:
             c["tipo"] = "catalog"
-            c["data"] = c.get("rows", [])
+            normalize_catalog_rows(c)
         registros = tablas + catalogos
         catalogos_por_usuario = {}
         for usuario in usuarios:
@@ -943,13 +944,7 @@ def ver_catalogos_usuario(user_email: str):
         # Añadir _id_str a cada catálogo para facilitar su uso en las plantillas
         for catalog in catalogs:
             catalog["_id_str"] = str(catalog["_id"])
-            # Calcular el número de filas del catálogo
-            if "rows" in catalog:
-                catalog["row_count"] = len(catalog["rows"])
-            elif "data" in catalog:
-                catalog["row_count"] = len(catalog["data"])
-            else:
-                catalog["row_count"] = 0
+            normalize_catalog_rows(catalog)
             # Formatear la fecha de creación
             if "created_at" in catalog and catalog["created_at"]:
                 if isinstance(catalog["created_at"], str):
@@ -2485,12 +2480,7 @@ def ver_catalogos_usuario_por_id(user_id: str):
 
         # Añadir información adicional a cada catálogo
         for catalog in catalogs:
-            if "rows" in catalog and catalog["rows"] is not None:
-                catalog["row_count"] = len(catalog["rows"])
-            elif "data" in catalog and catalog["data"] is not None:
-                catalog["row_count"] = len(catalog["data"])
-            else:
-                catalog["row_count"] = 0
+            normalize_catalog_rows(catalog)
             if "created_at" in catalog and catalog["created_at"]:
                 try:
                     if hasattr(catalog["created_at"], "strftime"):
@@ -2668,18 +2658,7 @@ def ver_catalogo_unificado(collection_source: str, catalog_id: str):
         else:
             catalog["created_at_formatted"] = "Fecha desconocida"
 
-        # Fuente oficial de filas: data.
-        # rows queda solo como compatibilidad, pero no debe machacar data.
-        if "data" in catalog and catalog["data"] is not None:
-            catalog["row_count"] = len(catalog["data"])
-            catalog["rows"] = catalog["data"]
-        elif "rows" in catalog and catalog["rows"] is not None:
-            catalog["data"] = catalog["rows"]
-            catalog["row_count"] = len(catalog["data"])
-        else:
-            catalog["data"] = []
-            catalog["rows"] = []
-            catalog["row_count"] = 0
+        normalize_catalog_rows(catalog)
 
         logger.info(
             f"[ADMIN] Mostrando catálogo desde {collection_source}: {catalog.get('name', 'Sin nombre')}"
@@ -2923,7 +2902,7 @@ def editar_fila_admin(collection_source: str, catalog_id: str, row_index: int):
                 )
             )
 
-        row_data = catalog["rows"][row_index]
+        row_data = get_catalog_rows(catalog)[row_index]
         logger.info(f"[ADMIN_EDIT_ROW] 🔍 row_data obtenido: {row_data}")
         logger.info(f"[ADMIN_EDIT_ROW] 📋 row_data tipo: {type(row_data)}")
         logger.info(
@@ -3583,7 +3562,7 @@ def get_catalog_images(catalog_id: str):
 
         # Extraer imágenes de las filas del catálogo
         images = []
-        data_to_search = catalog.get("data", catalog.get("rows", []))
+        data_to_search = get_catalog_rows(catalog)
 
         for row in data_to_search:
             if isinstance(row, dict):
