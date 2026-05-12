@@ -3,14 +3,10 @@
 # Autor: EDF Developer
 
 import os
-import subprocess
-import sys
 
 from flask import flash, jsonify, redirect, render_template, request, url_for
-from werkzeug.utils import secure_filename
 
 from app.decorators import admin_required
-from tools.db_utils.google_drive_utils import upload_to_drive
 
 
 def register_admin_maintenance_routes(admin_bp) -> None:
