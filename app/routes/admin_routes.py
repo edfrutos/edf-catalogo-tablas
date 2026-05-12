@@ -12,6 +12,12 @@ from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
 from app.routes.admin.admin_backup_routes import register_admin_backup_routes
 from app.routes.admin.admin_notifications import register_admin_notification_routes
 from app.routes.admin.admin_verify_users import register_admin_verify_user_routes
+from app.routes.admin.admin_backup_restore_utils import (
+    BackupRestoreError,
+    is_mongodb_binary_dump_name,
+    prepare_restore_documents,
+    read_backup_json_file,
+)
 from app.routes.admin.admin_passwords import register_admin_password_routes
 import csv
 import io
@@ -3705,31 +3711,11 @@ def restore_local_backup():
             f"Iniciando restauración desde backup local: {filename}"
         )
 
-        # Importar las utilidades necesarias
-        import gzip
-        import json
-
-        from bson import ObjectId
-
         # Obtener la ruta del archivo de backup
         backup_dir = get_backup_dir()
         file_path = os.path.join(backup_dir, filename)
 
-        if not os.path.exists(file_path):
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "error": f"El archivo de backup {filename} no existe",
-                    }
-                ),
-                404,
-            )
-
-        current_app.logger.info(f"Procesando archivo local: {file_path}")
-
-        # Verificar el tipo de archivo basándose en el nombre
-        if filename.startswith("mongodb_backup_"):
+        if is_mongodb_binary_dump_name(filename):
             return (
                 jsonify(
                     {
@@ -3740,249 +3726,18 @@ def restore_local_backup():
                 400,
             )
 
-        # Determinar el formato del archivo y procesarlo
-        backup_data = None
-
-        # Verificar si el archivo es GZIP comprimido
         try:
-            with open(file_path, "rb") as f:
-                # Leer los primeros bytes para detectar el formato
-                magic_bytes = f.read(2)
-                f.seek(0)  # Volver al inicio
-
-                if magic_bytes.startswith(b"\x1f\x8b"):  # GZIP magic bytes
-                    current_app.logger.info("Archivo detectado como GZIP comprimido")
-                    try:
-                        with gzip.open(file_path, "rb") as gz_file:
-                            compressed_content = gz_file.read()
-                            current_app.logger.info(
-                                f"Contenido GZIP descomprimido, longitud: {len(compressed_content)} bytes"
-                            )
-
-                            # Intentar decodificar como UTF-8
-                            try:
-                                content = compressed_content.decode("utf-8")
-                                current_app.logger.info(
-                                    f"Contenido decodificado como UTF-8, longitud: {len(content)} caracteres"
-                                )
-                            except UnicodeDecodeError as decode_error:
-                                current_app.logger.error(
-                                    f"Error decodificando UTF-8: {str(decode_error)}"
-                                )
-                                # Intentar con otras codificaciones
-                                try:
-                                    content = compressed_content.decode("latin-1")
-                                    current_app.logger.info(
-                                        f"Contenido decodificado como latin-1, longitud: {len(content)} caracteres"
-                                    )
-                                except UnicodeDecodeError:
-                                    return (
-                                        jsonify(
-                                            {
-                                                "success": False,
-                                                "error": "No se pudo decodificar el contenido del archivo comprimido",
-                                            }
-                                        ),
-                                        400,
-                                    )
-
-                            # Intentar parsear como JSON
-                            try:
-                                backup_data = json.loads(content)
-                                current_app.logger.info(
-                                    f"JSON parseado exitosamente, tipo: {type(backup_data)}"
-                                )
-                            except json.JSONDecodeError as e:
-                                current_app.logger.error(
-                                    f"Error parseando JSON: {str(e)}"
-                                )
-                                current_app.logger.error(
-                                    f"Primeros 200 caracteres del contenido: {content[:200]}"
-                                )
-
-                                # Verificar si es un archivo de backup de MongoDB
-                                # binario
-                                if (
-                                    content.startswith("BSON")
-                                    or "mongodump" in content.lower()
-                                    or "concurrent_collections" in content
-                                    or "server_version" in content
-                                ):
-                                    return (
-                                        jsonify(
-                                            {
-                                                "success": False,
-                                                "error": "Este archivo es un backup binario de MongoDB (mongodump). Solo se pueden restaurar backups en formato JSON. Use el archivo backup_*.json.gz en su lugar.",
-                                            }
-                                        ),
-                                        400,
-                                    )
-
-                                return (
-                                    jsonify(
-                                        {
-                                            "success": False,
-                                            "error": f"El archivo de backup no contiene JSON válido. Error: {str(e)}",
-                                        }
-                                    ),
-                                    400,
-                                )
-
-                    except Exception as gzip_error:
-                        current_app.logger.error(
-                            f"Error procesando GZIP: {str(gzip_error)}"
-                        )
-                        return (
-                            jsonify(
-                                {
-                                    "success": False,
-                                    "error": f"Error al descomprimir el archivo GZIP: {str(gzip_error)}",
-                                }
-                            ),
-                            400,
-                        )
-                else:
-                    current_app.logger.info("Archivo detectado como texto plano")
-                    # Intentar como archivo de texto plano
-                    try:
-                        with open(file_path, encoding="utf-8") as file:
-                            content = file.read()
-                            current_app.logger.info(
-                                f"Contenido plano leído, longitud: {len(content)} caracteres"
-                            )
-                            backup_data = json.loads(content)
-                            current_app.logger.info(
-                                f"JSON plano parseado exitosamente, tipo: {type(backup_data)}"
-                            )
-                    except UnicodeDecodeError as decode_error:
-                        current_app.logger.error(
-                            f"Error decodificando UTF-8: {str(decode_error)}"
-                        )
-                        # Intentar con otras codificaciones
-                        try:
-                            with open(file_path, encoding="latin-1") as file:
-                                content = file.read()
-                                current_app.logger.info(
-                                    f"Contenido plano leído como latin-1, longitud: {len(content)} caracteres"
-                                )
-                                backup_data = json.loads(content)
-                                current_app.logger.info(
-                                    f"JSON plano parseado exitosamente, tipo: {type(backup_data)}"
-                                )
-                        except (UnicodeDecodeError, json.JSONDecodeError) as e:
-                            current_app.logger.error(
-                                f"Error procesando archivo plano: {str(e)}"
-                            )
-                            return (
-                                jsonify(
-                                    {
-                                        "success": False,
-                                        "error": f"Formato de archivo no válido: {str(e)}",
-                                    }
-                                ),
-                                400,
-                            )
-                    except json.JSONDecodeError as e:
-                        current_app.logger.error(
-                            f"Error parseando JSON plano: {str(e)}"
-                        )
-                        current_app.logger.error(
-                            f"Primeros 200 caracteres del contenido: {content[:200]}"
-                        )
-
-                        # Verificar si es un archivo de backup de MongoDB binario
-                        if (
-                            content.startswith("BSON")  # type: ignore
-                            or "mongodump" in content.lower()  # type: ignore
-                            or "concurrent_collections" in content  # type: ignore
-                            or "server_version" in content  # type: ignore
-                        ):
-                            return (
-                                jsonify(
-                                    {
-                                        "success": False,
-                                        "error": "Este archivo es un backup binario de MongoDB (mongodump). Solo se pueden restaurar backups en formato JSON. Use el archivo backup_*.json.gz en su lugar.",
-                                    }
-                                ),
-                                400,
-                            )
-
-                        return (
-                            jsonify(
-                                {
-                                    "success": False,
-                                    "error": f"Formato de archivo no válido. Error JSON: {str(e)}",
-                                }
-                            ),
-                            400,
-                        )
-
-        except Exception as e:
-            current_app.logger.error(f"Error general procesando archivo: {str(e)}")
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "error": f"Error al procesar el archivo: {str(e)}",
-                    }
-                ),
-                400,
-            )
-
-        if not backup_data:
-            current_app.logger.error("No se pudo procesar el contenido del backup")
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "error": "No se pudo procesar el contenido del backup",
-                    }
-                ),
-                400,
-            )
-
-        current_app.logger.info(f"Backup data procesado, tipo: {type(backup_data)}")
-
-        # Validar estructura del backup
-        if isinstance(backup_data, dict):
-            # Estructura nueva con metadata y collections
-            current_app.logger.info("Backup detectado como estructura con metadata")
-            if (
-                "collections" in backup_data
-                and "catalogs" in backup_data["collections"]
-            ):
-                backup_data = backup_data["collections"]["catalogs"]
-                current_app.logger.info(
-                    f"Extraídos {len(backup_data)} documentos de la colección 'catalogs'"
-                )
-            else:
-                current_app.logger.error(
-                    "Backup no contiene la estructura esperada (collections.catalogs)"
-                )
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "error": "El backup no contiene la estructura esperada",
-                        }
-                    ),
-                    400,
-                )
-        elif not isinstance(backup_data, list):
+            backup_data = read_backup_json_file(file_path)
+            processed_docs = prepare_restore_documents(backup_data)
+        except BackupRestoreError as restore_error:
             current_app.logger.error(
-                f"Backup no es una lista ni un diccionario válido, es: {type(backup_data)}"
+                f"Error procesando backup local {filename}: {str(restore_error)}"
             )
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "error": "El backup debe contener una lista de documentos o una estructura válida",
-                    }
-                ),
-                400,
-            )
+            return jsonify({"success": False, "error": str(restore_error)}), 400
 
-        current_app.logger.info(f"Backup contiene {len(backup_data)} documentos")
+        current_app.logger.info(
+            f"Backup local preparado para restauración: {filename}, documentos: {len(processed_docs)}"
+        )
 
         # Obtener la colección de catálogos
         catalog_collection = get_catalogs_collection()
@@ -3992,30 +3747,6 @@ def restore_local_backup():
                     {"success": False, "error": "No se pudo acceder a la base de datos"}
                 ),
                 500,
-            )
-
-        # Procesar los documentos para restaurar ObjectIds
-        processed_docs = []
-        for doc in backup_data:
-            if isinstance(doc, dict):
-                # Convertir _id string de vuelta a ObjectId si es necesario
-                if "_id" in doc and isinstance(doc["_id"], str):
-                    try:
-                        doc["_id"] = ObjectId(doc["_id"])
-                    except Exception:
-                        # Si no se puede convertir, generar nuevo ObjectId
-                        doc["_id"] = ObjectId()
-                processed_docs.append(doc)
-
-        if not processed_docs:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "error": "No se encontraron documentos válidos en el backup",
-                    }
-                ),
-                400,
             )
 
         # Limpiar la colección actual (CUIDADO: esto elimina todos los datos)
