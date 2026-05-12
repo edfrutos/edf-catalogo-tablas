@@ -11,6 +11,7 @@ from app.routes.admin.admin_logs import get_log_files
 from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
 from app.routes.admin.admin_backup_routes import register_admin_backup_routes
 from app.routes.admin.admin_notifications import register_admin_notification_routes
+from app.routes.admin.admin_maintenance_routes import register_admin_maintenance_routes
 from app.routes.admin.admin_verify_users import register_admin_verify_user_routes
 from app.routes.admin.admin_backup_restore_utils import (
     BackupRestoreError,
@@ -126,6 +127,7 @@ logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 register_admin_backup_routes(admin_bp)
 register_admin_notification_routes(admin_bp)
+register_admin_maintenance_routes(admin_bp)
 
 
 @admin_bp.route("/")
@@ -3326,128 +3328,6 @@ def db_performance():
             )
 
     return render_template("admin/db_performance.html", results=results)
-
-
-@admin_bp.route("/reset_gdrive_token", methods=["POST"])
-@admin_required
-def reset_gdrive_token_route():
-    import subprocess
-    import sys
-
-    try:
-        script_path = os.path.join(
-            os.path.dirname(__file__), "../../tools/db_utils/google_drive_utils.py"
-        )
-        result = subprocess.run(
-            [sys.executable, script_path, "--reset-token"],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode == 0:
-            flash(
-                "Token de Google Drive eliminado correctamente. Sigue las instrucciones para regenerar el refresh_token.",
-                "success",
-            )
-            flash(result.stdout, "info")
-        else:
-            flash(f"Error al eliminar el token: {result.stderr}", "danger")
-    except (OSError, PermissionError, subprocess.SubprocessError) as e:
-        flash(f"Error al ejecutar el reseteo de token: {str(e)}", "danger")
-    return redirect(url_for("maintenance.maintenance_dashboard"))
-
-
-@admin_bp.route("/gdrive_upload_test", methods=["GET", "POST"])
-@admin_required
-def gdrive_upload_test():
-    import os
-
-    from werkzeug.utils import secure_filename
-
-    from tools.db_utils.google_drive_utils import upload_to_drive
-
-    uploaded_links = []
-    if request.method == "POST":
-        files = request.files.getlist("test_files")
-        if not files or files[0].filename == "":
-            flash("No se seleccionó ningún archivo.", "warning")
-            return redirect(url_for("admin.gdrive_upload_test"))
-        for file in files:
-            if file.filename is None:
-                continue
-            filename = secure_filename(file.filename)
-            temp_path = os.path.join("/tmp", filename)
-            file.save(temp_path)
-            try:
-                result = upload_to_drive(temp_path)
-                if result.get("success"):
-                    # Extraer solo la URL del resultado
-                    file_url = result.get("file_url", "#")
-                    uploaded_links.append((filename, file_url))
-                else:
-                    # Si hay error, mostramos el mensaje de error
-                    error_msg = result.get("error", "Error desconocido")
-                    flash(f"Error al subir '{filename}': {error_msg}", "danger")
-                flash(
-                    f"Archivo '{filename}' subido correctamente a Google Drive.",
-                    "success",
-                )
-            except (
-                ConnectionError,
-                TimeoutError,
-                OSError,
-                ValueError,
-                AttributeError,
-            ) as e:
-                flash(f"Error al subir '{filename}': {str(e)}", "danger")
-            finally:
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-    return render_template(
-        "admin/gdrive_upload_test.html", uploaded_links=uploaded_links
-    )
-
-
-@admin_bp.route("/truncate_log", methods=["POST"])
-@admin_required
-def truncate_log_route():
-    import subprocess
-    import sys
-
-    log_file = request.form.get("log_file")
-    lines = request.form.get("lines")
-    date = request.form.get("date")
-    script_path = os.path.join(os.path.dirname(__file__), "../../tools/log_utils.py")
-    cmd = [sys.executable, script_path, "--file", log_file]
-    if lines:
-        cmd += ["--lines", lines]
-    elif date:
-        cmd += ["--date", date]
-    else:
-        # Si la petición es AJAX o JSON, responde con JSON
-        if (
-            request.is_json
-            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
-        ):
-            return (
-                jsonify(
-                    {
-                        "status": "error",
-                        "message": "Debes indicar número de líneas o fecha.",
-                    }
-                ),
-                400,
-            )
-        flash("Debes indicar número de líneas o fecha.", "warning")
-        return redirect(url_for("maintenance.maintenance_dashboard"))
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0:
-            flash(result.stdout, "success")
-        else:
-            flash(result.stderr, "danger")
-    except (OSError, PermissionError, subprocess.SubprocessError) as e:
-        flash(f"Error al truncar el log: {str(e)}", "danger")
-    return redirect(url_for("maintenance.maintenance_dashboard"))
 
 
 # Función para registrar los blueprints
