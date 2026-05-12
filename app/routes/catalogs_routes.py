@@ -1420,6 +1420,7 @@ def add_row(catalog_id, catalog):
     return render_template("catalogos/add_row.html", catalog=catalog, session=session)
 
 
+@catalogs_bp.route("/delete/<catalog_id>/<int:row_index>", methods=["POST"])
 @catalogs_bp.route("/delete-row/<catalog_id>/<int:row_index>", methods=["POST"])
 @check_catalog_permission
 def delete_row(catalog_id, row_index, catalog):
@@ -1451,7 +1452,7 @@ def delete_row(catalog_id, row_index, catalog):
                 f"[delete_row] Catálogo {catalog_id} no encontrado en BD."
             )
             return redirect(url_for("catalogs.view", catalog_id=catalog_id))
-        current_rows = db_catalog.get("rows", [])
+        current_rows = db_catalog.get("rows") or db_catalog.get("data", [])
         current_app.logger.info(
             f"[delete_row] Estado de filas antes de eliminar: {len(current_rows)} filas."
         )
