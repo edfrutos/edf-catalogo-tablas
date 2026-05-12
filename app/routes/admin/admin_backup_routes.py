@@ -19,7 +19,6 @@ from app.audit import audit_log
 from app.database import (
     get_audit_logs_collection,
     get_catalogs_collection,
-    get_mongo_client,
     get_mongo_db,
 )
 from flask_login import current_user
