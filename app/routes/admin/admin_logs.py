@@ -2,10 +2,12 @@
 # Descripción: Rutas administrativas para consulta, descarga y limpieza de logs.
 # Autor: EDF Developer
 
+import logging
 import os
 import tempfile
 import zipfile
 from datetime import datetime
+from typing import Any, Dict, List
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, send_file, url_for
 
@@ -16,6 +18,8 @@ from app.decorators import admin_required as admin_required_logs
 # Definir el blueprint con el prefijo de URL correcto
 # Cambiamos el nombre a 'admin' para que coincida con el prefijo
 admin_logs_bp = Blueprint("admin_logs", __name__)
+
+logger = logging.getLogger(__name__)
 
 # Decorador para restringir acceso solo a admin (importamos el decorador principal)
 

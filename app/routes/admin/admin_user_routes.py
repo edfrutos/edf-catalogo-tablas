@@ -18,7 +18,7 @@ from app.decorators import admin_required
 logger = logging.getLogger(__name__)
 
 
-def register_ain_user_routes(admin_bp) -> None:
+def register_admin_user_routes(admin_bp) -> None:
     """Registra rutas administrativas de usuarios sobre el blueprint admin."""
 
     @admin_bp.route("/usuarios")

@@ -13,7 +13,7 @@ from app.routes.s3_utils import get_s3_url
 logger = logging.getLogger(__name__)
 
 
-def register_admin_tooloutes(admin_bp) -> None:
+def register_admin_tool_routes(admin_bp) -> None:
     """Registra rutas administrativas auxiliares sobre el blueprint admin."""
 
     @admin_bp.route("/tools-test")
