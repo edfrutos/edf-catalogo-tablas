@@ -3819,16 +3819,12 @@ def restore_drive_backup():
         )
 
         # Importar las utilidades necesarias
-        import gzip
-        import json
         import tempfile
-
-        from bson import ObjectId
 
         # Descargar el archivo desde Google Drive usando la API
         from tools.db_utils.google_drive_utils import download_file
 
-        # Obtener el file_id del backup_id (que es el mismo en este caso)
+        # Obtener el file_id del backup_id, que es el mismo en este caso
         file_id = backup_id
 
         # Descargar el archivo usando la API de Google Drive
@@ -3845,118 +3841,20 @@ def restore_drive_backup():
             temp_path = temp_file.name
 
         try:
-            # Determinar el formato del archivo y procesarlo
-            backup_data = None
-
             current_app.logger.info(f"Procesando archivo temporal: {temp_path}")
 
-            # Intentar como archivo GZIP primero
             try:
-                with gzip.open(temp_path, "rt", encoding="utf-8") as gz_file:
-                    content = gz_file.read()
-                    current_app.logger.info(
-                        f"Contenido GZIP leído, longitud: {len(content)} caracteres"
-                    )
-                    # Intentar parsear como JSON
-                    try:
-                        backup_data = json.loads(content)
-                        current_app.logger.info(
-                            f"JSON parseado exitosamente, tipo: {type(backup_data)}"
-                        )
-                    except json.JSONDecodeError as e:
-                        # Si no es JSON válido, asumir que es un dump de MongoDB
-                        current_app.logger.error(f"Error parseando JSON: {str(e)}")
-                        current_app.logger.info(
-                            "Archivo detectado como dump de MongoDB"
-                        )
-                        return (
-                            jsonify(
-                                {
-                                    "success": False,
-                                    "error": "Los dumps de MongoDB (.gz) no son compatibles con esta función. Use mongorestore manualmente.",
-                                }
-                            ),
-                            400,
-                        )
-            except (gzip.BadGzipFile, OSError) as e:
-                current_app.logger.error(f"Error leyendo GZIP: {str(e)}")
-                # Si no es GZIP, intentar como JSON plano
-                try:
-                    with open(temp_path, encoding="utf-8") as file:
-                        content = file.read()
-                        current_app.logger.info(
-                            f"Contenido plano leído, longitud: {len(content)} caracteres"
-                        )
-                        backup_data = json.load(file)
-                        current_app.logger.info(
-                            f"JSON plano parseado exitosamente, tipo: {type(backup_data)}"
-                        )
-                except json.JSONDecodeError as e:
-                    current_app.logger.error(f"Error parseando JSON plano: {str(e)}")
-                    return (
-                        jsonify(
-                            {
-                                "success": False,
-                                "error": f"Formato de archivo no válido: {str(e)}",
-                            }
-                        ),
-                        400,
-                    )
-
-            if not backup_data:
-                current_app.logger.error("No se pudo procesar el contenido del backup")
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "error": "No se pudo procesar el contenido del backup",
-                        }
-                    ),
-                    400,
-                )
-
-            current_app.logger.info(f"Backup data procesado, tipo: {type(backup_data)}")
-
-            # Validar estructura del backup
-            if isinstance(backup_data, dict):
-                # Estructura nueva con metadata y collections
-                current_app.logger.info("Backup detectado como estructura con metadata")
-                if (
-                    "collections" in backup_data
-                    and "catalogs" in backup_data["collections"]
-                ):
-                    backup_data = backup_data["collections"]["catalogs"]
-                    current_app.logger.info(
-                        f"Extraídos {len(backup_data)} documentos de la colección 'catalogs'"
-                    )
-                else:
-                    current_app.logger.error(
-                        "Backup no contiene la estructura esperada (collections.catalogs)"
-                    )
-                    return (
-                        jsonify(
-                            {
-                                "success": False,
-                                "error": "El backup no contiene la estructura esperada",
-                            }
-                        ),
-                        400,
-                    )
-            elif not isinstance(backup_data, list):
+                backup_data = read_backup_json_file(temp_path)
+                processed_docs = prepare_restore_documents(backup_data)
+            except BackupRestoreError as restore_error:
                 current_app.logger.error(
-                    f"Backup no es una lista ni un diccionario válido, es: {type(backup_data)}"
+                    f"Error procesando backup de Google Drive {backup_id}: {str(restore_error)}"
                 )
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "error": "El backup debe contener una lista de documentos o una estructura válida",
-                        }
-                    ),
-                    400,
-                )
+                return jsonify({"success": False, "error": str(restore_error)}), 400
 
-            current_app.logger.info(f"Backup contiene {len(backup_data)} documentos")
+            current_app.logger.info(
+                f"Backup de Google Drive preparado para restauración: {backup_id}, documentos: {len(processed_docs)}"
+            )
 
             # Obtener la colección de catálogos
             catalog_collection = get_catalogs_collection()
@@ -3969,30 +3867,6 @@ def restore_drive_backup():
                         }
                     ),
                     500,
-                )
-
-            # Procesar los documentos para restaurar ObjectIds
-            processed_docs = []
-            for doc in backup_data:
-                if isinstance(doc, dict):
-                    # Convertir _id string de vuelta a ObjectId si es necesario
-                    if "_id" in doc and isinstance(doc["_id"], str):
-                        try:
-                            doc["_id"] = ObjectId(doc["_id"])
-                        except Exception:
-                            # Si no se puede convertir, generar nuevo ObjectId
-                            doc["_id"] = ObjectId()
-                    processed_docs.append(doc)
-
-            if not processed_docs:
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "error": "No se encontraron documentos válidos en el backup",
-                        }
-                    ),
-                    400,
                 )
 
             # Limpiar la colección actual (CUIDADO: esto elimina todos los datos)
