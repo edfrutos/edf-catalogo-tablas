@@ -1,83 +1,32 @@
 # Script: admin_routes.py
-# Descripción: [Explica brevemente qué hace el script]
-# Uso: python3 admin_routes.py [opciones]
-# Requiere: [librerías externas, si aplica]
-# Variables de entorno: [si aplica]
+# Descripción: Orquestador principal de rutas administrativas.
+# Uso: importado por la aplicación Flask.
+# Requiere: Flask, MongoDB y módulos internos de administración.
+# Variables de entorno: según configuración de la aplicación.
 # Autor: EDF Developer - 2025-05-28
 
-from app.routes.admin.admin_system import admin_system_bp
-from app.routes.admin.admin_s3 import admin_s3_bp
-from app.routes.admin.admin_logs import get_log_files
-from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
-from app.routes.admin.admin_backup_routes import register_admin_backup_routes
-from app.routes.admin.admin_notifications import register_admin_notification_routes
-from app.routes.admin.admin_maintenance_routes import register_admin_maintenance_routes
-from app.routes.admin.admin_api_status_routes import register_admin_api_status_routes
-from app.routes.admin.admin_db_routes import register_admin_db_routes
-from app.routes.admin.admin_verify_users import register_admin_verify_user_routes
-from app.routes.admin.admin_user_routes import register_admin_user_routes
-from app.routes.admin.admin_user_catalog_routes import register_admin_user_catalog_routes
-from app.routes.admin.admin_catalog_routes import register_admin_catalog_routes
-from app.routes.admin.admin_tool_routes import register_admin_tool_routes
-from app.routes.admin.admin_dashboard_routes import register_admin_dashboard_routes
-from app.routes.admin.admin_backup_restore_utils import (
-    BackupRestoreError,
-    is_mongodb_binary_dump_name,
-    prepare_restore_documents,
-    read_backup_json_file,
-)
-from app.routes.admin.admin_passwords import register_admin_password_routes
-import csv
-import io
-import json
 import logging
-import os
-import platform
-import re
-import shutil
-import tempfile
-import time
-import traceback
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 
-import psutil
-import requests  # pyright: ignore[reportDuplicateImport]
-from bson import ObjectId
-from flask import (
-    Blueprint,
-    current_app,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    send_file,
-    session,
-    url_for,
-)
+from flask import Blueprint, current_app, request
 from flask_login import current_user  # type: ignore
-from werkzeug.security import generate_password_hash
 
-import app.monitoring as monitoring
-import app.notifications as notifications
-from app.audit import audit_log
-from app.cache_system import clear_cache, get_cache_stats
-from app.utils.catalog_utils import get_catalog_rows, normalize_catalog_rows
-from app.database import (
-    get_audit_logs_collection,
-    get_catalogs_collection,
-    get_mongo_client,
-    get_mongo_db,
-    get_reset_tokens_collection,
-    get_users_collection,
-)
-from app.decorators import admin_required
-from app.decorators import admin_required as admin_required_logs
-from app.decorators import login_required
-from app.routes.s3_utils import get_s3_url
-from app.routes.temp_files_utils import delete_temp_files, list_temp_files
-from tools.db_utils.google_drive_utils import list_files_in_folder, upload_to_drive
+from app.database import get_audit_logs_collection
+from app.routes.admin.admin_api_status_routes import register_admin_api_status_routes
+from app.routes.admin.admin_backup_routes import register_admin_backup_routes
+from app.routes.admin.admin_catalog_routes import register_admin_catalog_routes
+from app.routes.admin.admin_dashboard_routes import register_admin_dashboard_routes
+from app.routes.admin.admin_db_routes import register_admin_db_routes
+from app.routes.admin.admin_maintenance_routes import register_admin_maintenance_routes
+from app.routes.admin.admin_notifications import register_admin_notification_routes
+from app.routes.admin.admin_passwords import register_admin_password_routes
+from app.routes.admin.admin_s3 import admin_s3_bp
+from app.routes.admin.admin_system import admin_system_bp
+from app.routes.admin.admin_tool_routes import register_admin_tool_routes
+from app.routes.admin.admin_user_catalog_routes import register_admin_user_catalog_routes
+from app.routes.admin.admin_user_routes import register_admin_user_routes
+from app.routes.admin.admin_verify_users import register_admin_verify_user_routes
 
 
 def log_action(
@@ -142,6 +91,8 @@ register_admin_user_catalog_routes(admin_bp)
 register_admin_catalog_routes(admin_bp)
 register_admin_tool_routes(admin_bp)
 register_admin_dashboard_routes(admin_bp)
+register_admin_verify_user_routes(admin_bp)
+register_admin_password_routes(admin_bp)
 
 # ...
 
