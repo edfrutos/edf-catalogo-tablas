@@ -60,8 +60,6 @@ def register_admin_verify_user_routes(admin_bp) -> None:
             if not user_ids or not action:
                 flash("Debes seleccionar usuarios y una acción.", "warning")
                 return redirect(url_for("admin.verify_users"))
-            from bson import ObjectId
-
             object_ids = [ObjectId(uid) for uid in user_ids if uid]
             if action == "verify":
                 result = users_col.update_many(
