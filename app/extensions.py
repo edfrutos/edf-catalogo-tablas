@@ -11,6 +11,7 @@ from flask_mail import Mail
 from flask_pymongo import PyMongo
 
 from flask_session import Session
+from cachelib.file import FileSystemCache
 
 mail = Mail()
 mongo = PyMongo()
@@ -30,9 +31,10 @@ def init_extensions(app):
     logger.info("Inicializando extensiones...")
 
     # Configurar Flask-Session primero
-    app.config["SESSION_TYPE"] = "filesystem"  # Intentar filesystem primero
-    app.config["SESSION_PERMANENT"] = False
-    app.config["SESSION_USE_SIGNER"] = True
+    # Flask-Session 0.8 depreca SESSION_TYPE="filesystem"; usar CacheLib evita warnings.
+    app.config["SESSION_TYPE"] = "cachelib"
+    app.config["SESSION_PERMANENT"] = app.config.get("SESSION_PERMANENT", True)
+    app.config.pop("SESSION_USE_SIGNER", None)
     app.config["SESSION_KEY_PREFIX"] = "edf_catalogo:"
 
     # Si estamos en una aplicación empaquetada, usar cookies en lugar de archivos
@@ -58,14 +60,18 @@ def init_extensions(app):
     if getattr(sys, "frozen", False):
         session_dir = os.path.join(os.path.dirname(sys.executable), "flask_session")
     else:
-        session_dir = os.path.join(
+        session_dir = app.config.get("SESSION_FILE_DIR") or os.path.join(
             app.config.get("BASE_DIR", os.getcwd()), "flask_session"
         )
 
-    if not os.path.exists(session_dir):
-        os.makedirs(session_dir)
+    os.makedirs(session_dir, exist_ok=True)
 
     app.config["SESSION_FILE_DIR"] = session_dir
+    app.config["SESSION_CACHELIB"] = FileSystemCache(
+        cache_dir=session_dir,
+        threshold=app.config.get("SESSION_FILE_THRESHOLD", 500),
+        mode=app.config.get("SESSION_FILE_MODE", 0o600),
+    )
     logger.info(f"Directorio de sesiones: {session_dir}")
 
     # Inicializar Flask-Session
