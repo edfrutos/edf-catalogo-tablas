@@ -43,6 +43,7 @@ htmlcov/
 .env.development
 .env.test
 .env.production
+!.env.example
 config.local.*
 settings.local.*
 *.pem
