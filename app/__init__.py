@@ -25,7 +25,8 @@ from .routes.catalog_images_routes import image_bp
 # maintenance_bp se registra a través de register_maintenance_routes
 from .routes.catalogs_routes import catalogs_bp
 from .routes.dev_template import bp_dev_template
-from .routes.emergency_access import emergency_bp
+
+# emergency_access ya NO se importa/registra: exponía bypass de login sin auth
 from .routes.images_routes import (  # Blueprint para /imagenes_subidas/<filename> (ahora llamado uploaded_images)
     images_bp,
 )
@@ -293,14 +294,10 @@ def create_app(testing=False):
     except Exception as e:
         app.logger.error(f"Error registrando blueprints de mantenimiento: {str(e)}")
 
-    # Registrar blueprint de emergencia (emergency_bp) sin prefijo
-    try:
-        app.register_blueprint(emergency_bp)
-        app.logger.info(
-            "Blueprint de emergencia (emergency_bp) registrado correctamente."
-        )
-    except Exception as e:
-        app.logger.error(f"Error registrando blueprint de emergencia: {str(e)}")
+    # emergency_bp DESHABILITADO: exponía /admin_login_bypass y /user_login_bypass
+    # sin ninguna autenticación, otorgando sesión de administrador a cualquiera.
+    # No registrar en producción ni en ningún entorno hasta que se proteja
+    # explícitamente (por credencial o por entorno no productivo).
 
     # Registrar blueprints adicionales si existen
     try:
