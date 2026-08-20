@@ -8,6 +8,7 @@ from datetime import datetime
 
 from bson import ObjectId
 from flask import flash, redirect, render_template, request, session, url_for
+from pymongo.errors import PyMongoError
 from werkzeug.security import generate_password_hash
 
 from app.audit import audit_log
@@ -61,7 +62,14 @@ def register_admin_user_routes(admin_bp) -> None:
                 }
                 posibles = {v for v in posibles if v}
                 total_count = 0
+                if not posibles:
+                    logger.warning(
+                        f"[ADMIN] Usuario {user.get('_id')} no tiene email/username/name/nombre; "
+                        "se omite el conteo de catálogos"
+                    )
                 for collection_name in collections_to_check:
+                    if not posibles:
+                        continue
                     try:
                         if mongo and mongo.db is not None:
                             collection = mongo.db[collection_name]
@@ -84,7 +92,7 @@ def register_admin_user_routes(admin_bp) -> None:
                         logger.info(
                             f"[ADMIN] Usuario {user.get('email')} tiene {count} catálogos en {collection_name}"
                         )
-                    except (AttributeError, KeyError, TypeError) as e:
+                    except (AttributeError, KeyError, TypeError, PyMongoError) as e:
                         logger.error(
                             f"Error al contar catálogos en {collection_name}: {str(e)}"
                         )
@@ -102,7 +110,7 @@ def register_admin_user_routes(admin_bp) -> None:
                 },
             }
             return render_template("admin/users.html", usuarios=usuarios, stats=stats)
-        except (AttributeError, KeyError, TypeError) as e:
+        except (AttributeError, KeyError, TypeError, PyMongoError) as e:
             logger.error(f"Error en lista_usuarios: {str(e)}", exc_info=True)
             flash(f"Error al cargar la lista de usuarios: {str(e)}", "error")
             return redirect(url_for("admin.dashboard_admin"))
@@ -229,7 +237,7 @@ def register_admin_user_routes(admin_bp) -> None:
                 return redirect(url_for("admin.lista_usuarios"))
 
             return render_template("admin/editar_usuario.html", usuario=user)
-        except (AttributeError, KeyError, TypeError, ValueError) as e:
+        except (AttributeError, KeyError, TypeError, ValueError, PyMongoError) as e:
             logger.error(f"Error al editar usuario {user_id}: {str(e)}", exc_info=True)
             flash(f"Error al editar usuario: {str(e)}", "error")
             return redirect(url_for("admin.lista_usuarios"))
