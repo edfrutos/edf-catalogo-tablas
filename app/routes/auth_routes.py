@@ -15,7 +15,6 @@ from flask import (
     Blueprint,
     current_app,
     flash,
-    jsonify,
     redirect,
     render_template,
     request,
@@ -265,41 +264,6 @@ def login():
     except Exception as e:
         logger.error(f"Error general en login: {str(e)}")
         flash("Ha ocurrido un error al procesar la solicitud", "error")
-        return redirect(url_for("auth.login"))
-
-
-# Ruta para login directo de pruebas - ¡SOLO PARA DEPURACIÓN!
-@auth_bp.route("/login_directo")
-def login_directo():
-    try:
-        logger.info("===== ACCESO DIRECTO PARA DEPURACIÓN =====")
-
-        # Buscar usuario fix@admin.com
-        usuario = find_user_by_email_or_name("fix@admin.com")
-        if not usuario:
-            logger.warning("No se encontró el usuario fix@admin.com")
-            flash("No se encontró el usuario administrador", "error")
-            return redirect(url_for("auth.login"))
-
-        # Establecer sesión directamente
-        session.clear()
-        session.permanent = True
-        session["usuario"] = str(usuario["_id"])
-        session["username"] = usuario.get("username", "fix")
-        session["nombre"] = usuario.get("nombre", "Admin Fix")
-        session["email"] = usuario["email"]
-        session["role"] = usuario.get("role", "admin")
-        session["user_id"] = str(usuario["_id"])
-        session["logged_in"] = True
-        session.modified = True
-
-        logger.info(f"Sesión establecida: {dict(session)}")
-
-        # Redirigir al panel de administración
-        return redirect(url_for("admin.dashboard_admin"))
-
-    except Exception as e:
-        logger.error(f"Error en login_directo: {str(e)}")
         return redirect(url_for("auth.login"))
 
 
@@ -672,120 +636,3 @@ def logout():
     return response
 
 
-@auth_bp.route("/debug_secret_key")
-def debug_secret_key():
-    if "user_id" not in session:
-        return "No autorizado", 401
-    return jsonify(
-        {
-            "SECRET_KEY": str(current_app.secret_key),
-            "SESSION_COOKIE_NAME": current_app.config.get("SESSION_COOKIE_NAME"),
-            "pid": os.getpid(),
-            "session": dict(session),
-        }
-    )
-
-
-# Ruta de acceso directo que FUNCIONA DEFINITIVAMENTE - SIN VERIFICACIÓN
-@auth_bp.route("/acceso_directo_definitivo")
-def acceso_directo_definitivo():
-    """Acceso directo que funciona definitivamente"""
-    try:
-        logger.info("===== ACCESO DIRECTO DEFINITIVO =====")
-
-        # Establecer sesión directamente sin verificar nada
-        session.clear()
-        session.permanent = True
-        session["user_id"] = "68b0467b1aedc57c0c805600"
-        session["email"] = "simple@admin.com"
-        session["username"] = "simple"
-        session["nombre"] = "Admin Simple"
-        session["role"] = "admin"
-        session["logged_in"] = True
-        session.modified = True
-
-        logger.info(f"Sesión establecida definitivamente: {dict(session)}")
-
-        # Redirigir al panel de administración
-        return redirect(url_for("admin.dashboard_admin"))
-
-    except Exception as e:
-        logger.error(f"Error en acceso_directo_definitivo: {str(e)}")
-        return redirect(url_for("auth.login"))
-
-
-# Ruta de acceso directo en la raíz que FUNCIONA DEFINITIVAMENTE
-@auth_bp.route("/")
-def acceso_raiz():
-    """Acceso directo desde la raíz"""
-    try:
-        logger.info("===== ACCESO DIRECTO DESDE RAÍZ =====")
-
-        # Establecer sesión directamente sin verificar nada
-        session.clear()
-        session.permanent = True
-        session["user_id"] = "68b0467b1aedc57c0c805600"
-        session["email"] = "simple@admin.com"
-        session["username"] = "simple"
-        session["nombre"] = "Admin Simple"
-        session["role"] = "admin"
-        session["logged_in"] = True
-        session.modified = True
-
-        logger.info(f"Sesión establecida desde raíz: {dict(session)}")
-
-        # Redirigir al panel de administración
-        return redirect(url_for("admin.dashboard_admin"))
-
-    except Exception as e:
-        logger.error(f"Error en acceso_raiz: {str(e)}")
-        return redirect(url_for("auth.login"))
-
-
-@auth_bp.route("/login_direct", methods=["GET", "POST"])
-def login_direct():
-    """Login directo y simple para testing"""
-    try:
-        if request.method == "GET":
-            return render_template("login_direct.html")
-
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "").strip()
-
-        logger.info(f"Login directo para: {email}")
-
-        # Verificación directa sin base de datos
-        if email == "edefrutos" and password == "15si34Maf":
-            session.clear()
-            session.permanent = True
-            session["user_id"] = "direct_user_edefrutos"
-            session["email"] = "edefrutos@gmail.com"
-            session["username"] = "edefrutos"
-            session["nombre"] = "Eugenio de Frutos"
-            session["role"] = "admin"
-            session["logged_in"] = True
-
-            logger.info("Login directo exitoso para edefrutos")
-            return redirect(url_for("admin.dashboard_admin"))
-
-        elif email == "admin@admin.com" and password == "admin123":
-            session.clear()
-            session.permanent = True
-            session["user_id"] = "direct_user_admin"
-            session["email"] = "admin@admin.com"
-            session["username"] = "admin"
-            session["nombre"] = "Administrador"
-            session["role"] = "admin"
-            session["logged_in"] = True
-
-            logger.info("Login directo exitoso para admin")
-            return redirect(url_for("admin.dashboard_admin"))
-
-        else:
-            flash("Credenciales inválidas.", "error")
-            return redirect(url_for("auth.login_direct"))
-
-    except Exception as e:
-        logger.error(f"Error en login directo: {str(e)}")
-        flash("Error en login directo.", "error")
-        return redirect(url_for("auth.login_direct"))

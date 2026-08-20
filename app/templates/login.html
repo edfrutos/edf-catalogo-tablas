@@ -2,16 +2,10 @@
 {% block content %}
 <h2>Iniciar Sesión</h2>
 
-<!-- Advertencia de actualización de seguridad -->
-<div class="alert alert-warning" role="alert">
-  <i class="bi bi-exclamation-triangle"></i> <strong>Actualización de Seguridad</strong><br>
-  <strong>Importante:</strong> Hemos actualizado el sistema de autenticación. Si tienes problemas para acceder, usa tu <strong>contraseña temporal</strong> con el formato: <code>tu_usuario123</code>
-</div>
-
 <!-- Información adicional para usuarios con contraseñas temporales -->
 <div class="alert alert-info" role="alert">
-  <i class="bi bi-info-circle"></i> <strong>¿Primera vez después de la actualización?</strong><br>
-  Después de iniciar sesión con tu contraseña temporal, serás redirigido automáticamente para crear una nueva contraseña personalizada y segura.
+  <i class="bi bi-info-circle"></i> <strong>¿Tienes una contraseña temporal?</strong><br>
+  Si un administrador te ha creado una cuenta, usa la contraseña temporal que te ha proporcionado. Al iniciar sesión serás redirigido automáticamente para crear una nueva contraseña personalizada y segura.
 </div>
 
 <form method="POST" action="/login">
