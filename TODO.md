@@ -61,10 +61,6 @@
   - `pyproject.toml` - Configuración actualizada para Ruff v0.3+
   - `cspell.json` - Configuración para cSpell con palabras técnicas
 
-## 🔧 En Progreso
-
-## 📋 Pendientes
-
 ### Corrección de Problema de Build en GitHub Actions
 - **Estado**: Completada
 - **Descripción**: Solucionado error "Could not open requirements file: requirements_python310.txt"
@@ -81,6 +77,46 @@
   - Mejores mensajes de log para debugging
   - Detección temprana de errores
 - **Resultado**: El build de GitHub Actions debería funcionar correctamente ahora
+
+### Migración/sincronización completa de producción
+- **Estado**: Completada (2026-08-19/20)
+- **Descripción**: Producción llevaba meses desactualizada (nunca recibió el refactor de
+  `admin_routes.py` en 14 módulos ni ~38 commits de fixes posteriores). Convertida en clon git real
+  y sincronizada con `origin/main`; Python actualizado de 3.8.10 a 3.10.13.
+
+### Vulnerabilidad de seguridad — bypass de login de emergencia
+- **Estado**: Completada (2026-08-19)
+- **Descripción**: `app/routes/emergency_access.py` exponía `/admin_login_bypass` y
+  `/user_login_bypass` sin autenticación, otorgando sesión de admin a cualquiera. Registro del
+  blueprint deshabilitado (commit `b4a4a35`) y sincronizado el guard `is_development_mode()` que
+  ya existía en producción pero no en el repo (commit `04ef9ba`). Sin evidencia de explotación en
+  logs revisados desde sept. 2024. Contraseña de MongoDB Atlas rotada por precaución.
+
+## 🔧 En Progreso
+
+## 📋 Pendientes
+
+### Quitar el log de arranque que imprime `MONGO_URI` con contraseña en texto plano
+- **Estado**: Pendiente
+- **Descripción**: `app/database.py` (o similar) imprime la URI completa de MongoDB, incluida la
+  contraseña, en el log cada vez que arranca el servicio. La contraseña expuesta ya fue rotada, pero
+  el `print` sigue en el código.
+
+### Decidir el destino de `requirements.txt` en la raíz de `docker-python-patched`
+- **Estado**: Pendiente
+- **Descripción**: Ese archivo (distinto del `requirements.txt` de `edf-catalogo-tablas/`) parece ser
+  para el empaquetado de la app nativa de macOS (incluye `pyinstaller`, `py2app`, `pyqt6`). No se ha
+  decidido si conservarlo, limpiarlo o documentarlo mejor.
+
+### Servicio de producción corre como `root`
+- **Estado**: Pendiente (mejora de seguridad)
+- **Descripción**: `catalogotablas.service` corre como usuario `root` en vez de `www-data` o un
+  usuario dedicado. Preexistente, no se ha tocado.
+
+### Divergencia entre `.env` de producción y `.env.example` del repo
+- **Estado**: Pendiente
+- **Descripción**: Hay variables opcionales en el `.env` real de producción que no están reflejadas
+  en `.env.example`. No es crítico, pero conviene alinear.
 
 ## 🚨 Problemas Conocidos
 
