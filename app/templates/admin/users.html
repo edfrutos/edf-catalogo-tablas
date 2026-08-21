@@ -102,7 +102,7 @@
                                     <td>{{ user.nombre or user.username or 'Sin nombre' }}</td>
                                     <td>{{ user.role or 'Sin rol' }}</td>
                                     <td class="text-center">
-                                        <a href="{{ url_for('admin.ver_catalogos_usuario', user_email=user.email) }}" 
+                                        <a href="{{ url_for('admin.ver_catalogos_usuario_por_id', user_id=user._id) }}"
                                            class="btn btn-info btn-sm position-relative" 
                                            style="min-width: 110px; font-weight: bold;">
                                             <i class="bi bi-table me-1"></i> Catálogos
