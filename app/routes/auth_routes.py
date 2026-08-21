@@ -1,7 +1,7 @@
 # app/routes/auth_routes.py
 
-import base64  # pyright: ignore[reportUnusedImport]
-import hashlib  # pyright: ignore[reportUnusedImport]
+import base64
+import hashlib
 import logging
 import os
 import secrets
@@ -9,7 +9,7 @@ import sys  # pyright: ignore[reportUnusedImport]
 import traceback  # pyright: ignore[reportUnusedImport]
 from datetime import datetime, timedelta
 
-import bcrypt  # pyright: ignore[reportUnusedImport]
+import bcrypt
 from flask import g  # pyright: ignore[reportUnusedImport]
 from flask import (
     Blueprint,
@@ -39,16 +39,80 @@ logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
 
 
+def _verify_legacy_scrypt(password, stored_password):
+    """Verifica hashes scrypt generados por herramientas antiguas del proyecto
+    (tools/create_admin.py y similares, previas a la migración a
+    generate_password_hash), donde salt y/o hash se guardaron en base64 en vez
+    de hexadecimal como espera Werkzeug."""
+    try:
+        parts = stored_password.split("$")
+        if len(parts) != 3:
+            return False
+        params = parts[0].split(":")  # ["scrypt", N, r, p]
+        if len(params) != 4:
+            return False
+        n, r, p = int(params[1]), int(params[2]), int(params[3])
+
+        try:
+            salt = base64.b64decode(parts[1] + "==")
+        except Exception:
+            return False
+
+        stored_hash = parts[2]
+        maxmem = 132 * n * r * p  # mismo margen que usa Werkzeug internamente
+        hashed_bytes = hashlib.scrypt(
+            password.encode("utf-8"), salt=salt, n=n, r=r, p=p, maxmem=maxmem, dklen=64
+        )
+        if all(ch in "0123456789abcdef" for ch in stored_hash.lower()):
+            computed = hashed_bytes.hex()
+        else:
+            computed = base64.b64encode(hashed_bytes).decode("utf-8").rstrip("=")
+        return computed == stored_hash
+    except Exception as e:
+        logger.error("Error verificando contraseña scrypt legada: %s", e)
+        return False
+
+
 def verify_password(password, stored_password, password_type=None):
-    """Verifica una contraseña contra su hash almacenado."""
+    """Verifica una contraseña contra su hash almacenado.
+
+    Soporta, además del formato actual (generate_password_hash de Werkzeug):
+    - Hashes bcrypt ($2a$/$2b$/$2y$) de cuentas antiguas.
+    - Hashes scrypt con salt/hash en base64, generados por tools/create_admin.py
+      antes de la migración a Werkzeug (ver SESSION_NOTES.md).
+    """
     if not stored_password:
         return False
 
-    # Si la contraseña almacenada no es un hash, comparar directamente
+    if isinstance(stored_password, bytes):
+        stored_password = stored_password.decode("utf-8")
+
+    # Si la contraseña almacenada no es un hash reconocible, comparar directamente
     if not stored_password.startswith("$") and not stored_password.startswith(
         "scrypt:"
     ):
         return password == stored_password
+
+    if stored_password.startswith(("$2a$", "$2b$", "$2y$")):
+        try:
+            return bcrypt.checkpw(
+                password.encode("utf-8"), stored_password.encode("utf-8")
+            )
+        except Exception as e:
+            logger.error("Error verificando contraseña bcrypt: %s", e)
+            return False
+
+    if stored_password.startswith("scrypt:"):
+        # Primero el formato estándar de Werkzeug (salt/hash en hex)
+        try:
+            if check_password_hash(stored_password, password):
+                return True
+        except Exception as e:
+            logger.debug(
+                "check_password_hash no aplicable para este hash scrypt: %s", e
+            )
+        # Formato legado (salt/hash en base64)
+        return _verify_legacy_scrypt(password, stored_password)
 
     try:
         return check_password_hash(stored_password, password)
@@ -230,10 +294,9 @@ def login():
                 flash("Credenciales inválidas", "error")
                 return redirect(url_for("auth.login"))
 
-            # Verificar contraseña
-            from werkzeug.security import check_password_hash
-
-            if check_password_hash(usuario["password"], password):
+            # Verificar contraseña (soporta hashes legados: bcrypt, scrypt con
+            # salt en base64 de tools/create_admin.py, además del formato actual)
+            if verify_password(password, usuario.get("password", "")):
                 # Login exitoso
                 session.clear()
                 session.permanent = True
