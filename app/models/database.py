@@ -44,11 +44,17 @@ def get_mongo_client():
 def get_mongo_db():
     """
     Obtiene la base de datos de MongoDB.
+
+    Usa la base indicada en el propio MONGO_URI (igual que app/database.py,
+    el módulo que usa el resto de la aplicación), en vez de la variable
+    MONGODB_DB: usarla por separado hacía que login/registro operaran contra
+    una base distinta (app_catalogojoyero_nueva) a la del resto de la app
+    (edf_catalogotablas en producción), dejando invisibles para el login a
+    los usuarios creados fuera de este módulo (p.ej. admin, edefrutos).
     """
     global db
     client = get_mongo_client()
-    db_name = os.getenv("MONGODB_DB", "app_catalogojoyero_nueva")
-    return client[db_name]
+    return client.get_database()
 
 
 def get_users_collection():
