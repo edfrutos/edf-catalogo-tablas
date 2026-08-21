@@ -141,7 +141,7 @@ class ProductionConfig(BaseConfig):
     UPLOAD_FOLDER = os.getenv(
         "UPLOAD_FOLDER", os.path.join(BaseConfig.BASE_DIR, "app/static/uploads")
     )
-    LOG_DIR = os.getenv("LOG_DIR", "/logs")
+    LOG_DIR = os.getenv("LOG_DIR", os.path.join(BaseConfig.BASE_DIR, "logs"))
 
 
 def get_config():

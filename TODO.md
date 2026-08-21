@@ -94,11 +94,23 @@
     intransitable para un usuario no-root. Se abrió paso mínimo (travesía sin lectura en
     `/root`, `/root/.pyenv`, `/root/.pyenv/versions`; lectura+ejecución recursiva solo dentro de
     `.../3.10.13`) en vez de recompilar o mover el intérprete.
-  - Al reiniciar con el nuevo usuario, el servicio empezó a crashear con
-    `PermissionError: [Errno 13] Permission denied: '/logs/app.log'` — el `.env` real de
-    producción tenía `LOG_DIR=/logs` (ruta absoluta a la raíz del filesystem), invisible
-    mientras el servicio corría como root. Corregido apuntando `LOG_DIR` al `logs/` dentro del
-    propio proyecto. Añadida advertencia en `.env.example` para que no se repita.
+  - Al reiniciar con el nuevo usuario, el servicio empezó a crashear en bucle (`Restart=always`)
+    con `PermissionError: [Errno 13] Permission denied: '/logs/app.log'`, causando un 502 en
+    `catalogotablas.edefrutos2020.com` (el proxy nginx de Plesk está bien configurado — el
+    problema era que el backend en `127.0.0.1:5100` no llegaba a levantar). Causa real: hay
+    **dos** `create_app()` en el código — el que de verdad se usa es `app/__init__.py`
+    (`wsgi.py` hace `from app import create_app`), no `app/factory.py`. Ese `create_app` carga
+    `app.config.from_object("config.Config")`, es decir el `config.py` de la **raíz** del
+    proyecto (no `app/config.py`), y su `ProductionConfig.LOG_DIR` defaulteaba a `os.getenv(
+    "LOG_DIR", "/logs")` — como el `.env` real de producción no tenía ninguna línea `LOG_DIR`,
+    caía siempre en `/logs` (raíz del filesystem), invisible mientras el servicio corría como
+    root. Un primer intento de arreglarlo con `sed -i "s/^LOG_DIR=.../..."` no funcionó porque
+    esa sustitución solo reemplaza una línea ya existente y no había ninguna que reemplazar — el
+    servicio volvió a caer minutos después. Arreglado de verdad: (1) se añadió la línea
+    `LOG_DIR=.../edf_catalogotablas/logs` al `.env` real (con `grep -q ... || echo ... >> .env`
+    para que inserte si falta), y (2) se corrigió el default inseguro en `config.py` a
+    `os.path.join(BaseConfig.BASE_DIR, "logs")` (mismo patrón que ya usaba `BaseConfig` y
+    `DevelopmentConfig`) como defensa en profundidad. Añadida advertencia en `.env.example`.
   - Efecto colateral positivo: el backup de Plesk venía fallando con `Permission denied` en
     `flask_session/*` (ficheros creados por el servicio como `root:root`, ilegibles por el
     usuario de la subscription que usa Plesk para los backups). Debería quedar resuelto — falta
