@@ -84,6 +84,28 @@
   `admin_routes.py` en 14 módulos ni ~38 commits de fixes posteriores). Convertida en clon git real
   y sincronizada con `origin/main`; Python actualizado de 3.8.10 a 3.10.13.
 
+### Servicio de producción corre como `root` — RESUELTA
+- **Estado**: Completada (2026-08-21)
+- **Descripción**: `catalogotablas.service` corría como `root`. Migrado al usuario propio de la
+  subscription de Plesk (`ede2020:psacln`), dueño real de `edf_catalogotablas/`. Script con
+  check/fix-pyenv/apply/rollback en
+  `scripts/production/maintenance/migrate_service_dedicated_user.sh` (commits `596aea9`, `8c67933`).
+  - El `.venv` usa un Python compilado con `pyenv` bajo `/root/.pyenv/versions/3.10.13`,
+    intransitable para un usuario no-root. Se abrió paso mínimo (travesía sin lectura en
+    `/root`, `/root/.pyenv`, `/root/.pyenv/versions`; lectura+ejecución recursiva solo dentro de
+    `.../3.10.13`) en vez de recompilar o mover el intérprete.
+  - Al reiniciar con el nuevo usuario, el servicio empezó a crashear con
+    `PermissionError: [Errno 13] Permission denied: '/logs/app.log'` — el `.env` real de
+    producción tenía `LOG_DIR=/logs` (ruta absoluta a la raíz del filesystem), invisible
+    mientras el servicio corría como root. Corregido apuntando `LOG_DIR` al `logs/` dentro del
+    propio proyecto. Añadida advertencia en `.env.example` para que no se repita.
+  - Efecto colateral positivo: el backup de Plesk venía fallando con `Permission denied` en
+    `flask_session/*` (ficheros creados por el servicio como `root:root`, ilegibles por el
+    usuario de la subscription que usa Plesk para los backups). Debería quedar resuelto — falta
+    confirmarlo en el próximo backup programado.
+  - Queda un directorio `/logs` huérfano en la raíz del servidor (creado por el servicio cuando
+    corría como root); limpieza opcional, no bloqueante.
+
 ### Vulnerabilidad de seguridad — bypass de login de emergencia
 - **Estado**: Completada (2026-08-19)
 - **Descripción**: `app/routes/emergency_access.py` exponía `/admin_login_bypass` y
@@ -107,11 +129,6 @@
 - **Descripción**: Ese archivo (distinto del `requirements.txt` de `edf-catalogo-tablas/`) parece ser
   para el empaquetado de la app nativa de macOS (incluye `pyinstaller`, `py2app`, `pyqt6`). No se ha
   decidido si conservarlo, limpiarlo o documentarlo mejor.
-
-### Servicio de producción corre como `root`
-- **Estado**: Pendiente (mejora de seguridad)
-- **Descripción**: `catalogotablas.service` corre como usuario `root` en vez de `www-data` o un
-  usuario dedicado. Preexistente, no se ha tocado.
 
 ### Divergencia entre `.env` de producción y `.env.example` del repo
 - **Estado**: Pendiente
