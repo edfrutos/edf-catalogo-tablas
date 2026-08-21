@@ -14,14 +14,20 @@
 # Ejecutar como root en el servidor de produccion.
 #
 # Uso:
-#   ./migrate_service_dedicated_user.sh check     # solo diagnostico, no cambia nada
-#   ./migrate_service_dedicated_user.sh apply      # aplica la migracion
-#   ./migrate_service_dedicated_user.sh rollback   # revierte al backup del unit file
+#   ./migrate_service_dedicated_user.sh check       # solo diagnostico, no cambia nada
+#   ./migrate_service_dedicated_user.sh fix-pyenv   # abre paso minimo a /root/.pyenv/versions/<ver>
+#   ./migrate_service_dedicated_user.sh apply        # aplica la migracion
+#   ./migrate_service_dedicated_user.sh rollback     # revierte al backup del unit file
 #
-# El modo "apply" aborta ANTES de tocar systemd si el usuario destino no
-# puede ejecutar el interprete python del .venv (caso tipico: el .venv usa
-# un python compilado con pyenv bajo /root/.pyenv, intransitable para un
-# usuario no-root).
+# El .venv de produccion usa un python compilado con pyenv bajo
+# /root/.pyenv/versions/<ver> (build hecho en su dia como root), intransitable
+# para un usuario no-root. "apply" corre "fix-pyenv" automaticamente antes de
+# tocar systemd: abre solo TRAVESIA (chmod o+x, sin lectura) en la cadena
+# /root -> .../.pyenv -> .../versions -> .../<ver>, y dentro de esa version
+# concreta aplica lectura+travesia recursiva (chmod -R o+rX). No se toca nada
+# mas de /root — sigue sin poderse listar ni leer nada fuera de esa ruta
+# exacta, y sigue sin poder ESCRIBIRSE ahi. Si aun asi el usuario destino no
+# puede ejecutar el interprete, "apply" aborta antes de tocar systemd.
 
 set -euo pipefail
 
@@ -32,10 +38,13 @@ SVC_GROUP="psacln"
 BACKUP_DIR="/root/catalogotablas-service-migration"
 
 MODE="${1:-}"
-if [[ "$MODE" != "check" && "$MODE" != "apply" && "$MODE" != "rollback" ]]; then
-  echo "Uso: $0 {check|apply|rollback}" >&2
-  exit 1
-fi
+case "$MODE" in
+  check|fix-pyenv|apply|rollback) ;;
+  *)
+    echo "Uso: $0 {check|fix-pyenv|apply|rollback}" >&2
+    exit 1
+    ;;
+esac
 
 if [[ $EUID -ne 0 ]]; then
   echo "Este script debe ejecutarse como root (necesita useradd/chown/systemctl)." >&2
@@ -109,6 +118,56 @@ run_check() {
 }
 
 # ---------------------------------------------------------------------------
+# Abre paso MINIMO bajo /root hasta el interprete real del venv:
+#   - o+x (sin r) en /root, /root/.pyenv, /root/.pyenv/versions -> no listable,
+#     solo atravesable si ya conoces la ruta exacta.
+#   - o+rX recursivo SOLO dentro de /root/.pyenv/versions/<version> -> lectura
+#     y ejecucion (donde ya la habia) del propio interprete/stdlib, nada mas
+#     de /root queda expuesto.
+# No toca permisos de escritura en ningun punto de la cadena.
+fix_pyenv_access() {
+  local venv_py="$APP_DIR/.venv/bin/python3"
+  if [[ ! -e "$venv_py" ]]; then
+    echo "No existe $venv_py — nada que hacer."
+    return 0
+  fi
+
+  local real_py version_dir
+  real_py="$(readlink -f "$venv_py")"
+  if [[ "$real_py" != /root/* ]]; then
+    echo "$venv_py -> $real_py (no vive bajo /root, no hace falta tocar nada)."
+    return 0
+  fi
+
+  if [[ "$real_py" =~ ^(/root/\.pyenv/versions/[^/]+)/ ]]; then
+    version_dir="${BASH_REMATCH[1]}"
+  else
+    echo "No reconozco el patron /root/.pyenv/versions/<version>/... en $real_py" >&2
+    echo "Ajusta permisos a mano antes de continuar (revisa con: readlink -f $venv_py)." >&2
+    return 1
+  fi
+
+  log "Abriendo paso minimo hasta $version_dir"
+  local d="$version_dir" chain=()
+  while [[ "$d" != "/" ]]; do
+    chain+=("$d")
+    d="$(dirname "$d")"
+  done
+  local i
+  for ((i = ${#chain[@]} - 1; i >= 0; i--)); do
+    if [[ "${chain[$i]}" == "$version_dir" ]]; then
+      chmod -R o+rX "$version_dir"
+    else
+      chmod o+x "${chain[$i]}"
+    fi
+    stat -c '%a %n' "${chain[$i]}"
+  done
+
+  log "Verificando resultado"
+  sudo -u "$SVC_USER" test -x "$real_py" && echo "OK: $SVC_USER puede atravesar hasta $real_py"
+}
+
+# ---------------------------------------------------------------------------
 run_apply() {
   run_check
 
@@ -121,13 +180,16 @@ run_apply() {
   log "Cambiando propietario de $APP_DIR a $SVC_USER:$SVC_GROUP"
   chown -R "$SVC_USER:$SVC_GROUP" "$APP_DIR"
 
+  fix_pyenv_access
+
   log "Prueba funcional: ¿puede $SVC_USER ejecutar el python del venv?"
   VENV_PY="$APP_DIR/.venv/bin/python3"
   if ! sudo -u "$SVC_USER" "$VENV_PY" -V; then
-    echo "ABORTA: $SVC_USER no puede ejecutar $VENV_PY (probable pyenv bajo /root)." >&2
+    echo "ABORTA: $SVC_USER no puede ejecutar $VENV_PY." >&2
     echo "El unit file NO se ha tocado, el servicio sigue corriendo como antes." >&2
     echo "La propiedad de $APP_DIR ya quedo como $SVC_USER:$SVC_GROUP; eso no rompe nada" >&2
-    echo "(root sigue pudiendo leer/ejecutar todo), pero soluciona esto antes de reintentar." >&2
+    echo "(root sigue pudiendo leer/ejecutar todo), pero revisa el intercambio de pyenv" >&2
+    echo "a mano (fix-pyenv ya se intento automaticamente) antes de reintentar." >&2
     exit 1
   fi
 
@@ -183,12 +245,19 @@ run_rollback() {
   systemctl restart "$SERVICE_NAME"
   sleep 2
   systemctl status "$SERVICE_NAME" --no-pager || true
-  echo "Rollback aplicado. Nota: la propiedad de $APP_DIR se quedo en $SVC_USER:$SVC_GROUP;"
-  echo "eso es inofensivo con el servicio corriendo de nuevo como root."
+  echo "Rollback aplicado. Notas:"
+  echo "- La propiedad de $APP_DIR se quedo en $SVC_USER:$SVC_GROUP; inofensivo con el"
+  echo "  servicio de nuevo como root (root sigue accediendo a todo igual)."
+  echo "- Si 'apply' llego a correr fix-pyenv, /root/.pyenv/versions/<ver> quedo con"
+  echo "  o+rX (y sus directorios padre con o+x). Eso no compromete nada sensible (es"
+  echo "  solo el propio interprete Python), pero si quieres revertirlo tambien:"
+  echo "    chmod o-x /root /root/.pyenv /root/.pyenv/versions"
+  echo "    chmod -R o-rwx /root/.pyenv/versions/<ver>"
 }
 
 case "$MODE" in
   check) run_check ;;
+  fix-pyenv) fix_pyenv_access ;;
   apply) run_apply ;;
   rollback) run_rollback ;;
 esac
