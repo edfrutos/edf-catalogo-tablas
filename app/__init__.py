@@ -340,18 +340,11 @@ def create_app(testing=False):
         session["test"] = "ok"
         return f"Valor de session['test']: {session.get('test')}"
 
-    # Añadir log para depuración de cookies
-    @app.before_request
-    def log_cookie():  # type: ignore
-        # Función de debugging - se ejecuta automáticamente
-        pass
-
-    # Log de la cookie enviada en la respuesta
+    # Log de si se envió cookie de sesión, sin exponer su valor (identificador de sesión)
     @app.after_request
     def log_set_cookie(response):  # type: ignore
-        app.logger.info(
-            f"[COOKIES] Set-Cookie enviada: {response.headers.get('Set-Cookie')}"
-        )
+        if response.headers.get("Set-Cookie"):
+            app.logger.info("[COOKIES] Set-Cookie enviada")
         return response
 
     # Crear directorio de logs si no existe - usar LOG_DIR si está configurado

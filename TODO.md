@@ -151,11 +151,16 @@
 - **Descripción**: `app/__init__.py:357` hacía `print(f"MONGO_URI usado: {...}")` en cada
   `create_app()` (cada arranque de worker), yendo directo a stdout → journal de systemd, sin pasar
   por el filtro de redacción de `logging_filters.py` (ese filtro solo actúa sobre el módulo
-  `logging`, no sobre `print()`). Eliminado el print (commit `5f20e62`). Pendiente desplegar en
-  producción (`git pull` + `systemctl restart catalogotablas`).
-  - De paso, detectado (no corregido aún): `app/__init__.py` loguea el `Set-Cookie` completo a
-    nivel INFO en cada request (`after_request` / `log_set_cookie`) — filtra identificadores de
-    sesión al log. Menos grave que el caso de `MONGO_URI`, pendiente de decidir si se toca.
+  `logging`, no sobre `print()`). Eliminado el print (commit `5f20e62`). Desplegado en producción
+  (commit `ccdbfba`, `git pull` + `systemctl restart catalogotablas`).
+
+### Fuga de identificador de sesión en logs (`Set-Cookie` completo)
+- **Estado**: Completada (2026-08-22)
+- **Descripción**: `app/__init__.py` (`after_request` / `log_set_cookie`) logueaba el header
+  `Set-Cookie` completo a nivel INFO en cada request — filtraba el identificador de sesión a
+  `app.log`. Cambiado a loguear solo si se envió cookie, sin exponer su valor. De paso eliminado
+  un `before_request` de depuración (`log_cookie`) que no hacía nada (`pass`).
+
 
 ### Vulnerabilidad de seguridad — bypass de login de emergencia
 - **Estado**: Completada (2026-08-19)
@@ -168,6 +173,21 @@
 ## 🔧 En Progreso
 
 ## 📋 Pendientes
+
+### Directorio `/logs` huérfano en la raíz del servidor
+- **Estado**: Pendiente — requiere root
+- **Descripción**: Sobrante de cuando `catalogotablas.service` corría como `root` (propiedad de
+  `www-data` dentro de `/`, root:root). El usuario `ede2020` no tiene permiso para borrarlo sin
+  sudo. Limpieza opcional, no bloqueante:
+  ```bash
+  sudo rm -rf /logs
+  ```
+
+### Confirmar el próximo backup programado de Plesk
+- **Estado**: Pendiente de verificación
+- **Descripción**: La migración de `catalogotablas.service` a `ede2020:psacln` debería haber
+  resuelto el `Permission denied` que sufría el backup de Plesk en `flask_session/*` (archivos
+  antes creados como `root:root`). Falta confirmarlo en el próximo backup programado.
 
 ## 🚨 Problemas Conocidos
 
