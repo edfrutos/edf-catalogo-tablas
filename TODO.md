@@ -2,6 +2,19 @@
 
 ## ✅ Completadas
 
+### Documentado el destino de `requirements.txt` en la raíz de `docker-python-patched`
+- **Estado**: Completada (2026-08-22)
+- **Descripción**: Ese archivo (y su hermano `requirements_macOS.txt`) no lo usa el build de
+  Docker (`Dockerfile`/`docker-compose.yml` ya usan `edf-catalogo-tablas/requirements.txt`
+  explícitamente, con comentario propio). Es el entorno de desarrollo/empaquetado de la app
+  nativa de macOS (PyInstaller, py2app, PyQt6, pywebview), pero mezcla también un volcado
+  amplio de paquetes sin curar para este proyecto (fastapi/uvicorn, stack google-cloud-*,
+  opentelemetry, SQLAlchemy, duckduckgo_search...). Se decidió solo documentarlo (cabecera
+  añadida en ambos archivos aclarando su propósito real y la mezcla sin curar) en vez de
+  limpiarlo o borrarlo, para no arriesgar el entorno local de empaquetado nativo. Esos dos
+  archivos viven en la raíz de `docker-python-patched/`, que no es un repo git propio — el
+  cambio no se commitea aquí.
+
 ### Eliminación del usuario fantasma felipe@catalog.com
 - **Estado**: Completada (2026-08-22)
 - **Descripción**: `_id` corrupto (string literal `'ObjectId("6a3ab5000ed78be860000000")'`, no un
@@ -147,12 +160,6 @@
 ## 🔧 En Progreso
 
 ## 📋 Pendientes
-
-### Decidir el destino de `requirements.txt` en la raíz de `docker-python-patched`
-- **Estado**: Pendiente
-- **Descripción**: Ese archivo (distinto del `requirements.txt` de `edf-catalogo-tablas/`) parece ser
-  para el empaquetado de la app nativa de macOS (incluye `pyinstaller`, `py2app`, `pyqt6`). No se ha
-  decidido si conservarlo, limpiarlo o documentarlo mejor.
 
 ### Divergencia entre `.env` de producción y `.env.example` del repo
 - **Estado**: Pendiente
