@@ -125,6 +125,17 @@
   - Queda un directorio `/logs` huérfano en la raíz del servidor (creado por el servicio cuando
     corría como root); limpieza opcional, no bloqueante.
 
+### Print de `MONGO_URI` completo (con contraseña) en el arranque
+- **Estado**: Completada (2026-08-22)
+- **Descripción**: `app/__init__.py:357` hacía `print(f"MONGO_URI usado: {...}")` en cada
+  `create_app()` (cada arranque de worker), yendo directo a stdout → journal de systemd, sin pasar
+  por el filtro de redacción de `logging_filters.py` (ese filtro solo actúa sobre el módulo
+  `logging`, no sobre `print()`). Eliminado el print (commit `5f20e62`). Pendiente desplegar en
+  producción (`git pull` + `systemctl restart catalogotablas`).
+  - De paso, detectado (no corregido aún): `app/__init__.py` loguea el `Set-Cookie` completo a
+    nivel INFO en cada request (`after_request` / `log_set_cookie`) — filtra identificadores de
+    sesión al log. Menos grave que el caso de `MONGO_URI`, pendiente de decidir si se toca.
+
 ### Vulnerabilidad de seguridad — bypass de login de emergencia
 - **Estado**: Completada (2026-08-19)
 - **Descripción**: `app/routes/emergency_access.py` exponía `/admin_login_bypass` y
@@ -136,12 +147,6 @@
 ## 🔧 En Progreso
 
 ## 📋 Pendientes
-
-### Quitar el log de arranque que imprime `MONGO_URI` con contraseña en texto plano
-- **Estado**: Pendiente
-- **Descripción**: `app/database.py` (o similar) imprime la URI completa de MongoDB, incluida la
-  contraseña, en el log cada vez que arranca el servicio. La contraseña expuesta ya fue rotada, pero
-  el `print` sigue en el código.
 
 ### Decidir el destino de `requirements.txt` en la raíz de `docker-python-patched`
 - **Estado**: Pendiente
