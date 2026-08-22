@@ -2,6 +2,13 @@
 
 ## ✅ Completadas
 
+### Eliminación del usuario fantasma felipe@catalog.com
+- **Estado**: Completada (2026-08-22)
+- **Descripción**: `_id` corrupto (string literal `'ObjectId("6a3ab5000ed78be860000000")'`, no un
+  ObjectId real), invisible para las rutas normales de admin. Verificado con
+  `tools/diagnostics/diag_delete_ghost_felipe.py` (dry-run: 0 documentos asociados en
+  `catalogs`/`spreadsheets`) y borrado en producción con `--apply` (`deleted_count=1`).
+
 ### Funcionalidad de Miniatura de Catálogo
 - **Estado**: Completada
 - **Descripción**: Añadida funcionalidad completa para editar miniatura de catálogo con 3 opciones:
