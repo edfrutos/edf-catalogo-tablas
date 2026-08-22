@@ -34,7 +34,6 @@ from app.data_fallback import (
 )
 from config import (
     COLLECTION_AUDIT_LOGS,
-    COLLECTION_CATALOGOS,
     COLLECTION_RESET_TOKENS,
     COLLECTION_USERS,
     MONGO_CONFIG,
@@ -137,7 +136,7 @@ def initialize_db(app=None):
             except Exception as e:
                 logging.error(f"Error al sincronizar usuarios para fallback: {str(e)}")
             try:
-                sync_catalogs_to_fallback(_mongo_db[COLLECTION_CATALOGOS])
+                sync_catalogs_to_fallback(_mongo_db["spreadsheets"])
 
             except Exception as e:
                 logging.error(f"Error al sincronizar catálogos para fallback: {str(e)}")
