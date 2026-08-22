@@ -354,8 +354,6 @@ def create_app(testing=False):
         )
         return response
 
-    print(f"MONGO_URI usado: {app.config.get('MONGO_URI')}")
-
     # Crear directorio de logs si no existe - usar LOG_DIR si está configurado
     if os.environ.get("LOG_DIR"):
         logs_dir = os.environ["LOG_DIR"]
