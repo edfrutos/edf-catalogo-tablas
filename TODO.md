@@ -2,6 +2,14 @@
 
 ## ✅ Completadas
 
+### Divergencia entre `.env` de producción y `.env.example` del repo
+- **Estado**: Completada (2026-08-22)
+- **Descripción**: Comparadas solo las claves (nunca los valores) entre el `.env` real de
+  producción y `.env.example`. Única diferencia: `GOOGLE_EMAIL` y `GOOGLE_APP_PASSWORD`
+  (contraseña de aplicación de Gmail, no la contraseña normal de la cuenta) presentes en
+  producción y ausentes del ejemplo — no las referencia nada del código de este repo, las usa
+  un script de backup/notificación externo. Añadidas a `.env.example` con comentario aclaratorio.
+
 ### Documentado el destino de `requirements.txt` en la raíz de `docker-python-patched`
 - **Estado**: Completada (2026-08-22)
 - **Descripción**: Ese archivo (y su hermano `requirements_macOS.txt`) no lo usa el build de
@@ -160,11 +168,6 @@
 ## 🔧 En Progreso
 
 ## 📋 Pendientes
-
-### Divergencia entre `.env` de producción y `.env.example` del repo
-- **Estado**: Pendiente
-- **Descripción**: Hay variables opcionales en el `.env` real de producción que no están reflejadas
-  en `.env.example`. No es crítico, pero conviene alinear.
 
 ## 🚨 Problemas Conocidos
 
