@@ -277,7 +277,7 @@ jobs:
             echo "app = BUNDLE(" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "    coll," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "    name='EDF_CatalogoDeTablas_Web_Native.app'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    icon=None," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
+            echo "    icon='edf_developer.icns'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "    bundle_identifier='com.edefrutos.catalogodetablas.websockets'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "    info_plist={" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        'CFBundleName': 'EDF Catálogo de Tablas WebSockets'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
@@ -338,6 +338,103 @@ jobs:
           echo "Verificando salida de construcción..."
           ls -la dist/
           ls -la dist/EDF_CatalogoDeTablas_Web_Native.app/Contents/MacOS/ || echo "Aplicación no construida correctamente"
+
+      - name: Import signing certificate
+        if: github.event_name != 'pull_request'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "🔐 Importando certificado Developer ID Application..."
+          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import certificate.p12 -k "$KEYCHAIN_PATH" -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed 's/"//g')
+
+          rm -f certificate.p12
+          echo "✅ Certificado importado en keychain temporal"
+
+      - name: Code sign app bundle
+        if: github.event_name != 'pull_request'
+        env:
+          MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
+        run: |
+          echo "🔏 Firmando dist/EDF_CatalogoDeTablas_Web_Native.app..."
+          codesign --deep --force --options runtime --timestamp \
+            --entitlements entitlements.plist \
+            --sign "$MACOS_CERTIFICATE_NAME" \
+            "dist/EDF_CatalogoDeTablas_Web_Native.app"
+
+          echo "🔍 Verificando firma..."
+          codesign --verify --deep --strict --verbose=2 "dist/EDF_CatalogoDeTablas_Web_Native.app"
+          echo "✅ Firma completada y verificada"
+
+      - name: Create DMG
+        if: github.event_name != 'pull_request'
+        env:
+          MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
+        run: |
+          echo "📦 Creando DMG..."
+          mkdir -p dmg_staging
+          cp -R "dist/EDF_CatalogoDeTablas_Web_Native.app" dmg_staging/
+          ln -s /Applications dmg_staging/Applications
+
+          hdiutil create -volname "EDF Catálogo de Tablas" \
+            -srcfolder dmg_staging \
+            -ov -format UDZO \
+            "EDF_CatalogoDeTablas.dmg"
+
+          echo "🔏 Firmando el propio DMG..."
+          codesign --force --timestamp --sign "$MACOS_CERTIFICATE_NAME" "EDF_CatalogoDeTablas.dmg"
+          codesign --verify --verbose=2 "EDF_CatalogoDeTablas.dmg"
+
+          echo "✅ DMG creado y firmado: $(ls -la EDF_CatalogoDeTablas.dmg)"
+
+      - name: Notarize DMG
+        if: github.event_name != 'pull_request'
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: |
+          echo "📤 Enviando DMG a notarización de Apple (puede tardar varios minutos)..."
+          AUTH_KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          echo "$APP_STORE_CONNECT_KEY" | base64 --decode > "$AUTH_KEY_PATH"
+
+          xcrun notarytool submit "EDF_CatalogoDeTablas.dmg" \
+            --key "$AUTH_KEY_PATH" \
+            --key-id "$APP_STORE_CONNECT_KEY_ID" \
+            --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --wait
+
+          rm -f "$AUTH_KEY_PATH"
+
+          echo "📎 Grapando ticket de notarización al DMG..."
+          xcrun stapler staple "EDF_CatalogoDeTablas.dmg"
+
+          echo "🔍 Verificando aceptación de Gatekeeper (simulando descarga desde el navegador)..."
+          xattr -w com.apple.quarantine "0081;$(printf '%x' "$(date +%s)");Safari;$(uuidgen | tr 'A-Z' 'a-z')" "EDF_CatalogoDeTablas.dmg"
+          spctl -a -t open --context context:primary-signature -v "EDF_CatalogoDeTablas.dmg"
+          echo "✅ DMG notarizado y grapado"
+
+      - name: Clean up keychain
+        if: always() && github.event_name != 'pull_request'
+        run: |
+          security delete-keychain "$RUNNER_TEMP/build.keychain" || true
+
+      - name: Upload DMG artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: EDF_CatalogoDeTablas.dmg
+          path: EDF_CatalogoDeTablas.dmg
+          retention-days: 30
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
