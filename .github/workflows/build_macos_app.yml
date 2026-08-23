@@ -377,6 +377,8 @@ jobs:
 
       - name: Create DMG
         if: github.event_name != 'pull_request'
+        env:
+          MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
         run: |
           echo "📦 Creando DMG..."
           mkdir -p dmg_staging
@@ -388,7 +390,11 @@ jobs:
             -ov -format UDZO \
             "EDF_CatalogoDeTablas.dmg"
 
-          echo "✅ DMG creado: $(ls -la EDF_CatalogoDeTablas.dmg)"
+          echo "🔏 Firmando el propio DMG..."
+          codesign --force --timestamp --sign "$MACOS_CERTIFICATE_NAME" "EDF_CatalogoDeTablas.dmg"
+          codesign --verify --verbose=2 "EDF_CatalogoDeTablas.dmg"
+
+          echo "✅ DMG creado y firmado: $(ls -la EDF_CatalogoDeTablas.dmg)"
 
       - name: Notarize DMG
         if: github.event_name != 'pull_request'
