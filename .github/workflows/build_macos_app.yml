@@ -412,7 +412,8 @@ jobs:
           echo "📎 Grapando ticket de notarización al DMG..."
           xcrun stapler staple "EDF_CatalogoDeTablas.dmg"
 
-          echo "🔍 Verificando aceptación de Gatekeeper..."
+          echo "🔍 Verificando aceptación de Gatekeeper (simulando descarga desde el navegador)..."
+          xattr -w com.apple.quarantine "0081;$(printf '%x' "$(date +%s)");Safari;$(uuidgen | tr 'A-Z' 'a-z')" "EDF_CatalogoDeTablas.dmg"
           spctl -a -t open --context context:primary-signature -v "EDF_CatalogoDeTablas.dmg"
           echo "✅ DMG notarizado y grapado"
 
