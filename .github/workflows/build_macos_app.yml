@@ -393,16 +393,21 @@ jobs:
       - name: Notarize DMG
         if: github.event_name != 'pull_request'
         env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
         run: |
           echo "📤 Enviando DMG a notarización de Apple (puede tardar varios minutos)..."
+          AUTH_KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          echo "$APP_STORE_CONNECT_KEY" | base64 --decode > "$AUTH_KEY_PATH"
+
           xcrun notarytool submit "EDF_CatalogoDeTablas.dmg" \
-            --apple-id "$APPLE_ID" \
-            --team-id "$APPLE_TEAM_ID" \
-            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --key "$AUTH_KEY_PATH" \
+            --key-id "$APP_STORE_CONNECT_KEY_ID" \
+            --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
             --wait
+
+          rm -f "$AUTH_KEY_PATH"
 
           echo "📎 Grapando ticket de notarización al DMG..."
           xcrun stapler staple "EDF_CatalogoDeTablas.dmg"
