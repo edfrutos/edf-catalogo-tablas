@@ -112,6 +112,7 @@ def create_app(testing=False):
     from .routes.scripts_routes import scripts_bp
     from .routes.scripts_tools_routes import scripts_tools_bp
     from .routes.testing_routes import testing_bp
+    from .routes.update_routes import update_bp
     from .routes.usuarios_routes import usuarios_bp
 
     blueprints = [
@@ -129,6 +130,7 @@ def create_app(testing=False):
         (testing_bp, None),
         (images_bp, None),
         (emergency_bp, None),
+        (update_bp, None),
     ]
 
     for bp, prefix in blueprints:

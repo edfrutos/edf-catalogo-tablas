@@ -237,7 +237,10 @@ jobs:
       - name: Verify and create .spec file
         run: |
           echo "🔍 Verificando archivo .spec..."
-          
+
+          APP_VERSION=$(cat VERSION 2>/dev/null || echo "1.0.0")
+          echo "📌 Versión de la app: $APP_VERSION"
+
           # Verificar si existe el archivo .spec correcto
           if [ -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
             echo "✅ EDF_CatalogoDeTablas_Native_WebSockets.spec encontrado"
@@ -274,6 +277,7 @@ jobs:
             echo "        ('config.py', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        ('wsgi.py', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        ('.env', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
+            echo "        ('VERSION', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        ('requirements.txt', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "    ]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "    hiddenimports=[" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
@@ -334,8 +338,8 @@ jobs:
             echo "    info_plist={" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        'CFBundleName': 'EDF Catálogo de Tablas WebSockets'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        'CFBundleDisplayName': 'EDF Catálogo de Tablas'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleVersion': '1.0.0'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleShortVersionString': '1.0.0'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
+            echo "        'CFBundleVersion': '$APP_VERSION'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
+            echo "        'CFBundleShortVersionString': '$APP_VERSION'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        'CFBundleExecutable': 'EDF_CatalogoDeTablas_Web_Native'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        'CFBundlePackageType': 'APPL'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
             echo "        'CFBundleSignature': '????'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
