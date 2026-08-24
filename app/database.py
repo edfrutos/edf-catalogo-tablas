@@ -124,6 +124,8 @@ def initialize_db(app=None):
         _mongo_client.admin.command("ping")
 
         # Si llegamos aquí, la conexión fue exitosa
+        # Deliberadamente NO se usa MONGODB_DB aquí (ver app/models/database.py):
+        # la base real la determina el propio MONGO_URI.
         _mongo_db = _mongo_client.get_database()
         _is_connected = True
         _last_error = None

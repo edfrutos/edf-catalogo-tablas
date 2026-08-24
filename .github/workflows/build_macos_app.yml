@@ -64,7 +64,7 @@ jobs:
           FLASK_SECRET_KEY=${{ secrets.SECRET_KEY }}
 
           MONGO_URI=${{ secrets.MONGO_URI }}
-          MONGODB_DB=app_catalogojoyero_nueva
+          MONGODB_DB=edf_catalogotablas
 
           BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
           BREVO_SMTP_USERNAME=${{ secrets.BREVO_SMTP_USERNAME }}
