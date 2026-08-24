@@ -242,6 +242,37 @@ if (!window.mp4ProblemSolverLoaded) {
 }
 </script>-->
 
+<!-- Aviso de nueva versión disponible (solo consulta, no instala nada) -->
+<div id="update-banner" class="alert alert-info alert-dismissible fade show position-fixed"
+     style="bottom: 1rem; right: 1rem; z-index: 10050; display: none; max-width: 360px;" role="alert">
+  <span id="update-banner-text"></span>
+  <a id="update-banner-link" href="#" target="_blank" rel="noopener" class="alert-link ms-1">Descargar</a>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    fetch("{{ url_for('update.check_update') }}")
+      .then(function (response) { return response.ok ? response.json() : null; })
+      .then(function (data) {
+        if (!data || !data.update_available) return;
+        var dismissedVersion = localStorage.getItem("edf_update_dismissed");
+        if (dismissedVersion === data.latest_version) return;
+
+        var banner = document.getElementById("update-banner");
+        document.getElementById("update-banner-text").textContent =
+          "Nueva versión disponible: " + data.latest_version + " (tienes " + data.current_version + ")";
+        var link = document.getElementById("update-banner-link");
+        if (data.release_url) link.href = data.release_url;
+        banner.style.display = "block";
+
+        banner.addEventListener("closed.bs.alert", function () {
+          localStorage.setItem("edf_update_dismissed", data.latest_version);
+        });
+      })
+      .catch(function () { /* sin red o GitHub no disponible: no molestar */ });
+  });
+</script>
+
 </body>
 </html>
 
