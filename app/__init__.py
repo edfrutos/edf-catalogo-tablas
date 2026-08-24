@@ -223,6 +223,15 @@ def create_app(testing=False):
     except Exception as e:
         app.logger.error(f"Error registrando blueprint de testing: {str(e)}")
 
+    # Registrar blueprint de comprobación de actualizaciones
+    try:
+        from app.routes.update_routes import update_bp
+
+        app.register_blueprint(update_bp)
+        app.logger.info("Blueprint de actualizaciones registrado correctamente")
+    except Exception as e:
+        app.logger.error(f"Error registrando blueprint de actualizaciones: {str(e)}")
+
     # ---
     # Error handlers globales para API (devuelven JSON en endpoints tipo /api/
     # o si se acepta JSON)

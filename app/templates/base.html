@@ -251,7 +251,7 @@ if (!window.mp4ProblemSolverLoaded) {
 </div>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    fetch("{{ url_for('update.check_update') }}")
+    fetch("/api/system/check-update")
       .then(function (response) { return response.ok ? response.json() : null; })
       .then(function (data) {
         if (!data || !data.update_available) return;
