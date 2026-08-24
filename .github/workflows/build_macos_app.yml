@@ -59,14 +59,66 @@ jobs:
           
           # Crear archivo .env con variables de entorno
           cat > .env << EOF
-          MONGO_URI=${{ secrets.MONGO_URI }}
+          FLASK_ENV=production
           SECRET_KEY=${{ secrets.SECRET_KEY }}
+          FLASK_SECRET_KEY=${{ secrets.SECRET_KEY }}
+
+          MONGO_URI=${{ secrets.MONGO_URI }}
+          MONGODB_DB=app_catalogojoyero_nueva
+
           BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
           BREVO_SMTP_USERNAME=${{ secrets.BREVO_SMTP_USERNAME }}
           BREVO_SMTP_PASSWORD=${{ secrets.BREVO_SMTP_PASSWORD }}
+
+          MAIL_SERVER=${{ secrets.MAIL_SERVER }}
+          MAIL_PORT=${{ secrets.MAIL_PORT }}
+          MAIL_USE_TLS=${{ secrets.MAIL_USE_TLS }}
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+          MAIL_DEFAULT_SENDER_NAME=${{ secrets.MAIL_DEFAULT_SENDER_NAME }}
+          MAIL_DEFAULT_SENDER_EMAIL=${{ secrets.MAIL_DEFAULT_SENDER_EMAIL }}
+
+          NOTIFICATION_EMAIL_1=${{ secrets.NOTIFICATION_EMAIL_1 }}
+          NOTIFICATION_EMAIL_2=${{ secrets.NOTIFICATION_EMAIL_2 }}
+
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+          USE_S3=${{ secrets.USE_S3 }}
+
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_PROJECT_ID=${{ secrets.GOOGLE_PROJECT_ID }}
+          GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
+          GOOGLE_DRIVE_FOLDER=${{ secrets.GOOGLE_DRIVE_FOLDER }}
+
+          DISABLE_MONITORING=false
+          LOG_DIR=logs
+          TZ=Europe/Madrid
+          PYTHONPATH=.
           EOF
           
           echo "✅ Secrets y variables de entorno configurados"
+
+      - name: Verify required secrets are present
+        run: |
+          echo "🔍 Verificando que las variables críticas del .env no estén vacías..."
+          MISSING=0
+          for VAR in MONGO_URI SECRET_KEY; do
+            VALUE=$(grep "^${VAR}=" .env | cut -d'=' -f2-)
+            if [ -z "$VALUE" ]; then
+              echo "❌ $VAR está vacío -- falta el secret correspondiente en este repo (Settings → Secrets and variables → Actions)"
+              MISSING=1
+            else
+              echo "✅ $VAR presente"
+            fi
+          done
+          if [ "$MISSING" = "1" ]; then
+            echo "🛑 Abortando build: la app se empaquetaría sin poder conectar a servicios críticos."
+            exit 1
+          fi
 
       - name: Verify checkout
         run: |
