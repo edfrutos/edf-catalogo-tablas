@@ -7,6 +7,7 @@ Configura blueprints, variables de entorno, S3, MongoDB y otros componentes.
 """
 import logging
 import os
+import sys
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
@@ -37,8 +38,16 @@ from .routes.scripts_routes import scripts_bp
 from .routes.scripts_tools_routes import scripts_tools_bp
 from .routes.usuarios_routes import usuarios_bp
 
-# Cargar variables de entorno desde .env (sobrescribir existentes)
-_ = load_dotenv(override=True)
+# Cargar variables de entorno desde .env (sobrescribir existentes).
+# En build empaquetado (frozen), ruta explícita al .env del propio bundle:
+# load_dotenv() a secas busca .env subiendo desde el cwd del proceso, y con
+# override=True pisaría la configuración real si se lanza el ejecutable
+# desde una carpeta que tenga su propio .env por encima (p.ej. un clon del
+# repo en el disco de quien lo prueba).
+if getattr(sys, "frozen", False):
+    _ = load_dotenv(os.path.join(getattr(sys, "_MEIPASS", os.path.dirname(sys.executable)), ".env"), override=True)
+else:
+    _ = load_dotenv(override=True)
 
 # Configurar el cliente de S3 si está habilitado
 use_s3 = os.environ.get("USE_S3", "false").lower() == "true"

@@ -15,12 +15,23 @@ from pathlib import Path
 import requests
 import webview
 
-# Cargar variables de entorno desde .env
+# Cargar variables de entorno desde el .env empaquetado en la propia app.
+# Ruta explícita (en vez de load_dotenv() a secas): sin esto, python-dotenv
+# busca .env subiendo desde el directorio de trabajo del proceso, así que si
+# se lanza el ejecutable desde una carpeta que tenga su propio .env por
+# encima (p.ej. un clon del repo en el disco de quien lo prueba), ese .env
+# ajeno pisa (override=True) la configuración real empaquetada en el .app.
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(override=True)  # pyright: ignore[reportUnusedCallResult]
-    print("✅ Variables de entorno cargadas desde .env")
+    if getattr(sys, "frozen", False):
+        _app_root = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
+    else:
+        _app_root = os.path.dirname(os.path.abspath(__file__))
+    _env_path = os.path.join(_app_root, ".env")
+
+    load_dotenv(_env_path, override=True)  # pyright: ignore[reportUnusedCallResult]
+    print(f"✅ Variables de entorno cargadas desde {_env_path}")
 except ImportError:
     print("⚠️  python-dotenv no disponible, usando variables de entorno del sistema")
 except Exception as e:

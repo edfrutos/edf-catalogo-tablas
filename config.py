@@ -6,11 +6,18 @@
 # Autor: EDF Developer - 2025-05-28
 
 import os
+import sys
 from datetime import timedelta
 
 from dotenv import load_dotenv
 
-load_dotenv()
+# En build empaquetado (frozen), ruta explícita al .env del propio bundle en
+# vez de dejar que load_dotenv() busque subiendo desde el cwd del proceso
+# (ver app/__init__.py para el detalle de por qué).
+if getattr(sys, "frozen", False):
+    load_dotenv(os.path.join(getattr(sys, "_MEIPASS", os.path.dirname(sys.executable)), ".env"))
+else:
+    load_dotenv()
 
 
 class BaseConfig:
