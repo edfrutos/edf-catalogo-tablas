@@ -151,7 +151,7 @@ def serve_s3_proxy(filename):
 
         candidate_dirs = []
 
-        configured_uplod = current_app.config.get("UPLOAD_FOLDER")
+        configured_upload = current_app.config.get("UPLOAD_FOLDER")
         if configured_upload:
             candidate_dirs.append(configured_upload)
 
