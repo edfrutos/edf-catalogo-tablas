@@ -75,7 +75,9 @@ def start_flask_server():
             }
         )
 
-        app.run(debug=False, port=5004, host="127.0.0.1", use_reloader=False)
+        app.run(
+            debug=False, port=5004, host="127.0.0.1", use_reloader=False, threaded=True
+        )
     except Exception as e:
         print(f"❌ Error al iniciar el servidor Flask: {e}")
         sys.exit(1)
