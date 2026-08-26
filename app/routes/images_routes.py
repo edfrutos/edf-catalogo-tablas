@@ -54,6 +54,14 @@ def uploaded_images(filename):
 
     current_app.logger.info(f"Ruta /imagenes_subidas/ llamada para archivo: {filename}")
 
+    # Un <video>/<audio> con type="video/mp4" que recibe un 200 con la imagen
+    # por defecto (Content-Type: image/png) en vez de un error puede colgar el
+    # pipeline de decodificación de medios del navegador en vez de fallar
+    # limpio. Para vídeo/audio, un archivo no encontrado debe ser un 404 real.
+    is_media_file = filename.lower().endswith(
+        (".mp4", ".avi", ".mov", ".wmv", ".webm", ".mp3", ".wav", ".ogg", ".aac")
+    )
+
     # Verificar si se solicita específicamente S3
     s3_param = request.args.get("s3")
 
@@ -73,6 +81,8 @@ def uploaded_images(filename):
                     return send_from_directory(
                         current_app.config["UPLOAD_FOLDER"], filename
                     )
+                elif is_media_file:
+                    return "❌ Archivo multimedia no encontrado", 404
                 else:
                     # Servir imagen por defecto directamente
                     default_path = os.path.join(
@@ -92,6 +102,8 @@ def uploaded_images(filename):
                 return send_from_directory(
                     current_app.config["UPLOAD_FOLDER"], filename
                 )
+            elif is_media_file:
+                return "❌ Error de S3 y archivo multimedia no encontrado localmente", 404
             else:
                 # Servir imagen por defecto directamente
                 default_path = os.path.join(
@@ -124,6 +136,12 @@ def uploaded_images(filename):
         return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)
     else:
         current_app.logger.warning(f"Archivo NO encontrado localmente: {local_path}")
+
+    if is_media_file:
+        current_app.logger.warning(
+            f"Archivo multimedia no encontrado en S3 ni local: {filename}"
+        )
+        return "❌ Archivo multimedia no encontrado", 404
 
     # Si no se encuentra en ningún lado, usar imagen por defecto
     current_app.logger.info(f"Usando imagen por defecto para: {filename}")
