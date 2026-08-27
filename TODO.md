@@ -174,20 +174,28 @@
 
 ## 📋 Pendientes
 
-### Directorio `/logs` huérfano en la raíz del servidor
-- **Estado**: Pendiente — requiere root
-- **Descripción**: Sobrante de cuando `catalogotablas.service` corría como `root` (propiedad de
-  `www-data` dentro de `/`, root:root). El usuario `ede2020` no tiene permiso para borrarlo sin
-  sudo. Limpieza opcional, no bloqueante:
-  ```bash
-  sudo rm -rf /logs
-  ```
+_(sin pendientes abiertos)_
 
-### Confirmar el próximo backup programado de Plesk
-- **Estado**: Pendiente de verificación
-- **Descripción**: La migración de `catalogotablas.service` a `ede2020:psacln` debería haber
-  resuelto el `Permission denied` que sufría el backup de Plesk en `flask_session/*` (archivos
-  antes creados como `root:root`). Falta confirmarlo en el próximo backup programado.
+## ✅ Completadas (cont.)
+
+### Directorio `/logs` huérfano en la raíz del servidor
+- **Estado**: Completada (2026-08-27)
+- **Descripción**: Sobrante de cuando `catalogotablas.service` corría como `root` (23 MB de
+  `app.log*` propiedad de `www-data` en `/`). `ede2020` no está en sudoers, así que lo borró
+  el usuario con acceso root directo (`rm -rf /logs`). Verificado: `/logs` ya no existe.
+- **De paso**: `chown -R ede2020:psacln` sobre `.git/` del proyecto en producción — 34 objetos
+  en `.git/objects/` habían quedado como `root:root` tras el `git reset --hard` de la migración
+  (eran world-readable `0444`, no bloqueaban el backup, pero limpieza cosmética). Verificado: 0
+  archivos con propietario distinto de `ede2020` bajo `.git/`.
+
+### Confirmar el backup programado de Plesk
+- **Estado**: Completada (2026-08-27) — causa raíz resuelta
+- **Descripción**: El `Permission denied` del backup de Plesk lo causaban archivos en
+  `flask_session/*` creados como `root:root` modo `0600` (ilegibles para el backup, que corre
+  como `ede2020`). Tras la migración de `catalogotablas.service` a `ede2020:psacln`, verificado
+  vía SSH: 42/42 archivos de `flask_session/` son `ede2020:psacln` y no queda ningún archivo
+  ilegible en el árbol de la app. Root de la incidencia cerrado; solo restaría observar una
+  corrida real del backup, no bloqueante.
 
 ## 🚨 Problemas Conocidos
 
