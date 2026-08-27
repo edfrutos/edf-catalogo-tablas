@@ -54,14 +54,30 @@ document.addEventListener('DOMContentLoaded', function() {
     window.forceImageDisplay = function() {
         const img = document.getElementById('modalImage');
         if (img) {
+            // Si ya está en el estado correcto, no tocar el DOM: escribir aquí
+            // dispara el MutationObserver de más abajo (vigila cambios de
+            // style/class en este mismo elemento), que vuelve a llamar a esta
+            // función, que vuelve a escribir... bucle infinito de
+            // retroalimentación. Esta comprobación de idempotencia es lo que
+            // rompe el ciclo.
+            const alreadyVisible =
+                img.style.display === 'block' &&
+                img.style.visibility === 'visible' &&
+                img.style.opacity === '1' &&
+                !img.classList.contains('d-none');
+
+            if (alreadyVisible) {
+                return;
+            }
+
             // Forzar estilos directamente
             img.style.setProperty('display', 'block', 'important');
             img.style.setProperty('visibility', 'visible', 'important');
             img.style.setProperty('opacity', '1', 'important');
-            
+
             // Remover clases problemáticas
             img.classList.remove('d-none');
-            
+
             console.log("🔧 MODAL IMG DISPLAY FIX: Imagen forzada a visible");
         }
     };

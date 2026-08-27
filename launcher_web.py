@@ -56,7 +56,7 @@ def main():
         print("🛑 Presiona Ctrl+C para detener el servidor")
         print("-" * 50)
 
-        app.run(debug=False, port=5001, host="0.0.0.0")
+        app.run(debug=False, port=5001, host="0.0.0.0", threaded=True)
 
     except KeyboardInterrupt:
         print("\n🛑 Servidor detenido por el usuario")

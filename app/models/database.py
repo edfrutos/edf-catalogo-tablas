@@ -7,14 +7,20 @@
 
 import logging
 import os
+import sys
 from datetime import datetime
 
 from bson import ObjectId
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
-# Cargar variables de entorno
-load_dotenv()
+# Cargar variables de entorno. En build empaquetado (frozen), ruta explícita
+# al .env del propio bundle en vez de dejar que load_dotenv() busque subiendo
+# desde el cwd del proceso (ver app/__init__.py para el detalle de por qué).
+if getattr(sys, "frozen", False):
+    load_dotenv(os.path.join(getattr(sys, "_MEIPASS", os.path.dirname(sys.executable)), ".env"))
+else:
+    load_dotenv()
 
 # Configuración de logging
 logger = logging.getLogger(__name__)

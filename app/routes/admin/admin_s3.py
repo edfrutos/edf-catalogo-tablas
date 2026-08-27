@@ -151,7 +151,7 @@ def serve_s3_proxy(filename):
 
         candidate_dirs = []
 
-        configured_uplod = current_app.config.get("UPLOAD_FOLDER")
+        configured_upload = current_app.config.get("UPLOAD_FOLDER")
         if configured_upload:
             candidate_dirs.append(configured_upload)
 
@@ -178,7 +178,7 @@ def serve_s3_proxy(filename):
                 mime_type = mime_type or "application/octet-stream"
 
                 current_app.logger.info(
-                    f"[S3-PROXY] Archivo local encontrado: {local_path} ({mim_type})"
+                    f"[S3-PROXY] Archivo local encontrado: {local_path} ({mime_type})"
                 )
 
                 return send_file(

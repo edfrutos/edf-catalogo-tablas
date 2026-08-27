@@ -7,12 +7,40 @@
 
 import logging
 import os
+import threading
+import time
 
 import boto3
 from botocore.exceptions import ClientError
 from flask import current_app
 
 logger = logging.getLogger(__name__)
+
+# Caché en memoria de archivos que se ha confirmado que NO existen en S3.
+# Evita repetir los reintentos con sleep bloqueante (~2s) cada vez que la
+# interfaz vuelve a pedir el mismo archivo roto (p.ej. un <video> de
+# miniatura en una tabla que se recarga varias veces mientras el usuario
+# navega). TTL corto para no servir "no existe" indefinidamente si el
+# archivo se sube después.
+_missing_files_cache = {}
+_missing_files_cache_lock = threading.Lock()
+_MISSING_FILE_CACHE_TTL_SECONDS = 300
+
+
+def _is_known_missing(cache_key):
+    with _missing_files_cache_lock:
+        checked_at = _missing_files_cache.get(cache_key)
+        if checked_at is None:
+            return False
+        if (time.time() - checked_at) >= _MISSING_FILE_CACHE_TTL_SECONDS:
+            del _missing_files_cache[cache_key]
+            return False
+        return True
+
+
+def _mark_as_missing(cache_key):
+    with _missing_files_cache_lock:
+        _missing_files_cache[cache_key] = time.time()
 
 
 def get_s3_client():
@@ -225,8 +253,6 @@ def get_s3_url(object_name, bucket_name=None, retry_count=3, retry_delay=1):
     Returns:
         str: URL del objeto en S3 si existe, None si no existe después de todos los reintentos
     """
-    import time
-
     if bucket_name is None:
         bucket_name = os.environ.get("S3_BUCKET_NAME")
         if not bucket_name:
@@ -234,6 +260,10 @@ def get_s3_url(object_name, bucket_name=None, retry_count=3, retry_delay=1):
                 "No se especificó un bucket y no se encontró S3_BUCKET_NAME en las variables de entorno"
             )
             return None
+
+    cache_key = f"{bucket_name}:{object_name}"
+    if _is_known_missing(cache_key):
+        return None
 
     # Obtener el cliente S3
     s3_client = get_s3_client()
@@ -266,6 +296,7 @@ def get_s3_url(object_name, bucket_name=None, retry_count=3, retry_delay=1):
                     logger.warning(
                         f"Archivo {object_name} no encontrado en S3 después de {retry_count} intentos"
                     )
+                    _mark_as_missing(cache_key)
                     return None
             else:
                 logger.error(f"Error verificando archivo en S3: {str(e)}")
