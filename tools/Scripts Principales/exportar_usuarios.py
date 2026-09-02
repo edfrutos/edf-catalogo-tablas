@@ -19,9 +19,7 @@ from pymongo import MongoClient
 load_dotenv()
 
 # Configuración de conexión (ajusta según tu entorno)
-MONGO_URI = os.environ.get(
-    "MONGO_URI", "mongodb+srv://edfrutos:3Utitwr3piFt4LVf@cluster0.abpvipa.mongodb.net/"
-)
+MONGO_URI = os.environ.get("MONGO_URI")
 DB_NAME = os.environ.get("MONGO_DBNAME", "app_catalogojoyero_nueva")
 COLLECTION = "users"
 

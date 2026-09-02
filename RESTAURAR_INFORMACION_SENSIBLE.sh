@@ -109,7 +109,7 @@ cat > app_data/edefrutos2025_notifications_config.json.RECOVERED << 'EOF'
     "server": "smtp-relay.brevo.com",
     "port": 587,
     "username": "admin@edefrutos.me",
-    "password": "Rmp3UXwsIkvA0c1dRmp3UXwsIkvA0c1d",
+    "password": "__PON_TU_PASSWORD_BREVO__",
     "use_tls": true
   },
   "recipients": [
@@ -187,7 +187,7 @@ SECRET_KEY=tu-secret-key-super-seguro
 
 # Configuración SMTP/Brevo
 BREVO_SMTP_USERNAME=admin@edefrutos.me
-BREVO_SMTP_PASSWORD=Rmp3UXwsIkvA0c1dRmp3UXwsIkvA0c1d
+BREVO_SMTP_PASSWORD=__PON_TU_PASSWORD_BREVO__
 BREVO_API_KEY=tu-brevo-api-key
 
 # Emails de notificación
@@ -230,7 +230,7 @@ echo "  4. NO commitear archivos con credenciales reales"
 echo ""
 echo "🔐 CREDENCIALES ENCONTRADAS:"
 echo "  📧 SMTP Username: admin@edefrutos.me"
-echo "  🔑 SMTP Password: Rmp3UXwsIkvA0c1dRmp3UXwsIkvA0c1d"
+echo "  🔑 SMTP Password: __PON_TU_PASSWORD_BREVO__"
 echo "  📮 Email 1: admin@edefrutos2025.xyz"
 echo "  📮 Email 2: edfrutos@gmail.com"
 echo ""

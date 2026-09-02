@@ -19,7 +19,10 @@ def listar_catalogos():
     load_dotenv()
 
     # Configuración MongoDB
-    mongo_uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
+    mongo_uri = os.environ.get("MONGO_URI")
+    if not mongo_uri:
+        print("❌ Define MONGO_URI en el archivo .env")
+        return
 
     try:
         # Conectar a MongoDB
