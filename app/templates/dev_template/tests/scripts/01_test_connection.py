@@ -9,11 +9,16 @@ from pymongo import MongoClient
 import os
 
 import certifi
+from dotenv import load_dotenv
+
+load_dotenv()
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
-# URI de conexión a MongoDB Atlas
-uri = "mongodb+srv://edfrutos:rYjwUC6pUNrLtbaI@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority"
+# URI de conexión a MongoDB Atlas (definida en el .env)
+uri = os.environ.get("MONGO_URI")
+if not uri:
+    raise SystemExit("Define MONGO_URI en el archivo .env antes de ejecutar este script")
 
 try:
     # Crear cliente de MongoDB

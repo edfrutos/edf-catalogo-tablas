@@ -33,10 +33,10 @@ try:
 
     MONGO_URI = Config.MONGO_URI
 except ImportError:
-    MONGO_URI = os.environ.get(
-        "MONGO_URI",
-        "mongodb+srv://admin:admin123@cluster0.pmokh.mongodb.net/app_catalogojoyero_nueva?retryWrites=true&w=majority",
-    )
+    MONGO_URI = os.environ.get("MONGO_URI")
+
+if not MONGO_URI:
+    raise SystemExit("Define MONGO_URI en el archivo .env o en config.py")
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
