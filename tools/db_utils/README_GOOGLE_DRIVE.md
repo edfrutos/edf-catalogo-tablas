@@ -77,3 +77,47 @@ python fix_google_drive_auth.py
 - Las credenciales son específicas para tu proyecto de Google Cloud
 - No compartas el archivo `credentials.json` en el repositorio
 - El archivo `token.json` se regenera automáticamente
+
+---
+
+## Estado técnico (2026-09-03)
+
+> Deuda técnica conocida: **dos módulos, dos librerías, tres formatos de token.**
+
+### Módulos
+
+| Módulo | Librería | Token | Lo importan |
+|---|---|---|---|
+| `google_drive_utils.py` | `pydrive2` en `get_drive()`, `googleapiclient` en `upload_to_drive()` | `token.json` (oauth2client) **y** `token.pickle` | `admin_backups.py`, `admin_backup_routes.py`, `maintenance_routes_refactored.py`, `storage_utils.py` |
+| `google_drive_utils_v2.py` | solo `googleapiclient` + `google-auth` | `token.pickle` | `backup_utils.py`, `maintenance_routes.py` |
+
+### Artefactos (todos en esta carpeta, todos gitignored)
+
+| Archivo | Formato | Generado por | Consumido por |
+|---|---|---|---|
+| `credentials.json` | client secret OAuth escritorio `{"installed":{...}}` | copia manual del `client_secret_*.json` de la raíz | ambos |
+| `token.pickle` | `google.oauth2.credentials.Credentials` pickled | `regenerar_tokens_google_drive.py`, `generar_token_pickle.py` | v2 y rama googleapiclient de v1 |
+| `token.json` | `oauth2client` `OAuth2Credentials` JSON | `regenerar_tokens_google_drive.py`, `setup_google_drive.py` | `get_drive()` (PyDrive2) de v1 |
+
+### Regenerar los dos a la vez (recomendado)
+
+```bash
+python3 tools/db_utils/regenerar_tokens_google_drive.py
+scp -P 2222 tools/db_utils/token.pickle tools/db_utils/token.json \
+    root@208.76.221.20:/var/www/vhosts/edefrutos2020.com/edf_catalogotablas/tools/db_utils/
+```
+
+Si PyDrive2 rechaza el `token.json` traducido, usa `setup_google_drive.py` (flujo PyDrive nativo).
+
+### Dependencias
+
+`requirements.txt` (producción) NO lista `PyDrive2` ni `oauth2client` (sí están en
+`requirements-python310-090925.txt`). Verifica en el servidor:
+`.venv/bin/pip show pydrive2 oauth2client`.
+
+### Pendiente (refactor, requiere pruebas contra Drive real)
+
+1. Migrar los consumidores de `google_drive_utils.py` a `google_drive_utils_v2.py`.
+2. Borrar `google_drive_utils.py`, `pydrive2`, `oauth2client`, `token.json`.
+3. Un módulo, una librería, un formato de token.
+4. Unificar dependencias entre los `requirements*.txt`.
