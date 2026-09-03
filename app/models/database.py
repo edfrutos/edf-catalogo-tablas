@@ -14,6 +14,8 @@ from bson import ObjectId
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
+from app.models.user_schema import normalize_user_doc
+
 # Cargar variables de entorno. En build empaquetado (frozen), ruta explícita
 # al .env del propio bundle en vez de dejar que load_dotenv() busque subiendo
 # desde el cwd del proceso (ver app/__init__.py para el detalle de por qué).
@@ -109,6 +111,9 @@ def find_user_by_email_or_email(identifier):
             {"email": {"$regex": f"^{identifier}$", "$options": "i"}},
             {"username": {"$regex": f"^{identifier}$", "$options": "i"}},
             {"nombre": {"$regex": f"^{identifier}$", "$options": "i"}},
+            # Compat esquema .NET (PascalCase) en la colección `users` compartida
+            {"Username": {"$regex": f"^{identifier}$", "$options": "i"}},
+            {"Name": {"$regex": f"^{identifier}$", "$options": "i"}},
         ]
     }
     logger.info(f"[find_user_by_email_or_email] Query exacta: {query}")
@@ -129,7 +134,7 @@ def find_user_by_email_or_email(identifier):
         logger.info(
             f"[find_user_by_email_or_email] Usuario encontrado por {match_field if match_field else 'algún campo'}: {user.get('email', user.get('username', user.get('nombre', '')))}"
         )
-        return user
+        return normalize_user_doc(user)
 
     # 2. Búsqueda parcial si el input es suficientemente largo
     if len(identifier) > 3:
@@ -138,6 +143,8 @@ def find_user_by_email_or_email(identifier):
                 {"email": {"$regex": identifier, "$options": "i"}},
                 {"username": {"$regex": identifier, "$options": "i"}},
                 {"nombre": {"$regex": identifier, "$options": "i"}},
+                {"Username": {"$regex": identifier, "$options": "i"}},
+                {"Name": {"$regex": identifier, "$options": "i"}},
             ]
         }
         logger.info(f"[find_user_by_email_or_email] Query parcial: {query_partial}")
@@ -151,7 +158,7 @@ def find_user_by_email_or_email(identifier):
             logger.info(
                 f"[find_user_by_email_or_email] Usuario encontrado por búsqueda parcial: {user.get('email', user.get('username', user.get('nombre', '')))}"
             )
-            return user
+            return normalize_user_doc(user)
 
     # 3. Si no tiene @, probar dominios comunes
     if "@" not in identifier:
@@ -175,7 +182,7 @@ def find_user_by_email_or_email(identifier):
                 logger.info(
                     f"[find_user_by_email_or_email] Usuario encontrado con dominio {domain}: {user.get('email')}"
                 )
-                return user
+                return normalize_user_doc(user)
 
     logger.warning(
         f"[find_user_by_email_or_email] Usuario no encontrado con identificador: {identifier}"

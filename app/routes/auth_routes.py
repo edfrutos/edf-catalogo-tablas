@@ -34,6 +34,7 @@ from app.models import (
     get_users_collection,
 )
 from app.models.user import User  # pyright: ignore[reportUnusedImport]
+from app.models.user_schema import build_user_set
 
 logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
@@ -201,9 +202,11 @@ def register():
             "tables_updated_at": None,
         }
 
-        # Insertar en la colección users
+        # Insertar en la colección users. build_user_set() añade el espejo
+        # PascalCase (Username/Name/Role/IsActive/CreatedAt) para que el cliente
+        # .NET que comparte esta colección vea el usuario correctamente.
         try:
-            result = users_collection.insert_one(nuevo_usuario)
+            result = users_collection.insert_one(build_user_set(nuevo_usuario))
             logger.info(f"Usuario registrado correctamente: {email}")
 
             # Si llegamos aquí, la autenticación fue exitosa
@@ -308,6 +311,19 @@ def login():
                 session["logged_in"] = True
 
                 logger.info(f"Login exitoso para: {email}")
+
+                # Registrar último acceso (espejo snake_case + PascalCase para
+                # el cliente .NET). No debe romper el login si falla.
+                try:
+                    get_users_collection().update_one(
+                        {"_id": usuario["_id"]},
+                        {
+                            "$set": build_user_set({"last_login": datetime.utcnow()}),
+                            "$inc": {"login_count": 1},
+                        },
+                    )
+                except Exception as e:
+                    logger.warning(f"No se pudo actualizar last_login para {email}: {e}")
 
                 # Redireccionar según el rol
                 if usuario.get("role") == "admin":
