@@ -66,6 +66,10 @@ token*.json
 token*.pickle
 token.pickle
 client_secret*.json
+
+# Scripts fuente (no secretos) cuyo nombre contiene "token" — sí se versionan
+!tools/db_utils/regenerar_tokens_google_drive.py
+!tools/db_utils/generar_token_pickle.py
 cookies.txt
 credentials_all_users.txt
 mi_config.json
