@@ -10,6 +10,8 @@ from flask import g
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from app.models.user_schema import normalize_user_doc
+
 
 class User(UserMixin):
     def __init__(self, user_data):
@@ -17,18 +19,20 @@ class User(UserMixin):
         Inicializa un usuario con datos de MongoDB.
 
         Args:
-            user_data (dict): Datos del usuario desde MongoDB
+            user_data (dict): Datos del usuario desde MongoDB. Puede venir en
+                snake_case (Flask) o PascalCase (cliente .NET); se normaliza.
         """
+        user_data = normalize_user_doc(user_data) or {}
         self.id = str(user_data.get("_id"))
         self.email = user_data.get("email")
         self.password_hash = user_data.get("password")
-        self.role = user_data.get("role", "user")
-        self.name = user_data.get("name", "")
-        self.active = user_data.get("active", True)
+        self.role = user_data.get("role") or "user"
+        self.name = user_data.get("name") or user_data.get("nombre") or ""
+        self.active = user_data.get("is_active", user_data.get("active", True))
         self.created_at = user_data.get("created_at")
         self.last_login = user_data.get("last_login")
         self.foto_perfil = user_data.get("foto_perfil")
-        self.nombre = user_data.get("nombre")
+        self.nombre = user_data.get("nombre") or user_data.get("name")
         self.username = user_data.get("username")
 
     def get_id(self):
