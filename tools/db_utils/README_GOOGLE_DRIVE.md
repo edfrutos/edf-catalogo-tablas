@@ -107,7 +107,16 @@ scp -P 2222 tools/db_utils/token.pickle tools/db_utils/token.json \
     root@208.76.221.20:/var/www/vhosts/edefrutos2020.com/edf_catalogotablas/tools/db_utils/
 ```
 
+`credentials.json` **también** tiene que estar en el servidor (PyDrive lo exige aunque
+el token sea válido). Se copia una sola vez y se queda:
+
+```bash
+scp -P 2222 tools/db_utils/credentials.json \
+    root@208.76.221.20:/var/www/vhosts/edefrutos2020.com/edf_catalogotablas/tools/db_utils/
+```
+
 Si PyDrive2 rechaza el `token.json` traducido, usa `setup_google_drive.py` (flujo PyDrive nativo).
+(Verificado 2026-09-03: el `token.json` traducido lo acepta PyDrive2 1.21.3.)
 
 ### Dependencias
 
