@@ -24,6 +24,10 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from pathlib import Path
+
+# Raíz del repo: .../edf-catalogo-tablas (este script está en tools/local/aws_utils/)
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 REGION = "eu-south-2"
 DEST_DEFAULT = "edfcatalogotablas-sp"
@@ -36,7 +40,8 @@ def _client():
         from dotenv import load_dotenv
     except ImportError as exc:
         sys.exit(f"❌ Falta dependencia: {exc} (pip install boto3 python-dotenv)")
-    load_dotenv()
+    env_path = REPO_ROOT / ".env"
+    load_dotenv(env_path if env_path.exists() else None)
     key = os.getenv("AWS_ACCESS_KEY_ID")
     secret = os.getenv("AWS_SECRET_ACCESS_KEY")
     if not key or not secret:
