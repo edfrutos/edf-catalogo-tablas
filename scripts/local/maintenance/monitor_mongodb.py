@@ -17,7 +17,7 @@ from email.mime.text import MIMEText
 from dotenv import load_dotenv
 
 # Configuración
-BASE_DIR = "/Users/edefrutos/edf_catalogotablas"
+BASE_DIR = "/var/www/vhosts/edefrutos2020.com/edf_catalogotablas"
 LOG_FILE = f"{BASE_DIR}/logs/mongodb_monitor.log"
 GUNICORN_ERROR_LOG = f"{BASE_DIR}/logs/gunicorn_error.log"
 GUNICORN_ACCESS_LOG = f"{BASE_DIR}/logs/gunicorn_access.log"
@@ -121,7 +121,7 @@ except Exception as e:
 
         # Ejecutar el script
         result = subprocess.run(
-            [f"{BASE_DIR}/venv310/bin/python", test_script_path, mongo_uri],
+            [sys.executable, test_script_path, mongo_uri],
             capture_output=True,
             text=True,
         )
@@ -148,7 +148,7 @@ def check_application_status():
     # Verificar si el servicio Gunicorn está en ejecución
     try:
         result = subprocess.run(
-            ["systemctl", "is-active", "edefrutos2025"], capture_output=True, text=True
+            ["systemctl", "is-active", "catalogotablas"], capture_output=True, text=True
         )
         service_status = result.stdout.strip()
 
@@ -160,11 +160,11 @@ def check_application_status():
 
         # Verificar si el proceso está escuchando en el puerto correcto
         result = subprocess.run(["ss", "-tlnp"], capture_output=True, text=True)
-        if "127.0.0.1:8002" in result.stdout:
-            log("Proceso escuchando en el puerto 8002")
+        if "127.0.0.1:5100" in result.stdout:
+            log("Proceso escuchando en el puerto 5100")
         else:
-            log("Proceso no escuchando en el puerto 8002")
-            return False, "Puerto 8002 no disponible"
+            log("Proceso no escuchando en el puerto 5100")
+            return False, "Puerto 5100 no disponible"
 
         # Verificar si hay errores recientes en los logs
         recent_errors = []
@@ -184,11 +184,11 @@ def check_application_status():
         # Verificar si la aplicación responde
         try:
             result = subprocess.run(
-                ["curl", "-s", "-I", "http://127.0.0.1:8002"],
+                ["curl", "-s", "-I", "http://127.0.0.1:5100"],
                 capture_output=True,
                 text=True,
             )
-            if result.returncode == 0 and "200 OK" in result.stdout:
+            if result.returncode == 0 and ("200 OK" in result.stdout or "302 FOUND" in result.stdout):
                 log("Aplicación responde correctamente")
             else:
                 log("Aplicación no responde correctamente")
@@ -258,9 +258,9 @@ def send_alert_email(subject, message):
     # Configuración de correo
     smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER", "")
-    smtp_password = os.getenv("SMTP_PASSWORD", "")
-    alert_email = os.getenv("ALERT_EMAIL", "admin@edefrutos2025.xyz")
+    smtp_user = os.getenv("SMTP_USER", os.getenv("GOOGLE_EMAIL", ""))
+    smtp_password = os.getenv("SMTP_PASSWORD", os.getenv("GOOGLE_APP_PASSWORD", ""))
+    alert_email = os.getenv("ALERT_EMAIL", "admin@edefrutos2020.com")
 
     if not smtp_user or not smtp_password or not alert_email:
         log("No se pudo enviar alerta por correo: falta configuración de SMTP")
@@ -269,7 +269,7 @@ def send_alert_email(subject, message):
     try:
         # Crear mensaje
         msg = MIMEMultipart()
-        msg["From"] = smtp_user
+        msg["From"] = os.getenv("SMTP_USER", os.getenv("GOOGLE_EMAIL", ""))
         msg["To"] = alert_email
         msg["Subject"] = subject
 
@@ -302,7 +302,7 @@ def fix_mongodb_connection():
         fix_script = f"{BASE_DIR}/tools/fix_mongodb_atlas.py"
         if os.path.exists(fix_script):
             result = subprocess.run(
-                [f"{BASE_DIR}/venv310/bin/python", fix_script],
+                [sys.executable, fix_script],
                 capture_output=True,
                 text=True,
             )
@@ -343,7 +343,7 @@ def restart_application():
         else:
             # Intentar reiniciar con systemctl
             result = subprocess.run(
-                ["systemctl", "restart", "edefrutos2025"],
+                ["systemctl", "restart", "catalogotablas"],
                 capture_output=True,
                 text=True,
             )
