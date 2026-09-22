@@ -6,6 +6,7 @@ Endpoints de API críticos para la aplicación
 """
 
 import os
+import sys
 from datetime import datetime
 
 import boto3
