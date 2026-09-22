@@ -31,7 +31,7 @@ def serve_s3_file(filename: str):
         )
 
         response = s3_client.get_object(
-            Bucket=current_ap.config.get("S3_BUCKET_NAME"),
+            Bucket=current_app.config.get("S3_BUCKET_NAME"),
             Key=filename,
         )
 
@@ -59,7 +59,7 @@ def serve_s3_file(filename: str):
         local_path = os.path.join(uploads_dir, safe_filename)
 
         current_app.logger.info(
-            f"[S3-PROXY] Archivo no encontrado en S3, buscando fallback local físico: {lcal_path}"
+            f"[S3-PROXY] Archivo no encontrado en S3, buscando fallback local físico: {local_path}"
         )
 
         if os.path.exists(local_path):
