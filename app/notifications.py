@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import smtplib
+import tempfile
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -68,11 +69,23 @@ def load_config():
 
 
 def save_config(config):
-    """Guarda la configuración de notificaciones en el archivo de configuración"""
+    """Guarda la configuración de notificaciones en el archivo de configuración.
+
+    Escritura atómica (fichero temporal + os.replace) para que otros workers
+    de gunicorn nunca puedan leer el archivo a medio escribir/truncado.
+    """
     try:
         os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
-        with open(CONFIG_FILE, "w") as f:
-            json.dump(config, f, indent=2)
+        fd, tmp_path = tempfile.mkstemp(
+            dir=os.path.dirname(CONFIG_FILE), prefix=".tmp_notifications_config_"
+        )
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(config, f, indent=2)
+            os.replace(tmp_path, CONFIG_FILE)
+        except Exception:
+            os.remove(tmp_path)
+            raise
         return True
     except Exception as e:
         logger.error(f"Error al guardar configuración de notificaciones: {str(e)}")

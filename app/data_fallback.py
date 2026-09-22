@@ -13,6 +13,7 @@ Permite que la aplicación siga funcionando con datos básicos.
 import json
 import logging
 import os
+import tempfile
 
 from app.cache_system import cached
 
@@ -44,28 +45,43 @@ DEFAULT_ADMIN = {
 }
 
 
+def _atomic_write_json(path, data):
+    """Escribe JSON de forma atómica (fichero temporal + os.replace).
+
+    Evita que otro worker de gunicorn, leyendo el archivo en paralelo,
+    pueda encontrarlo truncado/vacío a mitad de escritura.
+    """
+    fd, tmp_path = tempfile.mkstemp(
+        dir=os.path.dirname(path), prefix=f".tmp_{os.path.basename(path)}_"
+    )
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(data, f)
+        os.replace(tmp_path, path)
+    except Exception:
+        os.remove(tmp_path)
+        raise
+
+
 def ensure_fallback_data():
     """Asegura que existan los archivos de datos básicos"""
     # Datos de usuarios
     if not os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, "w") as f:
-            json.dump([DEFAULT_ADMIN], f)
-            logging.info(f"Creado archivo de respaldo de usuarios: {USER_DATA_FILE}")
+        _atomic_write_json(USER_DATA_FILE, [DEFAULT_ADMIN])
+        logging.info(f"Creado archivo de respaldo de usuarios: {USER_DATA_FILE}")
 
     # Datos de catálogos
     if not os.path.exists(CATALOG_DATA_FILE):
-        with open(CATALOG_DATA_FILE, "w") as f:
-            json.dump([], f)
-            logging.info(
-                f"Creado archivo de respaldo de catálogos: {CATALOG_DATA_FILE}"
-            )
+        _atomic_write_json(CATALOG_DATA_FILE, [])
+        logging.info(
+            f"Creado archivo de respaldo de catálogos: {CATALOG_DATA_FILE}"
+        )
 
 
 def save_user_data(users):
     """Guarda datos de usuarios para modo sin conexión"""
     try:
-        with open(USER_DATA_FILE, "w") as f:
-            json.dump(users, f)
+        _atomic_write_json(USER_DATA_FILE, users)
         logging.info(f"Datos de usuarios guardados: {len(users)} usuarios")
         return True
     except Exception as e:
@@ -76,9 +92,7 @@ def save_user_data(users):
 def save_catalog_data(catalogs):
     """Guarda datos de catálogos para modo sin conexión"""
     try:
-        with open(CATALOG_DATA_FILE, "w") as f:
-            json.dump(catalogs, f)
-
+        _atomic_write_json(CATALOG_DATA_FILE, catalogs)
         return True
     except Exception as e:
         logging.error(f"Error al guardar datos de catálogos: {str(e)}")
