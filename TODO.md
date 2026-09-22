@@ -197,6 +197,36 @@ _(sin pendientes abiertos)_
   ilegible en el árbol de la app. Root de la incidencia cerrado; solo restaría observar una
   corrida real del backup, no bloqueante.
 
+### Rotación de credenciales AWS y MongoDB revocadas
+- **Estado**: Completada (2026-09-22)
+- **Descripción**: El Access Key ID de AWS del `.env` (local y de producción) estaba revocado
+  (`InvalidClientTokenId`/`InvalidAccessKeyId` al probar contra AWS real — STS, `head_bucket` y
+  `list_objects_v2` sobre `edfcatalogotablas-sp`). Las credenciales de MongoDB Atlas también
+  estaban revocadas. Ambas rotadas por el usuario y actualizadas en `.env`. Verificado tras
+  `systemctl restart catalogotablas`: `/api/health` → `"database":{"status":"connected"}`,
+  `"aws_s3":true`; nueva identidad AWS confirmada por STS:
+  `arn:aws:iam::732444625738:user/edfcatalogo-api-prod`.
+
+### `Permission denied` al guardar el fallback de catálogos
+- **Estado**: Completada (2026-09-22)
+- **Descripción**: `app_data/edefrutos2025_catalogs_fallback.json` fallaba con
+  `[Errno 13] Permission denied` en cada arranque de los 3 workers de gunicorn, pese a que
+  propietario (`ede2020:psacln`), permisos POSIX, ACL (`getfacl`), atributos ext4 (`lsattr`,
+  sin `chattr +i`), SELinux (`disabled`) y AppArmor (sin perfil para el proceso del servicio)
+  estaban todos limpios — causa exacta no identificada (probable estado del inodo heredado de
+  cuando el servicio corría como `root`, antes de la migración a `ede2020` documentada arriba).
+  Resuelto recreando el archivo (`rm` + recrear como `ede2020` + `chmod 644`) en vez de seguir
+  depurando un fichero de caché no crítico (la fuente real de catálogos es MongoDB). Verificado:
+  el archivo se reescribe en cada restart (tamaño/fecha cambian) sin errores en el journal.
+
+### Bug en `/api/health`: `google_drive` siempre `false`
+- **Estado**: Completada (2026-09-22, PR #11)
+- **Descripción**: `app/routes/api_routes.py::health_check()` usaba
+  `getattr(sys, "frozen", False)` sin haber importado `sys` — `NameError` capturado en silencio
+  por un `except Exception: pass`, así que `services.google_drive` reportaba `false` aunque
+  `tools/db_utils/credentials.json` existiera. Fix: añadido `import sys`. Verificado en
+  producción tras desplegar: `/api/health` → `"google_drive": true`.
+
 ## 🚨 Problemas Conocidos
 
 ## 📝 Notas de Desarrollo
