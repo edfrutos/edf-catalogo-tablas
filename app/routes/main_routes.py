@@ -2673,6 +2673,10 @@ def editar_tabla(id):
 
                     new_data.append(new_row)
 
+                # Persistir las filas remapeadas a los nuevos encabezados
+                update_data["data"] = new_data
+                update_data["num_rows"] = len(new_data)
+
                 # Manejar actualización de imágenes
                 nuevas_imagenes = request.files.getlist("imagenes") + request.files.getlist("images")
                 if nuevas_imagenes:
@@ -2738,14 +2742,14 @@ def editar_tabla(id):
                             )
 
                 # Preparar actualización sincronizada para MongoDB
-                mongo_update_sync = sync_row_update_paths(mongo_update)
+                mongo_update_sync = sync_row_update_paths(update_data)
 
                 current_app.logger.info(
                     f"Actualizando documento con datos sincronizados: {mongo_update_sync}"
                 )
-                
+
                 g.spreadsheets_collection.update_one(
-                    {"_id": ObjectId(tabla_id)}, {"$set": mongo_update_sync}
+                    {"_id": ObjectId(id)}, {"$set": mongo_update_sync}
                 )
 
                 # Los headers cambiaron, se actualizó todo
