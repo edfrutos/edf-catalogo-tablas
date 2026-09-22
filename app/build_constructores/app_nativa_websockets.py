@@ -172,8 +172,9 @@ class EDFCatalogoApp:
 
         except Exception as e:
             self.websocket_connected = False
-            self.root.after(0, lambda: self.status_var.set(f"❌ Error WebSocket: {e}"))
-            print(f"Error WebSocket: {e}")
+            error_msg = str(e)
+            self.root.after(0, lambda: self.status_var.set(f"❌ Error WebSocket: {error_msg}"))
+            print(f"Error WebSocket: {error_msg}")
 
     async def send_websocket_message(self, data):
         """Enviar mensaje por WebSocket"""
