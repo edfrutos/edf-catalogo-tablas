@@ -30,6 +30,9 @@ try:
         _app_root = os.path.dirname(os.path.abspath(__file__))
     _env_path = os.path.join(_app_root, ".env")
 
+    _user_env = Path.home() / "Library" / "Application Support" / "EDF_Catalogo" / ".env"
+    if getattr(sys, "frozen", False) and _user_env.is_file():
+        _env_path = str(_user_env)  # .env del usuario, fuera del bundle firmado
     load_dotenv(_env_path, override=True)  # pyright: ignore[reportUnusedCallResult]
     print(f"✅ Variables de entorno cargadas desde {_env_path}")
 except ImportError:
