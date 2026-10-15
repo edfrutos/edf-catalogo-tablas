@@ -20,8 +20,8 @@ escribe ambos.
 
 Tras ejecutarlo en local, copia AMBOS al servidor:
 
-    scp -P 2222 tools/db_utils/token.pickle tools/db_utils/token.json \\
-        root@208.76.221.20:/var/www/vhosts/edefrutos2020.com/edf_catalogotablas/tools/db_utils/
+    scp tools/db_utils/token.pickle tools/db_utils/token.json \\
+        root@57.131.133.236:/opt/catalogotablas/tools/db_utils/
 """
 
 from __future__ import annotations
@@ -119,8 +119,8 @@ def main() -> int:
 
     print(
         "\nSiguiente paso — copiar AMBOS al servidor:\n"
-        "  scp -P 2222 tools/db_utils/token.pickle tools/db_utils/token.json \\\n"
-        "      root@208.76.221.20:/var/www/vhosts/edefrutos2020.com/edf_catalogotablas/tools/db_utils/"
+        "  scp tools/db_utils/token.pickle tools/db_utils/token.json \\\n"
+        "      root@57.131.133.236:/opt/catalogotablas/tools/db_utils/"
     )
     return 0
 

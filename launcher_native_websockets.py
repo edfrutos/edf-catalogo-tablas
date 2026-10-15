@@ -30,6 +30,9 @@ try:
         _app_root = os.path.dirname(os.path.abspath(__file__))
     _env_path = os.path.join(_app_root, ".env")
 
+    _user_env = Path.home() / "Library" / "Application Support" / "EDF_Catalogo" / ".env"
+    if getattr(sys, "frozen", False) and _user_env.is_file():
+        _env_path = str(_user_env)  # .env del usuario, fuera del bundle firmado
     load_dotenv(_env_path, override=True)  # pyright: ignore[reportUnusedCallResult]
     print(f"✅ Variables de entorno cargadas desde {_env_path}")
 except ImportError:
@@ -56,6 +59,11 @@ if getattr(sys, "frozen", False):
     os.environ["FLASK_ENV"] = "production"
     os.environ["FLASK_DEBUG"] = "0"
     print("🔧 Configurado entorno de producción")
+    # Desde Finder el cwd es "/" (solo lectura): las rutas relativas ("logs"...) fallaban
+    _work_dir = Path.home() / "Library" / "Application Support" / "EDF_Catalogo"
+    _work_dir.mkdir(parents=True, exist_ok=True)
+    os.chdir(_work_dir)
+    print(f"📂 Directorio de trabajo: {_work_dir}")
 
 
 def start_flask_server():
@@ -151,7 +159,7 @@ def main():
         print("-" * 60)
 
         # Iniciar la aplicación con configuración mejorada
-        webview.start(debug=True, gui="native")  # pyright: ignore[reportArgumentType]
+        webview.start(debug=False, gui="native")  # pyright: ignore[reportArgumentType]
 
     except Exception as e:
         print(f"❌ Error al crear la ventana nativa: {e}")
