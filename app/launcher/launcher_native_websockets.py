@@ -122,7 +122,7 @@ def main():
         print("-" * 60)
 
         # Iniciar la aplicación con configuración mejorada
-        webview.start(debug=True, gui="native")
+        webview.start(debug=False, gui="native")
 
     except Exception as e:
         print(f"❌ Error al crear la ventana nativa: {e}")

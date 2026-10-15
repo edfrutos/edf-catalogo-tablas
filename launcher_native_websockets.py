@@ -56,6 +56,11 @@ if getattr(sys, "frozen", False):
     os.environ["FLASK_ENV"] = "production"
     os.environ["FLASK_DEBUG"] = "0"
     print("🔧 Configurado entorno de producción")
+    # Desde Finder el cwd es "/" (solo lectura): las rutas relativas ("logs"...) fallaban
+    _work_dir = Path.home() / "Library" / "Application Support" / "EDF_Catalogo"
+    _work_dir.mkdir(parents=True, exist_ok=True)
+    os.chdir(_work_dir)
+    print(f"📂 Directorio de trabajo: {_work_dir}")
 
 
 def start_flask_server():
@@ -151,7 +156,7 @@ def main():
         print("-" * 60)
 
         # Iniciar la aplicación con configuración mejorada
-        webview.start(debug=True, gui="native")  # pyright: ignore[reportArgumentType]
+        webview.start(debug=False, gui="native")  # pyright: ignore[reportArgumentType]
 
     except Exception as e:
         print(f"❌ Error al crear la ventana nativa: {e}")
