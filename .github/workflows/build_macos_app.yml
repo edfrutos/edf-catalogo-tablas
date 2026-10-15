@@ -25,100 +25,42 @@ jobs:
           # Crear directorio app_data si no existe
           mkdir -p app_data
           
-          # Crear archivo de configuración con secrets
-          cat > app_data/edefrutos2025_notifications_config.json << EOF
+          # Config de notificaciones SIN credenciales (la app de escritorio no las necesita)
+          cat > app_data/edefrutos2025_notifications_config.json << 'EOF'
           {
-            "enabled": true,
-            "smtp": {
-              "server": "smtp-relay.brevo.com",
-              "port": 587,
-              "username": "${{ secrets.BREVO_SMTP_USERNAME || 'default_username' }}",
-              "password": "${{ secrets.BREVO_SMTP_PASSWORD || 'default_password' }}",
-              "use_tls": true
-            },
-            "brevo_api": {
-              "api_key": "${{ secrets.BREVO_API_KEY }}",
-              "sender_name": "Administrador",
-              "sender_email": "no-reply@edefrutos2025.xyz"
-            },
-            "use_api": true,
-            "recipients": [
-              "${{ secrets.NOTIFICATION_EMAIL_1 }}",
-              "${{ secrets.NOTIFICATION_EMAIL_2 }}"
-            ],
-            "thresholds": {
-              "cpu": 80,
-              "memory": 90,
-              "disk": 85,
-              "error_rate": 5
-            },
+            "enabled": false,
+            "use_api": false,
+            "recipients": [],
+            "thresholds": {"cpu": 80, "memory": 90, "disk": 85, "error_rate": 5},
             "cooldown_minutes": 60,
             "last_alerts": {}
           }
           EOF
           
-          # Crear archivo .env con variables de entorno
-          cat > .env << EOF
+          # .env empaquetado: SOLO valores no secretos. Los secretos viven en
+          # ~/Library/Application Support/EDF_Catalogo/.env (fuera del bundle firmado).
+          cat > .env << 'EOF'
           FLASK_ENV=production
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          FLASK_SECRET_KEY=${{ secrets.SECRET_KEY }}
-
-          MONGO_URI=${{ secrets.MONGO_URI }}
           MONGODB_DB=edf_catalogotablas
-
-          BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
-          BREVO_SMTP_USERNAME=${{ secrets.BREVO_SMTP_USERNAME }}
-          BREVO_SMTP_PASSWORD=${{ secrets.BREVO_SMTP_PASSWORD }}
-
-          MAIL_SERVER=${{ secrets.MAIL_SERVER }}
-          MAIL_PORT=${{ secrets.MAIL_PORT }}
-          MAIL_USE_TLS=${{ secrets.MAIL_USE_TLS }}
-          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
-          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-          MAIL_DEFAULT_SENDER_NAME=${{ secrets.MAIL_DEFAULT_SENDER_NAME }}
-          MAIL_DEFAULT_SENDER_EMAIL=${{ secrets.MAIL_DEFAULT_SENDER_EMAIL }}
-
-          NOTIFICATION_EMAIL_1=${{ secrets.NOTIFICATION_EMAIL_1 }}
-          NOTIFICATION_EMAIL_2=${{ secrets.NOTIFICATION_EMAIL_2 }}
-
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION=${{ secrets.AWS_REGION }}
-          S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
-          USE_S3=${{ secrets.USE_S3 }}
-
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_PROJECT_ID=${{ secrets.GOOGLE_PROJECT_ID }}
-          GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
-          GOOGLE_DRIVE_FOLDER=${{ secrets.GOOGLE_DRIVE_FOLDER }}
-
           DISABLE_MONITORING=false
-          LOG_DIR=logs
           TZ=Europe/Madrid
           PYTHONPATH=.
           EOF
           
           echo "✅ Secrets y variables de entorno configurados"
 
-      - name: Verify required secrets are present
+      - name: Verify no secrets are embedded
         run: |
-          echo "🔍 Verificando que las variables críticas del .env no estén vacías..."
-          MISSING=0
-          for VAR in MONGO_URI SECRET_KEY; do
-            VALUE=$(grep "^${VAR}=" .env | cut -d'=' -f2-)
-            if [ -z "$VALUE" ]; then
-              echo "❌ $VAR está vacío -- falta el secret correspondiente en este repo (Settings → Secrets and variables → Actions)"
-              MISSING=1
-            else
-              echo "✅ $VAR presente"
-            fi
-          done
-          if [ "$MISSING" = "1" ]; then
-            echo "🛑 Abortando build: la app se empaquetaría sin poder conectar a servicios críticos."
+          echo "🔍 Verificando que el .env empaquetado no contiene secretos..."
+          if grep -qE '^(MONGO_URI|SECRET_KEY|FLASK_SECRET_KEY|BREVO_|MAIL_PASSWORD|AWS_|GEMINI_API_KEY|GOOGLE_CLIENT_SECRET)' .env; then
+            echo "🛑 El .env contiene secretos: abortando para no empaquetarlos"
             exit 1
           fi
+          if grep -qiE '"(password|api_key)": *"[^"]+"' app_data/edefrutos2025_notifications_config.json 2>/dev/null; then
+            echo "🛑 La config de notificaciones contiene credenciales: abortando"
+            exit 1
+          fi
+          echo "✅ Sin secretos en el .env empaquetado"
 
       - name: Verify checkout
         run: |
