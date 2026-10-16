@@ -4,6 +4,7 @@
 
 import mimetypes
 import os
+from app.utils.paths import writable_uploads
 
 import boto3
 from botocore.exceptions import ClientError
@@ -53,7 +54,7 @@ def serve_s3_file(filename: str):
 
         uploads_dir = current_app.config.get("UPLOAD_FOLDER")
         if not uploads_dir:
-            uploads_dir = os.path.join(current_app.root_path, "static", "uploads")
+            uploads_dir = writable_uploads(os.path.join(current_app.root_path, "static", "uploads"))
 
         safe_filename = os.path.basename(filename)
         local_path = os.path.join(uploads_dir, safe_filename)
@@ -157,7 +158,7 @@ def serve_s3_proxy(filename):
 
         candidate_dirs.extend(
             [
-                os.path.join(current_app.root_path, "static", "uploads"),
+                writable_uploads(os.path.join(current_app.root_path, "static", "uploads")),
                 os.path.join(os.getcwd(), "app", "static", "uploads"),
                 os.path.join(os.getcwd(), "static", "uploads"),
             ]

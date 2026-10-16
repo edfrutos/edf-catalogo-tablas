@@ -96,6 +96,15 @@ def create_app(testing=False):
     # Cargar configuración unificada desde config.py
     app.config.from_object("config.Config")
 
+    # App empaquetada (PyInstaller): el bundle está firmado y notarizado y cualquier
+    # escritura dentro de él rompe el sello. Todo lo escribible va a la carpeta del usuario.
+    if getattr(sys, "frozen", False):
+        from app.utils.paths import writable_dir, writable_uploads
+
+        app.config["UPLOAD_FOLDER"] = writable_uploads("")
+        app.config["SPREADSHEET_FOLDER"] = writable_dir("", "spreadsheets")
+        app.config["SESSION_FILE_DIR"] = os.environ.get("SESSION_FILE_DIR") or writable_dir("", "flask_session")
+
     # Configuración adicional para archivos grandes
     app.config["MAX_CONTENT_LENGTH"] = 300 * 1024 * 1024  # 300MB
     app.config["MAX_CONTENT_PATH"] = None

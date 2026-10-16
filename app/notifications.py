@@ -14,6 +14,7 @@ se detectan problemas en el sistema o cuando se alcanzan umbrales críticos.
 import json
 import logging
 import os
+from app.utils.paths import writable_dir
 import smtplib
 import tempfile
 from datetime import datetime
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Cargar configuración de notificaciones (usando directorio seguro)
 APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CONFIG_DIR = os.path.join(APP_ROOT, "app_data")
+CONFIG_DIR = writable_dir(APP_ROOT, "app_data")
 os.makedirs(CONFIG_DIR, exist_ok=True)  # Crear directorio si no existe
 CONFIG_FILE = os.path.join(CONFIG_DIR, "edefrutos2025_notifications_config.json")
 DEFAULT_CONFIG = {

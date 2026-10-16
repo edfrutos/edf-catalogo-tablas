@@ -3,6 +3,7 @@ Utilidades unificadas para manejo de imágenes
 """
 
 import os
+from app.utils.paths import writable_uploads
 from typing import Any, Dict, List, Optional
 
 from flask import current_app
@@ -107,7 +108,7 @@ def get_image_fallback_url(filename: str) -> Optional[str]:
 
     # 1. Verificar si existe localmente (más rápido)
     try:
-        local_path = os.path.join(current_app.root_path, "static", "uploads", filename)
+        local_path = os.path.join(writable_uploads(os.path.join(current_app.root_path, "static", "uploads")), filename)
         if os.path.exists(local_path):
             current_app.logger.debug(f"[IMAGE] Archivo local encontrado: {filename}")
             return f"/static/uploads/{filename}"

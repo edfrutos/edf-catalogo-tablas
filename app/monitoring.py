@@ -14,6 +14,7 @@ y generar alertas cuando se detectan problemas.
 import json
 import logging
 import os
+from app.utils.paths import writable_dir
 import threading
 import time
 from datetime import datetime  # type: ignore
@@ -59,7 +60,7 @@ _save_counter = 0
 
 # Ruta para el archivo de métricas (cambiado para evitar problemas de permisos)
 APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-METRICS_DIR = os.path.join(APP_ROOT, "app_data")
+METRICS_DIR = writable_dir(APP_ROOT, "app_data")
 os.makedirs(METRICS_DIR, exist_ok=True)  # Crear directorio si no existe
 _metrics_file = os.path.join(METRICS_DIR, "edefrutos2025_metrics.json")
 

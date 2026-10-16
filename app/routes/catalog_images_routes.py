@@ -7,6 +7,7 @@
 
 import logging
 import os
+from app.utils.paths import writable_uploads
 from datetime import datetime
 
 from bson import ObjectId
@@ -69,7 +70,7 @@ def upload_images(catalog_id):
             return redirect(url_for("catalogs.view", catalog_id=catalog_id))
 
         # Crear directorio de uploads si no existe
-        upload_folder = os.path.join(current_app.root_path, "static", "uploads")
+        upload_folder = writable_uploads(os.path.join(current_app.root_path, "static", "uploads"))
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
 
