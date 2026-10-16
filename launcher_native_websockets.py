@@ -194,7 +194,7 @@ def main():
         print("-" * 60)
 
         # Iniciar la aplicación con configuración mejorada
-        webview.start(debug=False, gui="native")  # pyright: ignore[reportArgumentType]
+        webview.start(debug=os.environ.get("EDF_WEBVIEW_DEBUG") == "1", gui="native")  # pyright: ignore[reportArgumentType]
 
     except Exception as e:
         print(f"❌ Error al crear la ventana nativa: {e}")
