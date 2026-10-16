@@ -225,6 +225,7 @@ document.getElementById('goTopBtn').onclick = function() {
   });
 </script>
 <!-- Script unificado de modales (cargado una sola vez globalmente) -->
+<script src="{{ url_for('static', filename='js/edf-native-bridge.js') }}?v=20261016"></script>
 <script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
 <!-- Scripts de solución de problemas MP4 (cargados globalmente para evitar duplicaciones)
 <script>
