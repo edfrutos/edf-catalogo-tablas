@@ -2,6 +2,7 @@
 
 import logging
 import os
+from app.utils.paths import writable_dir
 import sys
 
 import boto3
@@ -42,7 +43,7 @@ def init_extensions(app):
         app.config["SESSION_TYPE"] = (
             "filesystem"  # Mantener filesystem pero con configuración especial
         )
-        app.config["SESSION_FILE_DIR"] = os.path.join(
+        app.config["SESSION_FILE_DIR"] = writable_dir(
             os.path.dirname(sys.executable), "flask_session"
         )
         # Configuración adicional para aplicaciones empaquetadas
@@ -58,7 +59,7 @@ def init_extensions(app):
 
     # Asegurarse de que el directorio de sesiones existe
     if getattr(sys, "frozen", False):
-        session_dir = os.path.join(os.path.dirname(sys.executable), "flask_session")
+        session_dir = writable_dir(os.path.dirname(sys.executable), "flask_session")
     else:
         session_dir = app.config.get("SESSION_FILE_DIR") or os.path.join(
             app.config.get("BASE_DIR", os.getcwd()), "flask_session"
