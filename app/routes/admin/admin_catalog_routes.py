@@ -1021,11 +1021,34 @@ def register_admin_catalog_routes(admin_bp) -> None:
                     else:
                         updated_row["images"] = []
                 # Actualizar la fila en el catálogo
-                catalog["rows"][row_index] = updated_row
+                # Campos calculados solo para pintar la pantalla: no se guardan
+                import json as _json
 
-                # Actualizar en la base de datos
+                from app.utils.catalog_utils import (
+                    build_row_set,
+                    prune_derived_row_fields,
+                )
+
+                removed_docs = []
+                if deleted_documents:
+                    try:
+                        removed_docs = [
+                            item.get("value") for item in _json.loads(deleted_documents)
+                        ]
+                    except Exception:
+                        removed_docs = []
+                updated_row = prune_derived_row_fields(
+                    updated_row, catalog.get("headers", []), removed_docs
+                )
+
+                # `data` es la fuente de verdad y `rows` se mantiene sincronizada
+                raw_doc = (
+                    collection.find_one({"_id": ObjectId(catalog_id)}, {"data": 1, "rows": 1})
+                    or {}
+                )
                 _ = collection.update_one(
-                    {"_id": ObjectId(catalog_id)}, {"$set": {"rows": catalog["rows"]}}
+                    {"_id": ObjectId(catalog_id)},
+                    {"$set": build_row_set(raw_doc, row_index, updated_row)},
                 )
 
                 flash("Fila actualizada correctamente", "success")

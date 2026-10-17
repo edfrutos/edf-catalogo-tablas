@@ -95,3 +95,72 @@ def sync_row_update_paths(update_data: dict[str, Any]) -> dict[str, Any]:
 def sync_row_push_paths(row: Any) -> dict[str, Any]:
     """Devuelve un $push compatible para añadir una fila a data y rows."""
     return {"data": row, "rows": row}
+
+
+_DERIVED_ROW_FIELDS = (
+    "imagen_urls",
+    "_imagenes",
+    "processed_documents",
+    "processed_images",
+)
+
+
+def prune_derived_row_fields(
+    row: dict[str, Any],
+    headers: list[str] | None,
+    removed_docs: list[Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Devuelve una copia de la fila sin campos calculados solo para pintar pantallas.
+
+    - Elimina imagen_urls, _imagenes, processed_documents y processed_images
+      (salvo que sean cabeceras reales del catalogo).
+    - Elimina Documentacion_N / Documentos_N solo si su valor es uno de los
+      documentos eliminados en esta peticion (y no es una cabecera real).
+    """
+    headers_set = set(headers or [])
+    removed = {v for v in (removed_docs or []) if isinstance(v, str)}
+    cleaned: dict[str, Any] = {}
+    for key, value in row.items():
+        if key not in headers_set:
+            if key in _DERIVED_ROW_FIELDS:
+                continue
+            is_doc_aux = key.startswith("Documentación_") or key.startswith("Documentos_")
+            if is_doc_aux and isinstance(value, str) and value in removed:
+                continue
+        cleaned[key] = value
+    return cleaned
+
+
+def build_row_set(
+    raw_doc: dict[str, Any], row_index: int, row: dict[str, Any]
+) -> dict[str, Any]:
+    """
+    Construye el $set para guardar una fila manteniendo `data` y `rows` sincronizadas.
+
+    Si ambas listas existen y contienen la posicion, actualiza solo esa fila en las
+    dos. En caso contrario escribe las dos listas completas a partir de `data`
+    (o de `rows`), sin modificar `raw_doc`.
+    """
+    data = raw_doc.get("data")
+    rows = raw_doc.get("rows")
+    needed = row_index + 1
+    if (
+        isinstance(data, list)
+        and isinstance(rows, list)
+        and len(data) >= needed
+        and len(rows) >= needed
+    ):
+        return sync_row_update_paths({f"data.{row_index}": row})
+
+    base = data if isinstance(data, list) else (rows if isinstance(rows, list) else [])
+    merged = list(base)
+    while len(merged) <= row_index:
+        merged.append({})
+    merged[row_index] = row
+    return {
+        "data": merged,
+        "rows": merged,
+        "num_rows": len(merged),
+        "row_count": len(merged),
+    }
