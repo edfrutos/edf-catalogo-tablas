@@ -1455,6 +1455,8 @@ def editar_fila(tabla_id, fila_index):
                     upload_dir = get_upload_dir()
                     file_path = os.path.join(upload_dir, filename)
                     multimedia_file.save(file_path)
+                    from app.utils.s3_utils import subir_multimedia_a_s3
+                    subir_multimedia_a_s3(file_path, filename)
                     campo_valor = filename
                 else:
                     # Mantener valor existente si no hay cambios
@@ -2150,6 +2152,8 @@ def agregar_fila(tabla_id):
                         upload_dir = get_upload_dir()
                         file_path = os.path.join(upload_dir, filename)
                         multimedia_file.save(file_path)
+                        from app.utils.s3_utils import subir_multimedia_a_s3
+                        subir_multimedia_a_s3(file_path, filename)
                         nueva_fila[header] = filename
                     else:
                         nueva_fila[header] = ""
