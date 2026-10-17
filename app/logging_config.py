@@ -2,6 +2,7 @@
 
 import logging
 import os
+from app.utils.paths import writable_dir
 from logging.handlers import RotatingFileHandler
 
 from config import LOG_BACKUP_COUNT, LOG_ROTATION_SIZE
@@ -10,7 +11,7 @@ from config import LOG_BACKUP_COUNT, LOG_ROTATION_SIZE
 def setup_logging(app):
     """Configuración optimizada de logs para reducir el consumo de recursos"""
     # Crear directorio de logs si no existe
-    log_dir = os.path.join(app.root_path, "..", "logs")
+    log_dir = writable_dir(os.path.join(app.root_path, ".."), "logs")
     os.makedirs(log_dir, exist_ok=True)
 
     # Configurar el handler para rotación de logs (tamaño en MB)

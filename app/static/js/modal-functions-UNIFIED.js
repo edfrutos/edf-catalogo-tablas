@@ -717,8 +717,8 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
         <h5><i class="fas fa-video text-primary"></i> Reproduciendo Video</h5>
       </div>
       <div class="d-flex justify-content-center">
-        <video controls preload="metadata" class="img-fluid" style="max-width: 100%; height: auto; max-height: 70vh;">
-          <source src="${cleanMultimediaSrc}" type="video/${fileExtension || 'mp4'}">
+        <video controls playsinline preload="auto" src="${cleanMultimediaSrc}" class="img-fluid" style="max-width: 100%; height: auto; max-height: 70vh;">
+          
           Tu navegador no soporta el elemento de video.
         </video>
       </div>
@@ -760,13 +760,16 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
   
   [...videoElements, ...audioElements].forEach(element => {
     element.onerror = function() {
-      log("[MODAL-UNIFIED] ❌ Error cargando multimedia:", cleanMultimediaSrc);
+      const mErr = element.error ? ('codigo ' + element.error.code + (element.error.message ? ' - ' + element.error.message : '')) : 'desconocido';
+      log("[MODAL-UNIFIED] ❌ Error cargando multimedia:", cleanMultimediaSrc, mErr);
       modalContent.innerHTML = `
         <div class="text-center p-4">
           <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
           <h5>Error al cargar multimedia</h5>
           <p class="text-muted">No se pudo cargar el archivo multimedia.</p>
           <p class="text-danger small">URL: ${cleanMultimediaSrc}</p>
+          <p class="text-danger small">Error de reproducción: ${mErr}</p>
+          ${element.error && element.error.code === 4 ? '<p class="small mt-3">Este vídeo usa un formato o códec (por ejemplo AV1) que la ventana de la aplicación no puede reproducir. Pulsa «Abrir en Nueva Pestaña» para verlo en tu navegador.</p>' : ''}
         </div>
       `;
     };
@@ -811,6 +814,7 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
 // Función para descargar archivos S3
 function downloadS3File(fileUrl, fileName) {
   log("[MODAL-UNIFIED] 🔧 Descargando archivo S3:", fileUrl);
+  if (window.edfNativeSave && window.edfNativeSave(fileUrl, fileName)) { return; }
   
   try {
     const proxyUrl = fileUrl.replace(
@@ -837,6 +841,7 @@ function downloadS3File(fileUrl, fileName) {
 // Función para descargar archivos locales
 function downloadLocalFile(fileUrl, fileName) {
   log("[MODAL-UNIFIED] 🔧 Descargando archivo local:", fileUrl);
+  if (window.edfNativeSave && window.edfNativeSave(fileUrl, fileName)) { return; }
   
   try {
     const link = document.createElement('a');
@@ -1016,19 +1021,20 @@ log("  - hideImageLoadingSpinner:", typeof window.hideImageLoadingSpinner);
 
 // Event listeners para data-action download
 document.addEventListener('click', function(e) {
-    const action = e.target.dataset.action;
+    const actionEl = e.target.closest ? e.target.closest('[data-action]') : null;
+    const action = actionEl ? actionEl.dataset.action : undefined;
     
     if (action === 'download-s3-file') {
-        const documentSrc = e.target.dataset.documentSrc;
-        const documentTitle = e.target.dataset.documentTitle;
+        const documentSrc = actionEl.dataset.documentSrc;
+        const documentTitle = actionEl.dataset.documentTitle;
         if (documentSrc && documentTitle) {
             downloadS3File(documentSrc, documentTitle);
         }
     }
     
     if (action === 'download-local-file') {
-        const documentSrc = e.target.dataset.documentSrc;
-        const documentTitle = e.target.dataset.documentTitle;
+        const documentSrc = actionEl.dataset.documentSrc;
+        const documentTitle = actionEl.dataset.documentTitle;
         if (documentSrc && documentTitle) {
             downloadLocalFile(documentSrc, documentTitle);
         }

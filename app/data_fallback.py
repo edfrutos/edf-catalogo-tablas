@@ -13,6 +13,7 @@ Permite que la aplicación siga funcionando con datos básicos.
 import json
 import logging
 import os
+from app.utils.paths import writable_dir
 import tempfile
 
 from app.cache_system import cached
@@ -26,7 +27,7 @@ logging.basicConfig(
 
 # Directorio para almacenar datos de respaldo (cambiado a la carpeta de la app)
 APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(APP_ROOT, "app_data")
+DATA_DIR = writable_dir(APP_ROOT, "app_data")
 # Creamos el directorio si no existe
 os.makedirs(DATA_DIR, exist_ok=True)
 

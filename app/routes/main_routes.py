@@ -3,6 +3,7 @@
 import csv
 import logging
 import os
+from app.utils.paths import writable_uploads
 import secrets
 import uuid
 from datetime import datetime
@@ -35,7 +36,7 @@ from app.utils.image_utils import get_images_for_template
 def get_upload_dir():
     """Obtener directorio de uploads"""
     static_folder = current_app.static_folder or "static"
-    folder = os.path.join(static_folder, "uploads")
+    folder = writable_uploads(os.path.join(static_folder, "uploads"))
     os.makedirs(folder, exist_ok=True)
     return folder
 
@@ -995,7 +996,7 @@ def editar_perfil():
             flash("Error de configuración del servidor", "error")
             return redirect(url_for("main.dashboard_user"))
 
-        uploads_folder = os.path.join(current_app.static_folder, "uploads")
+        uploads_folder = writable_uploads(os.path.join(current_app.static_folder, "uploads"))
 
         # Crear la carpeta si no existe
         os.makedirs(uploads_folder, exist_ok=True)
@@ -1566,7 +1567,7 @@ def editar_fila(tabla_id, fila_index):
                         )
                         flash("Error de configuración del servidor", "error")
                         return redirect(url_for("main.tables"))
-                    ruta_uploads = os.path.join(current_app.static_folder, "uploads")
+                    ruta_uploads = writable_uploads(os.path.join(current_app.static_folder, "uploads"))
                     use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
 
                     for img_a_eliminar in imagenes_a_eliminar:
@@ -1743,9 +1744,9 @@ def editar_fila(tabla_id, fila_index):
 
                             # Eliminar del servidor local
                             if current_app.static_folder:
-                                ruta_uploads = os.path.join(
+                                ruta_uploads = writable_uploads(os.path.join(
                                     current_app.static_folder, "uploads"
-                                )
+                                ))
                                 ruta_media = os.path.join(
                                     ruta_uploads, media_a_eliminar
                                 )
@@ -1795,7 +1796,7 @@ def editar_fila(tabla_id, fila_index):
                             "Error de configuración del servidor: static_folder es None"
                         )
                         continue
-                    ruta_uploads = os.path.join(current_app.static_folder, "uploads")
+                    ruta_uploads = writable_uploads(os.path.join(current_app.static_folder, "uploads"))
                     if not os.path.exists(ruta_uploads):
                         os.makedirs(ruta_uploads)
                         logger.info(f"Carpeta de uploads creada: {ruta_uploads}")
@@ -2200,9 +2201,9 @@ def agregar_fila(tabla_id):
                                 "Error de configuración del servidor: static_folder es None"
                             )
                             continue
-                        ruta_uploads = os.path.join(
+                        ruta_uploads = writable_uploads(os.path.join(
                             current_app.static_folder, "uploads"
-                        )
+                        ))
                         if not os.path.exists(ruta_uploads):
                             os.makedirs(ruta_uploads)
                             logger.info(f"Carpeta de uploads creada: {ruta_uploads}")

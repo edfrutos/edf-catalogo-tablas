@@ -15,6 +15,41 @@ from pathlib import Path
 import requests
 import webview
 
+
+class _EdfApi:
+    """API JS -> Python expuesta a la ventana pywebview (enlaces externos y guardado de archivos)."""
+
+    def open_external(self, url):
+        import webbrowser
+        from urllib.parse import urlparse
+        if urlparse(str(url)).scheme not in ("http", "https"):
+            return False
+        webbrowser.open(str(url))
+        return True
+
+    def save_file(self, url, filename=""):
+        import os
+        import shutil
+        import urllib.request
+        from urllib.parse import urlparse, unquote
+        import webview
+
+        p = urlparse(str(url))
+        if p.scheme != "http" or p.hostname not in ("127.0.0.1", "localhost"):
+            return False
+        name = os.path.basename(unquote(filename or p.path)) or "archivo"
+        if not webview.windows:
+            return False
+        fd = getattr(webview, "FileDialog", None)
+        dialog = fd.SAVE if fd is not None else webview.SAVE_DIALOG
+        dest = webview.windows[0].create_file_dialog(dialog, save_filename=name)
+        if not dest:
+            return False
+        dest = dest if isinstance(dest, str) else dest[0]
+        with urllib.request.urlopen(str(url), timeout=300) as r, open(dest, "wb") as f:
+            shutil.copyfileobj(r, f)
+        return True
+
 # Cargar variables de entorno desde el .env empaquetado en la propia app.
 # Ruta explícita (en vez de load_dotenv() a secas): sin esto, python-dotenv
 # busca .env subiendo desde el directorio de trabajo del proceso, así que si
@@ -149,7 +184,7 @@ def main():
 
         # Crear la ventana nativa
         webview.create_window(
-            **window_config
+            **window_config, js_api=_EdfApi()
         )  # pyright: ignore[reportUnusedCallResult]
 
         print("✅ Ventana nativa creada")
@@ -159,7 +194,7 @@ def main():
         print("-" * 60)
 
         # Iniciar la aplicación con configuración mejorada
-        webview.start(debug=False, gui="native")  # pyright: ignore[reportArgumentType]
+        webview.start(debug=os.environ.get("EDF_WEBVIEW_DEBUG") == "1", gui="native")  # pyright: ignore[reportArgumentType]
 
     except Exception as e:
         print(f"❌ Error al crear la ventana nativa: {e}")

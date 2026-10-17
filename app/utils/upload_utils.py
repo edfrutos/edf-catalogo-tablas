@@ -1,5 +1,6 @@
 import logging
 import os
+from app.utils.paths import writable_uploads
 import uuid
 from typing import Optional
 
@@ -17,7 +18,7 @@ def get_upload_dir() -> str:
     static_folder = current_app.static_folder or os.path.join(
         current_app.root_path, "static"
     )
-    folder = os.path.join(static_folder, "uploads")
+    folder = writable_uploads(os.path.join(static_folder, "uploads"))
     os.makedirs(folder, exist_ok=True)
     return folder
 

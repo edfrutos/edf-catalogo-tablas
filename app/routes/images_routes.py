@@ -161,3 +161,19 @@ def uploaded_images(filename):
             f"Imagen por defecto no encontrada en: {default_image_path}"
         )
         return "❌ Archivo no encontrado", 404
+
+
+@images_bp.route("/static/uploads/<path:filename>")
+def static_uploads_compat(filename):
+    """Sirve /static/uploads/<fichero> desde UPLOAD_FOLDER (fuera del bundle en la
+    app empaquetada) y, si no está en local, usa el fallback S3 de uploaded_images."""
+    import os
+
+    from werkzeug.utils import safe_join
+
+    upload_dir = current_app.config.get("UPLOAD_FOLDER", "")
+    if upload_dir:
+        local_path = safe_join(upload_dir, filename)
+        if local_path and os.path.isfile(local_path):
+            return send_from_directory(upload_dir, filename)
+    return uploaded_images(filename)
