@@ -126,7 +126,7 @@ def check_database_health(db_client):
     try:
         # Intenta una operación simple para verificar conectividad
         admin_db = db_client.admin
-        admin_db.command("serverStatus")
+        admin_db.command("ping")
         end_time = time.time()
         response_time = (end_time - start_time) * 1000  # convertir a milisegundos
 
