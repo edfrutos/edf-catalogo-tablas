@@ -769,6 +769,7 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
           <p class="text-muted">No se pudo cargar el archivo multimedia.</p>
           <p class="text-danger small">URL: ${cleanMultimediaSrc}</p>
           <p class="text-danger small">Error de reproducción: ${mErr}</p>
+          ${element.error && element.error.code === 4 ? '<p class="small mt-3">Este vídeo usa un formato o códec (por ejemplo AV1) que la ventana de la aplicación no puede reproducir. Pulsa «Abrir en Nueva Pestaña» para verlo en tu navegador.</p>' : ''}
         </div>
       `;
     };

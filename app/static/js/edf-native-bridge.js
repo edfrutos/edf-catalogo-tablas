@@ -1,6 +1,8 @@
 /* edf-native-bridge.js - puente JS <-> pywebview: enlaces externos y descargas nativas */
 (function () {
   'use strict';
+  if (window.__edfBridgeLoaded) return;
+  window.__edfBridgeLoaded = true;
   var MEDIA = ['/static/uploads/', '/admin/s3/', '/imagenes_subidas/'];
 
   function api() { return window.pywebview && window.pywebview.api ? window.pywebview.api : null; }
