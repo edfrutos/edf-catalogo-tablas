@@ -25,7 +25,7 @@ def is_mongo_available():
         # Importamos mongo aquí para evitar importaciones circulares
         from app.extensions import mongo
 
-        info = mongo.db.command("serverStatus")
+        mongo.db.command("ping")
         return True
     except Exception as e:
         logger.error(f"Error al verificar disponibilidad de MongoDB: {str(e)}")

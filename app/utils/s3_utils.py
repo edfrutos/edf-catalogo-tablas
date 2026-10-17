@@ -345,3 +345,23 @@ def check_s3_file_exists_fast(object_name, bucket_name=None):
     except Exception as e:
         logger.error(f"Error inesperado verificando archivo en S3: {str(e)}")
         return False
+
+
+def subir_multimedia_a_s3(file_path, object_name):
+    """Sube un fichero multimedia a S3 si USE_S3=true.
+
+    Nunca lanza excepciones y nunca borra la copia local: si S3 falla, el
+    fichero sigue disponible en local y se registra un warning.
+    """
+    if os.environ.get("USE_S3", "false").lower() != "true":
+        return False
+    try:
+        result = upload_file_to_s3(file_path, object_name)
+        if result and result.get("success"):
+            logger.info(f"Multimedia subido a S3: {object_name}")
+            return True
+        error = result.get("error", "error desconocido") if result else "resultado vacío"
+        logger.warning(f"No se pudo subir multimedia a S3 ({object_name}): {error}")
+    except Exception as e:
+        logger.warning(f"Excepción subiendo multimedia a S3 ({object_name}): {e}")
+    return False
