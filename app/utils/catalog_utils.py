@@ -37,7 +37,7 @@ def normalize_catalog_rows(catalog: dict[str, Any]) -> dict[str, Any]:
         catalog["data"] = normalized_rows
     else:
         normalized_rows = []
-        catalog[""] = normalized_rows
+        catalog["data"] = normalized_rows
 
     catalog["rows"] = normalized_rows
     catalog["row_count"] = len(normalized_rows)
