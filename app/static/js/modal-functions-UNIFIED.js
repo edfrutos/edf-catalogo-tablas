@@ -797,14 +797,24 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
     element.onerror = function() {
       const mErr = element.error ? ('codigo ' + element.error.code + (element.error.message ? ' - ' + element.error.message : '')) : 'desconocido';
       log("[MODAL-UNIFIED] ❌ Error cargando multimedia:", cleanMultimediaSrc, mErr);
+      if (element.error && element.error.code === 4) {
+        // Formato/códec no soportado por la ventana de la app (p. ej. AV1): aviso informativo
+        modalContent.innerHTML = `
+        <div class="text-center p-4">
+          <i class="fas fa-info-circle fa-4x text-info mb-3"></i>
+          <h5>Vídeo no reproducible en la aplicación</h5>
+          <p class="text-muted">Este vídeo no se puede reproducir dentro de la aplicación por su formato (AV1). Ábrelo en tu navegador con el botón de abajo.</p>
+        </div>
+      `;
+        return;
+      }
       modalContent.innerHTML = `
         <div class="text-center p-4">
           <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
           <h5>Error al cargar multimedia</h5>
           <p class="text-muted">No se pudo cargar el archivo multimedia.</p>
-          <p class="text-danger small">URL: ${cleanMultimediaSrc}</p>
-          <p class="text-danger small">Error de reproducción: ${mErr}</p>
-          ${element.error && element.error.code === 4 ? '<p class="small mt-3">Este vídeo usa un formato o códec (por ejemplo AV1) que la ventana de la aplicación no puede reproducir. Pulsa «Abrir en Nueva Pestaña» para verlo en tu navegador.</p>' : ''}
+          <p class="text-danger small">URL: ${edfEscapeHtml(cleanMultimediaSrc)}</p>
+          <p class="text-danger small">Error de reproducción: ${edfEscapeHtml(mErr)}</p>
         </div>
       `;
     };
