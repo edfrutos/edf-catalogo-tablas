@@ -324,17 +324,16 @@ function edfLoadScript(src) {
   });
 }
 
-let edfMarkdownLibs = null;
 function edfEnsureMarkdownLibs() {
   if (window.marked && window.DOMPurify) { return Promise.resolve(true); }
-  if (!edfMarkdownLibs) {
-    edfMarkdownLibs = Promise.all([
+  if (!window.__edfMarkdownLibs) {
+    window.__edfMarkdownLibs = Promise.all([
       edfLoadScript('/static/js/vendor/marked.min.js'),
       edfLoadScript('/static/js/vendor/purify.min.js')
     ]).then(function () { return !!(window.marked && window.DOMPurify); })
       .catch(function (e) { console.warn('[MODAL-UNIFIED] Markdown sin librerías:', e); return false; });
   }
-  return edfMarkdownLibs;
+  return window.__edfMarkdownLibs;
 }
 
 // Devuelve HTML ya saneado. Si no hay librerías, texto plano escapado.

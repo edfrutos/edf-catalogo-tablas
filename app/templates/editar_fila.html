@@ -569,8 +569,7 @@ function confirmarEliminarFila(tablaId, filaIndex) {
 }
 
 </script>
-<!-- Scripts de modales para templates de edición -->
-<script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
+<!-- modal-functions-UNIFIED.js ya está cargado en base.html -->
 <script src="{{ url_for('static', filename='js/modal-img-display-fix.js') }}?v={{ range(1, 10000) | random }}"></script>
 <!-- Cache buster: {{ range(1000000, 9999999) | random }} -->
 {% endblock %}
