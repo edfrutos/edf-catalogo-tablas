@@ -8,9 +8,34 @@ from app.utils.paths import writable_uploads
 
 import boto3
 from botocore.exceptions import ClientError
-from flask import Blueprint, Response, current_app, jsonify, send_file, send_from_directory
+from urllib.parse import quote
+
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    jsonify,
+    request,
+    send_file,
+    send_from_directory,
+)
+
+from app.utils.row_media import display_name
 
 admin_s3_bp = Blueprint("admin_s3", __name__, url_prefix="/admin")
+
+
+def _content_disposition(filename: str, download: bool) -> str:
+    """Cabecera Content-Disposition con el nombre limpio (sin prefijo uuid).
+
+    Con ``download`` se fuerza la descarga; si no, se muestra en línea.
+    Se usa filename* (RFC 5987) para admitir tildes y espacios.
+    """
+    name = display_name(filename)
+    kind = "attachment" if download else "inline"
+    ascii_name = name.encode("ascii", "ignore").decode() or "archivo"
+    ascii_name = ascii_name.replace('"', "")
+    return f"{kind}; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(name)}"
 
 
 def serve_s3_file(filename: str):
@@ -128,7 +153,9 @@ def serve_s3_proxy(filename):
         elif filename.lower().endswith(".txt"):
             content_type = "text/plain"
         elif filename.lower().endswith(".md"):
-            content_type = "text/markdown"
+            # En línea se sirve como texto para que el visor lo lea siempre;
+            # el navegador no intenta descargarlo.
+            content_type = "text/plain; charset=utf-8"
 
         current_app.logger.info(
             f"[S3-PROXY] Archivo descargado exitosamente - "
@@ -137,9 +164,11 @@ def serve_s3_proxy(filename):
 
         return Response(
             file_content,
-            mimetype=content_type,
+            content_type=content_type,
             headers={
-                "Content-Disposition": f'inline; filename="{filename}"',
+                "Content-Disposition": _content_disposition(
+                    filename, request.args.get("download") == "1"
+                ),
                 "Access-Control-Allow-Origin": "*",
                 "Cache-Control": "no-cache",
             },
@@ -182,11 +211,14 @@ def serve_s3_proxy(filename):
                     f"[S3-PROXY] Archivo local encontrado: {local_path} ({mime_type})"
                 )
 
+                if safe_filename.lower().endswith(".md"):
+                    mime_type = "text/plain"
+                want_download = request.args.get("download") == "1"
                 return send_file(
                     local_path,
                     mimetype=mime_type,
-                    as_attachment=False,
-                    download_name=safe_filename,
+                    as_attachment=want_download,
+                    download_name=display_name(safe_filename),
                     conditional=True,
                 )
 

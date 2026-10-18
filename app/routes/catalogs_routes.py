@@ -40,6 +40,15 @@ from werkzeug.utils import secure_filename
 from app.database import get_mongo_db
 from app.utils.catalog_utils import get_catalog_rows, normalize_catalog_rows, sync_row_update_paths
 from app.utils.image_utils import get_images_for_template, upload_image_to_s3
+from app.utils.row_media import (
+    DOC_BASES,
+    apply_changes,
+    as_list,
+    collect_documents,
+    collect_multimedia,
+    doc_base_for,
+    multimedia_update,
+)
 from app.utils.mongo_utils import is_mongo_available, is_valid_object_id
 from app.utils.s3_utils import convert_s3_url_to_proxy, get_s3_url
 from app.utils.upload_utils import get_upload_dir, handle_file_upload
@@ -990,18 +999,16 @@ def edit_row(catalog_id, row_index, catalog):
         # Procesar campos normales y especiales
         for header in catalog["headers"]:
             if header == "Multimedia":
-                # Manejar campo Multimedia
+                # Acumula: lo existente + URL y/o varios archivos nuevos
+                media_added = []
                 multimedia_url = request.form.get(f"{header}_url", "").strip()
-                multimedia_file = request.files.get(f"{header}_file")
-
                 if multimedia_url:
-                    row_data[header] = multimedia_url
-                elif multimedia_file and multimedia_file.filename:
-                    if uploaded_filename := handle_file_upload(multimedia_file):
-                        row_data[header] = uploaded_filename
-                else:
-                    # Mantener valor existente si no hay cambios
-                    row_data[header] = row_data.get(header, "")
+                    media_added.append(multimedia_url)
+                for multimedia_file in request.files.getlist(f"{header}_file"):
+                    if multimedia_file and multimedia_file.filename:
+                        if uploaded_filename := handle_file_upload(multimedia_file):
+                            media_added.append(uploaded_filename)
+                row_data[header] = multimedia_update(row_data, added=media_added)
 
             elif header in ["Documentos", "Documentación"] or header.startswith(
                 "Documentación"
@@ -1009,19 +1016,11 @@ def edit_row(catalog_id, row_index, catalog):
                 # Manejar múltiples documentos por fila
                 documentos = []
 
-                # Obtener documentos existentes (si los hay)
-                documentos_existentes = row_data.get(header, [])
-                # Verificar el tipo de manera segura
-                if isinstance(documentos_existentes, str):
-                    # Si es un string (formato antiguo), convertirlo a array
-                    documentos_existentes = (
-                        [documentos_existentes] if documentos_existentes else []
-                    )
-                elif not hasattr(documentos_existentes, "__iter__") or isinstance(
-                    documentos_existentes, str
-                ):
-                    # Si no es iterable o es string, inicializar como lista vacía
-                    documentos_existentes = []
+                # Documentos existentes (lista principal + campos heredados)
+                if doc_base_for(header) == header:
+                    documentos_existentes = collect_documents(row_data, header)
+                else:
+                    documentos_existentes = as_list(row_data.get(header))
 
                 # Obtener todos los documentos del formulario (URLs y archivos)
                 # Buscar campos con el patrón header_url_INDEX y header_file_INDEX
@@ -1048,9 +1047,8 @@ def edit_row(catalog_id, row_index, catalog):
                         if uploaded_filename := handle_file_upload(documento_file):
                             documentos.append(uploaded_filename)
 
-                # Si no hay documentos nuevos, mantener los existentes
-                if not documentos:
-                    documentos = documentos_existentes
+                # Existentes + nuevos (nunca se pisan los anteriores)
+                documentos = apply_changes(documentos_existentes, documentos)
 
                 current_app.logger.info(
                     f"[EDIT_ROW] {header} - Documentos existentes: {documentos_existentes}"
@@ -1123,8 +1121,10 @@ def edit_row(catalog_id, row_index, catalog):
                 for deleted_item in deleted_media:
                     header = deleted_item.get("header")
                     value = deleted_item.get("value")
-                    if header in row_data and row_data[header] == value:
-                        row_data[header] = ""
+                    if header in row_data and row_data[header]:
+                        row_data[header] = apply_changes(
+                            as_list(row_data[header]), removed=[value]
+                        )
                 current_app.logger.info(
                     f"[EDIT_ROW] Multimedia eliminado: {deleted_media}"
                 )
@@ -1288,8 +1288,17 @@ def edit_row(catalog_id, row_index, catalog):
             f"[DEBUG_EDIT_ROW] Fila {row_index} ({nombre_fila}): {len(imagenes_urls)} imágenes → {imagenes_urls}"
         )
 
+    # Documentos: lista principal + campos heredados, sin duplicados
+    for _base in DOC_BASES:
+        _docs = collect_documents(row_data, _base)
+        if _docs:
+            row_data[_base] = _docs
     return render_template(
-        "catalogos/edit_row.html", catalog=catalog, row=row_data, row_index=row_index
+        "catalogos/edit_row.html",
+        catalog=catalog,
+        row=row_data,
+        row_index=row_index,
+        media_view=collect_multimedia(row_data),
     )
 
 
@@ -1321,16 +1330,15 @@ def add_row(catalog_id, catalog):
 
             for header in headers:
                 if header == "Multimedia":
+                    media_items = []
                     multimedia_url = request.form.get(f"{header}_url", "").strip()
-                    multimedia_file = request.files.get(f"{header}_file")
-
                     if multimedia_url:
-                        row[header] = multimedia_url
-                    elif multimedia_file and multimedia_file.filename:
-                        uploaded_filename = handle_file_upload(multimedia_file)
-                        row[header] = uploaded_filename or ""
-                    else:
-                        row[header] = ""
+                        media_items.append(multimedia_url)
+                    for multimedia_file in request.files.getlist(f"{header}_file"):
+                        if multimedia_file and multimedia_file.filename:
+                            if uploaded_filename := handle_file_upload(multimedia_file):
+                                media_items.append(uploaded_filename)
+                    row[header] = media_items
 
                 elif (
                     header in ["Documentos", "Documentación"]

@@ -3,6 +3,7 @@
 {% block title %}Editar Fila - {{ catalog.name }}{% endblock %}
 
 {% block content %}
+{% from "partials/_row_files.html" import file_list with context %}
 <div class="container mt-4">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -36,46 +37,22 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Subir Archivo Multimedia</label>
                                     <input type="file" class="form-control" name="{{ header }}_file" 
-                                           accept="video/*,audio/*,image/*">
-                                    <div class="form-text">Videos, Audio, Imágenes | Máximo: 100MB</div>
+                                           accept="video/*,audio/*,image/*" multiple>
+                                    <div class="form-text">Videos, Audio, Imágenes | Máximo: 100MB | Se conservan los anteriores; puedes elegir varios</div>
                                 </div>
                             </div>
                             
-                            <!-- Mostrar multimedia actual -->
-                            {% if row[header] %}
+                            <!-- Multimedia actual: todos los archivos conservados -->
+                            {% set media_items = media_view if media_view is defined else [] %}
+                            {% if media_items %}
                                 <div class="mt-3">
-                                    <label class="form-label">Multimedia Actual:</label>
+                                    <label class="form-label">Multimedia actual ({{ media_items|length }}):</label>
                                     <div class="multimedia-preview">
-                                        {% if row[header] is string and row[header].startswith('http') %}
-                                            <div class="alert alert-info d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <i class="fas fa-external-link-alt"></i> URL Externa: 
-                                                    <a href="{{ row[header] }}" target="_blank">{{ row[header] }}</a>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                        onclick="removeMultimedia('{{ header }}', '{{ row[header] }}', this)">
-                                                    <i class="fas fa-trash"></i> Eliminar
-                                                </button>
-                                            </div>
-                                        {% else %}
-                                            <div class="alert alert-success d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <i class="fas fa-file"></i> Archivo Local: {{ row[header] }}
-                                                    <a href="{% if row[header] is string and (row[header].startswith('http') or row[header].startswith('/admin/s3/') or row[header].startswith('/s3/') or '/admin/s3/' in row[header] or '/s3/' in row[header]) %}{{ row[header] }}{% else %}{{ url_for('uploaded_images.uploaded_images', filename=row[header]) }}{% endif %}" 
-                                                       target="_blank" class="btn btn-sm btn-outline-primary ms-2">
-                                                        <i class="fas fa-download"></i> Descargar
-                                                    </a>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                        onclick="removeMultimedia('{{ header }}', '{{ row[header] }}', this)">
-                                                    <i class="fas fa-trash"></i> Eliminar
-                                                </button>
-                                            </div>
-                                        {% endif %}
+                                        {{ file_list(media_items, header, 'removeMultimedia') }}
                                     </div>
                                 </div>
                             {% endif %}
-                            
+
                         {% elif header in ['Documentos', 'Documentación'] or header.startswith('Documentación') %}
                             <!-- Campo especial para Documentos/Documentación - MÚLTIPLES DOCUMENTOS -->
                             <label class="form-label fw-bold">
@@ -131,73 +108,17 @@
                                 <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB cada uno | Puedes seleccionar múltiples archivos</div>
                             </div>
                             
-                            <!-- Mostrar documentos actuales -->
-                            {% if row[header] %}
+                            <!-- Documentos actuales (lista principal + heredados, sin duplicados) -->
+                            {% set doc_items = docs_view[header] if docs_view is defined and header in docs_view else [] %}
+                            {% if doc_items %}
                                 <div class="mt-3">
-                                    <label class="form-label">Documentos Actuales:</label>
+                                    <label class="form-label">Documentos actuales ({{ doc_items|length }}):</label>
                                     <div class="documentos-preview">
-                                        {% if row[header] is iterable and row[header] is not string %}
-                                            <!-- Múltiples documentos (formato nuevo) -->
-                                            {% for doc in row[header] %}
-                                                {% if doc is string and doc.startswith('http') %}
-                                                    <div class="alert alert-info mb-2 d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <i class="fas fa-external-link-alt"></i> URL Externa: 
-                                                            <a href="{{ doc }}" target="_blank">{{ doc }}</a>
-                                                        </div>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                                onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
-                                                            <i class="fas fa-trash"></i> Eliminar
-                                                        </button>
-                                                    </div>
-                                                {% elif doc %}
-                                                    <div class="alert alert-success mb-2 d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <i class="fas fa-file"></i> Archivo Local: {{ doc }}
-                                                            <a href="{% if doc is string and (doc.startswith('http') or doc.startswith('/admin/s3/') or doc.startswith('/s3/') or '/admin/s3/' in doc or '/s3/' in doc) %}{{ doc }}{% else %}{{ url_for('uploaded_images.uploaded_images', filename=doc) }}{% endif %}" 
-                                                               target="_blank" class="btn btn-sm btn-outline-primary ms-2">
-                                                                <i class="fas fa-download"></i> Descargar
-                                                            </a>
-                                                        </div>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                                onclick="removeDocument('{{ header }}', '{{ doc }}', this)">
-                                                            <i class="fas fa-trash"></i> Eliminar
-                                                        </button>
-                                                    </div>
-                                                {% endif %}
-                                            {% endfor %}
-                                        {% elif row[header] is string and row[header].startswith('http') %}
-                                            <!-- Documento único URL (formato antiguo) -->
-                                            <div class="alert alert-info d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <i class="fas fa-external-link-alt"></i> URL Externa: 
-                                                    <a href="{{ row[header] }}" target="_blank">{{ row[header] }}</a>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                        onclick="removeDocument('{{ header }}', '{{ row[header] }}', this)">
-                                                    <i class="fas fa-trash"></i> Eliminar
-                                                </button>
-                                            </div>
-                                        {% elif row[header] %}
-                                            <!-- Documento único archivo (formato antiguo) -->
-                                            <div class="alert alert-success d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <i class="fas fa-file"></i> Archivo Local: {{ row[header] }}
-                                                    <a href="{% if row[header] is string and (row[header].startswith('http') or row[header].startswith('/admin/s3/') or row[header].startswith('/s3/') or '/admin/s3/' in row[header] or '/s3/' in row[header]) %}{{ row[header] }}{% else %}{{ url_for('uploaded_images.uploaded_images', filename=row[header]) }}{% endif %}" 
-                                                       target="_blank" class="btn btn-sm btn-outline-primary ms-2">
-                                                        <i class="fas fa-download"></i> Descargar
-                                                    </a>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                        onclick="removeDocument('{{ header }}', '{{ row[header] }}', this)">
-                                                    <i class="fas fa-trash"></i> Eliminar
-                                                </button>
-                                            </div>
-                                        {% endif %}
+                                        {{ file_list(doc_items, header, 'removeDocument') }}
                                     </div>
                                 </div>
                             {% endif %}
-                            
+
                         {% elif header == 'Fecha' %}
                             <!-- Campo especial para Fecha (columna inteligente) -->
                             <label for="{{ header }}" class="form-label fw-bold">

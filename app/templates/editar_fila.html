@@ -5,6 +5,7 @@
 
 {% endblock %}
 {% block content %}
+{% from "partials/_row_files.html" import file_list with context %}
 <div class="container mt-4">
     <h1>Editar Fila de "{{ catalog.name }}"</h1>
     
@@ -55,6 +56,24 @@ function removeDocument(header, value, button) {
 }
 
 window.removeDocument = removeDocument;
+
+function removeMultimedia(header, value, button) {
+    const field = document.getElementById('multimedia_a_eliminar');
+    let marked = [];
+    try { marked = JSON.parse(field.value || '[]'); } catch (e) { marked = []; }
+    if (!marked.includes(value)) { marked.push(value); }
+    field.value = JSON.stringify(marked);
+
+    const box = button.closest('.alert');
+    if (box) {
+        box.style.opacity = '0.45';
+        box.style.textDecoration = 'line-through';
+        box.classList.add('border-danger');
+    }
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-check"></i> Marcado';
+}
+window.removeMultimedia = removeMultimedia;
 </script>
         {% for header in headers %}
         {% if header == 'Multimedia' %}
@@ -74,60 +93,18 @@ window.removeDocument = removeDocument;
                     <div class="col-md-6">
                         <label class="form-label">Subir Archivo Multimedia</label>
                         <input type="file" class="form-control" name="{{ header }}_file" 
-                               accept="video/*,audio/*,image/*">
-                        <div class="form-text">Videos: MP4, AVI, MOV | Audio: MP3, WAV | Imágenes: JPG, PNG, GIF | Máximo: 300MB</div>
+                               accept="video/*,audio/*,image/*" multiple>
+                        <div class="form-text">Videos: MP4, AVI, MOV | Audio: MP3, WAV | Imágenes: JPG, PNG, GIF | Máximo: 300MB | Se conservan los anteriores; puedes elegir varios</div>
                     </div>
                 </div>
                 
-                <!-- Mostrar multimedia actual -->
-                {% if fila[header] %}
+                <!-- Multimedia actual: se conservan todos los archivos subidos -->
+                {% set media_items = fila['_multimedia'] if fila['_multimedia'] is defined else [] %}
+                {% if media_items %}
                     <div class="mt-3">
-                        <label class="form-label">Multimedia Actual:</label>
+                        <label class="form-label">Multimedia actual ({{ media_items|length }}):</label>
                         <div class="multimedia-preview">
-                            {% if fila[header] is string and fila[header].startswith('http') %}
-                                <div class="alert alert-info">
-                                    <i class="fas fa-external-link-alt"></i> URL Externa: 
-                                    <a href="{{ fila[header] }}" target="_blank">{{ fila[header] }}</a>
-                                </div>
-                            {% else %}
-                                <div class="alert alert-success d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="fas fa-file"></i> Archivo: {{ fila[header] }}
-                                        <div class="btn-group ms-2" role="group">
-                                            {% if fila[header] is string %}
-                                                {% if fila[header].startswith('http') %}
-                                                    <a href="{{ fila[header] }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-download"></i> Descargar
-                                                    </a>
-                                                {% else %}
-                                                    <a href="/admin/s3/{{ fila[header] }}" 
-                                                       download="{{ fila[header] }}" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-download"></i> Descargar
-                                                    </a>
-                                                {% endif %}
-                                            {% else %}
-                                                {% for doc in fila[header] %}
-                                                    {% if doc.startswith('http') %}
-                                                        <a href="{{ doc }}" target="_blank" class="btn btn-sm btn-outline-primary me-2">
-                                                            <i class="fas fa-download"></i> {{ doc[:20] }}...
-                                                        </a>
-                                                    {% else %}
-                                                        <a href="/admin/s3/{{ doc }}" 
-                                                           download="{{ doc }}" class="btn btn-sm btn-outline-primary me-2">
-                                                            <i class="fas fa-download"></i> {{ doc[:20] }}...
-                                                        </a>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                            data-multimedia="{{ fila[header] }}" data-columna="{{ loop.index0 }}"
-                                            onclick="confirmarEliminarMultimedia(this.dataset.multimedia, parseInt(this.dataset.columna))">
-                                        <i class="fas fa-trash"></i> Eliminar
-                                    </button>
-                                </div>
-                            {% endif %}
+                            {{ file_list(media_items, header, 'removeMultimedia') }}
                         </div>
                     </div>
                 {% endif %}
@@ -150,88 +127,25 @@ window.removeDocument = removeDocument;
                     <div class="col-md-6">
                         <label class="form-label">Subir Documento</label>
                         <input type="file" class="form-control" name="{{ header }}_file_{{ loop.index0 }}" 
-                               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.md">
-                        <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB</div>
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.md" multiple>
+                        <div class="form-text">PDF, Word, Excel, Texto, RTF, Markdown | Máximo: 50MB | Se conservan los anteriores; puedes elegir varios</div>
                     </div>
                 </div>
                 
-                <!-- Mostrar documento actual -->
-                {% set doc_data = fila[header] if fila[header] is defined else [] %}
-                {% if doc_data %}
+                <!-- Documentos actuales (lista principal + campos heredados, sin duplicados) -->
+                {% set base_name = 'Documentos' if header.startswith('Documentos') else 'Documentación' %}
+                {% set doc_items = fila['_docs'][base_name] if fila['_docs'] is defined else [] %}
+                {% if doc_items %}
                     <div class="mt-3">
-                        <label class="form-label">Documentos Actuales:</label>
+                        <label class="form-label">Documentos actuales ({{ doc_items|length }}):</label>
                         <div class="documento-preview">
-                            {% if doc_data is iterable and doc_data is not string %}
-                                <!-- Múltiples documentos (formato nuevo) -->
-                                {% for doc in doc_data %}
-                                    {% if doc is string and doc.startswith('http') %}
-                                        <div class="alert alert-info mb-2 d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <i class="fas fa-external-link-alt"></i> URL Externa: 
-                                                <a href="{{ doc }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                                    <i class="fas fa-external-link-alt"></i> Ver Documento
-                                                </a>
-                                            </div>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                    data-header="{{ header }}" data-value="{{ doc|e }}" onclick="removeDocument(this.dataset.header, this.dataset.value, this)">
-                                                <i class="fas fa-trash"></i> Eliminar
-                                            </button>
-                                        </div>
-                                    {% elif doc %}
-                                        <!-- Documento individual como string -->
-                                        <div class="alert alert-success mb-2 d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <i class="fas fa-file"></i> Archivo: {{ doc }}
-                                                <div class="btn-group ms-2" role="group">
-                                                    {% if doc.startswith('http') %}
-                                                        <a href="{{ doc }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-download"></i> Descargar
-                                                        </a>
-                                                    {% else %}
-                                                        <a href="/admin/s3/{{ doc }}" 
-                                                           download="{{ doc }}" class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-download"></i> Descargar
-                                                        </a>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                    data-header="{{ header }}" data-value="{{ doc|e }}" onclick="removeDocument(this.dataset.header, this.dataset.value, this)">
-                                                <i class="fas fa-trash"></i> Eliminar
-                                            </button>
-                                        </div>
-                                    {% endif %}
-                                {% endfor %}
-                            {% elif doc_data is string and doc_data.startswith('http') %}
-                                <!-- Documento único URL (formato antiguo) -->
-                                <div class="alert alert-info">
-                                    <i class="fas fa-external-link-alt"></i> URL Externa: 
-                                    <a href="{{ doc_data }}" target="_blank">{{ doc_data }}</a>
-                                </div>
-                            {% elif doc_data is string %}
-                                <!-- Documento único archivo (formato antiguo) -->
-                                <div class="alert alert-success">
-                                    <i class="fas fa-file"></i> Archivo: {{ doc_data }}
-                                    <div class="btn-group ms-2" role="group">
-                                        <a href="/admin/s3/{{ doc_data }}" 
-                                           download="{{ doc_data }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-download"></i> Descargar
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                data-documento="{{ doc_data }}" data-columna="{{ loop.index0 }}"
-                                                onclick="confirmarEliminarDocumento(this.dataset.documento, parseInt(this.dataset.columna))">
-                                            <i class="fas fa-trash"></i> Eliminar
-                                        </button>
-                                    </div>
-                                </div>
-                            {% endif %}
+                            {{ file_list(doc_items, base_name, 'removeDocument') }}
                         </div>
                     </div>
                 {% else %}
                     <div class="mt-3">
-                        <label class="form-label">Documento Actual:</label>
                         <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i> No hay documento para esta columna
+                            <i class="fas fa-exclamation-triangle"></i> No hay documentos en esta columna
                         </div>
                     </div>
                 {% endif %}
@@ -645,22 +559,6 @@ function eliminarMultimedia(multimedia, columnIndex) {
   // Actualizar el campo oculto con los multimedia a eliminar
   document.getElementById('multimedia_a_eliminar').value = JSON.stringify(multimediaAEliminar);
   
-  // Ocultar visualmente el multimedia eliminado
-  const multimediaPreview = document.querySelector('.alert-success');
-  if (multimediaPreview) {
-    multimediaPreview.style.display = 'none';
-  }
-  
-  // Limpiar los campos de multimedia del formulario
-  const campoMultimediaUrl = document.querySelector('input[name="Multimedia_url"]');
-  const campoMultimediaFile = document.querySelector('input[name="Multimedia_file"]');
-  
-  if (campoMultimediaUrl) {
-    campoMultimediaUrl.value = '';
-  }
-  if (campoMultimediaFile) {
-    campoMultimediaFile.value = '';
-  }
 }
 
 function confirmarEliminarFila(tablaId, filaIndex) {

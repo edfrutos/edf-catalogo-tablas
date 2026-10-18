@@ -31,6 +31,15 @@ from app.database import get_mongo_db
 from app.decorators import login_required
 from app.utils.catalog_utils import normalize_catalog_rows, sync_row_push_paths, sync_row_update_paths
 from app.utils.image_utils import get_images_for_template
+from app.utils.row_media import (
+    DOC_BASES,
+    aux_doc_keys,
+    collect_documents,
+    collect_multimedia,
+    documents_update,
+    media_key,
+    multimedia_update,
+)
 
 
 def get_upload_dir():
@@ -610,6 +619,13 @@ def ver_tabla(table_id):
                 f"[DEBUG][VISIONADO] Total de imágenes en fila {i}: {len(row.get('imagen_urls', []))}"
             )
 
+            # Unir la lista principal con los campos heredados Documentación_N / Documentos_N
+            # (subidas antiguas) para que la tabla muestre todos los documentos.
+            for _base in DOC_BASES:
+                _docs = collect_documents(row, _base)
+                if _docs:
+                    row[_base] = _docs
+
             # Procesar campos de Documentación - crear URLs correctas para documentos
             from app.utils.s3_utils import get_s3_url
 
@@ -692,57 +708,20 @@ def ver_tabla(table_id):
                                 processed_docs.append(doc)
                         row[key] = processed_docs
 
-            # Procesar campo Multimedia - crear URL correcta
-            if "Multimedia" in row and row["Multimedia"]:
-                multimedia_value = row["Multimedia"]
-                current_app.logger.info(
-                    f"[DEBUG][VISIONADO] Procesando multimedia: {multimedia_value}"
-                )
-
-                # Verificar si ya es una URL completa
-                if isinstance(multimedia_value, str) and (
-                    multimedia_value.startswith("/admin/s3/")
-                    or multimedia_value.startswith("/static/uploads/")
-                    or multimedia_value.startswith("/imagenes_subidas/")
-                    or multimedia_value.startswith("http")
-                ):
-                    # Ya es una URL completa, usar directamente
-                    current_app.logger.info(
-                        f"[DEBUG][VISIONADO] URL multimedia completa detectada: {multimedia_value}"
-                    )
-                elif isinstance(multimedia_value, str) and len(multimedia_value) > 5:
-                    # Si es solo un nombre de archivo, intentar obtener la URL de S3
-                    # primero
-                    s3_url = get_s3_url(multimedia_value)
-                    if s3_url:
-                        # Convertir URL S3 a proxy local
-                        filename = (
-                            multimedia_value.split("/")[-1]
-                            if "/" in multimedia_value
-                            else multimedia_value
-                        )
-                        proxy_url = f"/admin/s3/{filename}"
-                        row["Multimedia"] = proxy_url
-                        current_app.logger.info(
-                            f"[DEBUG][VISIONADO] Multimedia S3 encontrado: {multimedia_value} -> {proxy_url}"
-                        )
+            # Procesar campo Multimedia: puede ser texto (formato antiguo) o lista.
+            # Se deja siempre una lista de URLs listas para usar.
+            if row.get("Multimedia"):
+                urls = []
+                for media_item in collect_multimedia(row):
+                    if media_item.startswith(
+                        ("/admin/s3/", "/static/uploads/", "/imagenes_subidas/", "/s3/", "http")
+                    ):
+                        urls.append(media_item)
+                    elif get_s3_url(media_item):
+                        urls.append(f"/admin/s3/{media_key(media_item)}")
                     else:
-                        # Si no está en S3, usar la URL local directamente
-                        # No usar proxy S3 para archivos locales
-                        # Verificar si ya contiene una ruta para evitar concatenación
-                        # incorrecta
-                        if (
-                            multimedia_value.startswith("/admin/s3/")
-                            or multimedia_value.startswith("/static/uploads/")
-                            or multimedia_value.startswith("/imagenes_subidas/")
-                        ):
-                            local_url = multimedia_value
-                        else:
-                            local_url = f"/static/uploads/{multimedia_value}"
-                        row["Multimedia"] = local_url
-                        current_app.logger.info(
-                            f"[DEBUG][VISIONADO] Usando URL local para multimedia: {multimedia_value} -> {local_url}"
-                        )
+                        urls.append(f"/static/uploads/{media_item}")
+                row["Multimedia"] = urls
 
         normalize_catalog_rows(table)
 
@@ -1271,9 +1250,18 @@ def editar_fila(tabla_id, fila_index):
     )
     headers = table_info.get("headers", [])
 
+    # Documentos y multimedia tal y como los debe mostrar el formulario:
+    # lista principal + campos heredados, sin duplicados.
+    fila["_docs"] = {base: collect_documents(fila, base) for base in DOC_BASES}
+    fila["_multimedia"] = collect_multimedia(fila)
+
     if request.method == "POST":
         current_app.logger.info("[DEBUG_EDIT] Iniciando procesamiento POST")
         update_data = {}
+        # Cambios acumulados de documentos y multimedia; se aplican al final con
+        # app.utils.row_media (añadir sin pisar lo existente, quitar solo lo marcado).
+        new_docs = {"Documentación": [], "Documentos": []}
+        media_added = []
 
         # Procesar todos los documentos primero (antes del bucle normal)
         # Buscar todos los campos de documentos con el patrón Documentación_file_INDEX
@@ -1368,14 +1356,13 @@ def editar_fila(tabla_id, fila_index):
                         else:
                             campo_valor = filename
 
-                        # Guardar en el campo específico Documentación_X
-                        if key.startswith("Documentos"):
-                            header_name = f"Documentos_{column_index}"
-                        else:
-                            header_name = f"Documentación_{column_index}"
-                        update_data[f"data.{fila_index}.{header_name}"] = campo_valor
+                        # Se añade a la lista principal (sin pisar los existentes)
+                        base_header = (
+                            "Documentos" if key.startswith("Documentos") else "Documentación"
+                        )
+                        new_docs[base_header].append(campo_valor)
                         current_app.logger.info(
-                            f"[DEBUG_EDIT] Documento guardado en {header_name}: {campo_valor}"
+                            f"[DEBUG_EDIT] Documento añadido a {base_header}: {campo_valor}"
                         )
 
                     except ValueError:
@@ -1409,29 +1396,10 @@ def editar_fila(tabla_id, fila_index):
                     base_header = ""
 
                 try:
-                    column_index = int(index_str)
-                    header_name = f"{base_header}_{column_index}"
-
-                    # 1) Campo auxiliar, por compatibilidad con lógica antigua
-                    update_data[f"data.{fila_index}.{header_name}"] = nueva_url
-
-                    # 2) Campo principal, que es el que deben leer visor y modal
-                    documentos_actuales = fila.get(base_header, [])
-
-                    if isinstance(documentos_actuales, str):
-                        documentos_actuales = [documentos_actuales] if documentos_actuales else []
-                    elif isinstance(documentos_actuales, list):
-                        documentos_actuales = list(documentos_actuales)
-                    else:
-                        documentos_actuales = []
-
-                    if nueva_url not in documentos_actuales:
-                        documentos_actuales.append(nueva_url)
-
-                    update_data[f"data.{fila_index}.{base_header}"] = documentos_actuales
-
+                    int(index_str)  # valida que el sufijo sea un índice
+                    new_docs[base_header].append(nueva_url)
                     current_app.logger.info(
-                        f"[DEBUG_EDIT] URL de documento guardada en {base_header} y {header_name}: {nueva_url}"
+                        f"[DEBUG_EDIT] URL de documento añadida a {base_header}: {nueva_url}"
                     )
 
                 except ValueError:
@@ -1443,24 +1411,22 @@ def editar_fila(tabla_id, fila_index):
             if header == "Multimedia":
                 # Manejar campo Multimedia
                 multimedia_url = request.form.get(f"{header}_url", "").strip()
-                multimedia_file = request.files.get(f"{header}_file")
-
                 if multimedia_url:
-                    campo_valor = multimedia_url
-                elif multimedia_file and multimedia_file.filename:
-                    # Procesar archivo multimedia
-                    filename = secure_filename(
-                        f"{uuid.uuid4().hex}_{multimedia_file.filename}"
-                    )
-                    upload_dir = get_upload_dir()
-                    file_path = os.path.join(upload_dir, filename)
-                    multimedia_file.save(file_path)
-                    from app.utils.s3_utils import subir_multimedia_a_s3
-                    subir_multimedia_a_s3(file_path, filename)
-                    campo_valor = filename
-                else:
-                    # Mantener valor existente si no hay cambios
-                    campo_valor = fila.get(header, "")
+                    media_added.append(multimedia_url)
+                for multimedia_file in request.files.getlist(f"{header}_file"):
+                    if multimedia_file and multimedia_file.filename:
+                        # Procesar archivo multimedia (se admiten varios)
+                        filename = secure_filename(
+                            f"{uuid.uuid4().hex}_{multimedia_file.filename}"
+                        )
+                        upload_dir = get_upload_dir()
+                        file_path = os.path.join(upload_dir, filename)
+                        multimedia_file.save(file_path)
+                        from app.utils.s3_utils import subir_multimedia_a_s3
+                        subir_multimedia_a_s3(file_path, filename)
+                        media_added.append(filename)
+                # Acumula: lo existente + lo nuevo (la eliminación se aplica más abajo)
+                campo_valor = multimedia_update(fila, added=media_added)
 
             elif header in ("Documentación", "Documentos"):
                 # Los documentos ya se procesaron arriba; preservar el valor existente
@@ -1632,6 +1598,7 @@ def editar_fila(tabla_id, fila_index):
         # Compatibilidad:
         # - documentos_a_eliminar: formato antiguo/lista simple
         # - deleted_documents: formato nuevo [{header, value}]
+        removed_docs = []
         documentos_a_eliminar_raw = (
             request.form.get("deleted_documents", "")
             or request.form.get("documentos_a_eliminar", "")
@@ -1664,46 +1631,18 @@ def editar_fila(tabla_id, fila_index):
                                 continue
 
                             try:
-                                delete_file_from_s3(doc_a_eliminar)
+                                delete_file_from_s3(media_key(doc_a_eliminar))
                                 logger.info(f"Documento eliminado de S3: {doc_a_eliminar}")
                             except Exception as e:
                                 logger.error(
                                     f"Error eliminando documento de S3 {doc_a_eliminar}: {e}"
                                 )
 
-                    # Campos individuales Documentación_X / Documentos_X
-                    for key, value in fila.items():
-                        if (
-                            isinstance(value, str)
-                            and (
-                                key.startswith("Documentación_")
-                                or key.startswith("Documentos_")
-                            )
-                            and value in documentos_a_eliminar
-                        ):
-                            update_data[f"data.{fila_index}.{key}"] = ""
-                            logger.info(f"Documento elimina del campo {key}: {value}")
-
-                    # Campos principales Documentación / Documentos
-                    for docs_field in ("Documentación", "Documentos"):
-                        if docs_field in fila:
-                            if isinstance(fila[docs_field], list):
-                                documentos_actualizados = [
-                                    doc
-                                    for doc in fila[docs_field]
-                                    if doc not in documentos_a_eliminar
-                                ]
-                                update_data[f"data.{fila_index}.{docs_field}"] = documentos_actualizados
-                                logger.info(
-                                    f"Lista {docs_field} actualizada: {documentos_actualizados}"
-                                )
-
-                            elif isinstance(fila[docs_field], str):
-                                if fila[docs_field] in documentos_a_eliminar:
-                                    update_data[f"data.{fila_index}.{docs_field}"] = ""
-                                    logger.info(
-                                        f"Documento eliminado del campo {docs_field}: {fila[docs_field]}"
-                                    )
+                    # El quitado de las listas y de los campos Documentación_X /
+                    # Documentos_X se aplica más abajo con row_media.
+                    removed_docs.extend(
+                        d for d in documentos_a_eliminar if isinstance(d, str)
+                    )
 
                 else:
                     logger.info("Campo de documentos a eliminar vacío")
@@ -1714,6 +1653,20 @@ def editar_fila(tabla_id, fila_index):
                 logger.error(f"Error procesando documentos a eliminar: {e}")
         else:
             logger.info("No se proporcionó campo de documentos a eliminar o está vacío")
+
+        # Aplicar altas y bajas de documentos con la lógica compartida:
+        # lista final = (principal + heredados) - eliminados + nuevos.
+        data_key_row = f"data.{fila_index}"
+        for base in DOC_BASES:
+            if not (new_docs[base] or removed_docs):
+                continue
+            if base not in fila and not aux_doc_keys(fila, base) and not new_docs[base]:
+                continue
+            for k, v in documents_update(
+                fila, base, added=new_docs[base], removed=removed_docs
+            ).items():
+                update_data.get(data_key_row, {}).pop(k, None)
+                update_data[f"{data_key_row}.{k}"] = v
 
         # Procesar multimedia a eliminar
         multimedia_a_eliminar = request.form.get("multimedia_a_eliminar", "")
@@ -1728,7 +1681,14 @@ def editar_fila(tabla_id, fila_index):
                     # Eliminar multimedia del servidor y de S3
                     use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
 
-                    for media_a_eliminar in multimedia_a_eliminar:
+                    multimedia_a_eliminar = [
+                        m for m in multimedia_a_eliminar if isinstance(m, str) and m
+                    ]
+                    for media_a_eliminar_raw in multimedia_a_eliminar:
+                        # Solo el nombre de archivo: nunca rutas que vengan del formulario
+                        media_a_eliminar = media_key(media_a_eliminar_raw)
+                        if not media_a_eliminar or media_a_eliminar.startswith("http"):
+                            continue
                         try:
                             # Eliminar de S3 si está habilitado
                             if use_s3:
@@ -1762,9 +1722,11 @@ def editar_fila(tabla_id, fila_index):
                                 f"Error al eliminar multimedia: {str(e)}", exc_info=True
                             )
 
-                    # Limpiar el campo multimedia en la fila
-                    update_data[f"data.{fila_index}.Multimedia"] = ""
-                    logger.info("Campo multimedia limpiado")
+                    # Quitar solo lo marcado; el resto (y lo recién subido) se conserva
+                    update_data[f"data.{fila_index}.Multimedia"] = multimedia_update(
+                        fila, added=media_added, removed=multimedia_a_eliminar
+                    )
+                    logger.info("Multimedia actualizado tras eliminar")
 
             except json.JSONDecodeError as e:
                 logger.error(f"Error decodificando multimedia_a_eliminar: {e}")
@@ -2138,25 +2100,23 @@ def agregar_fila(tabla_id):
                         fecha_valor = datetime.now().strftime("%Y-%m-%d")
                     nueva_fila[header] = fecha_valor
                 elif header == "Multimedia":
-                    # Manejar campo Multimedia
+                    # Se admiten varios archivos y/o una URL; se guarda como lista
+                    media_items = []
                     multimedia_url = request.form.get(f"{header}_url", "").strip()
-                    multimedia_file = request.files.get(f"{header}_file")
-
                     if multimedia_url:
-                        nueva_fila[header] = multimedia_url
-                    elif multimedia_file and multimedia_file.filename:
-                        # Procesar archivo multimedia
-                        filename = secure_filename(
-                            f"{uuid.uuid4().hex}_{multimedia_file.filename}"
-                        )
-                        upload_dir = get_upload_dir()
-                        file_path = os.path.join(upload_dir, filename)
-                        multimedia_file.save(file_path)
-                        from app.utils.s3_utils import subir_multimedia_a_s3
-                        subir_multimedia_a_s3(file_path, filename)
-                        nueva_fila[header] = filename
-                    else:
-                        nueva_fila[header] = ""
+                        media_items.append(multimedia_url)
+                    for multimedia_file in request.files.getlist(f"{header}_file"):
+                        if multimedia_file and multimedia_file.filename:
+                            filename = secure_filename(
+                                f"{uuid.uuid4().hex}_{multimedia_file.filename}"
+                            )
+                            upload_dir = get_upload_dir()
+                            file_path = os.path.join(upload_dir, filename)
+                            multimedia_file.save(file_path)
+                            from app.utils.s3_utils import subir_multimedia_a_s3
+                            subir_multimedia_a_s3(file_path, filename)
+                            media_items.append(filename)
+                    nueva_fila[header] = media_items
                 elif header in ["Documentos", "Documentación"]:
                     # Saltar procesamiento de Documentación base - ya se procesó arriba
                     # Pero NO saltar Documentación_1, Documentación_2, etc.

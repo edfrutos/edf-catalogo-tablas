@@ -1,0 +1,31 @@
+{# Lista de archivos de una fila (documentos o multimedia) con Descargar y Eliminar.
+   Uso: {% from "partials/_row_files.html" import file_list %}
+        {{ file_list(items, header, "removeDocument") }}
+   - items: lista de textos (nombre de archivo o URL)
+   - on_remove: nombre de la función JS que marca el elemento para eliminar #}
+{% macro file_list(items, header, on_remove) %}
+  {% for item in items %}
+    {% set url = item|media_url %}
+    {% set external = item.startswith('http') and '.amazonaws.com/' not in item %}
+    {% set name = item|media_name %}
+    <div class="alert {{ 'alert-info' if external else 'alert-success' }} mb-2 d-flex justify-content-between align-items-center">
+      <div class="text-break">
+        {% if external %}
+          <i class="fas fa-external-link-alt"></i> Enlace externo:
+          <a href="{{ url }}" target="_blank" rel="noopener">{{ item }}</a>
+        {% else %}
+          <i class="fas fa-file"></i> Archivo: {{ name }}
+          <a href="{{ url }}{{ '&' if '?' in url else '?' }}download=1" download="{{ name }}"
+             class="btn btn-sm btn-outline-primary ms-2">
+            <i class="fas fa-download"></i> Descargar
+          </a>
+        {% endif %}
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-danger"
+              data-header="{{ header }}" data-value="{{ item }}"
+              onclick="{{ on_remove }}(this.dataset.header, this.dataset.value, this)">
+        <i class="fas fa-trash"></i> Eliminar
+      </button>
+    </div>
+  {% endfor %}
+{% endmacro %}
