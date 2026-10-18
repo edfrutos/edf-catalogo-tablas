@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block content %}
+{% from "partials/_row_files.html" import file_list with context %}
 <div class="container-fluid mt-4">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
@@ -34,55 +35,21 @@
                                     <div class="col-12 col-md-6 mb-3">
                                         <label class="form-label">Subir Archivo Multimedia</label>
                                         <input type="file" class="form-control" name="{{ header }}_file" 
-                                               accept="video/*,audio/*,image/*">
+                                               accept="video/*,audio/*,image/*" multiple>
                                         <div class="form-text">Videos: MP4, AVI, MOV | Audio: MP3, WAV | Imágenes: JPG, PNG, GIF | Máximo: 300MB</div>
                                     </div>
                                 </div>
-                                <!-- DEBUG: Mostrar valor crudo del campo Multimedia -->
-                                <div class="mb-2">
-                                    <span class="badge bg-secondary">Valor crudo Multimedia:</span>
-                                    <code style="font-size:0.95em;">{{ row[header]|default('') }}</code>
-                                </div>
-                                
-                                <!-- Mostrar multimedia actual -->
-                                {% if row[header] %}
+                                <!-- Multimedia actual: se conservan todos los archivos subidos -->
+                                {% set media_items = media_view if media_view is defined else [] %}
+                                {% if media_items %}
                                     <div class="mt-3">
-                                        <label class="form-label">Multimedia Actual:</label>
+                                        <label class="form-label">Multimedia actual ({{ media_items|length }}):</label>
                                         <div class="multimedia-preview">
-                                            {% if row[header] is string and row[header].startswith('http') %}
-                                                <div class="alert alert-info d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <i class="fas fa-external-link-alt"></i> URL Externa: 
-                                                        <a href="{{ row[header] }}" target="_blank">{{ row[header] }}</a>
-                                                    </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            data-header="{{ header }}"
-                                                            data-value="{{ row[header] }}"
-                                                            onclick="removeMultimedia(this.dataset.header, this.dataset.value, this)">
-                                                        <i class="fas fa-trash"></i> Eliminar
-                                                    </button>
-                                                </div>
-                                            {% else %}
-                                                <div class="alert alert-success d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <i class="fas fa-file"></i> Archivo Local: {{ row[header] }}
-                                                        <a href="{{ url_for('static', filename='uploads/' + row[header]) }}" 
-                                                           target="_blank" class="btn btn-sm btn-outline-primary ms-2">
-                                                            <i class="fas fa-download"></i> Descargar
-                                                        </a>
-                                                    </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            data-header="{{ header }}"
-                                                            data-value="{{ row[header] }}"
-                                                            onclick="removeMultimedia(this.dataset.header, this.dataset.value, this)">
-                                                        <i class="fas fa-trash"></i> Eliminar
-                                                    </button>
-                                                </div>
-                                            {% endif %}
+                                            {{ file_list(media_items, header, 'removeMultimedia') }}
                                         </div>
                                     </div>
                                 {% endif %}
-                                
+
                             {% elif header in ['Documentos', 'Documentación'] or header.startswith('Documentación') %}
                                 <!-- Campo especial para Documentos/Documentación - MÚLTIPLES DOCUMENTOS -->
                                 <label class="form-label fw-bold">

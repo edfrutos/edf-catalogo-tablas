@@ -14,6 +14,14 @@ from app.database import get_mongo_db
 from app.decorators import admin_required
 from app.routes.s3_utils import get_s3_url
 from app.utils.catalog_utils import get_catalog_rows, normalize_catalog_rows
+from app.utils.row_media import (
+    DOC_BASES,
+    apply_changes,
+    as_list,
+    collect_documents,
+    collect_multimedia,
+    multimedia_update,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -156,10 +164,18 @@ def register_admin_catalog_routes(admin_bp) -> None:
 
                     # 3. Process Multimedia
                     if "Multimedia" in row and row["Multimedia"]:
-                        media_item = row["Multimedia"]
-                        url, filename = get_final_url(media_item)
-                        row["multimedia_url"] = url
-                        row["multimedia_filename"] = filename if filename else ""
+                        processed_media = []
+                        for media_item in collect_multimedia(row):
+                            url, filename = get_final_url(media_item)
+                            if url:
+                                processed_media.append(
+                                    {"url": url, "filename": filename or ""}
+                                )
+                        row["processed_multimedia"] = processed_media
+                        if processed_media:
+                            # Compatibilidad: primer elemento
+                            row["multimedia_url"] = processed_media[0]["url"]
+                            row["multimedia_filename"] = processed_media[0]["filename"]
 
             # --- End of Refactoring ---
 
@@ -429,6 +445,10 @@ def register_admin_catalog_routes(admin_bp) -> None:
 
             # Procesar campos de Documentación - crear campos individuales para el
             # template (igual que en ver_catalogo_unificado)
+            for _base in DOC_BASES:
+                _docs = collect_documents(row_data, _base)
+                if _docs:
+                    row_data[_base] = _docs
             if "Documentación" in row_data and isinstance(row_data["Documentación"], list):
                 for i, doc in enumerate(row_data["Documentación"]):
                     if doc and doc.strip():  # Solo si el documento no está vacío
@@ -519,18 +539,20 @@ def register_admin_catalog_routes(admin_bp) -> None:
 
                 for header in catalog["headers"]:
                     if header == "Multimedia":
-                        # Manejar campo Multimedia
+                        # Multimedia acumula: lo existente + lo nuevo (URL y/o varios
+                        # archivos). Lo marcado para eliminar se quita más abajo.
+                        media_added = []
                         multimedia_url = request.form.get(f"{header}_url", "").strip()
-                        multimedia_file = request.files.get(f"{header}_file")
-
-                        # Solo actualizar si se proporciona un nuevo valor
                         if multimedia_url:
-                            updated_row[header] = multimedia_url
+                            media_added.append(multimedia_url)
                             logger.info(
-                                f"[ADMIN_EDIT_ROW] Multimedia URL actualizada: {multimedia_url}"
+                                f"[ADMIN_EDIT_ROW] Multimedia URL añadida: {multimedia_url}"
                             )
-                        elif multimedia_file and multimedia_file.filename:
-                            # Procesar archivo multimedia
+
+                        for multimedia_file in request.files.getlist(f"{header}_file"):
+                            if not (multimedia_file and multimedia_file.filename):
+                                continue
+
                             import uuid  # noqa: I001
 
                             from werkzeug.utils import secure_filename
@@ -544,14 +566,13 @@ def register_admin_catalog_routes(admin_bp) -> None:
                             file_path = os.path.join(upload_dir, filename)
                             multimedia_file.save(file_path)
 
-                            # Subir a S3 si está habilitado
+                            stored_value = filename
                             use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
                             if use_s3:
                                 try:
                                     from app.utils.s3_utils import upload_file_to_s3_direct
 
                                     logger.info(f"Subiendo multimedia a S3: {filename}")
-                                    # Leer el archivo y subirlo directamente a S3
                                     with open(file_path, "rb") as file_obj:
                                         from werkzeug.datastructures import FileStorage
 
@@ -568,36 +589,25 @@ def register_admin_catalog_routes(admin_bp) -> None:
                                         logger.info(
                                             f"Multimedia subida a S3: {result['url']}"
                                         )
-                                        # Eliminar el archivo local después de subirlo a S3
                                         os.remove(file_path)
-                                        updated_row[header] = result["url"]
+                                        stored_value = result["url"]
                                     else:
                                         logger.error(
                                             f"Error subiendo multimedia a S3: {result['error']}"
                                         )
-                                        # Si falla S3, mantener local
-                                        updated_row[header] = filename
                                 except Exception as e:
                                     logger.error(
                                         f"Error en proceso S3 para multimedia: {e}"
                                     )
-                                    # Si falla S3, mantener local
-                                    updated_row[header] = filename
                             else:
-                                # Almacenamiento local
                                 logger.info(f"Multimedia guardada localmente: {filename}")
-                                updated_row[header] = filename
 
-                            logger.info(
-                                f"[ADMIN_EDIT_ROW] Multimedia archivo actualizado: {updated_row[header]}"
-                            )
-                        else:
-                            # Mantener valor existente si no hay cambios
-                            existing_multimedia = row_data.get(header, "")
-                            updated_row[header] = existing_multimedia
-                            logger.info(
-                                f"[ADMIN_EDIT_ROW] Multimedia existente preservado: {existing_multimedia}"
-                            )
+                            media_added.append(stored_value)
+
+                        updated_row[header] = multimedia_update(row_data, added=media_added)
+                        logger.info(
+                            f"[ADMIN_EDIT_ROW] Multimedia resultante: {updated_row[header]}"
+                        )
 
                     elif header in ["Documentos", "Documentación"]:
                         # Manejar múltiples documentos por fila
@@ -608,7 +618,7 @@ def register_admin_catalog_routes(admin_bp) -> None:
                             f"[ADMIN_EDIT_ROW] 🔍 Obteniendo documentos existentes para {header}"
                         )
                         logger.info(f"[ADMIN_EDIT_ROW] 📋 row_data completo: {row_data}")
-                        documentos_existentes = row_data.get(header, [])
+                        documentos_existentes = collect_documents(row_data, header)
                         logger.info(
                             f"[ADMIN_EDIT_ROW] 📄 documentos_existentes inicial: {documentos_existentes} (tipo: {type(documentos_existentes)})"
                         )
@@ -728,22 +738,7 @@ def register_admin_catalog_routes(admin_bp) -> None:
                             f"[ADMIN_EDIT_ROW] {header} - Documentos nuevos: {documentos}"
                         )
 
-                        if documentos_existentes and documentos:
-                            # Hay documentos existentes Y nuevos: combinar
-                            documentos = documentos_existentes + documentos
-                            logger.info(
-                                f"[ADMIN_EDIT_ROW] {header} - Combinando existentes + nuevos: {documentos}"
-                            )
-                        elif documentos_existentes and not documentos:
-                            # Hay documentos existentes pero NO nuevos: preservar existentes
-                            documentos = documentos_existentes
-                            logger.info(
-                                f"[ADMIN_EDIT_ROW] {header} - Preservando existentes: {documentos}"
-                            )
-                        else:
-                            logger.info(
-                                f"[ADMIN_EDIT_ROW] {header} - Sin documentos existentes ni nuevos: {documentos}"
-                            )
+                        documentos = apply_changes(documentos_existentes, documentos)
                         # Si no hay documentos existentes ni nuevos, mantener lista vacía
 
                         # Almacenar como array de documentos con nombre único basado en el índice de la columna
@@ -925,10 +920,12 @@ def register_admin_catalog_routes(admin_bp) -> None:
                             logger.info(
                                 f"[ADMIN_EDIT_ROW] 🎯 Eliminando multimedia - Header: {header}, Value: {value}"
                             )
-                            if header in updated_row and updated_row[header] == value:
-                                updated_row[header] = ""
+                            if header in updated_row and updated_row[header]:
+                                updated_row[header] = apply_changes(
+                                    as_list(updated_row[header]), removed=[value]
+                                )
                                 logger.info(
-                                    f"[ADMIN_EDIT_ROW] ✅ Multimedia eliminado correctamente: {header}"
+                                    f"[ADMIN_EDIT_ROW] ✅ Multimedia eliminado: {header} -> {value}"
                                 )
                             else:
                                 logger.warning(
@@ -1062,7 +1059,12 @@ def register_admin_catalog_routes(admin_bp) -> None:
 
             # Renderizar formulario de edición
             return render_template(
-                "admin/editar_fila.html", catalog=catalog, row=row_data, row_index=row_index
+                "admin/editar_fila.html",
+                catalog=catalog,
+                row=row_data,
+                row_index=row_index,
+                docs_view={base: collect_documents(row_data, base) for base in DOC_BASES},
+                media_view=collect_multimedia(row_data),
             )
 
         except Exception as e:

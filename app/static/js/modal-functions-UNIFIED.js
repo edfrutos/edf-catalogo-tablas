@@ -65,7 +65,8 @@ function showDocumentModal(documentSrc, documentTitle) {
   }
   
   // Configurar título genérico basado en el tipo de archivo
-  const fileExtension = documentSrc.split('.').pop()?.toLowerCase();
+  // Extensión del archivo ignorando ?query y #hash (p. ej. /admin/s3/x.md?download=1)
+  const fileExtension = String(documentSrc).split('#')[0].split('?')[0].split('.').pop()?.toLowerCase();
   let genericTitle = 'Documento';
   if (fileExtension === 'pdf') {
     genericTitle = 'Ver PDF';
@@ -304,6 +305,48 @@ function showDocumentModal(documentSrc, documentTitle) {
   log("[MODAL-UNIFIED] ✅ Modal de documento configurado");
 }
 
+// ============================================================================
+// MARKDOWN SEGURO (marked + DOMPurify, incluidos en local)
+// ============================================================================
+function edfEscapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function edfLoadScript(src) {
+  return new Promise(function (resolve, reject) {
+    const el = document.createElement('script');
+    el.src = src;
+    el.onload = resolve;
+    el.onerror = function () { reject(new Error('No se pudo cargar ' + src)); };
+    document.head.appendChild(el);
+  });
+}
+
+let edfMarkdownLibs = null;
+function edfEnsureMarkdownLibs() {
+  if (window.marked && window.DOMPurify) { return Promise.resolve(true); }
+  if (!edfMarkdownLibs) {
+    edfMarkdownLibs = Promise.all([
+      edfLoadScript('/static/js/vendor/marked.min.js'),
+      edfLoadScript('/static/js/vendor/purify.min.js')
+    ]).then(function () { return !!(window.marked && window.DOMPurify); })
+      .catch(function (e) { console.warn('[MODAL-UNIFIED] Markdown sin librerías:', e); return false; });
+  }
+  return edfMarkdownLibs;
+}
+
+// Devuelve HTML ya saneado. Si no hay librerías, texto plano escapado.
+async function renderMarkdownSafe(text) {
+  const ok = await edfEnsureMarkdownLibs();
+  if (ok) {
+    const html = window.marked.parse(String(text), { mangle: false, headerIds: false });
+    return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+  }
+  return '<pre style="white-space: pre-wrap;">' + edfEscapeHtml(text) + '</pre>';
+}
+
 // Función para mostrar Markdown en modal
 function showMarkdownInModal(markdownUrl, markdownTitle) {
   log("[MODAL-UNIFIED] 📝 showMarkdownInModal llamado con:", { markdownUrl, markdownTitle });
@@ -347,24 +390,16 @@ function showMarkdownInModal(markdownUrl, markdownTitle) {
       }
       return response.text();
     })
-    .then(markdownText => {
+    .then(async markdownText => {
       log("[MODAL-UNIFIED] 🔍 Markdown text length:", markdownText.length);
-      log("[MODAL-UNIFIED] 🔍 Markdown preview:", markdownText.substring(0, 100));
-      // Renderizado simple de Markdown
-      const htmlContent = markdownText
-        .replace(/^### (.*$)/gim, "<h3>$1</h3>")
-        .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-        .replace(/^# (.*$)/gim, "<h1>$1</h1>")
-        .replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>")
-        .replace(/\*(.*)\*/gim, "<em>$1</em>")
-        .replace(/\n/gim, "<br>");
+      const htmlContent = await renderMarkdownSafe(markdownText);
       
       modalContent.innerHTML = `
         <div class="text-center p-4">
           <i class="fas fa-file-code fa-4x text-info mb-3"></i>
           <h5>Documento Markdown</h5>
           <p class="text-muted mb-4">
-            <strong>Archivo:</strong> ${markdownTitle}<br>
+            <strong>Archivo:</strong> ${edfEscapeHtml(edfCleanName(markdownTitle))}<br>
             <strong>Tipo:</strong> Markdown<br>
             <strong>Ubicación:</strong> ${isS3File ? 'S3' : 'Local'}
           </p>
@@ -402,8 +437,8 @@ function showMarkdownInModal(markdownUrl, markdownTitle) {
         <div class="text-center p-4">
           <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
           <h5>Error al cargar Markdown</h5>
-          <p class="text-muted">${error.message}</p>
-          <p class="text-danger small">URL intentada: ${fetchUrl}</p>
+          <p class="text-muted">${edfEscapeHtml(error.message)}</p>
+          <p class="text-danger small">URL intentada: ${edfEscapeHtml(fetchUrl)}</p>
         </div>
       `;
       
@@ -811,26 +846,45 @@ function showMultimediaModal(multimediaSrc, multimediaTitle) {
 // FUNCIONES DE DESCARGA
 // ============================================================================
 
+// Nombre legible: sin ruta ni prefijo uuid (32 hex + "_") que añade la subida
+function edfCleanName(name) {
+  const base = String(name || '').split('#')[0].split('?')[0].split('/').pop();
+  let decoded = base;
+  try { decoded = decodeURIComponent(base); } catch (e) { /* se deja tal cual */ }
+  return decoded.replace(/^[0-9a-f]{32}_/i, '') || 'archivo';
+}
+
+// URL de descarga: el proxy /admin/s3/ fuerza Content-Disposition: attachment con ?download=1
+function edfDownloadUrl(url) {
+  if (String(url).indexOf('/admin/s3/') !== -1 && String(url).indexOf('download=1') === -1) {
+    return url + (String(url).indexOf('?') === -1 ? '?' : '&') + 'download=1';
+  }
+  return url;
+}
+
+// Descarga común: diálogo nativo en la app de escritorio, <a download> en el navegador
+function edfDownload(url, fileName) {
+  const cleanName = edfCleanName(fileName || url);
+  const finalUrl = edfDownloadUrl(url);
+  if (window.edfNativeSave && window.edfNativeSave(finalUrl, cleanName)) { return; }
+  const link = document.createElement('a');
+  link.href = finalUrl;
+  link.download = cleanName;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 // Función para descargar archivos S3
 function downloadS3File(fileUrl, fileName) {
   log("[MODAL-UNIFIED] 🔧 Descargando archivo S3:", fileUrl);
-  if (window.edfNativeSave && window.edfNativeSave(fileUrl, fileName)) { return; }
-  
   try {
     const proxyUrl = fileUrl.replace(
       'https://edf-catalogo-tablas.s3.eu-central-1.amazonaws.com/',
       '/admin/s3/'
     );
-    
-    const link = document.createElement('a');
-    link.href = proxyUrl;
-    link.download = fileName || 'archivo';
-    link.style.display = 'none';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
+    edfDownload(proxyUrl, fileName);
     log("[MODAL-UNIFIED] ✅ Descarga S3 iniciada");
   } catch (error) {
     console.error("[MODAL-UNIFIED] ❌ Error descargando S3:", error);
@@ -841,18 +895,8 @@ function downloadS3File(fileUrl, fileName) {
 // Función para descargar archivos locales
 function downloadLocalFile(fileUrl, fileName) {
   log("[MODAL-UNIFIED] 🔧 Descargando archivo local:", fileUrl);
-  if (window.edfNativeSave && window.edfNativeSave(fileUrl, fileName)) { return; }
-  
   try {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName || 'archivo';
-    link.style.display = 'none';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
+    edfDownload(fileUrl, fileName);
     log("[MODAL-UNIFIED] ✅ Descarga local iniciada");
   } catch (error) {
     console.error("[MODAL-UNIFIED] ❌ Error descargando local:", error);
@@ -1039,75 +1083,4 @@ document.addEventListener('click', function(e) {
             downloadLocalFile(documentSrc, documentTitle);
         }
     }
-});
-/* =========================================================
-   EDF FIX - Documentos externos
-   Override final para URLs externas no embebibles.
-   ========================================================= */
-window.addEventListener('load', function () {
-    window.showDocumentModal = function (documentUrl, documentName) {
-        const safeUrl = String(documentUrl || '');
-        const safeName = documentName || safeUrl.split('/').pop() || 'Documento';
-
-        if (!safeUrl) {
-            alert('No hay URL de documento.');
-            return false;
-        }
-
-        const modalEl = document.getElementById('documentModal');
-        const titleEl = document.getElementById('documentTitle');
-        const contentEl = document.getElementById('documentContent');
-
-        if (!modalEl || !contentEl) {
-            window.open(safeUrl, '_blank', 'noopener,noreferrer');
-            return false;
-        }
-
-        const isExternal = /^https?:\/\//i.test(safeUrl);
-        const cleanUrl = safeUrl.split('?')[0].split('#')[0].toLowerCase();
-
-        const isPdf = cleanUrl.endsWith('.pdf');
-        const isTxt = cleanUrl.endsWith('.txt');
-        const isMd = cleanUrl.endsWith('.md');
-        const isPreviewableExternalDocument = isExternal && (isPdf || isTxt || isMd);
-
-        if (titleEl) {
-            titleEl.textContent = safeName;
-        }
-
-        if (isExternal && !isPreviewableExternalDocument) {
-            contentEl.innerHTML = `
-                <div class="alert alert-info mb-0">
-                    <h5 class="mb-3">
-                        <i class="fas fa-external-link-alt"></i> Documento externo
-                    </h5>
-                    <p>
-                        Esta URL apunta a una página web externa. Muchas webs no permiten mostrarse dentro de un modal por seguridad del navegador.
-                    </p>
-                    <p class="small text-muted" style="word-break: break-all;">
-                        ${safeUrl}
-                   </p>
-                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                        <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
-                    </a>
-                </div>
-            `;
-        } else {
-            contentEl.innerHTML = `
-                <iframe src="${safeUrl}"
-                        style="width: 100%; height: 70vh; border: 1px solid #ddd; border-radius: 6px;">
-                </iframe>
-                <div class="mt-3">
-                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                        <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
-                    </a>
-                </div>
-            `;
-        }
-
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
-
-        return false;
-    };
 });

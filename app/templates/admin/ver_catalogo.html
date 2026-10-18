@@ -849,10 +849,13 @@
                    ========================================================== #}
                 {% elif header == 'Multimedia' %}
             
-                  {% set multimedia_data = row.get(header, '') %}
+                  {% set multimedia_raw = row.get(header, '') %}
+                  {% set multimedia_list = ([multimedia_raw] if multimedia_raw is string else multimedia_raw) if multimedia_raw else [] %}
             
-                  {% if multimedia_data %}
-                    <div class="multimedia-preview">
+                  {% if multimedia_list %}
+                    {% for multimedia_data in multimedia_list %}
+                    {% if multimedia_data %}
+                    <div class="multimedia-preview mb-1">
             
                       {% if multimedia_data is string and multimedia_data.startswith('http') %}
                         {% set media_proxy = multimedia_data %}
@@ -901,6 +904,8 @@
                       {% endif %}
             
                     </div>
+                    {% endif %}
+                    {% endfor %}
                   {% else %}
                     <span class="text-muted">-</span>
                   {% endif %}
