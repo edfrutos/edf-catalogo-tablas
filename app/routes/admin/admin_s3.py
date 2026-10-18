@@ -148,6 +148,14 @@ def serve_s3_proxy(filename):
         file_content = response["Body"].read()
         content_type = response.get("ContentType", "application/octet-stream")
 
+        # Si S3 no guardó un tipo útil, se deduce por la extensión. Con
+        # application/octet-stream el navegador descarga el vídeo en lugar de
+        # reproducirlo.
+        if content_type in ("application/octet-stream", "binary/octet-stream", ""):
+            guessed, _ = mimetypes.guess_type(filename)
+            if guessed:
+                content_type = guessed
+
         if filename.lower().endswith(".pdf"):
             content_type = "application/pdf"
         elif filename.lower().endswith(".txt"):
