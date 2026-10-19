@@ -8,7 +8,7 @@ from app.utils.paths import writable_uploads
 
 import boto3
 from botocore.exceptions import ClientError
-from urllib.parse import quote
+from urllib.parse import parse_qsl, quote, unquote, urlencode, urlparse, urlunparse
 
 from flask import (
     Blueprint,
@@ -19,6 +19,7 @@ from flask import (
     send_file,
     session,
     send_from_directory,
+    stream_with_context,
 )
 
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -58,6 +59,25 @@ def _s3_request_authorized(filename: str) -> bool:
         return _s3_signer().loads(token, max_age=S3_LINK_MAX_AGE) == filename
     except (BadSignature, SignatureExpired):
         return False
+
+
+def signed_s3_url(url: str, secret_key: str) -> str:
+    """Añade ?t=<token> a una URL local de /admin/s3/ (la usa el launcher al abrir fuera de la app).
+
+    Cualquier otra URL, o una que ya lleve token, se devuelve igual.
+    """
+    parsed = urlparse(url)
+    prefix = "/admin/s3/"
+    if parsed.hostname not in ("127.0.0.1", "localhost") or not parsed.path.startswith(prefix):
+        return url
+    query = parse_qsl(parsed.query, keep_blank_values=True)
+    if any(k == "t" for k, _ in query):
+        return url
+    key = unquote(parsed.path[len(prefix):])
+    if not _s3_key_is_safe(key):
+        return url
+    token = URLSafeTimedSerializer(secret_key, salt="s3-proxy").dumps(key)
+    return urlunparse(parsed._replace(query=urlencode(query + [("t", token)])))
 
 
 @admin_s3_bp.route("/s3-link/<path:filename>")
@@ -195,9 +215,15 @@ def serve_s3_proxy(filename):
             f"[S3-PROXY] Descargando archivo desde S3: Bucket={aws_bucket}, Key={filename}"
         )
 
-        response = s3_client.get_object(Bucket=aws_bucket, Key=filename)
+        # Streaming + Range: el navegador empieza a leer (y a decidir si puede
+        # decodificar el vídeo) sin esperar a que el proxy baje el archivo entero.
+        get_kwargs = {"Bucket": aws_bucket, "Key": filename}
+        range_header = request.headers.get("Range")
+        if range_header:
+            get_kwargs["Range"] = range_header
+        response = s3_client.get_object(**get_kwargs)
 
-        file_content = response["Body"].read()
+        body = response["Body"]
         content_type = response.get("ContentType", "application/octet-stream")
 
         # Si S3 no guardó un tipo útil, se deduce por la extensión. Con
@@ -217,25 +243,38 @@ def serve_s3_proxy(filename):
             # el navegador no intenta descargarlo.
             content_type = "text/plain; charset=utf-8"
 
+        status = 206 if range_header and response.get("ContentRange") else 200
+        headers = {
+            "Content-Disposition": _content_disposition(
+                filename, request.args.get("download") == "1"
+            ),
+            "Cache-Control": "no-cache",
+            "Accept-Ranges": "bytes",
+        }
+        if response.get("ContentLength") is not None:
+            headers["Content-Length"] = str(response["ContentLength"])
+        if status == 206:
+            headers["Content-Range"] = response["ContentRange"]
+        if not _s3_auth_enabled():
+            headers["Access-Control-Allow-Origin"] = "*"
+
         current_app.logger.info(
-            f"[S3-PROXY] Archivo descargado exitosamente - "
-            f"Tamaño: {len(file_content)} bytes, Tipo: {content_type}"
+            f"[S3-PROXY] Sirviendo {filename} - estado {status}, "
+            f"Tamaño: {response.get('ContentLength')} bytes, Tipo: {content_type}"
         )
 
         return Response(
-            file_content,
+            stream_with_context(body.iter_chunks(65536)),
+            status=status,
             content_type=content_type,
-            headers={
-                "Content-Disposition": _content_disposition(
-                    filename, request.args.get("download") == "1"
-                ),
-                "Cache-Control": "no-cache",
-                **({} if _s3_auth_enabled() else {"Access-Control-Allow-Origin": "*"}),
-            },
+            headers=headers,
         )
 
     except ClientError as e:
         current_app.logger.error(f"Error descargando archivo S3 {filename}: {e}")
+
+        if e.response.get("Error", {}).get("Code") == "InvalidRange":
+            return Response(status=416)
 
         safe_filename = os.path.basename(filename)
 

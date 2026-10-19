@@ -25,7 +25,17 @@ class _EdfApi:
         from urllib.parse import urlparse
         if urlparse(str(url)).scheme not in ("http", "https"):
             return False
-        webbrowser.open(str(url))
+        url = str(url)
+        try:
+            # Chrome no comparte la sesión de la app: los archivos de /admin/s3/
+            # se abren con un enlace firmado y de corta duración.
+            from app.routes.admin.admin_s3 import signed_s3_url
+            from wsgi import app as flask_app
+
+            url = signed_s3_url(url, flask_app.secret_key)
+        except Exception as exc:
+            print(f"⚠️  No se pudo firmar el enlace: {exc}")
+        webbrowser.open(url)
         return True
 
     def save_file(self, url, filename=""):
@@ -139,17 +149,15 @@ def _show_error(message):
     """Diálogo nativo de macOS (aún no hay ventana pywebview); si falla, solo consola."""
     print(f"❌ {message}")
     if sys.platform == "darwin":
+        # El texto va dentro del propio script: osascript lo lee como UTF-8. Por una
+        # variable de entorno (system attribute) se decodifica como MacRoman y rompe tildes.
+        text = message.replace("\\", "\\\\").replace('"', '\\"')
         script = (
-            'display dialog (system attribute "EDF_MSG") with title '
-            '"EDF Catálogo de Tablas" buttons {"Aceptar"} default button 1 with icon stop'
+            f'display dialog "{text}" with title "EDF Catálogo de Tablas" '
+            'buttons {"Aceptar"} default button 1 with icon stop'
         )
         try:
-            subprocess.run(
-                ["osascript", "-e", script],
-                env={**os.environ, "EDF_MSG": message},
-                timeout=120,
-                check=False,
-            )
+            subprocess.run(["osascript", "-e", script], timeout=120, check=False)
         except Exception:
             pass
 
