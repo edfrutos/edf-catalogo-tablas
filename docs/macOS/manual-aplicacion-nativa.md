@@ -94,9 +94,9 @@ La aplicación utiliza las siguientes configuraciones:
 - **Logs**: Directorio de registros
 
 ### Directorios de Datos
-- **Logs**: `/var/folders/.../edf_catalogo_logs/`
-- **Sesiones**: `/var/folders/.../edf_catalogo_logs/flask_session/`
-- **Cache**: Almacenamiento temporal automático
+- **Logs**: `~/Library/Logs/EDF_Catalogo/` (visibles también en Consola.app)
+- **Sesiones**: `~/Library/Application Support/EDF_Catalogo/flask_session/`
+- **Cookies y almacenamiento web**: los conserva WebKit entre arranques (la sesión dura hasta 4 horas)
 
 ## 🆘 Solución de Problemas
 

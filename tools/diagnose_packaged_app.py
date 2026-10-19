@@ -78,7 +78,7 @@ def check_permissions():
     print("=" * 30)
 
     # Verificar directorio temporal
-    temp_dir = Path(tempfile.gettempdir()) / "edf_catalogo_logs"
+    temp_dir = Path.home() / "Library" / "Logs" / "EDF_Catalogo"
     print(f"📁 Directorio temporal: {temp_dir}")
 
     try:

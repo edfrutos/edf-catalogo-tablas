@@ -167,7 +167,7 @@ def check_permissions():
             print("💡 Ejecuta: chmod +x " + executable_path)
 
     # Verificar permisos de escritura en directorio temporal
-    temp_dir = Path(tempfile.gettempdir()) / "edf_catalogo_logs"
+    temp_dir = Path.home() / "Library" / "Logs" / "EDF_Catalogo"
     try:
         temp_dir.mkdir(exist_ok=True)
         test_file = temp_dir / "test_permissions.txt"
@@ -216,7 +216,7 @@ def check_logs():
 
     # Buscar logs recientes
     log_dirs = [
-        Path(tempfile.gettempdir()) / "edf_catalogo_logs",
+        Path.home() / "Library" / "Logs" / "EDF_Catalogo",
         Path.home() / "Library" / "Logs",
         Path.cwd() / "logs",
     ]
