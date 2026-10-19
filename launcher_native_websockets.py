@@ -7,7 +7,6 @@ con soporte para WebSockets en tiempo real
 
 import os
 import sys
-import tempfile
 import threading
 import time
 from pathlib import Path
@@ -78,17 +77,14 @@ except Exception as e:
 # Configurar directorios escribibles ANTES de cualquier importación
 if getattr(sys, "frozen", False):
     # Estamos en una aplicación empaquetada
-    temp_dir = Path(tempfile.gettempdir()) / "edf_catalogo_logs"
-    temp_dir.mkdir(exist_ok=True)
-    os.environ["LOG_DIR"] = str(temp_dir)
-    os.environ["FLASK_LOG_DIR"] = str(temp_dir)
-    print(f"📝 Directorio de logs configurado: {temp_dir}")
-
-    # Configurar directorio de sesiones
-    session_dir = temp_dir / "flask_session"
-    session_dir.mkdir(exist_ok=True)
-    os.environ["SESSION_FILE_DIR"] = str(session_dir)
-    print(f"📝 Directorio de sesiones configurado: {session_dir}")
+    # Convención macOS: los logs van a ~/Library/Logs/<App> (visibles en Consola.app)
+    log_dir = Path.home() / "Library" / "Logs" / "EDF_Catalogo"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    os.environ["LOG_DIR"] = str(log_dir)
+    os.environ["FLASK_LOG_DIR"] = str(log_dir)
+    print(f"📝 Directorio de logs configurado: {log_dir}")
+    # Nota: las sesiones de Flask no se configuran aquí. En modo empaquetado las fija
+    # app/extensions.py (writable_dir -> ~/Library/Application Support/EDF_Catalogo/flask_session).
 
     # Configurar entorno de producción
     os.environ["FLASK_ENV"] = "production"
@@ -99,6 +95,30 @@ if getattr(sys, "frozen", False):
     _work_dir.mkdir(parents=True, exist_ok=True)
     os.chdir(_work_dir)
     print(f"📂 Directorio de trabajo: {_work_dir}")
+
+
+# Cadenas de la interfaz nativa (diálogo de cierre, menús de macOS) en español.
+# Claves definidas en webview/localization.py de pywebview 6.x.
+_ES_STRINGS = {
+    "global.quitConfirmation": "¿Seguro que quieres salir?",
+    "global.ok": "Aceptar",
+    "global.quit": "Salir",
+    "global.cancel": "Cancelar",
+    "global.saveFile": "Guardar archivo",
+    "cocoa.menu.about": "Acerca de",
+    "cocoa.menu.services": "Servicios",
+    "cocoa.menu.view": "Visualización",
+    "cocoa.menu.edit": "Edición",
+    "cocoa.menu.hide": "Ocultar",
+    "cocoa.menu.hideOthers": "Ocultar otros",
+    "cocoa.menu.showAll": "Mostrar todo",
+    "cocoa.menu.quit": "Salir de",
+    "cocoa.menu.fullscreen": "Entrar en pantalla completa",
+    "cocoa.menu.cut": "Cortar",
+    "cocoa.menu.copy": "Copiar",
+    "cocoa.menu.paste": "Pegar",
+    "cocoa.menu.selectAll": "Seleccionar todo",
+}
 
 
 def start_flask_server():
@@ -172,7 +192,7 @@ def main():
 
         # Configuración básica para pywebview
         window_config = {
-            "title": "EDF Catálogo de Tablas - Aplicación Web Nativa",
+            "title": "EDF Catálogo de Tablas",
             "url": "http://127.0.0.1:5004",
             "width": 1400,
             "height": 900,
@@ -180,6 +200,8 @@ def main():
             "min_size": (800, 600),
             "text_select": True,
             "confirm_close": True,
+            # Se pasa a create_window (no a start): cada ventana copia las cadenas al crearse
+            "localization": _ES_STRINGS,
         }
 
         # Crear la ventana nativa
@@ -194,7 +216,14 @@ def main():
         print("-" * 60)
 
         # Iniciar la aplicación con configuración mejorada
-        webview.start(debug=os.environ.get("EDF_WEBVIEW_DEBUG") == "1", gui="native")  # pyright: ignore[reportArgumentType]
+        # private_mode=False: WebKit conserva cookies y localStorage entre arranques
+        # (por defecto pywebview es privado y pedía login en cada apertura).
+        # En macOS pywebview usa el almacén por defecto de WebKit y no usa storage_path.
+        webview.start(  # pyright: ignore[reportArgumentType]
+            debug=os.environ.get("EDF_WEBVIEW_DEBUG") == "1",
+            gui="native",
+            private_mode=False,
+        )
 
     except Exception as e:
         print(f"❌ Error al crear la ventana nativa: {e}")
