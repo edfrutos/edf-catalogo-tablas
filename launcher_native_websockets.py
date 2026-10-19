@@ -6,6 +6,8 @@ con soporte para WebSockets en tiempo real
 """
 
 import os
+import socket
+import subprocess
 import sys
 import threading
 import time
@@ -121,6 +123,34 @@ _ES_STRINGS = {
 }
 
 
+PORT = 5004  # fijo a propósito: cambiar de puerto cambia el origen y se perderían cookies y localStorage
+
+
+def _port_is_free(port=PORT):
+    """True si nadie escucha en 127.0.0.1:port (evita hablar con un servidor ajeno)."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        return sock.connect_ex(("127.0.0.1", port)) != 0
+
+
+def _show_error(message):
+    """Diálogo nativo de macOS (aún no hay ventana pywebview); si falla, solo consola."""
+    print(f"❌ {message}")
+    if sys.platform == "darwin":
+        script = (
+            'display dialog (system attribute "EDF_MSG") with title '
+            '"EDF Catálogo de Tablas" buttons {"Aceptar"} default button 1 with icon stop'
+        )
+        try:
+            subprocess.run(
+                ["osascript", "-e", script],
+                env={**os.environ, "EDF_MSG": message},
+                timeout=120,
+                check=False,
+            )
+        except Exception:
+            pass
+
+
 def start_flask_server():
     """Inicia el servidor Flask en segundo plano"""
     try:
@@ -139,7 +169,7 @@ def start_flask_server():
         )
 
         app.run(
-            debug=False, port=5004, host="127.0.0.1", use_reloader=False, threaded=True
+            debug=False, port=PORT, host="127.0.0.1", use_reloader=False, threaded=True
         )
     except Exception as e:
         print(f"❌ Error al iniciar el servidor Flask: {e}")
@@ -151,7 +181,7 @@ def wait_for_server():
     max_attempts = 30
     for attempt in range(max_attempts):
         try:
-            response = requests.get("http://127.0.0.1:5004", timeout=1)
+            response = requests.get(f"http://127.0.0.1:{PORT}", timeout=1)
             if response.status_code in [200, 302]:
                 print(f"✅ Servidor Flask listo (intento {attempt + 1})")
                 return True
@@ -175,6 +205,13 @@ def main():
     print("🚀 Iniciando EDF Catálogo de Tablas (Aplicación Nativa WebSockets)")
     print("=" * 60)
 
+    if not _port_is_free():
+        _show_error(
+            f"El puerto {PORT} ya está en uso. Probablemente hay otra copia de la "
+            "aplicación abierta (o un servidor local). Ciérrala e inténtalo de nuevo."
+        )
+        sys.exit(1)
+
     # Iniciar el servidor Flask en un hilo separado
     server_thread = threading.Thread(target=start_flask_server)
     server_thread.daemon = True
@@ -193,7 +230,7 @@ def main():
         # Configuración básica para pywebview
         window_config = {
             "title": "EDF Catálogo de Tablas",
-            "url": "http://127.0.0.1:5004",
+            "url": f"http://127.0.0.1:{PORT}",
             "width": 1400,
             "height": 900,
             "resizable": True,
@@ -233,7 +270,7 @@ def main():
         import webbrowser
 
         webbrowser.open(
-            "http://127.0.0.1:5004"
+            f"http://127.0.0.1:{PORT}"
         )  # pyright: ignore[reportUnusedCallResult]
 
         # Mantener el servidor corriendo
