@@ -68,7 +68,7 @@ def register_admin_tool_routes(admin_bp) -> None:
                 # Extraer el nombre del archivo de la URL
                 file_name = file_url.split("/")[-1]
                 bucket_name = current_app.config.get(
-                    "S3_BUCKET_NAME", "edf-catalogo-tablas"
+                    "S3_BUCKET_NAME", "edfcatalogotablas-sp"
                 )
 
                 current_app.logger.info(

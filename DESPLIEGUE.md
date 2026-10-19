@@ -15,7 +15,7 @@
 |---|---|
 | App | Flask / Gunicorn en Docker |
 | Base de datos | MongoDB Atlas — `cluster0.alh9mwn.mongodb.net` / `edf_catalogotablas` |
-| Almacenamiento | AWS S3 — bucket `edf-catalogo-tablas-sp` / región `eu-south-2` |
+| Almacenamiento | AWS S3 — bucket `edfcatalogotablas-sp` / región `eu-south-2` |
 | Túnel | autossh Mac → Vultr (`208.76.221.20:2222`) |
 | Proxy | nginx en Plesk → `127.0.0.1:5002` |
 | SSL | Let's Encrypt (renovación automática por Plesk) |
@@ -75,7 +75,7 @@ tail -f /tmp/catalogotablas-tunnel.log
 | `AWS_ACCESS_KEY_ID` | Credenciales S3 |
 | `AWS_SECRET_ACCESS_KEY` | Credenciales S3 |
 | `AWS_REGION` | `eu-south-2` |
-| `S3_BUCKET_NAME` | `edf-catalogo-tablas-sp` |
+| `S3_BUCKET_NAME` | `edfcatalogotablas-sp` |
 
 > El `.env` lo lee Docker Compose desde el directorio del proyecto.  
 > **No** sourcear `~/.config/edf_catalogotablas/.env` en el shell — sobreescribe las variables.
