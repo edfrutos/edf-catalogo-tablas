@@ -76,6 +76,9 @@ except ImportError:
 except Exception as e:
     print(f"⚠️  Error al cargar .env: {e}")
 
+# La app de escritorio exige sesión (o enlace firmado) en el proxy /admin/s3/
+os.environ["EDF_S3_PROXY_AUTH"] = "1"
+
 # Configurar directorios escribibles ANTES de cualquier importación
 if getattr(sys, "frozen", False):
     # Estamos en una aplicación empaquetada

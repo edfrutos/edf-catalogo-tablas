@@ -15,15 +15,33 @@
     return !!u && /^https?:$/.test(u.protocol) && u.origin !== window.location.origin;
   }
 
+  var S3 = '/admin/s3/';
+
+  // Los archivos de /admin/s3/ exigen sesión: lo que se abre fuera de la ventana (Chrome)
+  // o se descarga desde Python no la comparte, así que se pide antes una URL firmada.
+  function withToken(u) {
+    if (u.pathname.indexOf(S3) !== 0) return Promise.resolve(u.href);
+    return fetch('/admin/s3-link/' + u.pathname.slice(S3.length), { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (d) { return d.url + (u.search ? '&' + u.search.slice(1) : ''); })
+      .catch(function () { return u.href; });
+  }
+
   window.edfOpenExternal = function (url) {
     var a = api(), u = toURL(url);
-    if (a && a.open_external && u && (isMedia(u) || isExternal(u))) { a.open_external(u.href); return true; }
+    if (a && a.open_external && u && (isMedia(u) || isExternal(u))) {
+      (isMedia(u) ? withToken(u) : Promise.resolve(u.href)).then(function (h) { a.open_external(h); });
+      return true;
+    }
     return false;
   };
 
   window.edfNativeSave = function (url, name) {
     var a = api(), u = toURL(url);
-    if (a && a.save_file && isMedia(u)) { a.save_file(u.href, name || ''); return true; }
+    if (a && a.save_file && isMedia(u)) {
+      withToken(u).then(function (h) { a.save_file(h, name || ''); });
+      return true;
+    }
     return false;
   };
 
