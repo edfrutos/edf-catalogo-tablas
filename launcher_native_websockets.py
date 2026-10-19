@@ -109,9 +109,9 @@ def start_flask_server():
         # Configuración específica para pywebview
         app.config.update(
             {
-                "SESSION_COOKIE_SECURE": False,  # HTTP para pywebview
-                "SESSION_COOKIE_HTTPONLY": False,  # Acceso desde JavaScript
-                "SESSION_COOKIE_SAMESITE": None,  # Sin SameSite
+                "SESSION_COOKIE_SECURE": False,  # HTTP en 127.0.0.1 (sin TLS)
+                "SESSION_COOKIE_HTTPONLY": True,  # No accesible desde JavaScript
+                "SESSION_COOKIE_SAMESITE": "Lax",
                 "SESSION_COOKIE_DOMAIN": None,  # Sin dominio específico
                 "SESSION_COOKIE_PATH": "/",  # Ruta de la cookie
                 "PERMANENT_SESSION_LIFETIME": 14400,  # 4 horas
