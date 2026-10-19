@@ -17,12 +17,59 @@ from flask import (
     jsonify,
     request,
     send_file,
+    session,
     send_from_directory,
 )
+
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from app.utils.row_media import display_name
 
 admin_s3_bp = Blueprint("admin_s3", __name__, url_prefix="/admin")
+
+
+# Protección del proxy en la app de escritorio. El launcher activa EDF_S3_PROXY_AUTH=1;
+# el despliegue web no lo define y mantiene el comportamiento anterior.
+S3_LINK_MAX_AGE = 3600  # segundos de validez de un enlace firmado
+
+
+def _s3_auth_enabled() -> bool:
+    return os.getenv("EDF_S3_PROXY_AUTH") == "1"
+
+
+def _s3_signer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(current_app.secret_key, salt="s3-proxy")
+
+
+def _s3_key_is_safe(filename: str) -> bool:
+    return bool(filename) and not filename.startswith("/") and ".." not in filename.split("/")
+
+
+def _s3_request_authorized(filename: str) -> bool:
+    """Sesión iniciada, o token firmado válido para ESTE archivo (navegador externo)."""
+    if not _s3_auth_enabled():
+        return True
+    if session.get("user_id"):
+        return True
+    token = request.args.get("t")
+    if not token:
+        return False
+    try:
+        return _s3_signer().loads(token, max_age=S3_LINK_MAX_AGE) == filename
+    except (BadSignature, SignatureExpired):
+        return False
+
+
+@admin_s3_bp.route("/s3-link/<path:filename>")
+def s3_signed_link(filename):
+    """Devuelve una URL firmada y temporal para abrir el archivo fuera de la app."""
+    if not session.get("user_id"):
+        return jsonify({"error": "No autorizado"}), 401
+    if not _s3_key_is_safe(filename):
+        return jsonify({"error": "Ruta no válida"}), 400
+    token = _s3_signer().dumps(filename)
+    url = f"{request.host_url.rstrip('/')}/admin/s3/{quote(filename)}?t={token}"
+    return jsonify({"url": url})
 
 
 def _content_disposition(filename: str, download: bool) -> str:
@@ -119,6 +166,11 @@ def serve_s3_proxy(filename):
     Ruta para servir archivos S3 como proxy.
     Evita problemas CORS al descargar archivos desde S3.
     """
+    if not _s3_key_is_safe(filename):
+        return jsonify({"error": "Ruta no válida"}), 400
+    if not _s3_request_authorized(filename):
+        return jsonify({"error": "No autorizado"}), 401
+
     current_app.logger.info(f"[S3-PROXY] Solicitud para archivo: {filename}")
 
     try:
@@ -177,8 +229,8 @@ def serve_s3_proxy(filename):
                 "Content-Disposition": _content_disposition(
                     filename, request.args.get("download") == "1"
                 ),
-                "Access-Control-Allow-Origin": "*",
                 "Cache-Control": "no-cache",
+                **({} if _s3_auth_enabled() else {"Access-Control-Allow-Origin": "*"}),
             },
         )
 
