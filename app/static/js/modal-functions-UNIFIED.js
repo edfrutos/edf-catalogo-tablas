@@ -128,26 +128,14 @@ function showDocumentModal(documentSrc, documentTitle) {
       );
       
       modalContent.innerHTML = `
-        <div class="text-center p-4">
-          <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
-          <h5>Documento PDF</h5>
-          <p class="text-muted mb-4">
-            <strong>Archivo:</strong> ${documentTitle}<br>
-            <strong>Tipo:</strong> PDF<br>
-            <strong>Ubicación:</strong> S3
-          </p>
+        <div class="p-2">
+          ${edfDocHeader('fa-file-pdf', 'text-danger', documentTitle, 'PDF', 'S3')}
           
-          <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i>
-            <strong>Visualizando PDF desde S3...</strong>
-          </div>
-          
-          <div class="pdf-viewer-container mt-4">
+          <div class="pdf-viewer-container">
             <iframe 
               src="${proxyUrl}" 
               width="100%" 
-              height="600" 
-              style="border: 1px solid #dee2e6; border-radius: 8px;"
+              style="height: calc(100vh - 220px); min-height: 320px; border: 1px solid #dee2e6; border-radius: 8px;"
               onload="// console.log('[MODAL-UNIFIED] ✅ PDF cargado en iframe')"
               onerror="console.error('[MODAL-UNIFIED] ❌ Error cargando PDF en iframe')">
             </iframe>
@@ -184,14 +172,8 @@ function showDocumentModal(documentSrc, documentTitle) {
     } else {
       // Otros tipos S3
       modalContent.innerHTML = `
-        <div class="text-center p-4">
-          <i class="fas fa-file fa-4x text-primary mb-3"></i>
-          <h5>Documento S3</h5>
-          <p class="text-muted mb-4">
-            <strong>Archivo:</strong> ${documentTitle}<br>
-            <strong>Tipo:</strong> ${fileExtension?.toUpperCase() || 'Desconocido'}<br>
-            <strong>Ubicación:</strong> S3
-          </p>
+        <div class="p-2">
+          ${edfDocHeader('fa-file', 'text-primary', documentTitle, fileExtension?.toUpperCase() || 'Desconocido', 'S3')}
         </div>
       `;
       
@@ -221,21 +203,14 @@ function showDocumentModal(documentSrc, documentTitle) {
     if (fileExtension === 'pdf') {
       // PDF local - iframe directo
       modalContent.innerHTML = `
-        <div class="text-center p-4">
-          <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
-          <h5>Documento PDF</h5>
-          <p class="text-muted mb-4">
-            <strong>Archivo:</strong> ${documentTitle}<br>
-            <strong>Tipo:</strong> PDF<br>
-            <strong>Ubicación:</strong> S3
-          </p>
+        <div class="p-2">
+          ${edfDocHeader('fa-file-pdf', 'text-danger', documentTitle, 'PDF', 'Local')}
           
-          <div class="pdf-viewer-container mt-4">
+          <div class="pdf-viewer-container">
             <iframe 
               src="${documentSrc}" 
               width="100%" 
-              height="600" 
-              style="border: 1px solid #dee2e6; border-radius: 8px;"
+              style="height: calc(100vh - 220px); min-height: 320px; border: 1px solid #dee2e6; border-radius: 8px;"
               onload="// console.log('[MODAL-UNIFIED] ✅ PDF local cargado en iframe')">
             </iframe>
           </div>
@@ -271,14 +246,8 @@ function showDocumentModal(documentSrc, documentTitle) {
     } else {
       // Otros tipos locales
       modalContent.innerHTML = `
-        <div class="text-center p-4">
-          <i class="fas fa-file fa-4x text-primary mb-3"></i>
-          <h5>Documento Local</h5>
-          <p class="text-muted mb-4">
-            <strong>Archivo:</strong> ${documentTitle}<br>
-            <strong>Tipo:</strong> ${fileExtension?.toUpperCase() || 'Desconocido'}<br>
-            <strong>Ubicación:</strong> S3
-          </p>
+        <div class="p-2">
+          ${edfDocHeader('fa-file', 'text-primary', documentTitle, fileExtension?.toUpperCase() || 'Desconocido', 'Local')}
         </div>
       `;
       
@@ -312,6 +281,16 @@ function edfEscapeHtml(text) {
   return String(text).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
+}
+
+// Cabecera compacta de los modales de documento: una sola línea (icono, nombre y tipo · ubicación)
+function edfDocHeader(iconClass, colorClass, name, typeLabel, location) {
+  const clean = edfEscapeHtml(edfCleanName(name));
+  return `<div class="edf-doc-header d-flex align-items-center gap-2 mb-2">
+    <i class="fas ${iconClass} fa-lg ${colorClass} flex-shrink-0"></i>
+    <span class="fw-semibold text-truncate flex-grow-1" style="min-width: 0;" title="${clean}">${clean}</span>
+    <span class="badge bg-light text-dark border flex-shrink-0">${edfEscapeHtml(typeLabel)} · ${edfEscapeHtml(location)}</span>
+  </div>`;
 }
 
 function edfLoadScript(src) {
@@ -394,16 +373,10 @@ function showMarkdownInModal(markdownUrl, markdownTitle) {
       const htmlContent = await renderMarkdownSafe(markdownText);
       
       modalContent.innerHTML = `
-        <div class="text-center p-4">
-          <i class="fas fa-file-code fa-4x text-info mb-3"></i>
-          <h5>Documento Markdown</h5>
-          <p class="text-muted mb-4">
-            <strong>Archivo:</strong> ${edfEscapeHtml(edfCleanName(markdownTitle))}<br>
-            <strong>Tipo:</strong> Markdown<br>
-            <strong>Ubicación:</strong> ${isS3File ? 'S3' : 'Local'}
-          </p>
+        <div class="p-2">
+          ${edfDocHeader('fa-file-code', 'text-info', markdownTitle, 'Markdown', isS3File ? 'S3' : 'Local')}
           
-          <div class="markdown-content-wrapper" style="max-height: 60vh; overflow-y: auto; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: left; margin-bottom: 20px;">
+          <div class="markdown-content-wrapper" style="max-height: calc(100vh - 220px); overflow-y: auto; padding: 16px; background: #f8f9fa; border-radius: 8px; text-align: left;">
             <div class="markdown-rendered">
               ${htmlContent}
             </div>
@@ -471,16 +444,10 @@ function showTextInModal(textUrl, textTitle) {
   // Función para mostrar el contenido del texto
   function displayTextContent(content, location, finalUrl) {
     modalContent.innerHTML = `
-      <div class="text-center p-4">
-        <i class="fas fa-file-alt fa-4x text-primary mb-3"></i>
-        <h5>Documento de Texto</h5>
-        <p class="text-muted mb-4">
-          <strong>Archivo:</strong> ${textTitle}<br>
-          <strong>Tipo:</strong> Texto<br>
-          <strong>Ubicación:</strong> ${location}
-        </p>
+      <div class="p-2">
+          ${edfDocHeader('fa-file-alt', 'text-primary', textTitle, 'Texto', location)}
         
-        <div class="text-content-wrapper" style="max-height: 60vh; overflow-y: auto; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: left; margin-bottom: 20px;">
+        <div class="text-content-wrapper" style="max-height: calc(100vh - 220px); overflow-y: auto; padding: 16px; background: #f8f9fa; border-radius: 8px; text-align: left;">
           <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace;">${content}</pre>
         </div>
       </div>

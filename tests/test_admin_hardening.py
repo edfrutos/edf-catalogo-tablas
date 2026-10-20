@@ -140,18 +140,32 @@ PLANTILLAS = RAIZ / "app" / "templates"
 BLOQUE_VACIO = "{% block multimedia_modal %}{% endblock %}"
 
 
-def test_multimedia_modal_un_solo_id_por_pagina():
-    """Toda plantilla que hereda de base.html y define su propio #multimediaModal debe anular el bloque de base."""
+MODALES_BASE = {
+    "multimediaModal": "multimedia_modal",
+    "documentModal": "document_modal",
+    "imageModal": "image_modal",
+}
+
+
+def test_modales_de_base_un_solo_id_por_pagina():
+    """Si una plantilla que hereda de base.html define su propio modal, debe anular el bloque de base."""
     base = (PLANTILLAS / "base.html").read_text(encoding="utf-8")
-    assert base.count('id="multimediaModal"') == 1
-    assert "{% block multimedia_modal %}" in base
-    propias = []
+    for id_modal, bloque in MODALES_BASE.items():
+        assert base.count(f'id="{id_modal}"') == 1, id_modal
+        assert "{% block " + bloque + " %}" in base, bloque
+    propias = set()
     for p in PLANTILLAS.rglob("*.html"):
+        if p.name == "base.html":
+            continue
         s = p.read_text(encoding="utf-8")
-        if re.search(r"\{% extends ['\"]base\.html['\"] %\}", s) and 'id="multimediaModal"' in s:
-            propias.append(p)
-            assert BLOQUE_VACIO in s, f"{p.relative_to(PLANTILLAS)} duplica #multimediaModal"
-    assert {p.name for p in propias} >= {"ver_tabla.html", "view.html"}
+        if not re.search(r"\{% extends ['\"]base\.html['\"] %\}", s):
+            continue
+        for id_modal, bloque in MODALES_BASE.items():
+            if f'id="{id_modal}"' in s:
+                propias.add((p.name, id_modal))
+                assert "{% block " + bloque + " %}{% endblock %}" in s, f"{p.relative_to(PLANTILLAS)} duplica #{id_modal}"
+    assert ("ver_tabla.html", "documentModal") in propias
+    assert ("view.html", "imageModal") in propias
 
 
 def test_monitor_db_sin_ids_duplicados():
@@ -159,3 +173,12 @@ def test_monitor_db_sin_ids_duplicados():
     ids = re.findall(r'\bid="([^"]+)"', s)
     repetidos = {i for i in ids if ids.count(i) > 1}
     assert not repetidos, repetidos
+
+
+# ---------- cabecera compacta de los modales de documento ----------
+def test_modal_documentos_cabecera_compacta():
+    js = (RAIZ / "app" / "static" / "js" / "modal-functions-UNIFIED.js").read_text(encoding="utf-8")
+    assert "function edfDocHeader(" in js
+    assert "Visualizando PDF desde S3" not in js      # aviso azul eliminado
+    assert 'height="600"' not in js                    # el visor usa el alto de la ventana
+    assert "fa-4x text-danger mb-3\"></i>\n          <h5>Documento" not in js

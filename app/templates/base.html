@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <button type="button" id="goTopBtn" class="btn btn-primary btn-lg rounded-circle" style="position:fixed;bottom:32px;right:32px;z-index:1050;display:none;"><i class="bi bi-arrow-up"></i></button>
 
 <!-- Modal para Imágenes -->
+{% block image_modal %}
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -133,8 +134,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+{% endblock %}
 
 <!-- Modal para Documentos -->
+{% block document_modal %}
 <div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -156,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+{% endblock %}
 
 <!-- Modal para Multimedia (las páginas con su propio modal anulan este bloque para no duplicar el id) -->
 {% block multimedia_modal %}
