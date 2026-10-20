@@ -157,7 +157,8 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<!-- Modal para Multimedia -->
+<!-- Modal para Multimedia (las páginas con su propio modal anulan este bloque para no duplicar el id) -->
+{% block multimedia_modal %}
 <div class="modal fade" id="multimediaModal" tabindex="-1" aria-labelledby="multimediaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -179,6 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+{% endblock %}
 
 <!-- Modal para resultados de scripts -->
 <div class="modal fade" id="scriptResultModal" tabindex="-1" aria-labelledby="scriptResultModalLabel" aria-hidden="true">

@@ -324,20 +324,6 @@ def register_admin_db_routes(admin_bp) -> None:
                 else {"error": f"No se pudo obtener el estado del servidor: {ss_error}"}
             )
 
-            # Inicializar contadores de operaciones si no existen
-            if "opcounters" not in session:
-                session["opcounters"] = {
-                    "query": 0,
-                    "insert": 0,
-                    "update": 0,
-                    "delete": 0,
-                    "getmore": 0,
-                    "command": 0,
-                }
-
-            # Guardar timestamp de la última actualización
-            session["last_update"] = time.time()
-
             # Obtener operaciones lentas (últimas 10)
             try:
                 current_ops = client.admin.command("currentOp")
@@ -400,7 +386,11 @@ def register_admin_db_routes(admin_bp) -> None:
             if server_status is None:
                 # 200 con success=False: la página muestra el motivo y no se llena de errores 500
                 return jsonify(
-                    {"success": False, "error": f"serverStatus no disponible: {ss_error}"}
+                    {
+                        "success": False,
+                        "unavailable": True,
+                        "error": f"serverStatus no disponible: {ss_error}",
+                    }
                 )
 
             # Obtener contadores actuales
