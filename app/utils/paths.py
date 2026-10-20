@@ -42,3 +42,21 @@ def writable_uploads(default: str) -> str:
     if is_frozen():
         return writable_dir("", "uploads")
     return default
+
+
+def logs_dir(default: str) -> str:
+    """Carpeta de logs: empaquetada -> $LOG_DIR o ~/Library/Logs/EDF_Catalogo; desarrollo -> `default`.
+
+    El launcher fija LOG_DIR antes de arrancar Flask; este valor evita que las páginas de
+    administración lean (o creen) una carpeta `logs` dentro del .app firmado.
+    """
+    if not is_frozen():
+        return default
+    path = os.environ.get("LOG_DIR")
+    if not path:
+        if sys.platform == "darwin":
+            path = os.path.join(os.path.expanduser("~"), "Library", "Logs", "EDF_Catalogo")
+        else:
+            path = os.path.join(user_data_dir(), "logs")
+    os.makedirs(path, exist_ok=True)
+    return path

@@ -13,6 +13,8 @@ from flask import current_app, flash, jsonify, render_template, request, session
 from app.audit import audit_log
 from app.database import get_mongo_client, get_mongo_db
 from app.decorators import admin_required
+from app.utils.mongo_admin import admin_command
+from pymongo.errors import PyMongoError
 
 
 def register_admin_db_routes(admin_bp) -> None:
@@ -262,8 +264,10 @@ def register_admin_db_routes(admin_bp) -> None:
             status["server_info"] = convert_timestamps(server_info)
 
             # Obtener y procesar estadísticas del servidor
+            server_status, ss_error = admin_command(client, "serverStatus")
             try:
-                server_status = client.admin.command("serverStatus")
+                if server_status is None:
+                    raise ValueError(ss_error)
                 status["server_status"] = convert_timestamps(server_status)
             except (AttributeError, KeyError, TypeError, ValueError) as e:
                 status["server_status"] = {
@@ -271,6 +275,7 @@ def register_admin_db_routes(admin_bp) -> None:
                 }
 
         except (
+            PyMongoError,
             ConnectionError,
             TimeoutError,
             AttributeError,
@@ -311,9 +316,13 @@ def register_admin_db_routes(admin_bp) -> None:
                     )
                     status["error"] = f"Error al obtener estadísticas: {str(e)}"
 
-            # Obtener estado del servidor
-            server_status = client.admin.command("serverStatus")
-            status["server_status"] = server_status
+            # Obtener estado del servidor (puede no estar permitido: Atlas gratuito o usuario sin monitorización)
+            server_status, ss_error = admin_command(client, "serverStatus")
+            status["server_status"] = (
+                server_status
+                if server_status is not None
+                else {"error": f"No se pudo obtener el estado del servidor: {ss_error}"}
+            )
 
             # Inicializar contadores de operaciones si no existen
             if "opcounters" not in session:
@@ -350,6 +359,7 @@ def register_admin_db_routes(admin_bp) -> None:
                 status["slow_ops"] = []
 
         except (
+            PyMongoError,
             ConnectionError,
             TimeoutError,
             AttributeError,
@@ -377,7 +387,7 @@ def register_admin_db_routes(admin_bp) -> None:
         Endpoint para obtener estadísticas de operaciones en tiempo real.
         Usa variables globales para el seguimiento entre solicitudes.
         """
-        global last_ops, last_update
+        nonlocal last_ops, last_update
 
         try:
             client = get_mongo_client()
@@ -386,7 +396,12 @@ def register_admin_db_routes(admin_bp) -> None:
                     jsonify({"success": False, "error": "Cliente MongoDB no disponible"}),
                     500,
                 )
-            server_status = client.admin.command("serverStatus")
+            server_status, ss_error = admin_command(client, "serverStatus")
+            if server_status is None:
+                # 200 con success=False: la página muestra el motivo y no se llena de errores 500
+                return jsonify(
+                    {"success": False, "error": f"serverStatus no disponible: {ss_error}"}
+                )
 
             # Obtener contadores actuales
             current_ops = server_status.get("opcounters", {})
@@ -420,9 +435,10 @@ def register_admin_db_routes(admin_bp) -> None:
             connections = server_status.get("connections", {})
 
             # Obtener operaciones lentas
-            current_op = client.admin.current_op()
+            # Database.current_op() desapareció en PyMongo 4: se usa el comando currentOp
+            current_op, _ = admin_command(client, "currentOp")
             slow_ops = []
-            if "inprog" in current_op:
+            if current_op and "inprog" in current_op:
                 for op in current_op["inprog"]:
                     if (
                         "secs_running" in op and op["secs_running"] > 1
@@ -451,6 +467,7 @@ def register_admin_db_routes(admin_bp) -> None:
             )
 
         except (
+            PyMongoError,
             ConnectionError,
             TimeoutError,
             AttributeError,
@@ -461,9 +478,7 @@ def register_admin_db_routes(admin_bp) -> None:
             current_app.logger.error(f"Error en get_db_ops: {str(e)}")
             current_app.logger.error(traceback.format_exc())
             return (
-                jsonify(
-                    {"success": False, "error": str(e), "traceback": traceback.format_exc()}
-                ),
+                jsonify({"success": False, "error": str(e)}),
                 500,
             )
 

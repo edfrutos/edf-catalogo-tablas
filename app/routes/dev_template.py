@@ -6,6 +6,7 @@
 # Autor: [Tu nombre o equipo] - 2025-07-29
 
 import os
+import sys
 from functools import wraps
 
 from flask import (  # noqa: F401
@@ -355,6 +356,18 @@ def update_tests_readme():
                     }
                 ),
                 400,
+            )
+
+        # En la app empaquetada esta ruta cae dentro del .app firmado: escribir rompería el sello
+        if getattr(sys, "frozen", False):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "No disponible en la aplicación empaquetada (modificaría el .app firmado).",
+                    }
+                ),
+                403,
             )
 
         # Escribir archivo actualizado
