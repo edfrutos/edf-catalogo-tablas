@@ -13,6 +13,7 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, request,
 
 from app.audit import audit_log
 from app.decorators import admin_required as admin_required_logs
+from app.utils.paths import logs_dir as packaged_logs_dir
 
 
 # Definir el blueprint con el prefijo de URL correcto
@@ -23,15 +24,21 @@ logger = logging.getLogger(__name__)
 
 # Decorador para restringir acceso solo a admin (importamos el decorador principal)
 
-LOG_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../logs/flask_debug.log")
-)
+_DEFAULT_LOGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../logs"))
+
+
+def get_logs_dir() -> str:
+    """Carpeta de logs (en la app empaquetada vive en ~/Library/Logs, no dentro del .app)."""
+    return packaged_logs_dir(_DEFAULT_LOGS_DIR)
+
+
+LOG_PATH = os.path.join(get_logs_dir(), "flask_debug.log")
 
 
 @admin_logs_bp.route("/logs/list")
 @admin_required_logs
 def logs_list():
-    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../logs"))
+    logs_dir = get_logs_dir()
     log_files = get_log_files(logs_dir)
     return jsonify({"status": "success", "files": [f["name"] for f in log_files]})
 
@@ -73,9 +80,7 @@ def download_log(filename: str):
             flash("Nombre de archivo no válido", "danger")
             return redirect(url_for("admin.system_status"))
 
-        logs_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../logs")
-        )
+        logs_dir = get_logs_dir()
         log_path = os.path.join(logs_dir, filename)
 
         if not os.path.exists(log_path):
@@ -103,9 +108,7 @@ def download_multiple_logs():
             return redirect(url_for("admin.system_status"))
 
         files = files_param.split(",")
-        logs_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../logs")
-        )
+        logs_dir = get_logs_dir()
 
         # Crear un archivo ZIP temporal
 
@@ -152,7 +155,7 @@ def logs_tail():
     keyword = request.args.get("keyword", "").strip()
     log_file = request.args.get("log_file", "flask_debug.log")
 
-    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../logs"))
+    logs_dir = get_logs_dir()
     log_path = os.path.join(logs_dir, log_file)
 
     if not os.path.isfile(log_path):
@@ -244,7 +247,7 @@ def logs_search():
 
     kw = request.args.get("kw", "").strip()
     log_file = request.args.get("log_file", "flask_debug.log")
-    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../logs"))
+    logs_dir = get_logs_dir()
     log_path = os.path.join(logs_dir, log_file)
     if not os.path.isfile(log_path):
         from flask import abort
@@ -263,7 +266,7 @@ def logs_download():
     import os
 
     log_file = request.args.get("log_file", "flask_debug.log")
-    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../logs"))
+    logs_dir = get_logs_dir()
     log_path = os.path.join(logs_dir, log_file)
     if not os.path.isfile(log_path):
         return "Archivo no encontrado", 404
@@ -280,7 +283,7 @@ def logs_clear():
     lines = request.form.get("lines")
     date = request.form.get("date")
 
-    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../logs"))
+    logs_dir = get_logs_dir()
     log_path = os.path.join(logs_dir, log_file)
 
     if not os.path.isfile(log_path):
@@ -372,7 +375,7 @@ def logs_size():
     import os
 
     log_file = request.args.get("log_file", "flask_debug.log")
-    logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../logs"))
+    logs_dir = get_logs_dir()
     log_path = os.path.join(logs_dir, log_file)
     if not os.path.isfile(log_path):
         return jsonify({"size": 0, "backups": 0, "error": "Archivo no encontrado"}), 404

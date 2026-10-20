@@ -17,7 +17,7 @@ from app.cache_system import get_cache_stats
 from app.database import get_mongo_db
 from app.decorators import admin_required
 from app.routes.admin.admin_backup_utils import get_backup_files
-from app.routes.admin.admin_logs import get_log_files
+from app.routes.admin.admin_logs import get_log_files, get_logs_dir
 from app.routes.temp_files_utils import list_temp_files
 from app.utils.catalog_utils import normalize_catalog_rows
 
@@ -200,9 +200,7 @@ def register_admin_dashboard_routes(admin_bp) -> None:
             # Obtener datos del sistema
             data = get_system_status_data()
             # Obtener la lista de archivos de log
-            logs_dir = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "../../logs")
-            )
+            logs_dir = get_logs_dir()
             log_files = get_log_files(logs_dir)
             # Obtener la lista de archivos de backup
             backup_dir = os.path.abspath(os.path.join(os.getcwd(), "backups"))

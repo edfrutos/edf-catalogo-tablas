@@ -30,6 +30,7 @@ from flask import (
 from app.audit import audit_log
 from app.database import get_mongo_client, get_mongo_db
 from app.decorators import admin_required
+from app.utils.mongo_admin import admin_command
 
 admin_database_bp = Blueprint("admin_database", __name__, url_prefix="/admin/db")
 logger = logging.getLogger(__name__)
@@ -122,9 +123,13 @@ def db_monitor():
                 )
                 status["error"] = f"Error al obtener estadísticas: {str(e)}"
 
-        # Obtener estado del servidor
-        server_status = client.admin.command("serverStatus")
-        status["server_status"] = server_status
+        # Obtener estado del servidor (puede no estar permitido: Atlas gratuito o usuario sin monitorización)
+        server_status, ss_error = admin_command(client, "serverStatus")
+        status["server_status"] = (
+            server_status
+            if server_status is not None
+            else {"error": f"No se pudo obtener el estado del servidor: {ss_error}"}
+        )
 
         # Obtener operaciones lentas (últimas 10)
         try:
