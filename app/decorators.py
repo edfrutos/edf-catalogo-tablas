@@ -58,7 +58,8 @@ def admin_required(f: F) -> F:
     @wraps(f)
     def decorated_function(*args: Any, **kwargs: Any) -> ResponseReturnValue:
         logger.info(
-            f"[ADMIN_REQUIRED] Ruta: {request.path}, Método: {request.method}, Sesión actual: {dict(session)}"
+            f"[ADMIN_REQUIRED] Ruta: {request.path}, Método: {request.method}, "
+            f"usuario: {session.get('username')}, rol: {session.get('role')}"
         )
         # Verificar si el usuario está logueado (verificar tanto user_id como logged_in)
         if not session.get("logged_in", False) or "user_id" not in session:

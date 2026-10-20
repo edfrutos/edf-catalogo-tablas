@@ -41,7 +41,7 @@
                                                 {{ 'En Línea' if status.is_connected else 'Desconectado' }}
                                             </h3>
                                             <small class="text-muted">
-                                                {{ status.server_status.version|default('Versión: N/A') }}
+                                                {{ status.server_status.version|default('Versión: N/D') }}
                                             </small>
                                         </div>
                                         <div class="bg-{{ 'success' if status.is_connected else 'danger' }} bg-opacity-10 p-3 rounded">
@@ -117,9 +117,9 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h6 class="text-muted mb-2">Rendimiento</h6>
-                                            <h3 class="mb-0 text-warning" id="currentOps">0.00</h3>
+                                            <h3 class="mb-0 text-warning" id="currentOps">—</h3>
                                             <small class="text-muted">
-                                                <span id="currentConnections">0</span> conexiones activas
+                                                <span id="currentConnections">—</span> conexiones activas
                                             </small>
                                         </div>
                                         <div class="bg-warning bg-opacity-10 p-3 rounded">
@@ -135,9 +135,9 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h6 class="text-muted mb-2">Memoria</h6>
-                                            <h3 class="mb-0 text-info" id="memoryUsage">0 MB</h3>
+                                            <h3 class="mb-0 text-info" id="memoryUsage">—</h3>
                                             <small class="text-muted">
-                                                <span id="memoryPercentage">0%</span> en uso
+                                                <span id="memoryPercentage">—</span> en uso
                                             </small>
                                         </div>
                                         <div class="bg-info bg-opacity-10 p-3 rounded">
@@ -164,22 +164,22 @@
                     <div class="row mb-3">
                         <div class="col-6 col-md-3 text-center">
                             <h6 class="text-muted mb-1">Consultas</h6>
-                            <h4 id="currentQueries">0.00</h4>
+                            <h4 id="currentQueries">—</h4>
                             <small class="text-muted">ops/seg</small>
                         </div>
                         <div class="col-6 col-md-3 text-center">
                             <h6 class="text-muted mb-1">Inserciones</h6>
-                            <h4 id="currentInserts">0.00</h4>
+                            <h4 id="currentInserts">—</h4>
                             <small class="text-muted">ops/seg</small>
                         </div>
                         <div class="col-6 col-md-3 text-center">
                             <h6 class="text-muted mb-1">Actualizaciones</h6>
-                            <h4 id="currentUpdates">0.00</h4>
+                            <h4 id="currentUpdates">—</h4>
                             <small class="text-muted">ops/seg</small>
                         </div>
                         <div class="col-6 col-md-3 text-center">
                             <h6 class="text-muted mb-1">Eliminaciones</h6>
-                            <h4 id="currentDeletes">0.00</h4>
+                            <h4 id="currentDeletes">—</h4>
                             <small class="text-muted">ops/seg</small>
                         </div>
                     </div>
@@ -197,11 +197,11 @@
                     <div class="row mb-3">
                         <div class="col-6 text-center">
                             <h6 class="text-muted mb-1">Memoria Usada</h6>
-                            <h4 id="memoryUsage">0 MB</h4>
+                            <h4 id="memoryUsageChart">—</h4>
                         </div>
                         <div class="col-6 text-center">
                             <h6 class="text-muted mb-1">Conexiones</h6>
-                            <h4 id="currentConnectionsCount">0</h4>
+                            <h4 id="currentConnectionsCount">—</h4>
                         </div>
                     </div>
                     <canvas id="memoryChart" height="200"></canvas>
@@ -277,6 +277,21 @@ function formatBytes(bytes, decimals = 2) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+// Métricas en tiempo real no disponibles (p. ej. usuario de Atlas sin privilegios): "N/D" en vez de ceros
+function showMetricsUnavailable(reason) {
+    ['currentOps', 'currentConnections', 'memoryUsage', 'memoryUsageChart', 'memoryPercentage',
+     'currentConnectionsCount', 'currentQueries', 'currentInserts', 'currentUpdates', 'currentDeletes']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'N/D'; });
+    const errorDiv = document.getElementById('chartError');
+    const errorMessage = document.getElementById('errorMessage');
+    if (errorDiv && errorMessage) {
+        errorMessage.textContent = 'Métricas en tiempo real no disponibles: ' + (reason || 'sin permisos en el servidor');
+        errorDiv.classList.remove('alert-danger');
+        errorDiv.classList.add('alert-secondary');
+        errorDiv.classList.remove('d-none');
+    }
+}
+
 // Función para actualizar los datos de los gráficos
 function updateCharts() {
     console.log('Actualizando gráficos...');
@@ -298,6 +313,12 @@ function updateCharts() {
     })
     .then(data => {
         if (!data.success) {
+            if (data.unavailable) {
+                // Atlas no concede serverStatus a este usuario: no es un error, son métricas no disponibles
+                showMetricsUnavailable(data.error);
+                setTimeout(updateCharts, 30000);
+                return;
+            }
             throw new Error(data.error || 'Error desconocido al obtener datos');
         }
         
@@ -329,8 +350,14 @@ function updateCharts() {
         memoryData[dataIndex] = memoryUsed;
         
         // Actualizar estadísticas de memoria y conexiones
-        document.getElementById('memoryUsage').textContent = formatBytes(memoryUsed * 1024 * 1024);
-        document.getElementById('currentConnections').textContent = data.connections?.current || 0;
+        const memText = formatBytes(memoryUsed * 1024 * 1024);
+        document.getElementById('memoryUsage').textContent = memText;
+        const memChart = document.getElementById('memoryUsageChart');
+        if (memChart) memChart.textContent = memText;
+        const connCount = data.connections?.current || 0;
+        document.getElementById('currentConnections').textContent = connCount;
+        const connEl = document.getElementById('currentConnectionsCount');
+        if (connEl) connEl.textContent = connCount;
         
         // Actualizar gráficos
         updateChartsUI();
@@ -360,6 +387,8 @@ function updateCharts() {
             const errorMessage = document.getElementById('errorMessage');
             if (errorMessage) {
                 errorMessage.textContent = `Error al cargar datos: ${error.message}`;
+                errorDiv.classList.remove('alert-secondary');
+                errorDiv.classList.add('alert-danger');
                 errorDiv.classList.remove('d-none');
             }
         }
