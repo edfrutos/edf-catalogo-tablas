@@ -1344,81 +1344,47 @@ $(function () {
     updateLocalBackupsSelectionUI();
   });
 
-  // Acciones masivas - Se registrarán cuando el modal se abra
-  // eslint-disable-next-line no-unused-vars
-  function _initializeLocalBackupsMassiveActions() {
-    console.log("🔧 Inicializando acciones masivas de backups locales...");
+  // Acciones masivas (delegadas: los botones viven dentro del modal y pueden
+  // no existir cuando se carga este script)
+  $(document).on("click", "#uploadSelectedLocalBackups", async function () {
+    const selectedFiles = $(".local-backup-checkbox:checked").map(function () {
+      return $(this).data("filename");
+    }).get();
 
-    // Verificar que los elementos existan antes de registrar eventos
-    const uploadBtn = $("#uploadSelectedLocalBackups");
-    const deleteBtn = $("#deleteSelectedLocalBackups");
-
-    if (uploadBtn.length === 0) {
-      console.warn("⚠️ Botón uploadSelectedLocalBackups no encontrado");
+    if (selectedFiles.length === 0) {
+      showAlert("No hay backups seleccionados", "warning");
       return;
     }
 
-    if (deleteBtn.length === 0) {
-      console.warn("⚠️ Botón deleteSelectedLocalBackups no encontrado");
+    const fileList = selectedFiles.join("\n• ");
+    const confirmed = await showConfirmDialog(
+      "Confirmar Subida Masiva",
+      `¿Estás seguro de que quieres subir ${selectedFiles.length} backup${selectedFiles.length !== 1 ? 's' : ''} a Google Drive?\n\nArchivos seleccionados:\n• ${fileList}`,
+      "warning"
+    );
+    if (!confirmed) return;
+    uploadMultipleLocalBackups(selectedFiles);
+  });
+
+  $(document).on("click", "#deleteSelectedLocalBackups", async function () {
+    const selectedFiles = $(".local-backup-checkbox:checked").map(function () {
+      return $(this).data("filename");
+    }).get();
+
+    if (selectedFiles.length === 0) {
+      showAlert("No hay backups seleccionados", "warning");
       return;
     }
 
-    uploadBtn.off("click").on("click", async function () {
-      console.log("☁️ Botón subir seleccionados clickeado");
-      const selectedFiles = $(".local-backup-checkbox:checked").map(function () {
-        return $(this).data("filename");
-      }).get();
-
-      if (selectedFiles.length === 0) {
-        showAlert("No hay backups seleccionados", "warning");
-        return;
-      }
-
-      const fileList = selectedFiles.join("\n• ");
-      const confirmed = await showConfirmDialog(
-        "Confirmar Subida Masiva",
-        `¿Estás seguro de que quieres subir ${selectedFiles.length} backup${selectedFiles.length !== 1 ? 's' : ''} a Google Drive?\n\nArchivos seleccionados:\n• ${fileList}`,
-        "warning"
-      );
-
-      if (!confirmed) {
-        console.log("❌ Subida masiva cancelada por el usuario");
-        return;
-      }
-
-      console.log("🚀 Iniciando subida masiva de backups...");
-      uploadMultipleLocalBackups(selectedFiles);
-    });
-
-    deleteBtn.off("click").on("click", async function () {
-      console.log("🗑️ Botón eliminar seleccionados clickeado");
-      const selectedFiles = $(".local-backup-checkbox:checked").map(function () {
-        return $(this).data("filename");
-      }).get();
-
-      if (selectedFiles.length === 0) {
-        showAlert("No hay backups seleccionados", "warning");
-        return;
-      }
-
-      const fileList = selectedFiles.join("\n• ");
-      const confirmed = await showConfirmDialog(
-        "Confirmar Eliminación Masiva",
-        `¿Estás seguro de que quieres eliminar ${selectedFiles.length} backup${selectedFiles.length !== 1 ? 's' : ''}?\n\n⚠️ Esta acción no se puede deshacer.\n\nArchivos seleccionados:\n• ${fileList}`,
-        "danger"
-      );
-
-      if (!confirmed) {
-        console.log("❌ Eliminación masiva cancelada por el usuario");
-        return;
-      }
-
-      console.log("🚀 Iniciando eliminación masiva de backups...");
-      deleteMultipleLocalBackups(selectedFiles);
-    });
-
-    console.log("✅ Acciones masivas inicializadas correctamente");
-  }
+    const fileList = selectedFiles.join("\n• ");
+    const confirmed = await showConfirmDialog(
+      "Confirmar Eliminación Masiva",
+      `¿Estás seguro de que quieres eliminar ${selectedFiles.length} backup${selectedFiles.length !== 1 ? 's' : ''}?\n\n⚠️ Esta acción no se puede deshacer.\n\nArchivos seleccionados:\n• ${fileList}`,
+      "danger"
+    );
+    if (!confirmed) return;
+    deleteMultipleLocalBackups(selectedFiles);
+  });
 
   // Función para subir múltiples backups
   function uploadMultipleLocalBackups(filenames) {
