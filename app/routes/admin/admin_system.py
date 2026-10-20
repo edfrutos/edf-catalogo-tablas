@@ -13,6 +13,8 @@ import os
 import platform
 from datetime import datetime
 
+from app.utils.paths import backups_dir
+
 import psutil
 from flask import (
     Blueprint,
@@ -168,7 +170,7 @@ def system_status():
         log_files = get_log_files(logs_dir)
 
         # Obtener la lista de archivos de backup
-        backup_dir = os.path.abspath(os.path.join(os.getcwd(), "backups"))
+        backup_dir = os.path.abspath(backups_dir(os.getcwd()))
         backup_files = get_backup_files(backup_dir)
 
         # Pasar cache_stats y temp_files como variables independientes para el template

@@ -7,12 +7,14 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List
 
+from app.utils.paths import backups_dir
+
 logger = logging.getLogger(__name__)
 
 
 def get_backup_dir() -> str:
     """Obtiene el directorio de backups, asegurando que exista."""
-    backup_dir = os.path.abspath(os.path.join(os.getcwd(), "backups"))
+    backup_dir = os.path.abspath(backups_dir(os.getcwd()))
     os.makedirs(backup_dir, exist_ok=True)
     return backup_dir
 

@@ -9,6 +9,15 @@
         <span id="errorMessage"></span>
     </div>
     <h2 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Monitor de Base de Datos</h2>
+
+    {# serverStatus lo deniega Atlas a usuarios sin privilegios: se avisa en vez de mostrar ceros #}
+    {% set metrics_error = (status.server_status or {}).get('error') %}
+    {% if metrics_error %}
+    <div class="alert alert-secondary">
+        <i class="bi bi-info-circle me-2"></i>
+        Métricas en tiempo real no disponibles: {{ metrics_error }}
+    </div>
+    {% endif %}
     
     {% if status.error %}
     <div class="alert alert-danger">
@@ -117,9 +126,9 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h6 class="text-muted mb-2">Rendimiento</h6>
-                                            <h3 class="mb-0 text-warning" id="currentOps">—</h3>
+                                            <h3 class="mb-0 text-warning" id="currentOps">{{ 'N/D' if metrics_error else '—' }}</h3>
                                             <small class="text-muted">
-                                                <span id="currentConnections">—</span> conexiones activas
+                                                <span id="currentConnections">{{ 'N/D' if metrics_error else '—' }}</span> conexiones activas
                                             </small>
                                         </div>
                                         <div class="bg-warning bg-opacity-10 p-3 rounded">
@@ -135,9 +144,9 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h6 class="text-muted mb-2">Memoria</h6>
-                                            <h3 class="mb-0 text-info" id="memoryUsage">—</h3>
+                                            <h3 class="mb-0 text-info" id="memoryUsage">{{ 'N/D' if metrics_error else '—' }}</h3>
                                             <small class="text-muted">
-                                                <span id="memoryPercentage">—</span> en uso
+                                                <span id="memoryPercentage">{{ 'N/D' if metrics_error else '—' }}</span> en uso
                                             </small>
                                         </div>
                                         <div class="bg-info bg-opacity-10 p-3 rounded">
@@ -164,22 +173,22 @@
                     <div class="row mb-3">
                         <div class="col-6 col-md-3 text-center">
                             <h6 class="text-muted mb-1">Consultas</h6>
-                            <h4 id="currentQueries">—</h4>
+                            <h4 id="currentQueries">{{ 'N/D' if metrics_error else '—' }}</h4>
                             <small class="text-muted">ops/seg</small>
                         </div>
                         <div class="col-6 col-md-3 text-center">
                             <h6 class="text-muted mb-1">Inserciones</h6>
-                            <h4 id="currentInserts">—</h4>
+                            <h4 id="currentInserts">{{ 'N/D' if metrics_error else '—' }}</h4>
                             <small class="text-muted">ops/seg</small>
                         </div>
                         <div class="col-6 col-md-3 text-center">
                             <h6 class="text-muted mb-1">Actualizaciones</h6>
-                            <h4 id="currentUpdates">—</h4>
+                            <h4 id="currentUpdates">{{ 'N/D' if metrics_error else '—' }}</h4>
                             <small class="text-muted">ops/seg</small>
                         </div>
                         <div class="col-6 col-md-3 text-center">
                             <h6 class="text-muted mb-1">Eliminaciones</h6>
-                            <h4 id="currentDeletes">—</h4>
+                            <h4 id="currentDeletes">{{ 'N/D' if metrics_error else '—' }}</h4>
                             <small class="text-muted">ops/seg</small>
                         </div>
                     </div>
@@ -197,11 +206,11 @@
                     <div class="row mb-3">
                         <div class="col-6 text-center">
                             <h6 class="text-muted mb-1">Memoria Usada</h6>
-                            <h4 id="memoryUsageChart">—</h4>
+                            <h4 id="memoryUsageChart">{{ 'N/D' if metrics_error else '—' }}</h4>
                         </div>
                         <div class="col-6 text-center">
                             <h6 class="text-muted mb-1">Conexiones</h6>
-                            <h4 id="currentConnectionsCount">—</h4>
+                            <h4 id="currentConnectionsCount">{{ 'N/D' if metrics_error else '—' }}</h4>
                         </div>
                     </div>
                     <canvas id="memoryChart" height="200"></canvas>

@@ -182,3 +182,55 @@ def test_modal_documentos_cabecera_compacta():
     assert "Visualizando PDF desde S3" not in js      # aviso azul eliminado
     assert 'height="600"' not in js                    # el visor usa el alto de la ventana
     assert "fa-4x text-danger mb-3\"></i>\n          <h5>Documento" not in js
+
+
+# ---------- backups y credenciales de Drive fuera del .app ----------
+def test_backups_dir_desarrollo_y_empaquetada(monkeypatch, tmp_path):
+    monkeypatch.delattr(sys, "frozen", raising=False)
+    assert paths.backups_dir("/repo") == "/repo/backups"            # desarrollo: sin cambios
+
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(paths, "user_data_dir", lambda: str(tmp_path))
+    destino = paths.backups_dir("/Applications/X.app/Contents/Frameworks")
+    assert destino == str(tmp_path / "backups") and (tmp_path / "backups").is_dir()
+
+
+def test_drive_config_dir_desarrollo_y_empaquetada(monkeypatch, tmp_path):
+    monkeypatch.delattr(sys, "frozen", raising=False)
+    assert paths.drive_config_dir("/repo/tools/db_utils") == "/repo/tools/db_utils"
+
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(paths, "user_data_dir", lambda: str(tmp_path))
+    assert paths.drive_config_dir("/bundle/tools/db_utils") == str(tmp_path / "google_drive")
+
+
+def test_rutas_de_backups_y_drive_no_apuntan_al_bundle():
+    """El listado/descarga/borrado/subida de backups y las credenciales de Drive no pueden usar la ruta del código."""
+    mant = (RAIZ / "app" / "routes" / "maintenance_routes.py").read_text(encoding="utf-8")
+    assert 'project_root / "backups"' not in mant
+    assert mant.count("backups_dir(") >= 5
+    for nombre in ("google_drive_utils.py", "google_drive_utils_v2.py"):
+        s = (RAIZ / "tools" / "db_utils" / nombre).read_text(encoding="utf-8")
+        assert 'os.path.dirname(__file__), "credentials.json"' not in s
+        assert 'os.path.dirname(__file__), "token.pickle"' not in s
+        assert "script_dir = os.path.dirname(os.path.abspath(__file__))" not in s
+        assert "def _config_dir()" in s
+
+
+def test_monitor_db_muestra_nd_y_aviso_sin_serverstatus():
+    from jinja2 import DictLoader, Environment
+
+    src = (PLANTILLAS / "admin" / "db_monitor.html").read_text(encoding="utf-8")
+    # solo el bloque de contenido (el script usa Chart.js por CDN y no forma parte de esta comprobación)
+    env = Environment(loader=DictLoader({"admin/base.html": "{% block content %}{% endblock %}", "m.html": src}))
+    env.globals["url_for"] = lambda *a, **k: "/x"
+    t = env.get_template("m.html")
+    base = {"is_connected": True, "error": None, "stats": {}, "slow_ops": []}
+
+    sin_permisos = t.render(status={**base, "server_status": {"error": "serverStatus no disponible: not authorized"}})
+    assert "Métricas en tiempo real no disponibles" in sin_permisos
+    assert 'id="currentOps">N/D<' in sin_permisos and 'id="memoryUsage">N/D<' in sin_permisos
+
+    con_permisos = t.render(status={**base, "server_status": {"version": "7.0"}})
+    assert "Métricas en tiempo real no disponibles" not in con_permisos
+    assert 'id="currentOps">—<' in con_permisos

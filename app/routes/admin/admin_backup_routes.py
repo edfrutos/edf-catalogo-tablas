@@ -24,6 +24,8 @@ from app.database import (
 from flask_login import current_user
 from app.decorators import admin_required
 from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
+from app.utils.paths import backups_dir as unified_backups_dir
+from app.utils.paths import drive_config_dir
 from app.routes.admin.admin_backup_restore_utils import (
     BackupRestoreError,
     is_mongodb_binary_dump_name,
@@ -286,7 +288,7 @@ def register_admin_backup_routes(admin_bp) -> None:
                 )
 
             # Verificar que los archivos existen y son válidos
-            backup_dir = os.path.abspath(os.path.join(os.getcwd(), "backups"))
+            backup_dir = os.path.abspath(unified_backups_dir(os.getcwd()))
             logger.info(f"API Delete - Directorio de backups: {backup_dir}")
             if not os.path.exists(backup_dir):
                 os.makedirs(backup_dir, exist_ok=True)
@@ -422,7 +424,7 @@ def register_admin_backup_routes(admin_bp) -> None:
     @admin_bp.route("/backups/list", methods=["GET", "POST"])
     @admin_required
     def backups_list():
-        backups_dir = os.path.join(os.getcwd(), "backups")
+        backups_dir = get_backup_dir()
         backup_files = get_backup_files(backups_dir)
         if request.method == "POST":
             # Borrado individual
@@ -454,7 +456,7 @@ def register_admin_backup_routes(admin_bp) -> None:
     @admin_bp.route("/backups/download/<filename>")
     @admin_required
     def download_backup(filename: str):
-        backups_dir = os.path.join(os.getcwd(), "backups")
+        backups_dir = get_backup_dir()
         if ".." in filename or "/" in filename:
             flash("Nombre de archivo no válido", "danger")
             return redirect(url_for("admin.backups_list"))
@@ -519,11 +521,9 @@ def register_admin_backup_routes(admin_bp) -> None:
         try:
             # Verificar si existen las credenciales antes de intentar listar
             credentials_path = os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "tools",
-                "db_utils",
+                drive_config_dir(
+                    os.path.join(os.path.dirname(__file__), "..", "..", "tools", "db_utils")
+                ),
                 "credentials.json",
             )
             if not os.path.exists(credentials_path):

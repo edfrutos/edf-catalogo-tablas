@@ -13,6 +13,7 @@ import boto3
 from flask import Blueprint, current_app, jsonify, request
 from flask_login import current_user, login_required
 
+from app.utils.paths import drive_config_dir
 from app.models.database import get_mongo_db
 
 # Crear blueprint
@@ -45,6 +46,7 @@ def health_check():
                 # Aplicación empaquetada - buscar en el bundle
                 app_dir = os.path.dirname(sys.executable)
                 credentials_paths = [
+                    os.path.join(drive_config_dir(""), "credentials.json"),
                     os.path.join(
                         app_dir,
                         "..",
@@ -201,12 +203,11 @@ def s3_config():
 def drive_config():
     """Configuración de Google Drive"""
     try:
-        credentials_path = os.path.join(
-            current_app.root_path, "..", "tools", "db_utils", "credentials.json"
+        config_dir = drive_config_dir(
+            os.path.join(current_app.root_path, "..", "tools", "db_utils")
         )
-        token_path = os.path.join(
-            current_app.root_path, "..", "tools", "db_utils", "token.json"
-        )
+        credentials_path = os.path.join(config_dir, "credentials.json")
+        token_path = os.path.join(config_dir, "token.json")
 
         config = {
             "enabled": os.path.exists(credentials_path),

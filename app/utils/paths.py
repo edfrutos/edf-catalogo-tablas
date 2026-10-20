@@ -60,3 +60,25 @@ def logs_dir(default: str) -> str:
             path = os.path.join(user_data_dir(), "logs")
     os.makedirs(path, exist_ok=True)
     return path
+
+
+def backups_dir(default_root: str) -> str:
+    """Carpeta de backups locales: empaquetada -> <datos del usuario>/backups; desarrollo -> <default_root>/backups.
+
+    Una sola fuente de verdad: crear, listar, subir, descargar y borrar backups deben usar la misma carpeta
+    (antes unas rutas usaban el cwd y otras la ruta del código, que en el .app es el bundle firmado).
+    """
+    return writable_dir(default_root, "backups")
+
+
+def drive_config_dir(default: str) -> str:
+    """Carpeta de credentials.json / token.* de Google Drive.
+
+    Empaquetada -> <datos del usuario>/google_drive (se crea; las credenciales no van embebidas en el .app
+    y el token se reescribe al refrescarse). Desarrollo -> `default` (tools/db_utils).
+    """
+    if is_frozen():
+        path = os.path.join(user_data_dir(), "google_drive")
+        os.makedirs(path, exist_ok=True)
+        return path
+    return default

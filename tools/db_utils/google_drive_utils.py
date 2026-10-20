@@ -34,6 +34,16 @@ logging.basicConfig(level=logging.DEBUG)
 # Tipo para el resultado de upload_to_drive
 
 
+def _config_dir() -> str:
+    """Carpeta de credentials.json/token.*: en la app empaquetada, ~/Library/Application Support (no el .app)."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    try:
+        from app.utils.paths import drive_config_dir
+    except Exception:  # ejecución como script suelto
+        return here
+    return drive_config_dir(here)
+
+
 class UploadResult(TypedDict, total=False):
     success: bool
     file_id: str
@@ -79,7 +89,7 @@ def get_drive() -> GoogleDrive:
     """
     try:
         # Rutas a los archivos necesarios
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        script_dir = _config_dir()
         creds_file = os.path.join(script_dir, "credentials.json")
         token_file = os.path.join(script_dir, "token.json")
 
@@ -95,7 +105,7 @@ def get_drive() -> GoogleDrive:
                 "2. Crea un nuevo proyecto o selecciona uno existente\n"
                 "3. Habilita la API de Google Drive\n"
                 "4. Crea credenciales OAuth 2.0 para una aplicación de escritorio\n"
-                "5. Descarga el archivo JSON y guárdalo como 'credentials.json' en la carpeta del script"
+                f"5. Descarga el archivo JSON y guárdalo como 'credentials.json' en {script_dir}"
             )
             print(error_msg)
             raise FileNotFoundError(error_msg)
@@ -350,8 +360,8 @@ def upload_to_drive(
 
         # Configuración
         SCOPES = ["https://www.googleapis.com/auth/drive"]
-        creds_file = os.path.join(os.path.dirname(__file__), "credentials.json")
-        token_file = os.path.join(os.path.dirname(__file__), "token.pickle")
+        creds_file = os.path.join(_config_dir(), "credentials.json")
+        token_file = os.path.join(_config_dir(), "token.pickle")
 
         # Autenticación
         print("\n1. Inicializando autenticación con Google Drive...")
@@ -690,7 +700,7 @@ def reset_gdrive_token() -> ResetTokenResult:
     """
     try:
         # Obtener rutas de los archivos
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        script_dir = _config_dir()
         token_path = os.path.join(script_dir, "token.json")
         creds_path = os.path.join(script_dir, "credentials.json")
 
