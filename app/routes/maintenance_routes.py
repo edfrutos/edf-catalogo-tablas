@@ -31,6 +31,7 @@ from app.decorators import admin_required
 from app.logging_unified import get_logger
 
 # from app.auth_utils import require_google_drive_auth  # Función no disponible
+from app.utils.paths import backups_dir
 from app.utils.storage_utils import get_storage_client
 
 # Configurar logger
@@ -796,8 +797,8 @@ def create_local_backup():
         from pathlib import Path
 
         project_root = Path(__file__).parent.parent.parent
-        backup_dir = project_root / "backups"
-        backup_dir.mkdir(exist_ok=True)
+        backup_dir = Path(backups_dir(str(project_root)))
+        backup_dir.mkdir(parents=True, exist_ok=True)
         backup_path = backup_dir / filename
 
         # Comprimir y escribir el backup
@@ -849,7 +850,7 @@ def download_backup(filename):
         from flask import send_file
 
         project_root = Path(__file__).parent.parent.parent
-        backup_dir = project_root / "backups"
+        backup_dir = Path(backups_dir(str(project_root)))
         backup_path = backup_dir / filename
 
         if not backup_path.exists():
@@ -894,7 +895,7 @@ def create_backup():
         filename = f"backup_{timestamp}.json.gz"
 
         # Guardar en directorio temporal
-        backup_dir = os.path.join(os.getcwd(), "backups")
+        backup_dir = backups_dir(os.getcwd())
         os.makedirs(backup_dir, exist_ok=True)
         backup_path = os.path.join(backup_dir, filename)
 
@@ -1336,7 +1337,7 @@ def list_local_backups():
         from pathlib import Path
 
         project_root = Path(__file__).parent.parent.parent
-        backup_dir = str(project_root / "backups")
+        backup_dir = backups_dir(str(project_root))
 
         log_info("🔍 DEBUG: Función list_local_backups llamada")
         log_info(f"🔍 DEBUG: backup_dir = {backup_dir}")
@@ -1397,7 +1398,7 @@ def upload_local_backup_to_drive(filename):
         from pathlib import Path
 
         project_root = Path(__file__).parent.parent.parent
-        backup_dir = str(project_root / "backups")
+        backup_dir = backups_dir(str(project_root))
         file_path = os.path.join(backup_dir, filename)
 
         if not os.path.exists(file_path):
@@ -1462,7 +1463,7 @@ def delete_local_backup(filename):
         from pathlib import Path
 
         project_root = Path(__file__).parent.parent.parent
-        backup_dir = str(project_root / "backups")
+        backup_dir = backups_dir(str(project_root))
         file_path = os.path.join(backup_dir, filename)
 
         if not os.path.exists(file_path):
