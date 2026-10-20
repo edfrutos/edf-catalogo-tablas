@@ -234,3 +234,12 @@ def test_monitor_db_muestra_nd_y_aviso_sin_serverstatus():
     con_permisos = t.render(status={**base, "server_status": {"version": "7.0"}})
     assert "Métricas en tiempo real no disponibles" not in con_permisos
     assert 'id="currentOps">—<' in con_permisos
+
+
+def test_acciones_masivas_backups_locales_usan_delegacion():
+    """Los botones masivos del modal de backups locales deben tener manejador
+    delegado (antes estaban en una función que nunca se invocaba)."""
+    js = (RAIZ / "app/static/js/dashboard.js").read_text(encoding="utf-8")
+    assert '$(document).on("click", "#deleteSelectedLocalBackups"' in js
+    assert '$(document).on("click", "#uploadSelectedLocalBackups"' in js
+    assert "_initializeLocalBackupsMassiveActions" not in js
