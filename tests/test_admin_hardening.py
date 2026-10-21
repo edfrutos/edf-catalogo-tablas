@@ -273,3 +273,46 @@ def test_listas_backups_destruyen_datatable_antes_de_vaciar_tbody():
     assert js.count('resetDataTable("#driveBackupsTable"') == 2
     # Si Drive queda vacío, la tabla anterior se oculta
     assert '$("#driveBackupsContent").hide();\n          $("#driveBackupsEmpty").show();' in js
+
+
+def _dashboard_js():
+    return (RAIZ / "app/static/js/dashboard.js").read_text(encoding="utf-8")
+
+
+def test_datatables_sin_language_url_y_destroy_tolerante():
+    """language.url hace asíncrona la inicialización; un refresco intermedio
+    lanzaba excepción en destroy() y la lista no se actualizaba."""
+    js = _dashboard_js()
+    assert "cdn.datatables.net" not in js
+    assert js.count('"language": DT_LANG_ES') == 2
+    i = js.index("function resetDataTable(")
+    cuerpo = js[i : i + 700]
+    assert "try {" in cuerpo and "catch (err)" in cuerpo
+
+
+def test_seleccion_drive_se_poda_y_borrado_masivo_tolerante():
+    js = _dashboard_js()
+    assert "selectedBackups.delete(id)" in js  # poda de IDs inexistentes
+    assert "selectedBackups.delete(fileId)" in js  # borrado individual
+    assert "Promise.allSettled(deletePromises)" in js
+    assert "Promise.all(deletePromises)" not in js
+    i = js.index("Promise.allSettled(deletePromises)")
+    assert "loadDriveBackups();" in js[i : i + 900]  # siempre refresca
+
+
+def test_resultado_de_backup_se_vuelve_a_mostrar():
+    js = _dashboard_js()
+    assert "function showBackupResult(" in js
+    assert '$("#backupResult").html(' not in js
+    assert '.stop(true, true).show().html(html)' in js
+    assert js.count('$("#backupResult").fadeOut(') == 1  # solo en el helper
+    assert "window.loadLocalBackups = loadLocalBackups;" in js
+
+
+def test_subida_a_drive_conserva_el_nombre_del_backup():
+    src = (RAIZ / "app/routes/maintenance_routes.py").read_text(encoding="utf-8")
+    i = src.index("def upload_file(self, filename: str, file_content: bytes)")
+    bloque = src[i : i + 2200]
+    assert "NamedTemporaryFile" not in bloque
+    assert "os.path.basename(filename)" in bloque
+    assert "shutil.rmtree(temp_dir" in bloque

@@ -317,12 +317,14 @@ class GoogleDriveManager:
             )
             from google_drive_utils_v2 import upload_file_to_drive  # type: ignore
 
-            # Crear archivo temporal
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=os.path.splitext(filename)[1]
-            ) as temp_file:
+            # Fichero temporal con el nombre real: upload_file_to_drive usa el
+            # basename de la ruta como nombre en Drive (antes salía "tmpXXXX.gz").
+            import shutil
+
+            temp_dir = tempfile.mkdtemp(prefix="edf_upload_")
+            temp_file_path = os.path.join(temp_dir, os.path.basename(filename))
+            with open(temp_file_path, "wb") as temp_file:
                 _ = temp_file.write(file_content)
-                temp_file_path = temp_file.name
 
             try:
                 # Subir archivo usando la función real
@@ -343,9 +345,8 @@ class GoogleDriveManager:
                     raise Exception(f"Error subiendo a Google Drive: {error_msg}")
 
             finally:
-                # Limpiar archivo temporal
-                if os.path.exists(temp_file_path):
-                    os.unlink(temp_file_path)
+                # Limpiar archivo y directorio temporales
+                shutil.rmtree(temp_dir, ignore_errors=True)
 
         except Exception as e:
             log_error(f"Error subiendo archivo {filename}: {str(e)}")
