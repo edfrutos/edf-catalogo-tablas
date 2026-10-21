@@ -243,3 +243,18 @@ def test_acciones_masivas_backups_locales_usan_delegacion():
     assert '$(document).on("click", "#deleteSelectedLocalBackups"' in js
     assert '$(document).on("click", "#uploadSelectedLocalBackups"' in js
     assert "_initializeLocalBackupsMassiveActions" not in js
+
+
+def test_tamano_backups_no_muestra_na_para_ficheros_pequenos():
+    js = (RAIZ / "app/static/js/dashboard.js").read_text(encoding="utf-8")
+    assert "function formatFileSize(" in js
+    assert "formatFileSize(backup.size)" in js
+    assert "formatFileSize(backup.file_size)" in js
+    assert "backup.size_mb ?" not in js
+
+
+def test_create_and_upload_respalda_todas_las_colecciones():
+    src = (RAIZ / "app/routes/admin/admin_backup_routes.py").read_text(encoding="utf-8")
+    assert '["catalogs", "users"]' not in src
+    assert "db.list_collection_names()" in src
+    assert 'startswith("system.")' in src

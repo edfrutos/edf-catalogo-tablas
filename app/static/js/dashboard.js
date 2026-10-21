@@ -26,6 +26,16 @@ $(function () {
   }
 
   // Función ultra-simple para mostrar alertas
+  // Formatea un tamaño en bytes (KB/MB). 0 bytes es un tamaño válido; solo
+  // null/undefined/NaN se muestran como N/A.
+  function formatFileSize(bytes) {
+    const n = Number(bytes);
+    if (bytes === null || bytes === undefined || bytes === "" || Number.isNaN(n)) return "N/A";
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(2)} KB`;
+    return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+  }
+
   function showAlert(message, type = "success") {
     console.log(`📢 showAlert: ${message}`);
 
@@ -859,7 +869,7 @@ $(function () {
     $("#driveBackupsTableBody").empty();
 
     backups.forEach(function (backup) {
-      const sizeDisplay = backup.file_size ? `${(backup.file_size / (1024 * 1024)).toFixed(2)} MB` : "N/A";
+      const sizeDisplay = formatFileSize(backup.file_size);
       const uploadDate = backup.uploaded_at ? new Date(backup.uploaded_at).toLocaleString() : "N/A";
       const filename = backup.filename || "backup";
       const isSelected = selectedBackups.has(backup._id);
@@ -1237,7 +1247,7 @@ $(function () {
     $("#localBackupsTableBody").empty();
 
     backups.forEach(function (backup) {
-      const sizeDisplay = backup.size_mb ? `${backup.size_mb} MB` : "N/A";
+      const sizeDisplay = formatFileSize(backup.size);
       const modifiedDate = backup.modified_at ? new Date(backup.modified_at).toLocaleString() : "N/A";
 
       const actionButtons = `
