@@ -26,6 +26,16 @@ $(function () {
   }
 
   // Función ultra-simple para mostrar alertas
+  // Vacía el <tbody> de una tabla gestionada por DataTables. Hay que destruir
+  // el DataTable ANTES de vaciar: si no, destroy() restaura desde su caché las
+  // filas antiguas (los backups eliminados reaparecían tras "refrescar").
+  function resetDataTable(tableSelector, bodySelector) {
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable(tableSelector)) {
+      $(tableSelector).DataTable().destroy();
+    }
+    $(bodySelector).empty();
+  }
+
   // Formatea un tamaño en bytes (KB/MB). 0 bytes es un tamaño válido; solo
   // null/undefined/NaN se muestran como N/A.
   function formatFileSize(bytes) {
@@ -836,7 +846,7 @@ $(function () {
     $("#driveBackupsContent").hide();
     $("#driveBackupsEmpty").hide();
     $("#driveBackupsError").hide();
-    $("#driveBackupsTableBody").empty();
+    resetDataTable("#driveBackupsTable", "#driveBackupsTableBody");
 
     $.ajax({
       url: "/admin/maintenance/drive/backups",
@@ -851,6 +861,7 @@ $(function () {
           displayDriveBackups(response.backups);
           $("#driveBackupsContent").show();
         } else {
+          $("#driveBackupsContent").hide();
           $("#driveBackupsEmpty").show();
           $("#driveBackupsCount").text("0 respaldos");
         }
@@ -866,7 +877,7 @@ $(function () {
 
   // Función para mostrar backups de Google Drive
   function displayDriveBackups(backups) {
-    $("#driveBackupsTableBody").empty();
+    resetDataTable("#driveBackupsTable", "#driveBackupsTableBody");
 
     backups.forEach(function (backup) {
       const sizeDisplay = formatFileSize(backup.file_size);
@@ -1206,7 +1217,8 @@ $(function () {
     
     $("#localBackupsLoading").show();
     $("#localBackupsContent").hide();
-    
+    resetDataTable("#localBackupsTable", "#localBackupsTableBody");
+
     $.ajax({
       url: "/admin/maintenance/local-backups",
       method: "GET",
@@ -1244,7 +1256,7 @@ $(function () {
 
   // Función para mostrar backups locales
   function displayLocalBackups(backups) {
-    $("#localBackupsTableBody").empty();
+    resetDataTable("#localBackupsTable", "#localBackupsTableBody");
 
     backups.forEach(function (backup) {
       const sizeDisplay = formatFileSize(backup.size);
