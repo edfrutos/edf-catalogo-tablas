@@ -1498,8 +1498,12 @@ def register_admin_backup_routes(admin_bp) -> None:
                             else:
                                 return obj
 
-                        # Obtener datos de las colecciones principales
-                        collections_to_backup = ["catalogs", "users"]
+                        # Todas las colecciones (salvo las internas de MongoDB)
+                        collections_to_backup = sorted(
+                            name
+                            for name in db.list_collection_names()
+                            if not name.startswith("system.")
+                        )
 
                         for collection_name in collections_to_backup:
                             try:
@@ -1534,7 +1538,9 @@ def register_admin_backup_routes(admin_bp) -> None:
                         import gzip
                         import json
 
-                        json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
+                        json_data = json.dumps(
+                            backup_data, ensure_ascii=False, indent=2, default=str
+                        )
                         compressed_data = gzip.compress(json_data.encode("utf-8"))
 
                         with open(backup_file, "wb") as f:
