@@ -258,3 +258,18 @@ def test_create_and_upload_respalda_todas_las_colecciones():
     assert '["catalogs", "users"]' not in src
     assert "db.list_collection_names()" in src
     assert 'startswith("system.")' in src
+
+
+def test_listas_backups_destruyen_datatable_antes_de_vaciar_tbody():
+    """Vaciar el tbody con un DataTable activo hace que destroy() restaure las
+    filas antiguas (los backups eliminados reaparecían tras refrescar)."""
+    js = (RAIZ / "app/static/js/dashboard.js").read_text(encoding="utf-8")
+    assert "function resetDataTable(" in js
+    for body in ("#localBackupsTableBody", "#driveBackupsTableBody"):
+        assert f'$("{body}").empty()' not in js.replace(
+            "$(bodySelector).empty()", ""
+        ), body
+    assert js.count('resetDataTable("#localBackupsTable"') == 2
+    assert js.count('resetDataTable("#driveBackupsTable"') == 2
+    # Si Drive queda vacío, la tabla anterior se oculta
+    assert '$("#driveBackupsContent").hide();\n          $("#driveBackupsEmpty").show();' in js
