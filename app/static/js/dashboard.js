@@ -31,10 +31,31 @@ $(function () {
   // filas antiguas (los backups eliminados reaparecían tras "refrescar").
   function resetDataTable(tableSelector, bodySelector) {
     if ($.fn.DataTable && $.fn.DataTable.isDataTable(tableSelector)) {
-      $(tableSelector).DataTable().destroy();
+      try {
+        $(tableSelector).DataTable().destroy();
+      } catch (err) {
+        // destroy() lanza si el DataTable aún no terminó de inicializarse; no
+        // debe abortar el refresco de la lista.
+        console.warn("⚠️ No se pudo destruir el DataTable:", tableSelector, err);
+      }
     }
     $(bodySelector).empty();
   }
+
+  // Idioma de DataTables inline. Con `language.url` (CDN) la inicialización es
+  // asíncrona y, si la petición tarda o falla, un refresco intermedio lanza una
+  // excepción en destroy() y la lista no se actualiza.
+  const DT_LANG_ES = {
+    emptyTable: "No hay datos disponibles",
+    info: "Mostrando _START_ a _END_ de _TOTAL_",
+    infoEmpty: "Mostrando 0 a 0 de 0",
+    infoFiltered: "(filtrado de _MAX_ en total)",
+    lengthMenu: "Mostrar _MENU_",
+    loadingRecords: "Cargando...",
+    search: "Buscar:",
+    zeroRecords: "No se encontraron resultados",
+    paginate: { first: "Primero", last: "Último", next: "Siguiente", previous: "Anterior" }
+  };
 
   // Formatea un tamaño en bytes (KB/MB). 0 bytes es un tamaño válido; solo
   // null/undefined/NaN se muestran como N/A.
@@ -306,11 +327,27 @@ $(function () {
   // FUNCIONES DE BACKUP
   // ============================================
   
+  // El contenedor #backupResult se ocultaba con fadeOut y quedaba con
+  // display:none: los backups siguientes se escribían en él pero no se veían.
+  let backupResultTimer = null;
+  function showBackupResult(html) {
+    clearTimeout(backupResultTimer);
+    $("#backupResult").stop(true, true).show().html(html);
+  }
+  function scheduleBackupResultHide(ms = 15000) {
+    clearTimeout(backupResultTimer);
+    backupResultTimer = setTimeout(() => {
+      $("#backupResult").fadeOut(500, function () {
+        $(this).empty();
+      });
+    }, ms);
+  }
+
   function executeLocalBackup() {
     console.log("🗂️ Iniciando backup local...");
     
     // Mostrar estado de carga
-    $("#backupResult").html(`
+    showBackupResult(`
       <div class="alert alert-info">
         <i class="bi bi-folder-plus"></i> Creando backup local de la base de datos...
         <div class="spinner-border spinner-border-sm ms-2" role="status">
@@ -345,7 +382,7 @@ $(function () {
               </small>
             </div>
           `;
-          $("#backupResult").html(successMsg);
+          showBackupResult(successMsg);
           showAlert("Backup local creado correctamente", "success");
           
           // Actualizar lista de backups locales si está visible
@@ -359,7 +396,7 @@ $(function () {
       error: function (xhr, status, error) {
         console.error("❌ Error en backup local:", xhr.status, xhr.statusText, error);
         const errorMsg = xhr.responseJSON?.error || xhr.statusText || "Error de conexión";
-        $("#backupResult").html(`
+        showBackupResult(`
           <div class="alert alert-danger">
             <i class="bi bi-exclamation-triangle"></i>
             <strong>Error al crear backup local</strong><br>
@@ -370,11 +407,7 @@ $(function () {
       },
       complete: function () {
         // Auto-cerrar el resultado después de 15 segundos
-        setTimeout(() => {
-          $("#backupResult").fadeOut(500, function () {
-            $(this).empty();
-          });
-        }, 15000);
+        scheduleBackupResultHide(15000);
       }
     });
   }
@@ -383,7 +416,7 @@ $(function () {
     console.log("☁️ Iniciando backup en Google Drive...");
     
     // Mostrar estado de carga
-    $("#backupResult").html(`
+    showBackupResult(`
       <div class="alert alert-info">
         <i class="bi bi-google"></i> Creando backup y subiendo a Google Drive...
         <div class="spinner-border spinner-border-sm ms-2" role="status">
@@ -424,7 +457,7 @@ $(function () {
               </small>
             </div>
           `;
-          $("#backupResult").html(successMsg);
+          showBackupResult(successMsg);
           showAlert("Backup subido a Google Drive correctamente", "success");
           
           // Actualizar listas de backups
@@ -456,7 +489,7 @@ $(function () {
               </small>
             </div>
           `;
-          $("#backupResult").html(warningMsg);
+          showBackupResult(warningMsg);
           showAlert("Backup creado localmente, pero no se pudo subir a Google Drive", "warning");
           
         } else {
@@ -466,7 +499,7 @@ $(function () {
       error: function (xhr, status, error) {
         console.error("❌ Error en backup Google Drive:", xhr.status, xhr.statusText, error);
         const errorMsg = xhr.responseJSON?.error || xhr.statusText || "Error de conexión";
-        $("#backupResult").html(`
+        showBackupResult(`
           <div class="alert alert-danger">
             <i class="bi bi-exclamation-triangle"></i>
             <strong>Error al crear backup en Google Drive</strong><br>
@@ -477,11 +510,7 @@ $(function () {
       },
       complete: function () {
         // Auto-cerrar el resultado después de 15 segundos
-        setTimeout(() => {
-          $("#backupResult").fadeOut(500, function () {
-            $(this).empty();
-          });
-        }, 15000);
+        scheduleBackupResultHide(15000);
       }
     });
   }
@@ -502,7 +531,7 @@ $(function () {
       .on("click", function () {
         console.log("❌ LEGACY: Este código no debería ejecutarse");
 
-        $("#backupResult").html(`
+        showBackupResult(`
           <div class="alert alert-info">
             <i class="bi bi-info-circle"></i> Creando backup de la base de datos...
           </div>
@@ -531,7 +560,7 @@ $(function () {
         </small>
       </div>
     `;
-              $("#backupResult").html(successMsg);
+              showBackupResult(successMsg);
               showAlert("Backup subido a Google Drive correctamente", "success");
 
               // Actualizar lista de backups de Google Drive si está visible
@@ -540,11 +569,7 @@ $(function () {
               }
 
               // Auto-cerrar el resultado después de 10 segundos
-              setTimeout(() => {
-                $("#backupResult").fadeOut(500, function () {
-                  $(this).empty();
-                });
-              }, 10000);
+              scheduleBackupResultHide(10000);
 
             } else if (response.status === "warning" && !response.uploaded_to_drive) {
               const warningMsg = `
@@ -559,18 +584,14 @@ $(function () {
         </small>
       </div>
     `;
-              $("#backupResult").html(warningMsg);
+              showBackupResult(warningMsg);
               showAlert("Backup creado pero no subido a Google Drive", "warning");
 
               // Auto-cerrar el resultado después de 10 segundos
-              setTimeout(() => {
-                $("#backupResult").fadeOut(500, function () {
-                  $(this).empty();
-                });
-              }, 10000);
+              scheduleBackupResultHide(10000);
 
             } else {
-              $("#backupResult").html(`
+              showBackupResult(`
       <div class="alert alert-warning">
         <i class="bi bi-exclamation-triangle"></i>
         Backup completado con advertencias
@@ -578,16 +599,12 @@ $(function () {
     `);
 
               // Auto-cerrar el resultado después de 10 segundos
-              setTimeout(() => {
-                $("#backupResult").fadeOut(500, function () {
-                  $(this).empty();
-                });
-              }, 10000);
+              scheduleBackupResultHide(10000);
             }
           },
           error: function (xhr) {
             const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText;
-            $("#backupResult").html(`
+            showBackupResult(`
               <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle"></i>
                 <strong>Error al crear backup</strong><br>
@@ -597,11 +614,7 @@ $(function () {
             showAlert("Error al generar backup: " + errorMsg, "danger");
 
             // Auto-cerrar el resultado después de 10 segundos
-            setTimeout(() => {
-              $("#backupResult").fadeOut(500, function () {
-                $(this).empty();
-              });
-            }, 10000);
+            scheduleBackupResultHide(10000);
           },
           complete: function () {
             btn.prop("disabled", false).html(originalText);
@@ -753,6 +766,7 @@ $(function () {
         success: function (response) {
           if (response.status === "success" || response.success) {
             showAlert(`Backup "${filename}" eliminado correctamente`, "success");
+            selectedBackups.delete(fileId);
             loadDriveBackups(); // Recargar lista
           } else {
             showAlert(`Error al eliminar backup: ${response.message || "Error desconocido"}`, "danger");
@@ -815,7 +829,8 @@ $(function () {
       const originalText = btn.html();
       btn.prop("disabled", true).html("<span class=\"spinner-border spinner-border-sm\"></span> Eliminando...");
 
-      const deletePromises = Array.from(selectedBackups).map(backupId =>
+      const ids = Array.from(selectedBackups);
+      const deletePromises = ids.map(backupId =>
         $.ajax({
           url: `/admin/maintenance/drive/delete/${backupId}`,
           method: "DELETE",
@@ -823,17 +838,22 @@ $(function () {
         })
       );
 
-      Promise.all(deletePromises)
-        .then(() => {
-          showAlert(`${selectedBackups.size} backup(s) eliminado(s) correctamente`, "success");
-          selectedBackups.clear();
-          loadDriveBackups();
-        })
-        .catch((_error) => {
-          showAlert("Error al eliminar algunos backups", "danger");
+      // allSettled: un fallo (p. ej. un ID que ya no existe) no debe impedir
+      // informar ni refrescar la lista.
+      Promise.allSettled(deletePromises)
+        .then((results) => {
+          const ok = results.filter((r) => r.status === "fulfilled").length;
+          const failed = results.length - ok;
+          if (failed === 0) {
+            showAlert(`${ok} backup(s) eliminado(s) correctamente`, "success");
+          } else {
+            showAlert(`${ok} eliminado(s), ${failed} con error`, ok > 0 ? "warning" : "danger");
+          }
         })
         .finally(() => {
+          selectedBackups.clear();
           btn.prop("disabled", false).html(originalText);
+          loadDriveBackups();
         });
     });
   };
@@ -861,6 +881,8 @@ $(function () {
           displayDriveBackups(response.backups);
           $("#driveBackupsContent").show();
         } else {
+          selectedBackups.clear();
+          updateDeleteButton();
           $("#driveBackupsContent").hide();
           $("#driveBackupsEmpty").show();
           $("#driveBackupsCount").text("0 respaldos");
@@ -878,6 +900,13 @@ $(function () {
   // Función para mostrar backups de Google Drive
   function displayDriveBackups(backups) {
     resetDataTable("#driveBackupsTable", "#driveBackupsTableBody");
+
+    // Descartar de la selección los backups que ya no existen (si no, el
+    // contador marca "7 seleccionados" con 2 filas y el borrado masivo falla).
+    const currentIds = new Set(backups.map((b) => b._id));
+    Array.from(selectedBackups).forEach((id) => {
+      if (!currentIds.has(id)) selectedBackups.delete(id);
+    });
 
     backups.forEach(function (backup) {
       const sizeDisplay = formatFileSize(backup.file_size);
@@ -961,6 +990,7 @@ $(function () {
     // Inicializar funcionalidad de selección múltiple
     initializeDriveBackupsSelection();
     updateSelectAllState();
+    updateDeleteButton();
 
     // Inicializar DataTable para ordenamiento y paginación
     if ($.fn.DataTable) {
@@ -971,9 +1001,7 @@ $(function () {
       $('#driveBackupsTable').DataTable({
         "order": [[3, "desc"]], // Ordenar por fecha descendente por defecto
         "pageLength": 25,
-        "language": {
-          "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
-        },
+        "language": DT_LANG_ES,
         "columnDefs": [
           { "orderable": false, "targets": [0, 5] }, // Checkbox y acciones no ordenables
           { "type": "num", "targets": 2 } // Tamaño como número
@@ -1254,6 +1282,8 @@ $(function () {
     });
   }
 
+  window.loadLocalBackups = loadLocalBackups;
+
   // Función para mostrar backups locales
   function displayLocalBackups(backups) {
     resetDataTable("#localBackupsTable", "#localBackupsTableBody");
@@ -1312,9 +1342,7 @@ $(function () {
       $('#localBackupsTable').DataTable({
         "order": [[3, "desc"]], // Ordenar por fecha descendente por defecto
         "pageLength": 25,
-        "language": {
-          "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
-        },
+        "language": DT_LANG_ES,
         "columnDefs": [
           { "orderable": false, "targets": [0, 4] }, // Checkbox y acciones no ordenables
           { "type": "num", "targets": 2 } // Tamaño como número
