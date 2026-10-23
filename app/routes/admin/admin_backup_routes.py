@@ -776,14 +776,18 @@ def register_admin_backup_routes(admin_bp) -> None:
             sys.path.insert(0, db_utils_path)
 
         try:
-            from google_drive_utils import (
+            # upload_file_to_drive solo existe en google_drive_utils_v2 (el mismo
+            # módulo, credenciales y token.pickle que usa el panel de
+            # mantenimiento). Antes se importaba de google_drive_utils, que no la
+            # define, y siempre devolvía "Google Drive no disponible".
+            from google_drive_utils_v2 import (
                 # pyright: ignore[reportMissingModuleSource]
                 upload_file_to_drive as upload_to_drive,
             )
-        except ImportError:
+        except ImportError as import_error:
             # Si no se puede importar, Google Drive no estará disponible
             current_app.logger.warning(
-                "Google Drive no disponible: no se puede importar google_drive_utils"
+                f"Google Drive no disponible: no se puede importar google_drive_utils_v2: {import_error}"
             )
             return (
                 jsonify(

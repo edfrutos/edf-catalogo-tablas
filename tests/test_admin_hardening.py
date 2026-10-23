@@ -316,3 +316,33 @@ def test_subida_a_drive_conserva_el_nombre_del_backup():
     assert "NamedTemporaryFile" not in bloque
     assert "os.path.basename(filename)" in bloque
     assert "shutil.rmtree(temp_dir" in bloque
+
+
+def test_imports_de_subida_a_drive_apuntan_a_funciones_que_existen():
+    """El import dentro de upload_backup_to_drive fallaba siempre (la función
+    no existía en el módulo) y se mostraba como 'Google Drive no disponible'."""
+    import ast
+
+    src = (RAIZ / "app/routes/admin/admin_backup_routes.py").read_text(encoding="utf-8")
+    arbol = ast.parse(src)
+    fn = next(
+        n
+        for n in ast.walk(arbol)
+        if isinstance(n, ast.FunctionDef) and n.name == "upload_backup_to_drive"
+    )
+    imports = [
+        n
+        for n in ast.walk(fn)
+        if isinstance(n, ast.ImportFrom) and n.module and n.module.startswith("google_drive_utils")
+    ]
+    assert imports, "no se encontró el import de Google Drive"
+    for imp in imports:
+        modulo = RAIZ / "tools" / "db_utils" / f"{imp.module}.py"
+        assert modulo.exists(), modulo
+        definidas = {
+            n.name
+            for n in ast.parse(modulo.read_text(encoding="utf-8")).body
+            if isinstance(n, ast.FunctionDef)
+        }
+        for alias in imp.names:
+            assert alias.name in definidas, f"{imp.module} no define {alias.name}"
