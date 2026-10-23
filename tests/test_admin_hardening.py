@@ -346,3 +346,71 @@ def test_imports_de_subida_a_drive_apuntan_a_funciones_que_existen():
         }
         for alias in imp.names:
             assert alias.name in definidas, f"{imp.module} no define {alias.name}"
+
+
+def _cargar_models_database(monkeypatch):
+    """Carga app/models/database.py aislado (sin importar el paquete app)."""
+    for nombre in ("app", "app.models", "app.models.user_schema"):
+        monkeypatch.setitem(sys.modules, nombre, types.ModuleType(nombre))
+    sys.modules["app.models.user_schema"].normalize_user_doc = lambda d: d
+    spec = importlib.util.spec_from_file_location(
+        "edf_models_database_test", RAIZ / "app" / "models" / "database.py"
+    )
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+def test_mongo_valida_certificado_tls_por_defecto(monkeypatch):
+    monkeypatch.delenv("MONGO_TLS_INSECURE", raising=False)
+    mod = _cargar_models_database(monkeypatch)
+    import certifi
+
+    opts = mod._tls_options("mongodb+srv://u:p@cluster.example.mongodb.net/db")
+    assert opts == {"tlsCAFile": certifi.where()}
+    assert "tlsAllowInvalidCertificates" not in opts
+    # Mongo local sin TLS: sin opciones
+    assert mod._tls_options("mongodb://localhost:27017/") == {}
+
+
+def test_mongo_salida_insegura_solo_explicita(monkeypatch):
+    monkeypatch.setenv("MONGO_TLS_INSECURE", "1")
+    mod = _cargar_models_database(monkeypatch)
+    opts = mod._tls_options("mongodb+srv://u:p@cluster.example.mongodb.net/db")
+    assert opts["tlsAllowInvalidCertificates"] is True
+
+
+def test_get_mongo_client_no_pasa_tls_inseguro(monkeypatch):
+    monkeypatch.delenv("MONGO_TLS_INSECURE", raising=False)
+    monkeypatch.setenv("MONGO_URI", "mongodb+srv://u:p@cluster.example.mongodb.net/db")
+    mod = _cargar_models_database(monkeypatch)
+    llamadas = {}
+
+    class FalsoCliente:
+        def __init__(self, uri, **kwargs):
+            llamadas["kwargs"] = kwargs
+
+    monkeypatch.setattr(mod, "MongoClient", FalsoCliente)
+    mod.client = None
+    mod.get_mongo_client()
+    assert "tlsAllowInvalidCertificates" not in llamadas["kwargs"]
+    assert "tlsCAFile" in llamadas["kwargs"]
+
+
+def test_mongo_uri_con_flag_inseguro_se_ignora(monkeypatch):
+    monkeypatch.delenv("MONGO_TLS_INSECURE", raising=False)
+    mod = _cargar_models_database(monkeypatch)
+    uri = "mongodb+srv://u:p@c.example.mongodb.net/db?tlsAllowInvalidCertificates=true"
+    assert mod._tls_options(uri)["tlsAllowInvalidCertificates"] is False
+    monkeypatch.setenv("MONGO_TLS_INSECURE", "1")
+    assert mod._tls_options(uri)["tlsAllowInvalidCertificates"] is True
+
+
+def test_pymongo_kwarg_prevalece_sobre_uri():
+
+    uri = "mongodb://h/db?tls=true&tlsAllowInvalidCertificates=true"
+    from pymongo import MongoClient
+
+    c = MongoClient(uri, tlsAllowInvalidCertificates=False, connect=False)
+    assert c.options.pool_options._ssl_context.verify_mode.name == "CERT_REQUIRED"
+    c.close()
