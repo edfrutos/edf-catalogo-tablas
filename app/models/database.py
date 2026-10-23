@@ -53,11 +53,18 @@ def _tls_options(mongo_uri: str) -> dict:
             "MONGO_TLS_INSECURE=1: NO se valida el certificado TLS de MongoDB"
         )
         options["tlsAllowInvalidCertificates"] = True
-    if "tlsallowinvalidcertificates=true" in mongo_uri.lower():
+    if (
+        os.getenv("MONGO_TLS_INSECURE") != "1"
+        and "tlsallowinvalidcertificates=true" in mongo_uri.lower()
+    ):
+        # Un kwarg explícito prevalece sobre la opción de la URI en PyMongo:
+        # se fuerza la validación aunque la URI traiga el flag inseguro.
         logger.warning(
-            "La URI de MongoDB incluye tlsAllowInvalidCertificates=true: "
-            "no se valida el certificado TLS"
+            "La URI de MongoDB incluye tlsAllowInvalidCertificates=true: se "
+            "ignora y se valida el certificado (usa MONGO_TLS_INSECURE=1 "
+            "solo si es imprescindible)"
         )
+        options["tlsAllowInvalidCertificates"] = False
     return options
 
 

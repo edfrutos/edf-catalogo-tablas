@@ -395,3 +395,22 @@ def test_get_mongo_client_no_pasa_tls_inseguro(monkeypatch):
     mod.get_mongo_client()
     assert "tlsAllowInvalidCertificates" not in llamadas["kwargs"]
     assert "tlsCAFile" in llamadas["kwargs"]
+
+
+def test_mongo_uri_con_flag_inseguro_se_ignora(monkeypatch):
+    monkeypatch.delenv("MONGO_TLS_INSECURE", raising=False)
+    mod = _cargar_models_database(monkeypatch)
+    uri = "mongodb+srv://u:p@c.example.mongodb.net/db?tlsAllowInvalidCertificates=true"
+    assert mod._tls_options(uri)["tlsAllowInvalidCertificates"] is False
+    monkeypatch.setenv("MONGO_TLS_INSECURE", "1")
+    assert mod._tls_options(uri)["tlsAllowInvalidCertificates"] is True
+
+
+def test_pymongo_kwarg_prevalece_sobre_uri():
+
+    uri = "mongodb://h/db?tls=true&tlsAllowInvalidCertificates=true"
+    from pymongo import MongoClient
+
+    c = MongoClient(uri, tlsAllowInvalidCertificates=False, connect=False)
+    assert c.options.pool_options._ssl_context.verify_mode.name == "CERT_REQUIRED"
+    c.close()
