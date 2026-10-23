@@ -10,6 +10,7 @@ import os
 import sys
 from datetime import datetime
 
+import certifi
 from bson import ObjectId
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -34,6 +35,32 @@ users_collection = None
 resets_collection = None
 
 
+def _tls_options(mongo_uri: str) -> dict:
+    """Opciones TLS del cliente: el certificado del servidor SE VALIDA.
+
+    Antes se usaba tlsAllowInvalidCertificates=True siempre, lo que permite
+    suplantar el servidor (MITM) en la conexión que transporta las
+    credenciales y los hashes de usuarios. Para Atlas (mongodb+srv) se valida
+    contra el bundle de certifi, igual que app/database.py.
+
+    Salida de emergencia explícita y ruidosa: MONGO_TLS_INSECURE=1.
+    """
+    options: dict = {}
+    if mongo_uri.startswith("mongodb+srv"):
+        options["tlsCAFile"] = certifi.where()
+    if os.getenv("MONGO_TLS_INSECURE") == "1":
+        logger.warning(
+            "MONGO_TLS_INSECURE=1: NO se valida el certificado TLS de MongoDB"
+        )
+        options["tlsAllowInvalidCertificates"] = True
+    if "tlsallowinvalidcertificates=true" in mongo_uri.lower():
+        logger.warning(
+            "La URI de MongoDB incluye tlsAllowInvalidCertificates=true: "
+            "no se valida el certificado TLS"
+        )
+    return options
+
+
 def get_mongo_client():
     """Obtiene el cliente de MongoDB."""
     global client
@@ -43,8 +70,7 @@ def get_mongo_client():
             raise ValueError(
                 "No se ha configurado MONGO_URI en las variables de entorno"
             )
-        # Usamos solo tlsAllowInvalidCertificates ya que es el más moderno y recomendado
-        client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
+        client = MongoClient(mongo_uri, **_tls_options(mongo_uri))
         logger.info(f"Conectado a MongoDB: {mongo_uri.split('@')[-1]}")
     return client
 
