@@ -14,7 +14,6 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         overflow: hidden;
         margin-bottom: 2rem;
-        min-width: 1420px;
     }
     
     /* Header de la tabla con gradiente */
@@ -54,7 +53,6 @@
         -webkit-overflow-scrolling: touch;
         border-radius: 0 0 12px 12px;
         background: #fff;
-        min-width: 1420px;
     }
     
     /* Estilos de la tabla */
@@ -63,81 +61,6 @@
         border-collapse: separate;
         border-spacing: 0;
         width: 100%;
-        min-width: 1420px;
-    }
-    
-    /* ANCHOS ESPECÍFICOS PARA COLUMNAS */
-    #tablaFilas th:nth-child(1),
-    #tablaFilas td:nth-child(1) {
-        width: 60px;
-        min-width: 60px;
-        max-width: 60px;
-    }
-    
-    #tablaFilas th:nth-child(2),
-    #tablaFilas td:nth-child(2) {
-        width: 140px;
-        min-width: 140px;
-        max-width: 140px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-    
-    #tablaFilas th:nth-child(3),
-    #tablaFilas td:nth-child(3),
-    #tablaFilas th:nth-child(5),
-    #tablaFilas td:nth-child(5),
-    #tablaFilas th:nth-child(7),
-    #tablaFilas td:nth-child(7) {
-        width: 300px;
-        min-width: 300px;
-        max-width: 300px;
-        word-wrap: break-word;
-        line-height: 1.4;
-    }
-    
-    #tablaFilas th:nth-child(4),
-    #tablaFilas td:nth-child(4),
-    #tablaFilas th:nth-child(6),
-    #tablaFilas td:nth-child(6),
-    #tablaFilas th:nth-child(8),
-    #tablaFilas td:nth-child(8) {
-        width: 150px;
-        min-width: 150px;
-        max-width: 150px;
-        text-align: center;
-    }
-    
-    #tablaFilas th:nth-child(9),
-    #tablaFilas td:nth-child(9) {
-        width: 120px;
-        min-width: 120px;
-        max-width: 120px;
-        text-align: center;
-    }
-    
-    #tablaFilas th:nth-child(10),
-    #tablaFilas td:nth-child(10) {
-        width: 150px;
-        min-width: 150px;
-        max-width: 150px;
-        text-align: center;
-    }
-    
-    #tablaFilas th:nth-child(11),
-    #tablaFilas td:nth-child(11) {
-        width: 200px;
-        min-width: 200px;
-        max-width: 200px;
-        position: sticky;
-        right: 0;
-        background: #f8f9fa;
-        border-left: 2px solid #dee2e6;
-        z-index: 5;
     }
     
     
@@ -156,7 +79,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         border-bottom: 2px solid #343a40;
-        min-width: 150px;
+        min-width: 110px;
         word-wrap: break-word;
         line-height: 1.3;
         display: table-cell;
@@ -204,18 +127,6 @@
         position: sticky;
         left: 0;
         z-index: 5;
-    }
-    
-    #tablaFilas td:nth-last-child(1) {
-        white-space: nowrap;
-    }
-    
-    #tablaFilas td:last-child {
-        display: flex;
-        gap: 5px;
-        align-items: center;
-        flex-wrap: nowrap;
-        justify-content: center;
     }
     
     .documento-item .btn {
@@ -368,12 +279,6 @@
             font-size: 0.75rem;
             padding: 0.3rem 0.7rem;
         }
-
-        #tablaFilas td:nth-last-child(1),
-        #tablaFilas td:nth-last-child(2) {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-left: 2px solid #dee2e6;
-        }
     }
 
     @media (max-width: 768px) {
@@ -421,20 +326,6 @@
             word-break: break-word;
             hyphens: auto;
         }
-
-        #tablaFilas td:nth-last-child(1) {
-            width: 180px;
-            min-width: 180px;
-            right: 0;
-            z-index: 6;
-        }
-
-        #tablaFilas td:nth-last-child(2) {
-            width: 140px;
-            min-width: 140px;
-            right: 180px;
-            z-index: 6;
-        }
     }
 
     @media (max-width: 576px) {
@@ -459,7 +350,6 @@
 
         #tablaFilas {
             font-size: 0.8rem;
-            min-width: 600px;
         }
 
         #tablaFilas thead th {
@@ -483,16 +373,6 @@
             min-width: 50px;
             padding: 0.4rem 0.1rem;
             font-size: 0.75rem;
-        }
-
-        #tablaFilas td:nth-last-child(1) {
-            width: 200px;
-            min-width: 200px;
-        }
-
-        #tablaFilas td:nth-last-child(2) {
-            width: 120px;
-            min-width: 120px;
         }
         
         .modal-dialog {
@@ -579,7 +459,7 @@
     display: inline-flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    align-items: cent !important;
+    align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
     max-width: 260px !important;
@@ -659,7 +539,7 @@
 
 {% block content %}
 <!-- TEMPLATE ACTUALIZADO: 2025-09-15 -->
-<div class="container-fluid mt-4" style="max-width: 1580px; width: 96vw;">
+<div class="container-fluid mt-4" style="max-width: 1580px;">
   <div class="table-container">
     <div class="table-header">
       <div class="d-flex justify-content-between align-items-center">
@@ -724,7 +604,7 @@
         <table class="table table-hover" id="tablaFilas">
                     <thead>
                         <tr>
-            <th>#</th>
+            <th class="col-num">#</th>
             {%- for header in catalog.headers -%}
               <th class="sortable" data-column="{{ loop.index }}" title="Haz clic para ordenar">
                 {% if header.startswith('Documentación') %}
@@ -735,18 +615,18 @@
                 <i class="bi bi-chevron-expand sort-icon"></i>
                                 </th>
             {%- endfor -%}
-            <th>Imágenes</th>
+            <th class="col-imagenes">Imágenes</th>
             {%- if session.role == 'admin' -%}
-              <th>Acciones</th>
+              <th class="col-acciones">Acciones</th>
             {%- endif -%}
                         </tr>
                     </thead>
                     <tbody>
           {%- for row in catalog.data -%}
             <tr data-row-index="{{ loop.index0 }}">
-              <td>{{ loop.index }}</td>
+              <td class="col-num" data-label="Fila">{{ loop.index }}</td>
               {%- for header in catalog.headers -%}
-              <td>
+              <td data-label="{{ header|e }}">
                 {% set cell_data = row.get(header, '') %}
             
                 {# ==========================================================
@@ -924,7 +804,7 @@
                 {% endif %}
               </td>
             {%- endfor -%}
-              <td style="text-align: center;">
+              <td class="col-imagenes" data-label="Imágenes">
                   {% if row.imagen_urls and row.imagen_urls|length > 0 %}
                     <div class="admin-images-inline">
                       {% for img_url in row.imagen_urls %}
@@ -955,7 +835,7 @@
                   {% endif %}
                </td>
               {%- if session.role == 'admin' -%}
-                                    <td>
+                                    <td class="col-acciones" data-label="Acciones">
                   <div class="d-flex gap-1 justify-content-center">
                     <a href="{{ url_for('admin.editar_fila_admin', collection_source=catalog.collection_source, catalog_id=catalog._id_str, row_index=loop.index0) }}" class="btn btn-sm btn-warning">
                       <i class="bi bi-pencil"></i> Editar

@@ -414,3 +414,55 @@ def test_pymongo_kwarg_prevalece_sobre_uri():
     c = MongoClient(uri, tlsAllowInvalidCertificates=False, connect=False)
     assert c.options.pool_options._ssl_context.verify_mode.name == "CERT_REQUIRED"
     c.close()
+
+
+# --- Tablas de filas de catálogo: layout responsive (admin y usuario) ---
+
+_PLANTILLAS_TABLA = ("app/templates/ver_tabla.html", "app/templates/admin/ver_catalogo.html")
+
+
+def test_tablas_catalogo_sin_anchos_fijos_ni_reglas_posicionales():
+    import re
+
+    for ruta in _PLANTILLAS_TABLA + ("app/static/css/ver_tabla_improvements.css",):
+        texto = (RAIZ / ruta).read_text(encoding="utf-8")
+        assert not re.search(r"min-width:\s*1[4-6]00px", texto), ruta
+        assert "#tablaFilas th:nth-child" not in texto, ruta
+        assert "#tablaFilas td:nth-child(1" not in texto, ruta
+        assert "td:nth-last-child" not in texto, ruta
+
+
+def test_tablas_catalogo_celdas_con_data_label_y_clases():
+    for ruta in _PLANTILLAS_TABLA:
+        texto = (RAIZ / ruta).read_text(encoding="utf-8")
+        for clase in ("col-num", "col-imagenes", "col-acciones"):
+            assert f'class="{clase}"' in texto, (ruta, clase)
+        assert 'data-label="{{ header|e }}"' in texto, ruta
+        assert 'data-label="Acciones"' in texto, ruta
+
+
+def test_vista_usuario_emite_su_css():
+    # base.html no define {% block head %}: el CSS debe ir dentro de content
+    base = (RAIZ / "app/templates/base.html").read_text(encoding="utf-8")
+    assert "{% block head %}" not in base
+    texto = (RAIZ / "app/templates/ver_tabla.html").read_text(encoding="utf-8")
+    assert "{% block head %}" not in texto.replace(
+        "{# base.html no define {% block head %}", ""
+    )
+    inicio = texto.index("{% block content %}")
+    assert texto.index("ver_tabla_improvements.css") > inicio
+
+
+def test_css_tarjetas_no_fuerza_display_de_filas():
+    # la búsqueda y la paginación ocultan filas con style.display
+    css = (RAIZ / "app/static/css/ver_tabla_improvements.css").read_text(encoding="utf-8")
+    bloque = css[css.index("@media (width <= 768px)", css.index("11. LAYOUT")):]
+    assert "#tablaFilas tbody tr {" in bloque
+    regla_tr = bloque[bloque.index("#tablaFilas tbody tr {"):].split("}")[0]
+    assert "display" not in regla_tr
+
+
+def test_navbar_admin_colapsa_por_debajo_de_xl():
+    base = (RAIZ / "app/templates/admin/base.html").read_text(encoding="utf-8")
+    assert "navbar-expand-xl" in base and "navbar-expand-lg" not in base
+    assert "max-width: 1199.98px" in base

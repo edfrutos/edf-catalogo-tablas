@@ -56,205 +56,12 @@
     padding: 0.75rem 1rem !important;
 }
 
-/* 3. ANCHOS ESPECÍFICOS PARA COLUMNAS */
-
-#tablaFilas th:nth-child(1), /* Columna # */
-#tablaFilas td:nth-child(1) {
-    width: 60px !important;
-    min-width: 60px !important;
-    max-width: 60px !important;
-}
-
-/* Columna Fecha - una sola línea */
-
-#tablaFilas th:nth-child(2), /* Columna Fecha */
-#tablaFilas td:nth-child(2) {
-    width: 140px !important;
-    min-width: 140px !important;
-    max-width: 140px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-/* Columnas Título_* - más anchas */
-
-#tablaFilas th:nth-child(3), /* Título_1 */
-#tablaFilas td:nth-child(3),
-#tablaFilas th:nth-child(5), /* Título_2 */
-#tablaFilas td:nth-child(5),
-#tablaFilas th:nth-child(7), /* Título_3 */
-#tablaFilas td:nth-child(7) {
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
-    overflow-wrap: break-word !important;
-    line-height: 1.4 !important;
-}
-
-/* Columnas Documentación_* - anchos estándar */
-
-#tablaFilas th:nth-child(4), /* Documentación_1 */
-#tablaFilas td:nth-child(4),
-#tablaFilas th:nth-child(6), /* Documentación_2 */
-#tablaFilas td:nth-child(6),
-#tablaFilas th:nth-child(8), /* Documentación_3 */
-#tablaFilas td:nth-child(8) {
-    width: 150px !important;
-    min-width: 150px !important;
-    max-width: 150px !important;
-    text-align: center !important;
-}
-
-/* Columna Multimedia */
-
-#tablaFilas th:nth-child(9),
-#tablaFilas td:nth-child(9) {
-    width: 120px !important;
-    min-width: 120px !important;
-    max-width: 120px !important;
-    text-align: center !important;
-}
-
-/* Columna Imágenes */
-
-#tablaFilas th:nth-child(10),
-#tablaFilas td:nth-child(10) {
-    width: 150px !important;
-    min-width: 150px !important;
-    max-width: 150px !important;
-    text-align: center !important;
-}
-
-/* Columna Acciones - asegurar que siempre sea visible */
-
-#tablaFilas th:nth-child(11),
-#tablaFilas td:nth-child(11) {
-    width: 200px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-    position: sticky !important;
-    right: 0 !important;
-    background: #f8f9fa !important;
-    border-left: 2px solid #dee2e6 !important;
-    z-index: 5 !important;
-}
-
-/* 4. RESPONSIVIDAD MEJORADA */
-@media (width <= 1200px) {
-    .search-container {
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-    
-    #tablaFilas th:nth-child(3),
-    #tablaFilas td:nth-child(3),
-    #tablaFilas th:nth-child(5),
-    #tablaFilas td:nth-child(5),
-    #tablaFilas th:nth-child(7),
-    #tablaFilas td:nth-child(7) {
-        width: 220px !important;
-        min-width: 220px !important;
-        max-width: 220px !important;
-    }
-}
-
-@media (width <= 992px) {
-    .search-container {
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-    
-    #tablaFilas th:nth-child(3),
-    #tablaFilas td:nth-child(3),
-    #tablaFilas th:nth-child(5),
-    #tablaFilas td:nth-child(5),
-    #tablaFilas th:nth-child(7),
-    #tablaFilas td:nth-child(7) {
-        width: 200px !important;
-        min-width: 200px !important;
-        max-width: 200px !important;
-    }
-    
-    #tablaFilas th:nth-child(11),
-    #tablaFilas td:nth-child(11) {
-        width: 180px !important;
-        min-width: 180px !important;
-        max-width: 180px !important;
-    }
-}
-
-@media (width <= 768px) {
-    .search-container {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-bottom: 1rem !important;
-    }
-    
-    #tablaFilas th:nth-child(3),
-    #tablaFilas td:nth-child(3),
-    #tablaFilas th:nth-child(5),
-    #tablaFilas td:nth-child(5),
-    #tablaFilas th:nth-child(7),
-    #tablaFilas td:nth-child(7) {
-        width: 180px !important;
-        min-width: 180px !important;
-        max-width: 180px !important;
-    }
-    
-    #tablaFilas th:nth-child(11),
-    #tablaFilas td:nth-child(11) {
-        width: 160px !important;
-        min-width: 160px !important;
-        max-width: 160px !important;
-    }
-}
-
-@media (width <= 576px) {
-    .search-container {
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-    
-    #tablaFilas th:nth-child(3),
-    #tablaFilas td:nth-child(3),
-    #tablaFilas th:nth-child(5),
-    #tablaFilas td:nth-child(5),
-    #tablaFilas th:nth-child(7),
-    #tablaFilas td:nth-child(7) {
-        width: 150px !important;
-        min-width: 150px !important;
-        max-width: 150px !important;
-    }
-    
-    #tablaFilas th:nth-child(11),
-    #tablaFilas td:nth-child(11) {
-        width: 140px !important;
-        min-width: 140px !important;
-        max-width: 140px !important;
-    }
-}
-
 /* 5. MEJORAS ADICIONALES PARA RESPONSIVIDAD */
 
 .table-responsive-custom {
     border-radius: 8px !important;
     box-shadow: 0 4px 12px rgb(0 0 0 / 10%) !important;
-    overflow: auto visible !important;
-}
-
-/* Asegurar que la tabla tenga scroll horizontal cuando sea necesario */
-
-#tablaFilas {
-    min-width: 1400px !important; /* Ajustado para incluir todas las columnas más anchas */
-}
-
-/* 6. ESTILOS PARA BOTONES DE ACCIONES */
-
-#tablaFilas td:nth-child(11) .btn {
-    margin: 2px !important;
-    font-size: 0.85rem !important;
-    padding: 0.375rem 0.75rem !important;
+    overflow-x: auto !important;
 }
 
 /* 7. MEJORAS EN EL CONTENIDO DE CELDAS */
@@ -303,4 +110,174 @@
     font-family: 'Courier New', monospace !important;
     font-size: 0.9rem !important;
     color: #6c757d !important;
+}
+
+/* ===== 11. LAYOUT DE LA TABLA DE FILAS (por clase, no por posición) =====
+   Sustituye a los anchos fijos por nth-child (pensados para 11 columnas) y a
+   los min-width de 1400-1600px, que desbordaban la ventana. La tabla se ajusta
+   al ancho disponible; si no cabe, scroll horizontal DENTRO de su contenedor.
+   Por debajo de 768px cada fila pasa a tarjeta (etiquetas via data-label). */
+
+.table-container {
+    min-width: 0 !important;
+    max-width: 100%;
+}
+
+.table-responsive-custom {
+    min-width: 0 !important;
+    max-width: 100%;
+    overflow-x: auto !important;
+}
+
+#tablaFilas {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
+}
+
+#tablaFilas thead th,
+#tablaFilas tbody td {
+    min-width: 100px;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+#tablaFilas th.col-num,
+#tablaFilas td.col-num {
+    width: 56px;
+    min-width: 56px !important;
+    max-width: 72px;
+    text-align: center !important;
+}
+
+#tablaFilas th.col-imagenes,
+#tablaFilas td.col-imagenes {
+    min-width: 120px !important;
+    text-align: center !important;
+}
+
+#tablaFilas th.col-acciones,
+#tablaFilas td.col-acciones {
+    min-width: 175px !important;
+    white-space: nowrap;
+    text-align: center !important;
+}
+
+#tablaFilas thead th.col-acciones {
+    right: 0;
+    z-index: 11 !important;
+}
+
+#tablaFilas td.col-acciones {
+    position: sticky;
+    right: 0;
+    z-index: 5;
+    background: #f8f9fa;
+    border-left: 2px solid #dee2e6;
+}
+
+#tablaFilas td.col-acciones > div {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+#tablaFilas td.col-acciones .btn {
+    margin: 0;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.6rem;
+    white-space: nowrap;
+}
+
+#tablaFilas td.col-imagenes > div {
+    justify-content: center;
+}
+
+#tablaFilas thead th {
+    white-space: normal !important;
+}
+
+@media (width <= 768px) {
+    .table-responsive-custom {
+        overflow-x: visible !important;
+        box-shadow: none !important;
+        background: transparent;
+    }
+
+    #tablaFilas,
+    #tablaFilas tbody,
+    #tablaFilas tr,
+    #tablaFilas td {
+        display: block;
+        width: 100% !important;
+    }
+
+    #tablaFilas thead {
+        display: none;
+    }
+
+    /* Sin !important en display: la búsqueda/paginación oculta filas con style.display */
+    #tablaFilas tbody tr {
+        margin: 0 0 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+        transform: none !important;
+    }
+
+    #tablaFilas tbody td {
+        position: relative;
+        min-width: 0 !important;
+        max-width: none !important;
+        padding: 0.6rem 0.85rem 0.6rem 42% !important;
+        min-height: 2.4rem;
+        text-align: left !important;
+        border-left: 0 !important;
+        border-bottom: 1px solid #f1f3f4 !important;
+    }
+
+    #tablaFilas tbody td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0.85rem;
+        top: 0.6rem;
+        width: 36%;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+        text-align: left;
+    }
+
+    #tablaFilas tbody td.col-num {
+        position: relative;
+        max-width: none !important;
+        background: #f1f3f5;
+        text-align: left !important;
+    }
+
+    #tablaFilas tbody td.col-acciones {
+        position: static;
+        padding-left: 0.85rem !important;
+        background: #f8f9fa;
+        border-bottom: 0 !important;
+    }
+
+    #tablaFilas tbody td.col-acciones::before {
+        display: none;
+    }
+
+    #tablaFilas td.col-acciones > div {
+        justify-content: flex-start;
+    }
+
+    #tablaFilas tbody td.col-imagenes {
+        text-align: left !important;
+    }
+
+    #tablaFilas td.col-imagenes > div {
+        justify-content: flex-start;
+    }
 }

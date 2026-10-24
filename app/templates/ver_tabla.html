@@ -3,7 +3,9 @@
 {% block multimedia_modal %}{% endblock %}
 {% block title %}Ver Tabla{% endblock %}
 
-{% block head %}
+{% block content %}
+{# base.html no define {% block head %}: todo lo que estaba en ese bloque se descartaba
+   (CSS de la tabla incluido). Se emite aquí, al inicio del contenido. #}
 <!-- CSS Version: 2025-01-12-21:15 - Estilos integrados directamente en HTML -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/ver_tabla_improvements.css') }}">
 <style>
@@ -63,109 +65,6 @@
         border-collapse: separate;
         border-spacing: 0;
         width: 100%;
-        min-width: 1600px !important; /* Ajustado para columnas más anchas */
-    }
-    
-    /* ANCHOS ESPECÍFICOS PARA COLUMNAS - CON MAYOR ESPECIFICIDAD */
-    .table-responsive-custom #tablaFilas th:nth-child(1),
-    .table-responsive-custom #tablaFilas td:nth-child(1),
-    #tablaFilas th:nth-child(1),
-    #tablaFilas td:nth-child(1) {
-        width: 60px !important;
-        min-width: 60px !important;
-        max-width: 60px !important;
-    }
-    
-    /* Columna Fecha - una sola línea */
-    .table-responsive-custom #tablaFilas th:nth-child(2),
-    .table-responsive-custom #tablaFilas td:nth-child(2),
-    #tablaFilas th:nth-child(2),
-    #tablaFilas td:nth-child(2) {
-        width: 140px !important;
-        min-width: 140px !important;
-        max-width: 140px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        font-family: 'Courier New', monospace !important;
-        font-size: 0.9rem !important;
-        color: #6c757d !important;
-    }
-    
-    /* Columnas Título_* - más anchas */
-    .table-responsive-custom #tablaFilas th:nth-child(3),
-    .table-responsive-custom #tablaFilas td:nth-child(3),
-    .table-responsive-custom #tablaFilas th:nth-child(5),
-    .table-responsive-custom #tablaFilas td:nth-child(5),
-    .table-responsive-custom #tablaFilas th:nth-child(7),
-    .table-responsive-custom #tablaFilas td:nth-child(7),
-    #tablaFilas th:nth-child(3),
-    #tablaFilas td:nth-child(3),
-    #tablaFilas th:nth-child(5),
-    #tablaFilas td:nth-child(5),
-    #tablaFilas th:nth-child(7),
-    #tablaFilas td:nth-child(7) {
-        width: 300px !important;
-        min-width: 300px !important;
-        max-width: 300px !important;
-        word-wrap: break-word !important;
-        line-height: 1.4 !important;
-    }
-    
-    /* Columnas Documentación_* - anchos estándar */
-    .table-responsive-custom #tablaFilas th:nth-child(4),
-    .table-responsive-custom #tablaFilas td:nth-child(4),
-    .table-responsive-custom #tablaFilas th:nth-child(6),
-    .table-responsive-custom #tablaFilas td:nth-child(6),
-    .table-responsive-custom #tablaFilas th:nth-child(8),
-    .table-responsive-custom #tablaFilas td:nth-child(8),
-    #tablaFilas th:nth-child(4),
-    #tablaFilas td:nth-child(4),
-    #tablaFilas th:nth-child(6),
-    #tablaFilas td:nth-child(6),
-    #tablaFilas th:nth-child(8),
-    #tablaFilas td:nth-child(8) {
-        width: 150px !important;
-        min-width: 150px !important;
-        max-width: 150px !important;
-        text-align: center !important;
-    }
-    
-    /* Columna Multimedia */
-    .table-responsive-custom #tablaFilas th:nth-child(9),
-    .table-responsive-custom #tablaFilas td:nth-child(9),
-    #tablaFilas th:nth-child(9),
-    #tablaFilas td:nth-child(9) {
-        width: 120px !important;
-        min-width: 120px !important;
-        max-width: 120px !important;
-        text-align: center !important;
-    }
-    
-    /* Columna Imágenes */
-    .table-responsive-custom #tablaFilas th:nth-child(10),
-    .table-responsive-custom #tablaFilas td:nth-child(10),
-    #tablaFilas th:nth-child(10),
-    #tablaFilas td:nth-child(10) {
-        width: 150px !important;
-        min-width: 150px !important;
-        max-width: 150px !important;
-        text-align: center !important;
-    }
-    
-    /* Columna Acciones */
-    .table-responsive-custom #tablaFilas th:nth-child(11),
-    .table-responsive-custom #tablaFilas td:nth-child(11),
-    #tablaFilas th:nth-child(11),
-    #tablaFilas td:nth-child(11) {
-        width: 200px !important;
-        min-width: 200px !important;
-        max-width: 200px !important;
-        position: sticky !important;
-        right: 0 !important;
-        background: #f8f9fa !important;
-        border-left: 2px solid #dee2e6 !important;
-        z-index: 5 !important;
     }
     
     
@@ -186,13 +85,9 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
         border-bottom: 2px solid #343a40 !important;
-        min-width: 150px !important;
+        min-width: 110px !important;
         word-wrap: break-word !important;
         line-height: 1.3 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-wrap: nowrap !important;
     }
     
     /* ESTILOS PARA ICONOS DE ORDENAMIENTO */
@@ -260,50 +155,6 @@
         position: sticky;
         left: 0;
         z-index: 5;
-    }
-    
-    /* Columnas de acciones e imágenes */
-    #tablaFilas td:nth-last-child(1) {
-        white-space: nowrap;
-        width: 200px;
-        min-width: 200px;
-        background: #f8f9fa;
-        position: sticky;
-        right: 0;
-        z-index: 5;
-    }
-    
-    #tablaFilas td:nth-last-child(2) {
-        width: 150px;
-        min-width: 150px;
-        background: #f8f9fa;
-        position: sticky;
-        right: 200px;
-        z-index: 5;
-    }
-    
-    /* Botones de acción */
-    #tablaFilas td:nth-last-child(1) .btn {
-        display: inline-block;
-        margin: 2px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        padding: 0.4rem 0.6rem;
-        transition: all 0.3s ease;
-    }
-    
-    #tablaFilas td:nth-last-child(1) .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    /* Contenedor de acciones */
-    #tablaFilas td:last-child {
-        display: flex;
-        gap: 5px;
-        align-items: center;
-        flex-wrap: nowrap;
-        justify-content: center;
     }
     
     /* Estilos para documentos */
@@ -376,10 +227,12 @@
         max-width: 100% !important;
     }
     
+    /* width:100% sacaba el campo de la fila y lo dejaba bajo el icono */
     .table-container .search-container .form-control,
     .search-container .form-control {
-        width: 100% !important;
-        max-width: 100% !important;
+        flex: 1 1 auto !important;
+        width: 1% !important;
+        min-width: 0 !important;
     }
     
     .search-container .form-control {
@@ -418,13 +271,6 @@
         .documento-item .btn {
             font-size: 0.75rem;
             padding: 0.3rem 0.7rem;
-        }
-
-        /* Mejorar visibilidad de columnas importantes */
-        #tablaFilas td:nth-last-child(1),
-        #tablaFilas td:nth-last-child(2) {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-left: 2px solid #dee2e6;
         }
     }
 
@@ -474,31 +320,6 @@
             hyphens: auto;
         }
 
-        /* Columnas más anchas en móvil para mejor legibilidad */
-        #tablaFilas td:nth-last-child(1) {
-            width: 180px;
-            min-width: 180px;
-            position: sticky;
-            right: 0;
-            z-index: 6;
-        }
-
-        #tablaFilas td:nth-last-child(2) {
-            width: 140px;
-            min-width: 140px;
-            position: sticky;
-            right: 180px;
-            z-index: 6;
-        }
-
-        /* Mejorar botones de acción en móvil */
-        #tablaFilas td:nth-last-child(1) .btn {
-            font-size: 0.75rem;
-            padding: 0.35rem 0.5rem;
-            margin: 1px;
-            min-width: 60px;
-        }
-
         .documento-item .btn {
             font-size: 0.7rem;
             padding: 0.25rem 0.5rem;
@@ -520,20 +341,6 @@
             padding: 0.75rem;
         }
 
-        .search-container .input-group {
-            flex-direction: column;
-        }
-
-        .search-container .input-group .input-group-text {
-            border-bottom: none;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-
-        .search-container .form-control {
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
-        }
     }
 
     @media (max-width: 576px) {
@@ -567,7 +374,6 @@
 
         #tablaFilas {
             font-size: 0.8rem;
-            min-width: 600px; /* Ajustado para mejor scroll */
         }
 
         #tablaFilas thead th {
@@ -593,28 +399,6 @@
             padding: 0.4rem 0.1rem;
             text-align: center;
             font-size: 0.75rem;
-        }
-
-        /* Columnas de acciones más anchas para mejor usabilidad */
-        #tablaFilas td:nth-last-child(1) {
-            width: 200px;
-            min-width: 200px;
-        }
-
-        #tablaFilas td:nth-last-child(2) {
-            width: 120px;
-            min-width: 120px;
-        }
-
-        /* Botones más grandes y touch-friendly */
-        #tablaFilas td:nth-last-child(1) .btn {
-            font-size: 0.75rem;
-            padding: 0.5rem 0.8rem;
-            margin: 2px;
-            min-height: 36px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .documento-item .btn {
@@ -697,16 +481,6 @@
             padding: 0.3rem 0.15rem;
         }
 
-        #tablaFilas td:nth-last-child(1) {
-            width: 180px;
-            min-width: 180px;
-        }
-
-        #tablaFilas td:nth-last-child(2) {
-            width: 100px;
-            min-width: 100px;
-        }
-
         .btn {
             font-size: 0.75rem !important;
             padding: 0.3rem 0.5rem !important;
@@ -752,9 +526,7 @@
         background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
 </style>
-{% endblock %}
 
-{% block content %}
 <!-- TEMPLATE ACTUALIZADO: 2025-01-16-13:15 - URLs de multimedia corregidas -->
 <div class="container mt-4">
   <!-- Header de la tabla con información -->
@@ -798,20 +570,20 @@
     <!-- Barra de búsqueda -->
     {% if table.data and table.headers %}
       <div class="search-container" style="width: 100% !important; max-width: 100% !important; margin-bottom: 1.5rem !important;">
-        <div class="input-group" style="width: 100% !important; max-width: 100% !important;">
+        <div class="input-group">
           <span class="input-group-text">
             <i class="bi bi-search"></i>
           </span>
-          <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla..." style="width: 100% !important; max-width: 100% !important;">
+          <input type="text" id="searchInput" class="form-control" placeholder="Buscar en la tabla...">
         </div>
       </div>
       
       <!-- Tabla responsive -->
       <div class="table-responsive-custom">
-        <table class="table table-hover" id="tablaFilas" style="min-width: 1600px !important; width: 100% !important;">
+        <table class="table table-hover" id="tablaFilas">
         <thead>
           <tr>
-            <th style="width: 60px; text-align: center; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important;">#</th>
+            <th class="col-num" style="text-align: center; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important;">#</th>
             {% for header in table.headers %}
               <th class="sortable" data-column="{{ loop.index }}" title="Haz clic para ordenar" style="cursor: pointer; user-select: none; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important; text-align: center !important; position: sticky !important; top: 0 !important; z-index: 10 !important; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; border-bottom: 2px solid #343a40 !important;">
                 {% if header.startswith('Documentación') %}
@@ -822,19 +594,19 @@
                 <i class="bi bi-chevron-expand sort-icon" style="font-size: 0.8em; opacity: 0.7; margin-left: 8px; color: #ffffff !important;"></i>
               </th>
             {% endfor %}
-            <th style="width: 150px; min-width: 150px; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important; text-align: center !important; position: sticky !important; top: 0 !important; z-index: 10 !important; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; border-bottom: 2px solid #343a40 !important;">Imágenes</th>
+            <th class="col-imagenes" style="background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important; text-align: center !important; position: sticky !important; top: 0 !important; z-index: 10 !important; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; border-bottom: 2px solid #343a40 !important;">Imágenes</th>
             {% if session.role == 'admin' or session.username == table.owner %}
-              <th style="width: 200px; min-width: 200px; background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important; text-align: center !important; position: sticky !important; top: 0 !important; z-index: 10 !important; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; border-bottom: 2px solid #343a40 !important;">Acciones</th>
+              <th class="col-acciones" style="background: linear-gradient(135deg, #495057 0%, #6c757d 100%) !important; color: #ffffff !important; border: none !important; padding: 1rem 0.75rem !important; font-weight: 600 !important; text-align: center !important; position: sticky !important; top: 0 !important; z-index: 10 !important; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; border-bottom: 2px solid #343a40 !important;">Acciones</th>
             {% endif %}
           </tr>
         </thead>
         <tbody>
           {% for row in table.data %}
             <tr data-row-index="{{ loop.index0 }}">
-              <td style="text-align: center; font-weight: bold; color: #6c757d; width: 60px !important; min-width: 60px !important; max-width: 60px !important;">{{ loop.index }}</td>
+              <td class="col-num" data-label="Fila">{{ loop.index }}</td>
         
               {% for header in table.headers %}
-                <td>
+                <td data-label="{{ header|e }}">
                   {% set cell_data = row[header] if row[header] is defined and row[header] is not none else '' %}
         
                   {# ============================================================
@@ -1215,7 +987,7 @@
                 </td>
               {% endfor %}
         
-              <td style="width: 150px !important; min-width: 150px !important; max-width: 150px !important; text-align: center !important;">
+              <td class="col-imagenes" data-label="Imágenes">
                 {% if row.imagen_urls and row.imagen_urls|length > 0 %}
                   <div class="d-flex flex-wrap gap-1">
                     {% for img_url in row.imagen_urls %}
@@ -1234,7 +1006,7 @@
               </td>
         
               {% if session.role == 'admin' or session.username == table.owner %}
-                <td style="white-space: nowrap; width: 200px; min-width: 200px; position: sticky !important; right: 0 !important; background: #f8f9fa !important; border-left: 2px solid #dee2e6 !important; z-index: 5 !important;">
+                <td class="col-acciones" data-label="Acciones">
                   <div class="d-flex gap-1">
                     <a href="{{ url_for('main.editar_fila', tabla_id=table._id|string, fila_index=loop.index0) }}" class="btn btn-sm btn-warning">
                       <i class="bi bi-pencil"></i> Editar
