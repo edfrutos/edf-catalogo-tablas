@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Obligatorio en la Mac App Store -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <!-- La app sirve su interfaz con un servidor local (127.0.0.1) y descarga recursos -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <key>com.apple.security.network.server</key>
+    <true/>
+    <!-- Importar/exportar archivos elegidos por el usuario en los diálogos del sistema -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <!--
+      com.apple.application-identifier y com.apple.developer.team-identifier se añaden
+      en sign_and_package.sh a partir del perfil de aprovisionamiento embebido.
+      No se usan entitlements com.apple.security.cs.*: la firma de la tienda no usa
+      Hardened Runtime y esas excepciones no son necesarias.
+    -->
+</dict>
+</plist>
