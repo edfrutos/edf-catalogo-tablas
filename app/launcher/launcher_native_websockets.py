@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Lanzador nativo para EDF Catálogo de Tablas
+Lanzador nativo para TablaTeca
 Ejecuta la aplicación web Flask en una ventana nativa de macOS
 con soporte para WebSockets en tiempo real
 """
@@ -82,7 +82,7 @@ def wait_for_server():
 
 def main():
     """Función principal de la aplicación"""
-    print("🚀 Iniciando EDF Catálogo de Tablas (Aplicación Nativa WebSockets)")
+    print("🚀 Iniciando TablaTeca (Aplicación Nativa WebSockets)")
     print("=" * 60)
 
     # Iniciar el servidor Flask en un hilo separado
@@ -102,7 +102,7 @@ def main():
 
         # Configuración básica para pywebview
         window_config = {
-            "title": "EDF Catálogo de Tablas - Aplicación Web Nativa",
+            "title": "TablaTeca",
             "url": "http://127.0.0.1:5004",
             "width": 1400,
             "height": 900,

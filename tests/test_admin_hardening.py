@@ -466,3 +466,26 @@ def test_navbar_admin_colapsa_por_debajo_de_xl():
     base = (RAIZ / "app/templates/admin/base.html").read_text(encoding="utf-8")
     assert "navbar-expand-xl" in base and "navbar-expand-lg" not in base
     assert "max-width: 1199.98px" in base
+
+
+# --- Renombrado de la app a TablaTeca ---
+
+
+def test_workflow_usa_nombre_tablateca():
+    wf = (RAIZ / ".github/workflows/build_macos_app.yml").read_text(encoding="utf-8")
+    assert "EDF_CatalogoDeTablas" not in wf
+    assert "catalogodetablas.websockets" not in wf
+    assert "bundle_identifier='com.edefrutos.tablateca'" in wf
+    assert "'CFBundleName': 'TablaTeca'" in wf
+    assert "'CFBundleExecutable': 'TablaTeca'" in wf
+    assert "name='TablaTeca.app'" in wf
+    assert 'dist/TablaTeca.app' in wf and 'TablaTeca.dmg' in wf
+    # nombre de ejecutable y de CFBundleExecutable deben coincidir
+    assert wf.count("name='TablaTeca',") == 2
+
+
+def test_datos_del_usuario_no_cambian_de_carpeta():
+    # El renombrado NO mueve datos ni backups: siguen en EDF_Catalogo
+    paths = (RAIZ / "app/utils/paths.py").read_text(encoding="utf-8")
+    assert '"Application Support", "EDF_Catalogo"' in paths
+    assert '"Logs", "EDF_Catalogo"' in paths

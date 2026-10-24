@@ -184,11 +184,11 @@ jobs:
           echo "📌 Versión de la app: $APP_VERSION"
 
           # Verificar si existe el archivo .spec correcto
-          if [ -f "EDF_CatalogoDeTablas_Native_WebSockets.spec" ]; then
-            echo "✅ EDF_CatalogoDeTablas_Native_WebSockets.spec encontrado"
-            echo "📏 Tamaño del archivo: $(wc -l < EDF_CatalogoDeTablas_Native_WebSockets.spec) líneas"
+          if [ -f "TablaTeca.spec" ]; then
+            echo "✅ TablaTeca.spec encontrado"
+            echo "📏 Tamaño del archivo: $(wc -l < TablaTeca.spec) líneas"
             echo "📋 Primeras 10 líneas:"
-            head -10 EDF_CatalogoDeTablas_Native_WebSockets.spec
+            head -10 TablaTeca.spec
             echo "✅ Verificación completada"
             exit 0
           fi
@@ -206,99 +206,99 @@ jobs:
             echo "⚠️  Script verify_spec.sh no encontrado, creando archivo manualmente..."
             
             # Crear archivo .spec simplificado para evitar errores en GitHub Actions
-            echo "# -*- mode: python ; coding: utf-8 -*-" > "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "block_cipher = None" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "a = Analysis(" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    ['launcher_native_websockets.py']," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    pathex=[]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    binaries=[]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    datas=[" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        ('app', 'app')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        ('config.py', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        ('wsgi.py', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        ('.env', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        ('VERSION', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        ('requirements.txt', '.')," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    ]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    hiddenimports=[" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'flask', 'flask_login', 'flask_session', 'pymongo', 'requests'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'webview', 'werkzeug', 'jinja2', 'markupsafe', 'itsdangerous'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'click', 'blinker', 'boto3', 'botocore', 's3transfer'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'jmespath', 'python_dateutil', 'urllib3', 'certifi'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'charset_normalizer', 'idna', 'six', 'websockets'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'asyncio', 'threading', 'tempfile', 'pathlib', 'datetime'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'json', 'os', 'sys', 'time'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    ]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    hookspath=[]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    hooksconfig={}," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    runtime_hooks=[]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    excludes=[]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    win_no_prefer_redirects=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    win_private_assemblies=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    cipher=block_cipher," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    noarchive=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo ")" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "exe = EXE(" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    pyz," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    a.scripts," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    []," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    exclude_binaries=True," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    name='EDF_CatalogoDeTablas_Web_Native'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    debug=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    bootloader_ignore_signals=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    strip=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    upx=True," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    console=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    disable_windowed_traceback=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    argv_emulation=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    target_arch=None," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    codesign_identity=None," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    entitlements_file=None," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo ")" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "coll = COLLECT(" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    exe," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    a.binaries," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    a.zipfiles," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    a.datas," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    strip=False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    upx=True," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    upx_exclude=[]," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    name='EDF_CatalogoDeTablas_Web_Native'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo ")" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "app = BUNDLE(" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    coll," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    name='EDF_CatalogoDeTablas_Web_Native.app'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    icon='edf_developer.icns'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    bundle_identifier='com.edefrutos.catalogodetablas.websockets'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    info_plist={" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleName': 'EDF Catálogo de Tablas'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleDisplayName': 'EDF Catálogo de Tablas'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleVersion': '$APP_VERSION'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleShortVersionString': '$APP_VERSION'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleExecutable': 'EDF_CatalogoDeTablas_Web_Native'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundlePackageType': 'APPL'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleSignature': '????'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'LSMinimumSystemVersion': '11.0'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'NSHighResolutionCapable': True," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'NSRequiresAquaSystemAppearance': False," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'LSApplicationCategoryType': 'public.app-category.productivity'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleDevelopmentRegion': 'es'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'CFBundleLocalizations': ['es', 'en']," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "        'NSHumanReadableCopyright': 'Copyright © 2026 EDF. Todos los derechos reservados.'," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo "    }," >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
-            echo ")" >> "EDF_CatalogoDeTablas_Native_WebSockets.spec"
+            echo "# -*- mode: python ; coding: utf-8 -*-" > "TablaTeca.spec"
+            echo "" >> "TablaTeca.spec"
+            echo "block_cipher = None" >> "TablaTeca.spec"
+            echo "" >> "TablaTeca.spec"
+            echo "a = Analysis(" >> "TablaTeca.spec"
+            echo "    ['launcher_native_websockets.py']," >> "TablaTeca.spec"
+            echo "    pathex=[]," >> "TablaTeca.spec"
+            echo "    binaries=[]," >> "TablaTeca.spec"
+            echo "    datas=[" >> "TablaTeca.spec"
+            echo "        ('app', 'app')," >> "TablaTeca.spec"
+            echo "        ('config.py', '.')," >> "TablaTeca.spec"
+            echo "        ('wsgi.py', '.')," >> "TablaTeca.spec"
+            echo "        ('.env', '.')," >> "TablaTeca.spec"
+            echo "        ('VERSION', '.')," >> "TablaTeca.spec"
+            echo "        ('requirements.txt', '.')," >> "TablaTeca.spec"
+            echo "    ]," >> "TablaTeca.spec"
+            echo "    hiddenimports=[" >> "TablaTeca.spec"
+            echo "        'flask', 'flask_login', 'flask_session', 'pymongo', 'requests'," >> "TablaTeca.spec"
+            echo "        'webview', 'werkzeug', 'jinja2', 'markupsafe', 'itsdangerous'," >> "TablaTeca.spec"
+            echo "        'click', 'blinker', 'boto3', 'botocore', 's3transfer'," >> "TablaTeca.spec"
+            echo "        'jmespath', 'python_dateutil', 'urllib3', 'certifi'," >> "TablaTeca.spec"
+            echo "        'charset_normalizer', 'idna', 'six', 'websockets'," >> "TablaTeca.spec"
+            echo "        'asyncio', 'threading', 'tempfile', 'pathlib', 'datetime'," >> "TablaTeca.spec"
+            echo "        'json', 'os', 'sys', 'time'," >> "TablaTeca.spec"
+            echo "    ]," >> "TablaTeca.spec"
+            echo "    hookspath=[]," >> "TablaTeca.spec"
+            echo "    hooksconfig={}," >> "TablaTeca.spec"
+            echo "    runtime_hooks=[]," >> "TablaTeca.spec"
+            echo "    excludes=[]," >> "TablaTeca.spec"
+            echo "    win_no_prefer_redirects=False," >> "TablaTeca.spec"
+            echo "    win_private_assemblies=False," >> "TablaTeca.spec"
+            echo "    cipher=block_cipher," >> "TablaTeca.spec"
+            echo "    noarchive=False," >> "TablaTeca.spec"
+            echo ")" >> "TablaTeca.spec"
+            echo "" >> "TablaTeca.spec"
+            echo "pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)" >> "TablaTeca.spec"
+            echo "" >> "TablaTeca.spec"
+            echo "exe = EXE(" >> "TablaTeca.spec"
+            echo "    pyz," >> "TablaTeca.spec"
+            echo "    a.scripts," >> "TablaTeca.spec"
+            echo "    []," >> "TablaTeca.spec"
+            echo "    exclude_binaries=True," >> "TablaTeca.spec"
+            echo "    name='TablaTeca'," >> "TablaTeca.spec"
+            echo "    debug=False," >> "TablaTeca.spec"
+            echo "    bootloader_ignore_signals=False," >> "TablaTeca.spec"
+            echo "    strip=False," >> "TablaTeca.spec"
+            echo "    upx=True," >> "TablaTeca.spec"
+            echo "    console=False," >> "TablaTeca.spec"
+            echo "    disable_windowed_traceback=False," >> "TablaTeca.spec"
+            echo "    argv_emulation=False," >> "TablaTeca.spec"
+            echo "    target_arch=None," >> "TablaTeca.spec"
+            echo "    codesign_identity=None," >> "TablaTeca.spec"
+            echo "    entitlements_file=None," >> "TablaTeca.spec"
+            echo ")" >> "TablaTeca.spec"
+            echo "" >> "TablaTeca.spec"
+            echo "coll = COLLECT(" >> "TablaTeca.spec"
+            echo "    exe," >> "TablaTeca.spec"
+            echo "    a.binaries," >> "TablaTeca.spec"
+            echo "    a.zipfiles," >> "TablaTeca.spec"
+            echo "    a.datas," >> "TablaTeca.spec"
+            echo "    strip=False," >> "TablaTeca.spec"
+            echo "    upx=True," >> "TablaTeca.spec"
+            echo "    upx_exclude=[]," >> "TablaTeca.spec"
+            echo "    name='TablaTeca'," >> "TablaTeca.spec"
+            echo ")" >> "TablaTeca.spec"
+            echo "" >> "TablaTeca.spec"
+            echo "app = BUNDLE(" >> "TablaTeca.spec"
+            echo "    coll," >> "TablaTeca.spec"
+            echo "    name='TablaTeca.app'," >> "TablaTeca.spec"
+            echo "    icon='edf_developer.icns'," >> "TablaTeca.spec"
+            echo "    bundle_identifier='com.edefrutos.tablateca'," >> "TablaTeca.spec"
+            echo "    info_plist={" >> "TablaTeca.spec"
+            echo "        'CFBundleName': 'TablaTeca'," >> "TablaTeca.spec"
+            echo "        'CFBundleDisplayName': 'TablaTeca'," >> "TablaTeca.spec"
+            echo "        'CFBundleVersion': '$APP_VERSION'," >> "TablaTeca.spec"
+            echo "        'CFBundleShortVersionString': '$APP_VERSION'," >> "TablaTeca.spec"
+            echo "        'CFBundleExecutable': 'TablaTeca'," >> "TablaTeca.spec"
+            echo "        'CFBundlePackageType': 'APPL'," >> "TablaTeca.spec"
+            echo "        'CFBundleSignature': '????'," >> "TablaTeca.spec"
+            echo "        'LSMinimumSystemVersion': '11.0'," >> "TablaTeca.spec"
+            echo "        'NSHighResolutionCapable': True," >> "TablaTeca.spec"
+            echo "        'NSRequiresAquaSystemAppearance': False," >> "TablaTeca.spec"
+            echo "        'LSApplicationCategoryType': 'public.app-category.productivity'," >> "TablaTeca.spec"
+            echo "        'CFBundleDevelopmentRegion': 'es'," >> "TablaTeca.spec"
+            echo "        'CFBundleLocalizations': ['es', 'en']," >> "TablaTeca.spec"
+            echo "        'NSHumanReadableCopyright': 'Copyright © 2026 EDF. Todos los derechos reservados.'," >> "TablaTeca.spec"
+            echo "    }," >> "TablaTeca.spec"
+            echo ")" >> "TablaTeca.spec"
             
-            echo "✅ Archivo EDF_CatalogoDeTablas_Native_WebSockets.spec creado manualmente"
-            echo "📏 Tamaño del archivo: $(wc -l < EDF_CatalogoDeTablas_Native_WebSockets.spec) líneas"
+            echo "✅ Archivo TablaTeca.spec creado manualmente"
+            echo "📏 Tamaño del archivo: $(wc -l < TablaTeca.spec) líneas"
             echo "📋 Primeras 10 líneas:"
-            head -10 EDF_CatalogoDeTablas_Native_WebSockets.spec
+            head -10 TablaTeca.spec
           fi
           
           echo "✅ Verificación completada"
@@ -329,7 +329,7 @@ jobs:
             ./build_macos_app.sh
           else
             echo "⚠️  Script build_macos_app.sh no encontrado, usando PyInstaller directamente..."
-            python -m PyInstaller EDF_CatalogoDeTablas_Native_WebSockets.spec --clean
+            python -m PyInstaller TablaTeca.spec --clean
           fi
           
           echo "✅ Construcción completada"
@@ -338,7 +338,7 @@ jobs:
         run: |
           echo "Verificando salida de construcción..."
           ls -la dist/
-          ls -la dist/EDF_CatalogoDeTablas_Web_Native.app/Contents/MacOS/ || echo "Aplicación no construida correctamente"
+          ls -la dist/TablaTeca.app/Contents/MacOS/ || echo "Aplicación no construida correctamente"
 
       - name: Import signing certificate
         if: github.event_name != 'pull_request'
@@ -366,14 +366,14 @@ jobs:
         env:
           MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
         run: |
-          echo "🔏 Firmando dist/EDF_CatalogoDeTablas_Web_Native.app..."
+          echo "🔏 Firmando dist/TablaTeca.app..."
           codesign --deep --force --options runtime --timestamp \
             --entitlements entitlements.plist \
             --sign "$MACOS_CERTIFICATE_NAME" \
-            "dist/EDF_CatalogoDeTablas_Web_Native.app"
+            "dist/TablaTeca.app"
 
           echo "🔍 Verificando firma..."
-          codesign --verify --deep --strict --verbose=2 "dist/EDF_CatalogoDeTablas_Web_Native.app"
+          codesign --verify --deep --strict --verbose=2 "dist/TablaTeca.app"
           echo "✅ Firma completada y verificada"
 
       - name: Create DMG
@@ -383,19 +383,19 @@ jobs:
         run: |
           echo "📦 Creando DMG..."
           mkdir -p dmg_staging
-          cp -R "dist/EDF_CatalogoDeTablas_Web_Native.app" dmg_staging/
+          cp -R "dist/TablaTeca.app" dmg_staging/
           ln -s /Applications dmg_staging/Applications
 
-          hdiutil create -volname "EDF Catálogo de Tablas" \
+          hdiutil create -volname "TablaTeca" \
             -srcfolder dmg_staging \
             -ov -format UDZO \
-            "EDF_CatalogoDeTablas.dmg"
+            "TablaTeca.dmg"
 
           echo "🔏 Firmando el propio DMG..."
-          codesign --force --timestamp --sign "$MACOS_CERTIFICATE_NAME" "EDF_CatalogoDeTablas.dmg"
-          codesign --verify --verbose=2 "EDF_CatalogoDeTablas.dmg"
+          codesign --force --timestamp --sign "$MACOS_CERTIFICATE_NAME" "TablaTeca.dmg"
+          codesign --verify --verbose=2 "TablaTeca.dmg"
 
-          echo "✅ DMG creado y firmado: $(ls -la EDF_CatalogoDeTablas.dmg)"
+          echo "✅ DMG creado y firmado: $(ls -la TablaTeca.dmg)"
 
       - name: Notarize DMG
         if: github.event_name != 'pull_request'
@@ -408,7 +408,7 @@ jobs:
           AUTH_KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
           echo "$APP_STORE_CONNECT_KEY" | base64 --decode > "$AUTH_KEY_PATH"
 
-          xcrun notarytool submit "EDF_CatalogoDeTablas.dmg" \
+          xcrun notarytool submit "TablaTeca.dmg" \
             --key "$AUTH_KEY_PATH" \
             --key-id "$APP_STORE_CONNECT_KEY_ID" \
             --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -417,11 +417,11 @@ jobs:
           rm -f "$AUTH_KEY_PATH"
 
           echo "📎 Grapando ticket de notarización al DMG..."
-          xcrun stapler staple "EDF_CatalogoDeTablas.dmg"
+          xcrun stapler staple "TablaTeca.dmg"
 
           echo "🔍 Verificando aceptación de Gatekeeper (simulando descarga desde el navegador)..."
-          xattr -w com.apple.quarantine "0081;$(printf '%x' "$(date +%s)");Safari;$(uuidgen | tr 'A-Z' 'a-z')" "EDF_CatalogoDeTablas.dmg"
-          spctl -a -t open --context context:primary-signature -v "EDF_CatalogoDeTablas.dmg"
+          xattr -w com.apple.quarantine "0081;$(printf '%x' "$(date +%s)");Safari;$(uuidgen | tr 'A-Z' 'a-z')" "TablaTeca.dmg"
+          spctl -a -t open --context context:primary-signature -v "TablaTeca.dmg"
           echo "✅ DMG notarizado y grapado"
 
       - name: Clean up keychain
@@ -433,15 +433,15 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: EDF_CatalogoDeTablas.dmg
-          path: EDF_CatalogoDeTablas.dmg
+          name: TablaTeca.dmg
+          path: TablaTeca.dmg
           retention-days: 30
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: EDF_CatalogoDeTablas_Web_Native.app
-          path: dist/EDF_CatalogoDeTablas_Web_Native.app
+          name: TablaTeca.app
+          path: dist/TablaTeca.app
           retention-days: 30
 
       - name: Upload build logs
