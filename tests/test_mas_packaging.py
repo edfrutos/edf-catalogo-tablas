@@ -66,6 +66,8 @@ def test_spec_mas_compila_y_no_firma_ni_comprime():
     assert "entitlements_file=None" in src
     assert "MAS_BUILD_NUMBER" in src and "MAS_MARKETING_VERSION" in src
     assert 'LSApplicationCategoryType' in src
+    # Apple (90869): una app solo arm64 necesita un mínimo de macOS >= 12.0
+    assert '"LSMinimumSystemVersion": "12.0"' in src
 
 
 def test_script_de_firma_sintaxis_y_buenas_practicas():

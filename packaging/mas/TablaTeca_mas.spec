@@ -88,7 +88,7 @@ app = BUNDLE(
         "CFBundleExecutable": "TablaTeca",
         "CFBundlePackageType": "APPL",
         "CFBundleSignature": "????",
-        "LSMinimumSystemVersion": "11.0",
+        "LSMinimumSystemVersion": "12.0",  # arm64 solo: Apple exige >= 12.0 sin x86_64
         "NSHighResolutionCapable": True,
         "NSRequiresAquaSystemAppearance": False,
         "LSApplicationCategoryType": "public.app-category.productivity",
