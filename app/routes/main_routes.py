@@ -3,6 +3,7 @@
 import csv
 import logging
 import os
+from app.utils.log_safety import redact
 from app.utils.paths import writable_uploads
 import secrets
 import uuid
@@ -2484,7 +2485,7 @@ def editar_tabla(id):
 
         if request.method == "POST":
             current_app.logger.info("🔥🔥🔥 [EDITAR_TABLA] POST recibido")
-            current_app.logger.info(f"[EDITAR_TABLA] Form data: {dict(request.form)}")
+            current_app.logger.info(f"[EDITAR_TABLA] Form data: {redact(request.form)}")
 
             # Obtener los datos del formulario
             new_name = request.form.get("name", "").strip()

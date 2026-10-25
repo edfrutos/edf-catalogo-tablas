@@ -24,6 +24,7 @@ from flask import (
 from flask_mail import Message
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from app.utils.log_safety import redact
 from app.extensions import mail  # pyright: ignore[reportUnusedImport]
 from app.models import find_reset_token  # pyright: ignore[reportUnusedImport]
 from app.models import mark_token_as_used  # pyright: ignore[reportUnusedImport]
@@ -142,7 +143,7 @@ def register():
         logger.info(
             f"[REGISTER] Datos recibidos: email='{email}', username='{username}', nombre='{nombre}', password_length={len(password)}, confirm_length={len(confirm_password)}"
         )
-        logger.info(f"[REGISTER] Form data completo: {dict(request.form)}")
+        logger.info(f"[REGISTER] Form data (sin secretos): {redact(request.form)}")
 
         # Validaciones básicas
         if not all([email, password, confirm_password, username, nombre]):
