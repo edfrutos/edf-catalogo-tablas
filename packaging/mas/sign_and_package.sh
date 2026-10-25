@@ -92,7 +92,10 @@ tipo: $(file -b "$PROVISIONING_PROFILE")"
     LISTA=""
     n=0
     while $PLISTBUDDY -c "Print :DeveloperCertificates:$n" "$WORK/profile.plist" > "$WORK/devcert.der" 2>/dev/null; do
-      sha="$(shasum -a 1 "$WORK/devcert.der" | awk '{ print toupper($1) }')"
+      # PlistBuddy añade un salto de línea tras los datos binarios: shasum sobre el
+      # fichero daría una huella falsa. openssl lee solo el certificado DER.
+      sha="$(openssl x509 -inform der -in "$WORK/devcert.der" -noout -fingerprint -sha1 2>/dev/null \
+        | sed 's/.*=//; s/://g' | tr 'a-f' 'A-F')"
       info="$(openssl x509 -inform der -in "$WORK/devcert.der" -noout -subject -enddate 2>/dev/null | tr '\n' ' ')"
       echo "   Certificado #$n del perfil: $sha $info"
       LISTA="${LISTA}#$n $sha $info
