@@ -49,6 +49,29 @@ def _setup_file_logging():
 _LOG_FH = _setup_file_logging()
 
 
+def _sandbox_safe_mimetypes():
+    """El sandbox de la Mac App Store prohíbe leer /etc/apache2/mime.types y similares.
+
+    mimetypes.init() solo comprueba que el fichero exista (isfile) y luego lo abre:
+    el PermissionError no se captura y rompe el import de openpyxl. Se descartan los
+    ficheros del sistema que no se pueden leer, antes de importar nada de la app.
+    """
+    import mimetypes
+
+    legibles = []
+    for f in mimetypes.knownfiles:
+        try:
+            with open(f, "rb"):
+                pass
+        except OSError:
+            continue
+        legibles.append(f)
+    mimetypes.knownfiles = legibles
+
+
+_sandbox_safe_mimetypes()
+
+
 class _EdfApi:
     """API JS -> Python expuesta a la ventana pywebview (enlaces externos y guardado de archivos)."""
 
@@ -168,6 +191,9 @@ _ES_STRINGS = {
 }
 
 
+_SERVER_THREAD = None
+_SERVER_ERROR = None
+
 PORT = 5004  # fijo a propósito: cambiar de puerto cambia el origen y se perderían cookies y localStorage
 
 
@@ -217,7 +243,9 @@ def start_flask_server():
     except BaseException as e:
         import traceback
 
-        print(f"❌ Error al iniciar el servidor Flask: {type(e).__name__}: {e}")
+        global _SERVER_ERROR
+        _SERVER_ERROR = f"{type(e).__name__}: {e}"
+        print(f"❌ Error al iniciar el servidor Flask: {_SERVER_ERROR}")
         traceback.print_exc()
         sys.stdout.flush()
 
@@ -226,6 +254,9 @@ def wait_for_server(max_attempts=60):
     """Espera a que el servidor Flask esté listo"""
     last_error = None
     for attempt in range(max_attempts):
+        if _SERVER_THREAD is not None and not _SERVER_THREAD.is_alive():
+            print("❌ El hilo del servidor Flask ha terminado: no se espera más")
+            return False
         try:
             response = requests.get(f"http://127.0.0.1:{PORT}", timeout=2)
             if response.status_code in [200, 302]:
@@ -277,9 +308,8 @@ def _boot(window):
         if wait_for_server():
             window.load_url(f"http://127.0.0.1:{PORT}")
         else:
-            window.load_html(
-                _error_html("El servidor interno no respondió a tiempo.")
-            )
+            detalle = _SERVER_ERROR or "El servidor interno no respondió a tiempo."
+            window.load_html(_error_html(detalle))
     except Exception as exc:
         print(f"❌ Error en el arranque de la ventana: {type(exc).__name__}: {exc}")
 
@@ -297,8 +327,10 @@ def main():
         sys.exit(1)
 
     # Iniciar el servidor Flask en un hilo separado
+    global _SERVER_THREAD
     server_thread = threading.Thread(target=start_flask_server)
     server_thread.daemon = True
+    _SERVER_THREAD = server_thread
     server_thread.start()
 
     try:
