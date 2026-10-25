@@ -17,6 +17,38 @@ import requests
 import webview
 
 
+def _setup_file_logging():
+    """En la app empaquetada (sin consola) stdout/stderr van a un fichero de log.
+
+    Sin esto no hay forma de saber por qué una app firmada y con sandbox no arranca.
+    Va a ~/Library/Logs/EDF_Catalogo/launcher.log (en la MAS, dentro del contenedor).
+    """
+    if not getattr(sys, "frozen", False):
+        return None
+    try:
+        import faulthandler
+
+        log_dir = Path.home() / "Library" / "Logs" / "EDF_Catalogo"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        path = log_dir / "launcher.log"
+        if path.exists() and path.stat().st_size > 1_000_000:
+            path.replace(log_dir / "launcher.log.1")
+        fh = open(path, "a", buffering=1, encoding="utf-8", errors="replace")
+        sys.stdout = fh
+        sys.stderr = fh
+        faulthandler.enable(fh)
+        print(
+            f"\n===== {time.strftime('%Y-%m-%d %H:%M:%S')} pid={os.getpid()} "
+            f"HOME={Path.home()} cwd={os.getcwd()} ====="
+        )
+        return fh
+    except Exception:
+        return None
+
+
+_LOG_FH = _setup_file_logging()
+
+
 class _EdfApi:
     """API JS -> Python expuesta a la ventana pywebview (enlaces externos y guardado de archivos)."""
 
@@ -182,33 +214,74 @@ def start_flask_server():
         app.run(
             debug=False, port=PORT, host="127.0.0.1", use_reloader=False, threaded=True
         )
-    except Exception as e:
-        print(f"❌ Error al iniciar el servidor Flask: {e}")
-        sys.exit(1)
+    except BaseException as e:
+        import traceback
+
+        print(f"❌ Error al iniciar el servidor Flask: {type(e).__name__}: {e}")
+        traceback.print_exc()
+        sys.stdout.flush()
 
 
-def wait_for_server():
+def wait_for_server(max_attempts=60):
     """Espera a que el servidor Flask esté listo"""
-    max_attempts = 30
+    last_error = None
     for attempt in range(max_attempts):
         try:
-            response = requests.get(f"http://127.0.0.1:{PORT}", timeout=1)
+            response = requests.get(f"http://127.0.0.1:{PORT}", timeout=2)
             if response.status_code in [200, 302]:
                 print(f"✅ Servidor Flask listo (intento {attempt + 1})")
                 return True
-        except requests.exceptions.RequestException:
-            pass
+            last_error = f"HTTP {response.status_code}"
+        except requests.exceptions.RequestException as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
 
         time.sleep(1)
         if attempt % 5 == 0:
             print(
-                # pyright: ignore[reportImplicitStringConcatenation]
                 f"⏳ Esperando servidor Flask... "
-                f"(intento {attempt + 1}/{max_attempts})"
+                f"(intento {attempt + 1}/{max_attempts}) último error: {last_error}"
             )
 
-    print("❌ Timeout esperando al servidor Flask")
+    print(f"❌ Timeout esperando al servidor Flask. Último error: {last_error}")
+    try:  # pila de todos los hilos: dónde se ha quedado parado el arranque
+        import faulthandler
+
+        faulthandler.dump_traceback(file=sys.stdout, all_threads=True)
+    except Exception:
+        pass
     return False
+
+
+_LOADING_HTML = """<!doctype html><meta charset="utf-8"><title>TablaTeca</title>
+<body style="font-family:-apple-system,sans-serif;display:flex;align-items:center;
+justify-content:center;height:100vh;margin:0;background:#f5f5f7;color:#333">
+<div style="text-align:center"><h2>TablaTeca</h2><p>Iniciando…</p></div></body>"""
+
+
+def _error_html(detail):
+    import html
+
+    return (
+        '<!doctype html><meta charset="utf-8"><title>TablaTeca</title>'
+        '<body style="font-family:-apple-system,sans-serif;max-width:640px;margin:15vh auto;'
+        'color:#333"><h2>No se pudo iniciar TablaTeca</h2>'
+        f"<p>{html.escape(detail)}</p>"
+        "<p>Detalles en <code>~/Library/Logs/EDF_Catalogo/launcher.log</code> "
+        "(en la versión de la App Store, dentro del contenedor de la app).</p></body>"
+    )
+
+
+def _boot(window):
+    """Corre en un hilo con la ventana ya visible: espera a Flask y carga la app."""
+    try:
+        if wait_for_server():
+            window.load_url(f"http://127.0.0.1:{PORT}")
+        else:
+            window.load_html(
+                _error_html("El servidor interno no respondió a tiempo.")
+            )
+    except Exception as exc:
+        print(f"❌ Error en el arranque de la ventana: {type(exc).__name__}: {exc}")
 
 
 def main():
@@ -228,12 +301,6 @@ def main():
     server_thread.daemon = True
     server_thread.start()
 
-    # Esperar a que el servidor esté listo
-    print("⏳ Iniciando servidor Flask...")
-    if not wait_for_server():
-        print("❌ No se pudo conectar al servidor Flask")
-        sys.exit(1)
-
     try:
         # Crear la ventana nativa
         print("🖥️  Creando ventana nativa...")
@@ -241,7 +308,7 @@ def main():
         # Configuración básica para pywebview
         window_config = {
             "title": "TablaTeca",
-            "url": f"http://127.0.0.1:{PORT}",
+            "html": _LOADING_HTML,
             "width": 1400,
             "height": 900,
             "resizable": True,
@@ -253,9 +320,7 @@ def main():
         }
 
         # Crear la ventana nativa
-        webview.create_window(
-            **window_config, js_api=_EdfApi()
-        )  # pyright: ignore[reportUnusedCallResult]
+        window = webview.create_window(**window_config, js_api=_EdfApi())
 
         print("✅ Ventana nativa creada")
         print("🖥️  Aplicación web ejecutándose en ventana nativa")
@@ -268,6 +333,8 @@ def main():
         # (por defecto pywebview es privado y pedía login en cada apertura).
         # En macOS pywebview usa el almacén por defecto de WebKit y no usa storage_path.
         webview.start(  # pyright: ignore[reportArgumentType]
+            _boot,
+            window,
             debug=os.environ.get("EDF_WEBVIEW_DEBUG") == "1",
             gui="native",
             private_mode=False,
