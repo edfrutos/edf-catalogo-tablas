@@ -126,3 +126,32 @@ def test_workflow_mas_usa_numero_de_ejecucion_como_build(wf):
     pasos = {p["name"]: p for p in wf["jobs"]["build-mas"]["steps"]}
     assert pasos["Build app (PyInstaller, onedir)"]["env"]["MAS_BUILD_NUMBER"] == "${{ github.run_number }}"
     assert re.fullmatch(r"\d+(\.\d+){0,2}", wf["env"]["MAS_MARKETING_VERSION"])
+
+
+def _chunks_icns(ruta):
+    datos = ruta.read_bytes()
+    assert datos[:4] == b"icns"
+    assert int.from_bytes(datos[4:8], "big") == len(datos)
+    i, tipos = 8, {}
+    while i < len(datos):
+        tipo = datos[i:i + 4].decode()
+        largo = int.from_bytes(datos[i + 4:i + 8], "big")
+        tipos[tipo] = datos[i + 8:i + largo]
+        i += largo
+    return tipos
+
+
+def test_icono_icns_incluye_512_y_512_2x_en_png():
+    # La tienda exige 512x512 y 512x512@2x en el .icns
+    tipos = _chunks_icns(RAIZ / "edf_developer.icns")
+    for t in ("ic09", "ic10"):
+        assert tipos[t][:8] == b"\x89PNG\r\n\x1a\n", t
+
+
+def test_icono_maestro_1024_con_esquinas_transparentes():
+    from PIL import Image
+
+    im = Image.open(RAIZ / "icons" / "TablaTeca_1024.png").convert("RGBA")
+    assert im.size == (1024, 1024)
+    assert im.getpixel((0, 0))[3] == 0 and im.getpixel((1023, 1023))[3] == 0
+    assert im.getpixel((512, 512))[3] == 255
