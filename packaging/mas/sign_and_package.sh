@@ -16,7 +16,23 @@
 #                            los entitlements y productbuild, no para subir.
 #
 # Compatible con bash 3.2 (el de macOS).
-set -euo pipefail
+set -Eeuo pipefail
+
+# En GitHub Actions los logs no siempre son accesibles: el fallo se publica
+# también como anotación (inocua fuera de Actions, solo imprime una línea).
+trap 'echo "::error title=sign_and_package.sh::falló en la línea $LINENO: ${BASH_COMMAND}"' ERR
+
+# Ejecuta un comando y, si falla, publica su salida como anotación.
+run_annotated() {
+  local out
+  if ! out="$("$@" 2>&1)"; then
+    echo "$out"
+    echo "::error title=$1 falló::${out//$'\n'/%0A}"
+    return 1
+  fi
+  [ -n "$out" ] && echo "$out"
+  return 0
+}
 
 APP_PATH="${1:?Uso: sign_and_package.sh <TablaTeca.app> <salida.pkg>}"
 PKG_PATH="${2:?Uso: sign_and_package.sh <TablaTeca.app> <salida.pkg>}"
@@ -48,7 +64,18 @@ else
   TS_FLAG="--timestamp"
 
   echo "📄 Leyendo el perfil de aprovisionamiento..."
-  security cms -D -i "$PROVISIONING_PROFILE" > "$WORK/profile.plist"
+  # security cms es lo habitual; openssl smime sirve de alternativa si falla
+  if ! cms_err="$(security cms -D -i "$PROVISIONING_PROFILE" 2>&1 >"$WORK/profile.plist")"; then
+    echo "⚠️  security cms falló: $cms_err"
+    if ! ossl_err="$(openssl smime -inform der -verify -noverify -in "$PROVISIONING_PROFILE" -out "$WORK/profile.plist" 2>&1)"; then
+      detalle="security cms: ${cms_err}
+openssl smime: ${ossl_err}
+tamaño: $(wc -c < "$PROVISIONING_PROFILE") bytes
+tipo: $(file -b "$PROVISIONING_PROFILE")"
+      echo "::error title=No se pudo leer el perfil de aprovisionamiento::${detalle//$'\n'/%0A}"
+      exit 1
+    fi
+  fi
   APP_ID="$($PLISTBUDDY -c 'Print :Entitlements:com.apple.application-identifier' "$WORK/profile.plist")"
   TEAM_ID="$($PLISTBUDDY -c 'Print :Entitlements:com.apple.developer.team-identifier' "$WORK/profile.plist")"
   if [ "$APP_ID" != "$TEAM_ID.$BUNDLE_ID" ]; then
@@ -56,6 +83,32 @@ else
     exit 1
   fi
   echo "   Equipo: $TEAM_ID · App: $APP_ID"
+
+  # El perfil solo vale para los certificados que contiene: si la identidad de
+  # firma no está entre ellos, Apple rechaza el paquete (error 90284).
+  if printf '%s' "$APP_SIGN_IDENTITY" | grep -qE '^[0-9A-Fa-f]{40}$'; then
+    WANT_SHA="$(printf '%s' "$APP_SIGN_IDENTITY" | tr 'a-f' 'A-F')"
+    FOUND=0
+    LISTA=""
+    n=0
+    while $PLISTBUDDY -c "Print :DeveloperCertificates:$n" "$WORK/profile.plist" > "$WORK/devcert.der" 2>/dev/null; do
+      sha="$(shasum -a 1 "$WORK/devcert.der" | awk '{ print toupper($1) }')"
+      info="$(openssl x509 -inform der -in "$WORK/devcert.der" -noout -subject -enddate 2>/dev/null | tr '\n' ' ')"
+      echo "   Certificado #$n del perfil: $sha $info"
+      LISTA="${LISTA}#$n $sha $info
+"
+      [ "$sha" = "$WANT_SHA" ] && FOUND=1
+      n=$((n + 1))
+    done
+    if [ "$FOUND" != 1 ]; then
+      detalle="Identidad de firma usada: $WANT_SHA
+Certificados que contiene el perfil:
+$LISTA"
+      echo "::error title=El perfil no contiene el certificado de firma::${detalle//$'\n'/%0A}"
+      exit 1
+    fi
+    echo "   ✔ El certificado de firma está en el perfil"
+  fi
   cp "$PROVISIONING_PROFILE" "$APP_PATH/Contents/embedded.provisionprofile"
 fi
 
@@ -72,7 +125,7 @@ $PLISTBUDDY -c "Add :com.apple.application-identifier string $APP_ID" "$MAIN_ENT
 $PLISTBUDDY -c "Add :com.apple.developer.team-identifier string $TEAM_ID" "$MAIN_ENT"
 
 sign() {
-  codesign --force "$TS_FLAG" --sign "$APP_SIGN_IDENTITY" \
+  run_annotated codesign --force "$TS_FLAG" --sign "$APP_SIGN_IDENTITY" \
     ${KEYCHAIN_ARGS[@]+"${KEYCHAIN_ARGS[@]}"} "$@"
 }
 
@@ -115,7 +168,7 @@ echo "🔏 Firmando $APP_PATH..."
 sign --entitlements "$MAIN_ENT" "$APP_PATH"
 
 echo "🔍 Verificando la firma..."
-codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+run_annotated codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 codesign -d --entitlements :- "$APP_PATH" 2>/dev/null > "$WORK/final-entitlements.plist" || true
 if ! grep -q 'com.apple.security.app-sandbox' "$WORK/final-entitlements.plist"; then
   echo "🛑 La app firmada no lleva el entitlement de sandbox" >&2
@@ -128,13 +181,13 @@ sed 's/^/   | /' "$WORK/final-entitlements.plist"
 echo "📦 Creando $PKG_PATH..."
 rm -f "$PKG_PATH"
 if [ "$AD_HOC" = "1" ]; then
-  productbuild --component "$APP_PATH" /Applications "$PKG_PATH"
+  run_annotated productbuild --component "$APP_PATH" /Applications "$PKG_PATH"
 else
-  productbuild --component "$APP_PATH" /Applications \
+  run_annotated productbuild --component "$APP_PATH" /Applications \
     --sign "$INSTALLER_SIGN_IDENTITY" \
     ${KEYCHAIN_ARGS[@]+"${KEYCHAIN_ARGS[@]}"} \
     "$PKG_PATH"
-  pkgutil --check-signature "$PKG_PATH"
+  run_annotated pkgutil --check-signature "$PKG_PATH"
 fi
 
 echo "✅ Listo: $PKG_PATH"

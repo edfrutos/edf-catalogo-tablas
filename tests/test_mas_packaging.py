@@ -72,7 +72,7 @@ def test_script_de_firma_sintaxis_y_buenas_practicas():
     script = MAS / "sign_and_package.sh"
     src = script.read_text(encoding="utf-8")
     subprocess.run(["bash", "-n", str(script)], check=True)
-    assert "set -euo pipefail" in src
+    assert "set -Eeuo pipefail" in src
     # Nunca firmar con --deep: solo se usa para verificar
     for linea in src.splitlines():
         if "--deep" in linea:
