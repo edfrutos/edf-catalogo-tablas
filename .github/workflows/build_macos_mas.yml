@@ -193,7 +193,9 @@ jobs:
             echo "::notice title=Validación de App Store Connect::${out//$'\n'/%0A}"
           else
             echo "$out"
-            echo "::error title=Validación de App Store Connect falló::${out//$'\n'/%0A}"
+            resumen="$(echo "$out" | grep -oE '\([0-9]{5}\)' | sort | uniq -c | tr '\n' ' ')"
+            otros="$(echo "$out" | grep -E 'ERROR: \[altool' | grep -v '(90284)' | head -8 || true)"
+            echo "::error title=Validación de App Store Connect falló::Códigos: ${resumen}%0A${otros//$'\n'/%0A}"
             exit 1
           fi
 

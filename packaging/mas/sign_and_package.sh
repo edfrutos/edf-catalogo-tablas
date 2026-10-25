@@ -83,6 +83,32 @@ tipo: $(file -b "$PROVISIONING_PROFILE")"
     exit 1
   fi
   echo "   Equipo: $TEAM_ID · App: $APP_ID"
+
+  # El perfil solo vale para los certificados que contiene: si la identidad de
+  # firma no está entre ellos, Apple rechaza el paquete (error 90284).
+  if printf '%s' "$APP_SIGN_IDENTITY" | grep -qE '^[0-9A-Fa-f]{40}$'; then
+    WANT_SHA="$(printf '%s' "$APP_SIGN_IDENTITY" | tr 'a-f' 'A-F')"
+    FOUND=0
+    LISTA=""
+    n=0
+    while $PLISTBUDDY -c "Print :DeveloperCertificates:$n" "$WORK/profile.plist" > "$WORK/devcert.der" 2>/dev/null; do
+      sha="$(shasum -a 1 "$WORK/devcert.der" | awk '{ print toupper($1) }')"
+      info="$(openssl x509 -inform der -in "$WORK/devcert.der" -noout -subject -enddate 2>/dev/null | tr '\n' ' ')"
+      echo "   Certificado #$n del perfil: $sha $info"
+      LISTA="${LISTA}#$n $sha $info
+"
+      [ "$sha" = "$WANT_SHA" ] && FOUND=1
+      n=$((n + 1))
+    done
+    if [ "$FOUND" != 1 ]; then
+      detalle="Identidad de firma usada: $WANT_SHA
+Certificados que contiene el perfil:
+$LISTA"
+      echo "::error title=El perfil no contiene el certificado de firma::${detalle//$'\n'/%0A}"
+      exit 1
+    fi
+    echo "   ✔ El certificado de firma está en el perfil"
+  fi
   cp "$PROVISIONING_PROFILE" "$APP_PATH/Contents/embedded.provisionprofile"
 fi
 
