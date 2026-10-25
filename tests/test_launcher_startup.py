@@ -67,3 +67,37 @@ def test_sanear_mimetypes_descarta_ficheros_ilegibles(tmp_path):
         assert str(tmp_path / "no_existe") not in mimetypes.knownfiles
     finally:
         mimetypes.knownfiles = viejo
+
+
+def test_flask_no_busca_dotenv_y_find_dotenv_se_sanea():
+    text = SRC.read_text(encoding="utf-8")
+    assert "load_dotenv=False" in text
+    assert text.index("_sandbox_safe_dotenv()\n") < text.index("from dotenv import load_dotenv")
+
+
+def test_find_dotenv_seguro_ignora_env_ilegible(tmp_path, monkeypatch):
+    import os
+    import sys
+
+    import dotenv
+    import dotenv.main as dm
+
+    ns = {"sys": sys}
+    src = SRC.read_text(encoding="utf-8")
+    start = src.index("def _sandbox_safe_dotenv")
+    end = src.index("_sandbox_safe_dotenv()\n", start)
+    exec(src[start:end], ns)
+
+    orig_main, orig_pkg = dm.find_dotenv, dotenv.find_dotenv
+    try:
+        monkeypatch.setattr(sys, "frozen", True, raising=False)
+        env = tmp_path / ".env"
+        env.write_text("A=1\n")
+        monkeypatch.chdir(tmp_path)
+        ns["_sandbox_safe_dotenv"]()
+        assert dm.find_dotenv(usecwd=True) == str(env)  # legible: se devuelve
+        if os.geteuid() != 0:
+            env.chmod(0)
+            assert dm.find_dotenv(usecwd=True) == ""  # ilegible: se ignora
+    finally:
+        dm.find_dotenv, dotenv.find_dotenv = orig_main, orig_pkg
