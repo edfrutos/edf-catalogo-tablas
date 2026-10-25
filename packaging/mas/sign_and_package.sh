@@ -64,7 +64,18 @@ else
   TS_FLAG="--timestamp"
 
   echo "📄 Leyendo el perfil de aprovisionamiento..."
-  security cms -D -i "$PROVISIONING_PROFILE" > "$WORK/profile.plist"
+  # security cms es lo habitual; openssl smime sirve de alternativa si falla
+  if ! cms_err="$(security cms -D -i "$PROVISIONING_PROFILE" 2>&1 >"$WORK/profile.plist")"; then
+    echo "⚠️  security cms falló: $cms_err"
+    if ! ossl_err="$(openssl smime -inform der -verify -noverify -in "$PROVISIONING_PROFILE" -out "$WORK/profile.plist" 2>&1)"; then
+      detalle="security cms: ${cms_err}
+openssl smime: ${ossl_err}
+tamaño: $(wc -c < "$PROVISIONING_PROFILE") bytes
+tipo: $(file -b "$PROVISIONING_PROFILE")"
+      echo "::error title=No se pudo leer el perfil de aprovisionamiento::${detalle//$'\n'/%0A}"
+      exit 1
+    fi
+  fi
   APP_ID="$($PLISTBUDDY -c 'Print :Entitlements:com.apple.application-identifier' "$WORK/profile.plist")"
   TEAM_ID="$($PLISTBUDDY -c 'Print :Entitlements:com.apple.developer.team-identifier' "$WORK/profile.plist")"
   if [ "$APP_ID" != "$TEAM_ID.$BUNDLE_ID" ]; then
