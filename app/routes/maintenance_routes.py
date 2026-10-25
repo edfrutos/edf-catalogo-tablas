@@ -26,6 +26,7 @@ from flask import (
 )
 from pymongo import errors as pymongo_errors
 
+from app.utils.log_safety import redact
 from app.database import get_mongo_db
 from app.decorators import admin_required
 from app.logging_unified import get_logger
@@ -612,8 +613,8 @@ def api_run_task():
         # Debug: Log de todos los datos recibidos
         log_info(f"Request method: {request.method}")
         log_info(f"Request content type: {request.content_type}")
-        log_info(f"Request form data: {dict(request.form)}")
-        log_info(f"Request JSON data: {request.get_json(silent=True)}")
+        log_info(f"Request form data: {redact(request.form)}")
+        log_info(f"Request JSON data: {redact(request.get_json(silent=True))}")
         log_info(f"Request args: {dict(request.args)}")
 
         # Intentar obtener el parámetro 'task' de múltiples fuentes
