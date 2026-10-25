@@ -72,6 +72,40 @@ def _sandbox_safe_mimetypes():
 _sandbox_safe_mimetypes()
 
 
+def _sandbox_safe_dotenv():
+    """En la app empaquetada, find_dotenv() busca .env subiendo desde el cwd.
+
+    El cwd está dentro del contenedor (~/Library/Containers/...), así que la búsqueda
+    llega al ~/.env real del usuario, que el sandbox no deja leer (PermissionError).
+    Se ignoran los .env que no se pueden abrir. Solo en modo empaquetado.
+    """
+    if not getattr(sys, "frozen", False):
+        return
+    try:
+        import dotenv
+        import dotenv.main as dotenv_main
+
+        original = dotenv_main.find_dotenv
+
+        def safe_find_dotenv(*args, **kwargs):
+            try:
+                path = original(*args, **kwargs)
+                if path:
+                    with open(path, "rb"):
+                        pass
+                return path
+            except OSError:
+                return ""
+
+        dotenv_main.find_dotenv = safe_find_dotenv
+        dotenv.find_dotenv = safe_find_dotenv
+    except Exception as exc:
+        print(f"⚠️  No se pudo sanear find_dotenv: {exc}")
+
+
+_sandbox_safe_dotenv()
+
+
 class _EdfApi:
     """API JS -> Python expuesta a la ventana pywebview (enlaces externos y guardado de archivos)."""
 
@@ -237,8 +271,15 @@ def start_flask_server():
             }
         )
 
+        # load_dotenv=False: Flask no debe buscar un .env subiendo desde el cwd
+        # (en el sandbox llega al ~/.env real y no puede leerlo)
         app.run(
-            debug=False, port=PORT, host="127.0.0.1", use_reloader=False, threaded=True
+            debug=False,
+            port=PORT,
+            host="127.0.0.1",
+            use_reloader=False,
+            threaded=True,
+            load_dotenv=False,
         )
     except BaseException as e:
         import traceback
