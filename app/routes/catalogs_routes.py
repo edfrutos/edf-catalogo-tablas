@@ -301,6 +301,43 @@ def check_catalog_permission(f):
     return decorated_function
 
 
+
+_IMG_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg")
+
+
+def _miniatura_de_fila(row):
+    """URL de la primera imagen de una fila para la miniatura del catálogo.
+
+    Misma normalización que la vista de catálogo: acepta listas (también
+    anidadas), rutas propias ("/imagenes_subidas/x", "/static/uploads/x",
+    "/admin/s3/x") y nombres sueltos (-> /static/uploads/<nombre>). Si no hay
+    imágenes en los campos de imagen, usa la primera imagen de Multimedia.
+    """
+    from app.utils.row_media import flatten_media
+
+    candidatos = []
+    for campo in ("imagenes", "images", "imagen_data"):
+        candidatos.extend(flatten_media(row.get(campo)))
+    candidatos.extend(
+        m
+        for m in flatten_media(row.get("Multimedia"))
+        if m.lower().split("?", 1)[0].endswith(_IMG_EXT)
+    )
+    for img in candidatos:
+        if img == "N/A" or img.startswith("http"):
+            continue
+        if img.startswith("/"):
+            return img
+        use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
+        if use_s3:
+            from app.utils.s3_utils import get_s3_url
+
+            s3_url = get_s3_url(img)
+            if s3_url:
+                return s3_url
+        return url_for("static", filename=f"uploads/{img}")
+    return None
+
 catalogs_bp = Blueprint("catalogs", __name__, url_prefix="/catalogs")
 
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
@@ -513,7 +550,7 @@ def list_catalogs():
             catalog["miniatura"] = ""
 
             # Buscar en todas las filas hasta encontrar una imagen
-            for row in catalog.get("data", []):
+            for row in catalog.get("data") or catalog.get("rows") or []:
                 if not isinstance(row, dict):
                     continue
 
@@ -529,46 +566,7 @@ def list_catalogs():
 
                 # 2. Si no hay imagen externa, buscar en campos de imágenes locales
                 if not imagen_encontrada:
-                    for campo in ["imagenes", "images", "imagen_data"]:
-                        if campo in row and row[campo]:
-                            imgs = (
-                                row[campo]
-                                if hasattr(row[campo], "__iter__")
-                                and not isinstance(row[campo], str)
-                                else [row[campo]]
-                            )
-                            for img in imgs:
-                                if (
-                                    img
-                                    and img != "N/A"
-                                    and isinstance(img, str)
-                                    and not img.startswith("http")
-                                ):
-                                    use_s3 = (
-                                        os.environ.get(
-                                            "USE_S3", "false").lower()
-                                        == "true"
-                                    )
-                                    if use_s3:
-                                        from app.utils.s3_utils import (
-                                            convert_s3_url_to_proxy,
-                                            get_s3_url,
-                                        )
-
-                                        s3_url = get_s3_url(img)
-                                        if s3_url:
-                                            imagen_encontrada = s3_url
-                                        else:
-                                            imagen_encontrada = url_for(
-                                                "static", filename=f"uploads/{img}"
-                                            )
-                                    else:
-                                        imagen_encontrada = url_for(
-                                            "static", filename=f"uploads/{img}"
-                                        )
-                                    break
-                        if imagen_encontrada:
-                            break
+                    imagen_encontrada = _miniatura_de_fila(row)
 
                 # Si encontramos una imagen, salir del bucle
                 if imagen_encontrada:
