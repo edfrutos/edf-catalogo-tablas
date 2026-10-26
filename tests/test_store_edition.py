@@ -368,3 +368,47 @@ def test_get_s3_url_con_bucket_sigue_firmando(monkeypatch):
     monkeypatch.setattr(s3u, "S3_BUCKET_NAME", "bucket")
     monkeypatch.setattr(s3u, "s3_client", FakeS3())
     assert s3u.get_s3_url("a.png", 60) == "https://s3.test/bucket/a.png?e=60"
+
+
+# ------------------------------------------------ miniatura del catálogo (listado)
+@pytest.mark.parametrize(
+    "row, esperado",
+    [
+        ({"images": ["a.png"]}, "/static/uploads/a.png"),
+        ({"images": [["a.png", "b.png"]]}, "/static/uploads/a.png"),
+        ({"images": ["/imagenes_subidas/a.png"]}, "/imagenes_subidas/a.png"),
+        ({"images": ["/static/uploads/a.png"]}, "/static/uploads/a.png"),
+        ({"images": [], "Multimedia": ["v.mp4", "f.JPG"]}, "/static/uploads/f.JPG"),
+        ({"imagenes": "a.png"}, "/static/uploads/a.png"),
+        ({"images": ["N/A"], "Multimedia": ["v.mp4"]}, None),
+        ({"images": ["/logout"]}, None),
+        ({"images": ["//evil.example/x.png"]}, None),
+        ({"images": ["/imagenes_subidas/../../logout"]}, None),
+        ({"images": ["/logout", "ok.png"]}, "/static/uploads/ok.png"),
+        ({"Nombre": "sin imagen"}, None),
+    ],
+)
+def test_miniatura_de_fila(store_app, row, esperado):
+    from app.routes.catalogs_routes import _miniatura_de_fila
+
+    with store_app.test_request_context("/"):
+        assert _miniatura_de_fila(row) == esperado
+
+
+def test_listado_muestra_miniatura_valida_y_la_sirve(store_app):
+    import app.database as appdb
+
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+    r = c.get("/catalogs/")
+    assert r.status_code == 200
+    assert b"/static/uploads/foto1.png" in r.data
+    # y con rutas propias con barra inicial (antes salía /static/uploads//imagenes_subidas/..)
+    db = appdb.get_mongo_db()
+    db["spreadsheets"].update_one(
+        {"name": "Con medios"},
+        {"$set": {"data": [{"images": ["/imagenes_subidas/zz.png"]}]}},
+    )
+    r = c.get("/catalogs/")
+    assert b'src="/imagenes_subidas/zz.png"' in r.data
+    assert b"uploads//" not in r.data

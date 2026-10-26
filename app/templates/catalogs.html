@@ -88,7 +88,7 @@
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
                         {% if catalog.miniatura %}
-                            <img src="{{ catalog.miniatura }}" class="card-img-top" alt="Miniatura de {{ catalog.name }}" style="height: 200px; object-fit: contain; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+                            <img src="{{ catalog.miniatura }}" class="card-img-top" alt="Miniatura de {{ catalog.name }}" style="height: 200px; object-fit: contain; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;" onerror="this.onerror=null;this.outerHTML='<div class=&quot;card-img-top d-flex align-items-center justify-content-center bg-light&quot; style=&quot;height: 200px;&quot;><i class=&quot;fas fa-table fa-3x text-muted&quot;></i></div>';">
                         {% else %}
                             <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
                                 <i class="fas fa-table fa-3x text-muted"></i>
