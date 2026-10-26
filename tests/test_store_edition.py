@@ -376,15 +376,18 @@ def test_get_s3_url_con_bucket_sigue_firmando(monkeypatch):
     [
         ({"images": ["a.png"]}, "/static/uploads/a.png"),
         ({"images": [["a.png", "b.png"]]}, "/static/uploads/a.png"),
-        ({"images": ["/imagenes_subidas/a.png"]}, "/imagenes_subidas/a.png"),
+        ({"images": ["/imagenes_subidas/a.png"]}, "/static/uploads/a.png"),
         ({"images": ["/static/uploads/a.png"]}, "/static/uploads/a.png"),
         ({"images": [], "Multimedia": ["v.mp4", "f.JPG"]}, "/static/uploads/f.JPG"),
         ({"imagenes": "a.png"}, "/static/uploads/a.png"),
         ({"images": ["N/A"], "Multimedia": ["v.mp4"]}, None),
-        ({"images": ["/logout"]}, None),
-        ({"images": ["//evil.example/x.png"]}, None),
-        ({"images": ["/imagenes_subidas/../../logout"]}, None),
-        ({"images": ["/logout", "ok.png"]}, "/static/uploads/ok.png"),
+        ({"images": ["/logout"]}, "/static/uploads/logout"),
+        ({"images": ["//evil.example/x.png"]}, "/static/uploads/x.png"),
+        ({"images": ["/imagenes_subidas/../.."]}, None),
+        ({"images": ["/imagenes_subidas/%2e%2e/%2e%2e/logout"]}, "/static/uploads/logout"),
+        ({"images": ["../../logout"]}, "/static/uploads/logout"),
+        ({"images": ["..", "%2e%2e", "/", "\\..\\x.png"]}, "/static/uploads/x.png"),
+        
         ({"Nombre": "sin imagen"}, None),
     ],
 )
@@ -403,12 +406,33 @@ def test_listado_muestra_miniatura_valida_y_la_sirve(store_app):
     r = c.get("/catalogs/")
     assert r.status_code == 200
     assert b"/static/uploads/foto1.png" in r.data
-    # y con rutas propias con barra inicial (antes salía /static/uploads//imagenes_subidas/..)
+    # y con rutas con barra inicial (antes salía /static/uploads//imagenes_subidas/..)
     db = appdb.get_mongo_db()
     db["spreadsheets"].update_one(
         {"name": "Con medios"},
         {"$set": {"data": [{"images": ["/imagenes_subidas/zz.png"]}]}},
     )
     r = c.get("/catalogs/")
-    assert b'src="/imagenes_subidas/zz.png"' in r.data
+    assert b'src="/static/uploads/zz.png"' in r.data
     assert b"uploads//" not in r.data
+
+
+@pytest.mark.parametrize(
+    "valor",
+    ["%2e%2e", "..", "%252e%252e", "/imagenes_subidas/%2e%2e", "a/..", "javascript:alert(1)", "data:image/png;base64,AA"],
+)
+def test_miniatura_nunca_emite_rutas_de_escape(store_app, valor):
+    from app.routes.catalogs_routes import _miniatura_de_fila
+
+    with store_app.test_request_context("/"):
+        assert _miniatura_de_fila({"images": [valor]}) is None
+
+
+def test_miniatura_solo_usa_url_bajo_uploads(store_app):
+    from app.routes.catalogs_routes import _miniatura_de_fila
+
+    malos = ["/logout", "//evil.example/x.png", "../../logout", "/imagenes_subidas/%2e%2e/%2e%2e/logout", "\\..\\logout"]
+    with store_app.test_request_context("/"):
+        for v in malos:
+            url = _miniatura_de_fila({"images": [v]})
+            assert url is None or (url.startswith("/static/uploads/") and "/.." not in url and "//" not in url[1:]), (v, url)

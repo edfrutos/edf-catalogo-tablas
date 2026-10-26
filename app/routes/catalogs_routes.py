@@ -13,6 +13,7 @@ visualización y gestión de catálogos de tablas. Incluye funcionalidades para:
 
 import logging
 import os
+from urllib.parse import unquote
 import uuid
 from datetime import datetime
 from functools import wraps
@@ -302,7 +303,6 @@ def check_catalog_permission(f):
 
 
 
-_RUTAS_MEDIOS_PROPIAS = ("/imagenes_subidas/", "/static/uploads/", "/admin/s3/", "/s3/")
 _IMG_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg")
 
 
@@ -310,8 +310,7 @@ def _miniatura_de_fila(row):
     """URL de la primera imagen de una fila para la miniatura del catálogo.
 
     Misma normalización que la vista de catálogo: acepta listas (también
-    anidadas), rutas propias ("/imagenes_subidas/x", "/static/uploads/x",
-    "/admin/s3/x") y nombres sueltos (-> /static/uploads/<nombre>). Si no hay
+    anidadas) y rutas o nombres: solo se aprovecha el nombre de fichero. Si no hay
     imágenes en los campos de imagen, usa la primera imagen de Multimedia.
     """
     from app.utils.row_media import flatten_media
@@ -325,23 +324,23 @@ def _miniatura_de_fila(row):
         if m.lower().split("?", 1)[0].endswith(_IMG_EXT)
     )
     for img in candidatos:
-        if img == "N/A" or img.startswith("http"):
+        if img == "N/A" or img.startswith(("http", "data:", "javascript:")):
             continue
-        if img.startswith("/"):
-            # Solo rutas propias de medios: un valor importado como "/logout" o
-            # "//host/x.png" no debe acabar como src de <img> (GET con sesión /
-            # carga de terceros).
-            if img.startswith(_RUTAS_MEDIOS_PROPIAS) and "//" not in img[1:] and ".." not in img:
-                return img
+        # Del dato importado solo se usa el NOMBRE de fichero (tras decodificar
+        # %xx y unificar separadores) y la URL la construimos nosotros: así un
+        # valor como "/logout", "//host/x", "../../logout" o
+        # "/imagenes_subidas/%2e%2e/%2e%2e/logout" nunca llega como ruta al <img>.
+        nombre = unquote(img).replace("\\", "/").rsplit("/", 1)[-1].strip()
+        if nombre in ("", ".", "..") or "%" in nombre:
             continue
         use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
         if use_s3:
             from app.utils.s3_utils import get_s3_url
 
-            s3_url = get_s3_url(img)
+            s3_url = get_s3_url(nombre)
             if s3_url:
                 return s3_url
-        return url_for("static", filename=f"uploads/{img}")
+        return url_for("static", filename=f"uploads/{nombre}")
     return None
 
 catalogs_bp = Blueprint("catalogs", __name__, url_prefix="/catalogs")
