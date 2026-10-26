@@ -31,17 +31,26 @@ _OWN_PREFIXES = (
 
 
 def as_list(value: Any) -> list[str]:
-    """Normaliza un valor (None, texto o lista) a lista de textos no vacíos."""
-    if value is None:
-        return []
-    if isinstance(value, str):
-        value = [value]
-    if not isinstance(value, (list, tuple)):
-        return []
+    """Normaliza un valor (None, texto o lista, incluso anidada) a lista de textos no vacíos."""
+    return flatten_media(value)
+
+
+def flatten_media(value: Any) -> list[str]:
+    """Aplana cualquier mezcla de textos y listas (anidadas) a lista plana de textos.
+
+    Hay filas con ``Multimedia`` o documentos como lista dentro de otra lista
+    (``[["a.jpg", "b.png"]]``): las plantillas esperaban textos y fallaban con
+    ``'list object' has no attribute 'lower'``. Descarta lo que no sea texto.
+    """
     out: list[str] = []
-    for item in value:
-        if isinstance(item, str) and item.strip():
-            out.append(item.strip())
+    if value is None:
+        return out
+    if isinstance(value, str):
+        value = value.strip()
+        return [value] if value else out
+    if isinstance(value, (list, tuple, set)):
+        for item in value:
+            out.extend(flatten_media(item))
     return out
 
 
