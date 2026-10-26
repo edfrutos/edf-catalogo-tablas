@@ -77,6 +77,11 @@ def get_s3_url(object_name, expiration=3600):
     Returns:
         str|None: URL prefirmada o None si falla.
     """
+    # Sin bucket configurado (p. ej. edición local de la tienda) no hay S3 que
+    # consultar: boto3 lanzaría TypeError/ParamValidationError, que no es
+    # ClientError y tumbaba la vista del catálogo.
+    if not S3_BUCKET_NAME:
+        return None
     try:
         url = s3_client.generate_presigned_url(
             "get_object",

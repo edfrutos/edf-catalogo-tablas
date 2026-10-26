@@ -310,3 +310,61 @@ def test_launcher_envia_la_cabecera_en_la_tienda_y_no_en_la_estandar(monkeypatch
     assert ns["_launch_headers"]() == {"X-EDF-Launch": LAUNCH_TOKEN}
     ns = _launcher_ns(monkeypatch, store=False)
     assert ns["_launch_headers"]() == {}
+
+
+# ------------------------------------------- tienda sin S3: filas con multimedia
+def _catalogo_con_media(db):
+    rows = [
+        {
+            "Nombre": "Con medios",
+            "Multimedia": ["foto1.png"],
+            "Documentación": ["manual1.pdf"],
+            "images": ["foto1.png"],
+        }
+    ]
+    res = db["spreadsheets"].insert_one(
+        {
+            "name": "Con medios",
+            "headers": ["Nombre", "Multimedia", "Documentación"],
+            "rows": rows,
+            "data": rows,
+            "owner": "local@tablateca.local",
+        }
+    )
+    return str(res.inserted_id)
+
+
+def test_tienda_ver_catalogo_con_imagenes_y_documentos_sin_s3(store_app):
+    """Regresión: 'expected string or bytes-like object' al abrir un catálogo con
+    medios, porque get_s3_url llamaba a boto3 sin bucket (TypeError)."""
+    import app.database as appdb
+
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+
+    r = c.get(f"/admin/catalogo/spreadsheets/{cid}")
+    assert r.status_code == 200, (r.status_code, r.headers.get("Location"))
+    assert b"foto1.png" in r.data
+    assert c.get("/catalogs/", follow_redirects=True).status_code == 200
+
+
+def test_get_s3_url_sin_bucket_devuelve_none(monkeypatch):
+    import app.routes.s3_utils as s3u
+
+    monkeypatch.setattr(s3u, "S3_BUCKET_NAME", None)
+    assert s3u.get_s3_url("foto1.png") is None
+    monkeypatch.setattr(s3u, "S3_BUCKET_NAME", "")
+    assert s3u.get_s3_url("foto1.png") is None
+
+
+def test_get_s3_url_con_bucket_sigue_firmando(monkeypatch):
+    """No regresión de la edición estándar: con bucket configurado se firma."""
+    import app.routes.s3_utils as s3u
+
+    class FakeS3:
+        def generate_presigned_url(self, op, Params, ExpiresIn):
+            return f"https://s3.test/{Params['Bucket']}/{Params['Key']}?e={ExpiresIn}"
+
+    monkeypatch.setattr(s3u, "S3_BUCKET_NAME", "bucket")
+    monkeypatch.setattr(s3u, "s3_client", FakeS3())
+    assert s3u.get_s3_url("a.png", 60) == "https://s3.test/bucket/a.png?e=60"
