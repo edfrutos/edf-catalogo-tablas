@@ -381,6 +381,10 @@ def test_get_s3_url_con_bucket_sigue_firmando(monkeypatch):
         ({"images": [], "Multimedia": ["v.mp4", "f.JPG"]}, "/static/uploads/f.JPG"),
         ({"imagenes": "a.png"}, "/static/uploads/a.png"),
         ({"images": ["N/A"], "Multimedia": ["v.mp4"]}, None),
+        ({"images": ["/logout"]}, None),
+        ({"images": ["//evil.example/x.png"]}, None),
+        ({"images": ["/imagenes_subidas/../../logout"]}, None),
+        ({"images": ["/logout", "ok.png"]}, "/static/uploads/ok.png"),
         ({"Nombre": "sin imagen"}, None),
     ],
 )

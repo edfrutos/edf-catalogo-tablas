@@ -302,6 +302,7 @@ def check_catalog_permission(f):
 
 
 
+_RUTAS_MEDIOS_PROPIAS = ("/imagenes_subidas/", "/static/uploads/", "/admin/s3/", "/s3/")
 _IMG_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg")
 
 
@@ -327,7 +328,12 @@ def _miniatura_de_fila(row):
         if img == "N/A" or img.startswith("http"):
             continue
         if img.startswith("/"):
-            return img
+            # Solo rutas propias de medios: un valor importado como "/logout" o
+            # "//host/x.png" no debe acabar como src de <img> (GET con sesión /
+            # carga de terceros).
+            if img.startswith(_RUTAS_MEDIOS_PROPIAS) and "//" not in img[1:] and ".." not in img:
+                return img
+            continue
         use_s3 = os.environ.get("USE_S3", "false").lower() == "true"
         if use_s3:
             from app.utils.s3_utils import get_s3_url
