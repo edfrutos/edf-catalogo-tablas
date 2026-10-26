@@ -7,7 +7,7 @@
 
 from datetime import datetime
 
-from app.utils.row_media import display_name, media_key
+from app.utils.row_media import display_name, flatten_media, media_key
 
 
 def datetimeformat(value, format="%Y-%m-%d %H:%M"):
@@ -57,3 +57,4 @@ def init_app(app):
     app.jinja_env.filters["datetimeformat"] = datetimeformat
     app.jinja_env.filters["media_url"] = media_url
     app.jinja_env.filters["media_name"] = display_name
+    app.jinja_env.filters["media_list"] = flatten_media

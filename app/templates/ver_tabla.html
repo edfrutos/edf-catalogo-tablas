@@ -651,7 +651,7 @@
                       {% if doc_data is iterable and doc_data is not string %}
         
                         {# Lista de documentos #}
-                        {% for doc_item in doc_data %}
+                        {% for doc_item in doc_data|media_list %}
                           {% if doc_item %}
                             <div class="documento-item mb-1">
         
@@ -788,7 +788,7 @@
                   {% elif header == 'Multimedia' %}
         
                     {% set multimedia_raw = row[header] if row[header] is defined else '' %}
-                    {% set multimedia_list = ([multimedia_raw] if multimedia_raw is string else multimedia_raw) if multimedia_raw else [] %}
+                    {% set multimedia_list = multimedia_raw|media_list %}
         
                     {% if multimedia_list %}
                       {% for multimedia_data in multimedia_list %}

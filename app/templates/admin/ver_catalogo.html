@@ -661,7 +661,7 @@
             
                   {% if doc_data %}
                     {% if doc_data is iterable and doc_data is not string %}
-                      {% set documentos_lista = doc_data %}
+                      {% set documentos_lista = doc_data|media_list %}
                     {% else %}
                       {% set documentos_lista = [doc_data] %}
                     {% endif %}
@@ -730,7 +730,7 @@
                 {% elif header == 'Multimedia' %}
             
                   {% set multimedia_raw = row.get(header, '') %}
-                  {% set multimedia_list = ([multimedia_raw] if multimedia_raw is string else multimedia_raw) if multimedia_raw else [] %}
+                  {% set multimedia_list = multimedia_raw|media_list %}
             
                   {% if multimedia_list %}
                     {% for multimedia_data in multimedia_list %}
