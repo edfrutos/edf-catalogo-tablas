@@ -3,13 +3,26 @@
 Sin cuentas: la app abre directamente con un único usuario local, creado la primera vez
 en el almacén SQLite. Este módulo solo se carga en la edición de tienda; la edición
 estándar no lo importa.
+
+Seguridad. Flask escucha en 127.0.0.1 y CSRF está desactivado en la app, así que una
+página web cualquiera del navegador del usuario podría enviar peticiones al puerto
+local. Por eso NO se crea ninguna sesión por iniciativa del servidor:
+
+* la sesión solo se abre con la URL de entrada que lleva el token de arranque, que se
+  genera en cada ejecución y solo conoce el launcher (mismo proceso);
+* se rechaza cualquier petición cuyo ``Host`` no sea local (DNS rebinding);
+* las peticiones que modifican datos se rechazan si vienen de otro origen
+  (``Origin`` / ``Sec-Fetch-Site``).
 """
 
 from __future__ import annotations
 
 import datetime as _dt
+import hmac
 import logging
+import secrets
 import threading
+from urllib.parse import urlsplit
 
 from flask import redirect, request, session
 
@@ -18,6 +31,13 @@ logger = logging.getLogger(__name__)
 LOCAL_EMAIL = "local@tablateca.local"
 LOCAL_USERNAME = "tablateca"
 LOCAL_NAME = "Usuario local"
+
+ENTER_PATH = "/_store/enter"
+# Token de esta ejecución: solo lo conoce el launcher (mismo proceso que Flask).
+LAUNCH_TOKEN = secrets.token_urlsafe(32)
+
+LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 # Pantallas de cuentas que no existen en la edición de tienda.
 ACCOUNT_PATHS = (
@@ -34,6 +54,19 @@ ACCOUNT_PATHS = (
 )
 
 _lock = threading.Lock()
+
+
+LAUNCH_HEADER = "X-EDF-Launch"
+
+
+def launch_headers() -> dict:
+    """Cabecera que usa el launcher para sus descargas (urllib no lleva la cookie)."""
+    return {LAUNCH_HEADER: LAUNCH_TOKEN}
+
+
+def entry_path() -> str:
+    """Ruta de entrada con el token de esta ejecución (la usa el launcher)."""
+    return f"{ENTER_PATH}?t={LAUNCH_TOKEN}"
 
 
 def ensure_local_user(db) -> dict:
@@ -69,6 +102,7 @@ def _open_local_session(db) -> None:
     session["nombre"] = user.get("nombre", "")
     session["role"] = user.get("role", "admin")
     session["logged_in"] = True
+    session["edf_store"] = True
     session.permanent = True
     try:
         from flask_login import login_user
@@ -80,22 +114,78 @@ def _open_local_session(db) -> None:
         logger.debug("login_user omitido: %s", exc)
 
 
+def _host_is_local() -> bool:
+    try:
+        host = urlsplit("//" + (request.host or "")).hostname
+    except ValueError:
+        return False
+    return host in LOCAL_HOSTS
+
+
+def _cross_origin_write() -> bool:
+    """True si una petición que modifica datos no viene de este mismo origen."""
+    if request.method in SAFE_METHODS:
+        return False
+    site = request.headers.get("Sec-Fetch-Site")
+    if site is not None and site not in ("same-origin", "none"):
+        return True
+    origin = request.headers.get("Origin")
+    if origin is not None:
+        try:
+            return urlsplit(origin).netloc != request.host
+        except ValueError:
+            return True
+    return False
+
+
+def _denied():
+    return (
+        "<h1>Acceso denegado</h1><p>Abre TablaTeca desde su propia ventana.</p>",
+        403,
+    )
+
+
+def _launch_header_ok() -> bool:
+    value = request.headers.get(LAUNCH_HEADER, "")
+    return bool(value) and hmac.compare_digest(value.encode(), LAUNCH_TOKEN.encode())
+
+
+def _has_local_session() -> bool:
+    return bool(
+        session.get("logged_in") and session.get("user_id") and session.get("edf_store")
+    )
+
+
 def init_store_edition(app) -> None:
     @app.before_request
-    def _auto_login():
+    def _store_gate():
+        if not _host_is_local() or _cross_origin_write():
+            return _denied()
+
         path = request.path or "/"
         if path.startswith("/static/"):
             return None
+
+        if path == ENTER_PATH:
+            token = request.args.get("t", "")
+            if not hmac.compare_digest(token.encode(), LAUNCH_TOKEN.encode()):
+                return _denied()
+            from app.database import get_mongo_db
+
+            db = get_mongo_db()
+            if db is None:
+                return _denied()
+            _open_local_session(db)
+            return redirect("/")
+
+        if request.method in ("GET", "HEAD") and _launch_header_ok():
+            return None  # descarga iniciada por el propio launcher (solo lectura)
+
+        if not _has_local_session():
+            return _denied()
+
         if path.rstrip("/") in ACCOUNT_PATHS:
             return redirect("/")
-        if session.get("logged_in") and session.get("user_id"):
-            return None
-        from app.database import get_mongo_db
-
-        db = get_mongo_db()
-        if db is None:
-            return None
-        _open_local_session(db)
         return None
 
     app.config["EDF_EDITION"] = "store"

@@ -146,7 +146,8 @@ class _EdfApi:
         if not dest:
             return False
         dest = dest if isinstance(dest, str) else dest[0]
-        with urllib.request.urlopen(str(url), timeout=300) as r, open(dest, "wb") as f:
+        req = urllib.request.Request(str(url), headers=_launch_headers())
+        with urllib.request.urlopen(req, timeout=300) as r, open(dest, "wb") as f:
             shutil.copyfileobj(r, f)
         return True
 
@@ -291,6 +292,42 @@ def start_flask_server():
         sys.stdout.flush()
 
 
+def _store_edition():
+    """True en la edición de tienda (ver app/edition.py)."""
+    try:
+        from app.edition import is_store
+
+        return is_store()
+    except Exception:
+        return False
+
+
+def _start_url():
+    """URL inicial. En la edición de tienda lleva el token de arranque: sin él, el
+    servidor local rechaza la entrada (ver app/store_edition.py)."""
+    base = f"http://127.0.0.1:{PORT}"
+    if _store_edition():
+        try:
+            from app.store_edition import entry_path
+
+            return base + entry_path()
+        except Exception as exc:
+            print(f"⚠️ No se pudo obtener la URL de entrada de la tienda: {exc}")
+    return base
+
+
+def _launch_headers():
+    """Cabecera de autenticación del launcher para sus descargas (solo en la tienda)."""
+    if _store_edition():
+        try:
+            from app.store_edition import launch_headers
+
+            return launch_headers()
+        except Exception:
+            pass
+    return {}
+
+
 def wait_for_server(max_attempts=60):
     """Espera a que el servidor Flask esté listo"""
     last_error = None
@@ -300,7 +337,9 @@ def wait_for_server(max_attempts=60):
             return False
         try:
             response = requests.get(f"http://127.0.0.1:{PORT}", timeout=2)
-            if response.status_code in [200, 302]:
+            # En la tienda, "/" sin sesión responde 403: el servidor está vivo igualmente.
+            listo = [200, 302] + ([403] if _store_edition() else [])
+            if response.status_code in listo:
                 print(f"✅ Servidor Flask listo (intento {attempt + 1})")
                 return True
             last_error = f"HTTP {response.status_code}"
@@ -347,7 +386,7 @@ def _boot(window):
     """Corre en un hilo con la ventana ya visible: espera a Flask y carga la app."""
     try:
         if wait_for_server():
-            window.load_url(f"http://127.0.0.1:{PORT}")
+            window.load_url(_start_url())
         else:
             detalle = _SERVER_ERROR or "El servidor interno no respondió a tiempo."
             window.load_html(_error_html(detalle))
@@ -420,9 +459,7 @@ def main():
         # Fallback: abrir en navegador
         import webbrowser
 
-        webbrowser.open(
-            f"http://127.0.0.1:{PORT}"
-        )  # pyright: ignore[reportUnusedCallResult]
+        webbrowser.open(_start_url())  # pyright: ignore[reportUnusedCallResult]
 
         # Mantener el servidor corriendo
         try:
