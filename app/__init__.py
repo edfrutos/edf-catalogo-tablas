@@ -159,6 +159,14 @@ def create_app(testing=False):
 
     # Registrar la función para que se use
     _ = app.before_request(ensure_db)
+
+    # Edición de tienda: sin cuentas, entra directamente con el usuario local.
+    from app.edition import is_store
+
+    if is_store():
+        from app.store_edition import init_store_edition
+
+        init_store_edition(app)
     # Configurar el cargador de usuarios para Flask-Login
     from app.models.user import User
 

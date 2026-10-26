@@ -155,3 +155,23 @@ def test_icono_maestro_1024_con_esquinas_transparentes():
     assert im.size == (1024, 1024)
     assert im.getpixel((0, 0))[3] == 0 and im.getpixel((1023, 1023))[3] == 0
     assert im.getpixel((512, 512))[3] == 255
+
+
+def test_spec_empaqueta_el_marcador_de_edicion_de_tienda():
+    # app/edition.py lo lee en el .app para activar la edición local (SQLite, sin cuentas)
+    assert (MAS / "EDITION").read_text().strip() == "store"
+    spec = (MAS / "TablaTeca_mas.spec").read_text()
+    assert '"packaging", "mas", "EDITION"' in spec
+
+
+def test_spec_no_empaqueta_credenciales():
+    # El .env que se empaqueta lo genera el workflow sin secretos; el spec no añade otros
+    spec = (MAS / "TablaTeca_mas.spec").read_text()
+    for prohibido in ("client_secret", "credentials.json", "serviceAccount"):
+        assert prohibido not in spec
+
+
+def test_spec_declara_los_imports_del_almacen_local():
+    spec = (MAS / "TablaTeca_mas.spec").read_text()
+    for modulo in ("sqlite3", "_sqlite3", "bson.json_util", "pymongo.results"):
+        assert f'"{modulo}"' in spec

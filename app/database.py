@@ -23,6 +23,8 @@ from pymongo.errors import (
     ServerSelectionTimeoutError,
 )
 
+from app.edition import is_store
+
 # Importar sistemas de caché y fallback
 from app.cache_system import cached, get_cache, set_cache
 from app.data_fallback import (
@@ -84,6 +86,17 @@ def initialize_db(app=None):
 
     if app:
         pass
+
+    if is_store():
+        # Edición de tienda: almacén local SQLite, sin red ni MongoDB.
+        from app.storage.local_store import get_local_client
+
+        _mongo_client = get_local_client()
+        _mongo_db = _mongo_client.get_database()
+        _is_connected = True
+        _last_error = None
+        logging.info("Edición tienda: almacén local SQLite activo")
+        return True
 
     mongo_uri = os.getenv("MONGO_URI")
     if not mongo_uri:

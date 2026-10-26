@@ -15,6 +15,7 @@ from bson import ObjectId
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
+from app.edition import is_store
 from app.models.user_schema import normalize_user_doc
 
 # Cargar variables de entorno. En build empaquetado (frozen), ruta explícita
@@ -71,6 +72,10 @@ def _tls_options(mongo_uri: str) -> dict:
 def get_mongo_client():
     """Obtiene el cliente de MongoDB."""
     global client
+    if is_store():
+        from app.storage.local_store import get_local_client
+
+        return get_local_client()
     if client is None:
         mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
         if not mongo_uri:

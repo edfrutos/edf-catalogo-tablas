@@ -21,6 +21,8 @@ a = Analysis(
         (os.path.join(ROOT, "config.py"), "."),
         (os.path.join(ROOT, "wsgi.py"), "."),
         (os.path.join(ROOT, ".env"), "."),
+        # Marca la edición de tienda (SQLite local, sin cuentas): ver app/edition.py
+        (os.path.join(ROOT, "packaging", "mas", "EDITION"), "."),
         (os.path.join(ROOT, "VERSION"), "."),
         (os.path.join(ROOT, "requirements.txt"), "."),
     ],
@@ -32,6 +34,10 @@ a = Analysis(
         "charset_normalizer", "idna", "six", "websockets",
         "asyncio", "threading", "tempfile", "pathlib", "datetime",
         "json", "os", "sys", "time",
+        # Almacén local de la edición de tienda (app/ va como datos: PyInstaller no
+        # analiza sus imports, hay que declararlos)
+        "sqlite3", "_sqlite3", "bson", "bson.json_util", "bson.objectid",
+        "pymongo.errors", "pymongo.results",
     ],
     hookspath=[],
     hooksconfig={},

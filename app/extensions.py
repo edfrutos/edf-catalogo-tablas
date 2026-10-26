@@ -98,7 +98,18 @@ def init_extensions(app):
         return user
 
     # Hacer que la conexión a MongoDB sea opcional
-    if app.config.get("MONGO_URI"):
+    from app.edition import is_store
+
+    if is_store():
+        # Edición de tienda: `mongo.db` / `mongo.cx` apuntan al almacén local.
+        from app.storage.local_store import get_local_client
+
+        local_client = get_local_client()
+        mongo.cx = local_client
+        mongo.db = local_client.get_database()
+        catalog_collection = mongo.db.get_collection("catalogo_tablas")
+        logger.info("Edición tienda: PyMongo sustituido por el almacén local")
+    elif app.config.get("MONGO_URI"):
         try:
             # Forzar el uso de certifi para los certificados
             mongo.init_app(app, tlsCAFile=certifi.where())
