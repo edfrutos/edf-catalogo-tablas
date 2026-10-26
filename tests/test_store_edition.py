@@ -100,33 +100,129 @@ def store_app(monkeypatch, tmp_path):
     appdb._is_connected = False
 
 
-def test_tienda_entra_sin_login_y_usa_sqlite(store_app, tmp_path):
+def _entrar(client):
+    """Entra como lo hace el launcher: con la URL que lleva el token de arranque."""
+    from app.store_edition import entry_path
+
+    r = client.get(entry_path())
+    assert r.status_code == 302 and r.headers["Location"].endswith("/")
+    return client
+
+
+def test_tienda_entra_con_el_token_y_usa_sqlite(store_app):
     import app.database as appdb
     from app.storage.local_store import LocalClient
 
     assert isinstance(appdb.get_mongo_client(), LocalClient)
-    c = store_app.test_client()
-    r = c.get("/", follow_redirects=True)
-    assert r.status_code == 200
+    c = _entrar(store_app.test_client())
+    assert c.get("/", follow_redirects=True).status_code == 200
     with c.session_transaction() as s:
         assert s["logged_in"] is True and s["role"] == "admin"
     users = appdb.get_mongo_db()["users"]
     assert users.count_documents({"email": "local@tablateca.local"}) == 1
-    c.get("/", follow_redirects=True)
+    _entrar(store_app.test_client())
     assert users.count_documents({}) == 1  # no duplica el usuario local
+
+
+# ------------------------------------------------ el puerto local no se regala
+def test_sin_token_no_hay_sesion_ni_datos(store_app):
+    import app.database as appdb
+
+    c = store_app.test_client()
+    assert c.get("/").status_code == 403
+    assert c.get("/admin/").status_code == 403
+    assert c.post("/catalogs/create", data={"name": "X", "headers": "A"}).status_code == 403
+    db = appdb.get_mongo_db()
+    assert db["spreadsheets"].count_documents({}) == 0
+    assert db["users"].count_documents({}) == 0  # ni siquiera se crea el usuario local
+
+
+@pytest.mark.parametrize("token", ["", "x", "A" * 43])
+def test_token_incorrecto_se_rechaza(store_app, token):
+    import app.database as appdb
+
+    c = store_app.test_client()
+    assert c.get(f"/_store/enter?t={token}").status_code == 403
+    assert c.get("/_store/enter").status_code == 403
+    assert appdb.get_mongo_db()["users"].count_documents({}) == 0
+    assert c.get("/").status_code == 403
+
+
+def test_host_no_local_se_rechaza_incluso_con_token(store_app):
+    from app.store_edition import entry_path
+
+    c = store_app.test_client()
+    assert c.get(entry_path(), base_url="http://evil.example:5004").status_code == 403
+    assert c.get(entry_path(), base_url="http://127.0.0.1.evil.example").status_code == 403
+    r = c.get(entry_path(), base_url="http://127.0.0.1:5004")
+    assert r.status_code == 302
+    assert c.get("/", base_url="http://127.0.0.1:5004", follow_redirects=True).status_code == 200
+    # La misma sesión (cookie de 127.0.0.1) con otro nombre de host no entra
+    assert c.get("/", base_url="http://evil.example:5004").status_code == 403
+
+
+@pytest.mark.parametrize(
+    "host,esperado",
+    [
+        ("127.0.0.1", True),
+        ("127.0.0.1:5004", True),
+        ("localhost:5004", True),
+        ("[::1]:5004", True),
+        ("evil.example", False),
+        ("evil.example:5004", False),
+        ("127.0.0.1.evil.example", False),
+        ("localhost.evil.example:5004", False),
+        ("", False),
+    ],
+)
+def test_host_local_solo_acepta_loopback(store_app, host, esperado):
+    from app.store_edition import _host_is_local
+
+    with store_app.test_request_context("/", headers={"Host": host}):
+        assert _host_is_local() is esperado
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {"Origin": "http://evil.example"},
+        {"Origin": "null"},
+        {"Sec-Fetch-Site": "cross-site"},
+        {"Sec-Fetch-Site": "same-site"},
+    ],
+)
+def test_escrituras_de_otro_origen_se_rechazan_aunque_haya_sesion(store_app, headers):
+    import app.database as appdb
+
+    c = _entrar(store_app.test_client())
+    r = c.post("/catalogs/create", data={"name": "Intruso", "headers": "A"}, headers=headers)
+    assert r.status_code == 403
+    assert appdb.get_mongo_db()["spreadsheets"].count_documents({"name": "Intruso"}) == 0
+
+
+def test_escritura_del_mismo_origen_funciona(store_app):
+    import app.database as appdb
+
+    c = _entrar(store_app.test_client())
+    r = c.post(
+        "/catalogs/create",
+        data={"name": "Propio", "headers": "A"},
+        headers={"Origin": "http://localhost", "Sec-Fetch-Site": "same-origin"},
+    )
+    assert r.status_code in (200, 302)
+    assert appdb.get_mongo_db()["spreadsheets"].count_documents({"name": "Propio"}) == 1
 
 
 @pytest.mark.parametrize("path", ["/login", "/register", "/welcome", "/auth/login", "/auth/register"])
 def test_pantallas_de_cuenta_redirigen_a_inicio(store_app, path):
-    r = store_app.test_client().get(path)
+    r = _entrar(store_app.test_client()).get(path)
     assert r.status_code == 302 and r.headers["Location"].endswith("/")
 
 
 def test_crear_catalogo_anadir_editar_ver_y_borrar(store_app, tmp_path):
     import app.database as appdb
 
-    c = store_app.test_client()
-    c.get("/")
+    c = _entrar(store_app.test_client())
     r = c.post("/catalogs/create", data={"name": "Mi tabla", "headers": "Nombre,Notas"})
     assert r.status_code in (200, 302), r.status_code
     sheet = appdb.get_mongo_db()["spreadsheets"].find_one({"name": "Mi tabla"})
@@ -152,11 +248,9 @@ def test_crear_catalogo_anadir_editar_ver_y_borrar(store_app, tmp_path):
 
 
 def test_los_datos_sobreviven_a_reiniciar(store_app, tmp_path):
-    import app.database as appdb
     from app.storage import local_store
 
-    c = store_app.test_client()
-    c.get("/")
+    c = _entrar(store_app.test_client())
     c.post("/catalogs/create", data={"name": "Persistente", "headers": "A"})
     local_store.reset_local_client()
     again = local_store.LocalClient(str(tmp_path / "t.sqlite3"))
@@ -164,3 +258,55 @@ def test_los_datos_sobreviven_a_reiniciar(store_app, tmp_path):
         assert again.get_database()["spreadsheets"].count_documents({"name": "Persistente"}) == 1
     finally:
         again.close()
+
+
+def test_descargas_del_launcher_llevan_cabecera_y_solo_leen(store_app):
+    from app.store_edition import launch_headers
+
+    c = store_app.test_client()
+    # Con la cabecera se supera la puerta (la ruta decide después: 404 = no existe el fichero)
+    assert c.get("/imagenes_subidas/no-existe.png", headers=launch_headers()).status_code != 403
+    assert c.get("/imagenes_subidas/no-existe.png").status_code == 403
+    assert c.get("/imagenes_subidas/no-existe.png", headers={"X-EDF-Launch": "otro"}).status_code == 403
+    r = c.post("/catalogs/create", data={"name": "X", "headers": "A"}, headers=launch_headers())
+    assert r.status_code == 403  # la cabecera no autoriza escrituras
+
+
+# --------------------------------------------------------------- el launcher
+def _launcher_ns(monkeypatch, store):
+    import ast
+    import pathlib
+
+    src = (pathlib.Path(__file__).resolve().parents[1] / "launcher_native_websockets.py").read_text()
+    tree = ast.parse(src)
+    wanted = {"_store_edition", "_start_url", "_launch_headers"}
+    code = "\n".join(ast.get_source_segment(src, n) for n in tree.body
+                     if isinstance(n, ast.FunctionDef) and n.name in wanted)
+    ns = {"PORT": 5004}
+    exec(code, ns)  # noqa: S102 - solo funciones del propio launcher
+    if store:
+        monkeypatch.setenv("EDF_EDITION", "store")
+    else:
+        monkeypatch.delenv("EDF_EDITION", raising=False)
+    return ns
+
+
+def test_launcher_abre_la_tienda_con_el_token(monkeypatch):
+    from app.store_edition import LAUNCH_TOKEN
+
+    ns = _launcher_ns(monkeypatch, store=True)
+    assert ns["_start_url"]() == f"http://127.0.0.1:5004/_store/enter?t={LAUNCH_TOKEN}"
+
+
+def test_launcher_en_edicion_estandar_abre_la_url_de_siempre(monkeypatch):
+    ns = _launcher_ns(monkeypatch, store=False)
+    assert ns["_start_url"]() == "http://127.0.0.1:5004"
+
+
+def test_launcher_envia_la_cabecera_en_la_tienda_y_no_en_la_estandar(monkeypatch):
+    from app.store_edition import LAUNCH_TOKEN
+
+    ns = _launcher_ns(monkeypatch, store=True)
+    assert ns["_launch_headers"]() == {"X-EDF-Launch": LAUNCH_TOKEN}
+    ns = _launcher_ns(monkeypatch, store=False)
+    assert ns["_launch_headers"]() == {}
