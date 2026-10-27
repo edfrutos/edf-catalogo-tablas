@@ -631,13 +631,21 @@ function showImageModal(imageSrc, imageTitle) {
     return;
   }
   
+  // Indicador de carga: visible mientras se descarga la imagen y oculto al
+  // terminar (antes se quedaba girando para siempre al lado de la imagen).
+  const modalSpinner = modalElement.querySelector('.spinner-border');
+  const setSpinner = function(visible) {
+    if (modalSpinner) { modalSpinner.style.display = visible ? '' : 'none'; }
+  };
+  setSpinner(true);
+
   // Configurar título e imagen
   modalTitle.textContent = imageTitle || 'Imagen';
-  modalImage.src = imageSrc;
   modalImage.alt = imageTitle || 'Imagen';
   
   // Manejar errores de carga de imagen
   modalImage.onerror = function() {
+    setSpinner(false);
     log("[MODAL-UNIFIED] ❌ Error cargando imagen:", imageSrc);
     modalImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbiBubyBlbmNvbnRyYWRhPC90ZXh0Pjwvc3ZnPg==';
     modalImage.alt = 'Imagen no encontrada';
@@ -645,8 +653,14 @@ function showImageModal(imageSrc, imageTitle) {
   };
   
   modalImage.onload = function() {
+    setSpinner(false);
     log("[MODAL-UNIFIED] ✅ Imagen cargada correctamente:", imageSrc);
   };
+
+  // El src va después de los manejadores y, si ya estaba en caché y completa,
+  // se oculta el indicador sin esperar a un evento que puede no llegar.
+  modalImage.src = imageSrc;
+  if (modalImage.complete && modalImage.naturalWidth > 0) { setSpinner(false); }
   
   // Mostrar modal
   const modal = new bootstrap.Modal(modalElement);
