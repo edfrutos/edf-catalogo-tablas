@@ -508,3 +508,21 @@ def test_miniatura_rota_solo_se_evalua_en_la_tienda(monkeypatch, tmp_path):
         assert _miniatura_local_rota("https://x/y.png") is False
         (tmp_path / "ok.png").write_bytes(b"x")
         assert _miniatura_local_rota("/static/uploads/ok.png") is False
+
+
+# ------------------------------------------------ modal de imagen: el indicador se oculta
+def test_modal_de_imagen_oculta_el_indicador_al_cargar_o_fallar():
+    """Regresión: el spinner del modal de imagen giraba para siempre junto a la imagen.
+    (Comprobado además en Chromium: oculto tras imagen válida y tras imagen rota.)"""
+    import re
+
+    src = open(
+        os.path.join(os.path.dirname(__file__), "..", "app", "static", "js", "modal-functions-UNIFIED.js"),
+        encoding="utf-8",
+    ).read()
+    cuerpo = src[src.index("function showImageModal") : src.index("function showMultimediaModal")]
+    assert "setSpinner(true)" in cuerpo
+    assert re.search(r"onload = function\(\) \{\s*setSpinner\(false\)", cuerpo)
+    assert re.search(r"onerror = function\(\) \{\s*setSpinner\(false\)", cuerpo)
+    # el src se asigna después de los manejadores
+    assert cuerpo.index("modalImage.onload") < cuerpo.index("modalImage.src = imageSrc")
