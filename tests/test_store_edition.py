@@ -526,3 +526,22 @@ def test_modal_de_imagen_oculta_el_indicador_al_cargar_o_fallar():
     assert re.search(r"onerror = function\(\) \{\s*setSpinner\(false\)", cuerpo)
     # el src se asigna después de los manejadores
     assert cuerpo.index("modalImage.onload") < cuerpo.index("modalImage.src = imageSrc")
+
+
+# ------------------------------------------------------- visor de PDF (pdf.js local)
+def test_visor_pdf_usa_pdfjs_local_con_respaldo_de_iframe():
+    base = os.path.join(os.path.dirname(__file__), "..", "app", "static", "js")
+    for f in ("pdf.min.js", "pdf.worker.min.js", "LICENSE"):
+        assert os.path.getsize(os.path.join(base, "vendor", "pdfjs", f)) > 1000, f
+    js = open(os.path.join(base, "modal-functions-UNIFIED.js"), encoding="utf-8").read()
+    # los dos caminos de PDF (S3 y local) montan pdf.js, ya no un iframe fijo
+    import re as _re
+
+    assert len(_re.findall(r"edfMountPdf\(modalContent, \w+\);", js)) == 2
+    cuerpo = js[js.index("function showDocumentModal") : js.index("function edfEscapeHtml")]
+    assert "<iframe" not in cuerpo.split("fileExtension === 'md'")[0].split("if (fileExtension === 'pdf')")[1]
+    # sin CDN: todo desde /static y sin eval
+    assert "/static/js/vendor/pdfjs/pdf.min.js" in js and "isEvalSupported: false" in js
+    assert "cdn" not in js[js.index("function edfEnsurePdfJs") : js.index("function showMarkdownInModal")].lower()
+    # y el respaldo al visor integrado existe
+    assert "document.createElement('iframe')" in js

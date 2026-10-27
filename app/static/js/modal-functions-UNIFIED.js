@@ -131,17 +131,10 @@ function showDocumentModal(documentSrc, documentTitle) {
         <div class="p-2">
           ${edfDocHeader('fa-file-pdf', 'text-danger', documentTitle, 'PDF', 'S3')}
           
-          <div class="pdf-viewer-container">
-            <iframe 
-              src="${proxyUrl}" 
-              width="100%" 
-              style="height: calc(100vh - 220px); min-height: 320px; border: 1px solid #dee2e6; border-radius: 8px;"
-              onload="// console.log('[MODAL-UNIFIED] ✅ PDF cargado en iframe')"
-              onerror="console.error('[MODAL-UNIFIED] ❌ Error cargando PDF en iframe')">
-            </iframe>
-          </div>
+          <div class="pdf-viewer-container"></div>
         </div>
       `;
+      edfMountPdf(modalContent, proxyUrl);
       
       // Insertar botones en el modal-footer
       const modalFooter = document.querySelector('#documentModal .modal-footer');
@@ -206,16 +199,10 @@ function showDocumentModal(documentSrc, documentTitle) {
         <div class="p-2">
           ${edfDocHeader('fa-file-pdf', 'text-danger', documentTitle, 'PDF', 'Local')}
           
-          <div class="pdf-viewer-container">
-            <iframe 
-              src="${documentSrc}" 
-              width="100%" 
-              style="height: calc(100vh - 220px); min-height: 320px; border: 1px solid #dee2e6; border-radius: 8px;"
-              onload="// console.log('[MODAL-UNIFIED] ✅ PDF local cargado en iframe')">
-            </iframe>
-          </div>
+          <div class="pdf-viewer-container"></div>
         </div>
       `;
+      edfMountPdf(modalContent, documentSrc);
       
       // Insertar botones en el modal-footer
       const modalFooter = document.querySelector('#documentModal .modal-footer');
@@ -323,6 +310,78 @@ async function renderMarkdownSafe(text) {
     return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
   }
   return '<pre style="white-space: pre-wrap;">' + edfEscapeHtml(text) + '</pre>';
+}
+
+// ============================================================================
+// VISOR DE PDF (pdf.js, incluido en local)
+// El visor integrado de WKWebView muestra el PDF como una página diminuta
+// dentro del iframe; pdf.js dibuja cada página ajustada al ancho del modal.
+// ============================================================================
+function edfEnsurePdfJs() {
+  if (window.pdfjsLib) { return Promise.resolve(true); }
+  if (!window.__edfPdfJs) {
+    window.__edfPdfJs = edfLoadScript('/static/js/vendor/pdfjs/pdf.min.js')
+      .then(function () {
+        if (!window.pdfjsLib) { return false; }
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/js/vendor/pdfjs/pdf.worker.min.js';
+        return true;
+      })
+      .catch(function (e) { console.warn('[MODAL-UNIFIED] pdf.js no disponible:', e); return false; });
+  }
+  return window.__edfPdfJs;
+}
+
+async function edfRenderPdf(url, box, token) {
+  const ok = await edfEnsurePdfJs();
+  if (!ok) { throw new Error('Visor de PDF no disponible'); }
+  const pdf = await window.pdfjsLib.getDocument({
+    url: url,
+    isEvalSupported: false,
+    disableRange: true,
+    disableStream: true,
+    withCredentials: true
+  }).promise;
+  if (box.dataset.edfToken !== token) { return; }
+  box.innerHTML = '';
+  const width = Math.max((box.clientWidth || 800) - 28, 280);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  for (let n = 1; n <= pdf.numPages; n++) {
+    if (box.dataset.edfToken !== token) { return; }  // modal cerrado o reutilizado
+    const page = await pdf.getPage(n);
+    const base = page.getViewport({ scale: 1 });
+    const cssScale = width / base.width;
+    const vp = page.getViewport({ scale: cssScale * dpr });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.floor(vp.width);
+    canvas.height = Math.floor(vp.height);
+    canvas.style.width = Math.floor(vp.width / dpr) + 'px';
+    canvas.style.height = Math.floor(vp.height / dpr) + 'px';
+    canvas.className = 'd-block mx-auto mb-3 bg-white shadow-sm';
+    canvas.setAttribute('aria-label', 'Página ' + n + ' de ' + pdf.numPages);
+    box.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+  }
+}
+
+// Monta el visor dentro de .pdf-viewer-container; si pdf.js falla, usa el iframe de siempre.
+function edfMountPdf(modalContent, src) {
+  const holder = modalContent.querySelector('.pdf-viewer-container');
+  if (!holder) { return; }
+  const token = String(Date.now()) + Math.random();
+  holder.innerHTML = '<div class="edf-pdf-pages" style="height: calc(100vh - 220px); min-height: 320px; overflow: auto; background: #e9ecef; border: 1px solid #dee2e6; border-radius: 8px; padding: 14px;"></div>';
+  const box = holder.firstElementChild;
+  box.dataset.edfToken = token;
+  box.innerHTML = '<div class="text-center text-muted p-4"><div class="spinner-border text-primary mb-2" role="status"></div><div>Cargando PDF...</div></div>';
+  edfRenderPdf(src, box, token).catch(function (err) {
+    console.warn('[MODAL-UNIFIED] pdf.js falló, uso el visor integrado:', err);
+    if (box.dataset.edfToken !== token) { return; }
+    const frame = document.createElement('iframe');
+    frame.src = src;
+    frame.width = '100%';
+    frame.style.cssText = 'height: calc(100vh - 220px); min-height: 320px; border: 1px solid #dee2e6; border-radius: 8px;';
+    holder.innerHTML = '';
+    holder.appendChild(frame);
+  });
 }
 
 // Función para mostrar Markdown en modal
