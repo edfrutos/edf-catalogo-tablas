@@ -343,6 +343,28 @@ def _miniatura_de_fila(row):
         return url_for("static", filename=f"uploads/{nombre}")
     return None
 
+
+def _miniatura_local_rota(url):
+    """True si la miniatura apunta a un fichero local (/static/uploads/x o
+    /imagenes_subidas/x) que no existe o está vacío (p. ej. subidas de 0 bytes
+    de versiones anteriores); entonces se busca la primera imagen de las filas."""
+    from app.edition import is_store
+
+    if not is_store() or not isinstance(url, str):
+        # Solo en la tienda: en la web la carpeta de subidas puede no ser la de
+        # /static/uploads y no se debe descartar una miniatura válida.
+        return False
+    url = url.strip()
+    for prefijo in ("/static/uploads/", "/imagenes_subidas/"):
+        if url.startswith(prefijo):
+            nombre = os.path.basename(unquote(url[len(prefijo):].split("?", 1)[0]))
+            if not nombre or nombre in (".", ".."):
+                return True
+            carpeta = current_app.config.get("UPLOAD_FOLDER") or ""
+            ruta = os.path.join(carpeta, nombre)
+            return not (os.path.isfile(ruta) and os.path.getsize(ruta) > 0)
+    return False
+
 catalogs_bp = Blueprint("catalogs", __name__, url_prefix="/catalogs")
 
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
@@ -531,7 +553,9 @@ def list_catalogs():
             )
 
             # 1. Verificar si tiene miniatura personalizada configurada
-            if catalog.get("miniatura") and catalog["miniatura"].strip():
+            if catalog.get("miniatura") and catalog["miniatura"].strip() and not _miniatura_local_rota(
+                catalog["miniatura"]
+            ):
                 # Convertir URL directa de S3 a URL del proxy si es necesario
                 miniatura_original = catalog["miniatura"]
                 if isinstance(miniatura_original, str) and (
@@ -864,7 +888,11 @@ def edit(catalog_id, catalog):
                         # Fallback: guardar localmente si S3 falla
                         upload_dir = get_upload_dir()
                         file_path = os.path.join(upload_dir, unique_filename)
+                        miniatura_file.seek(0)
                         miniatura_file.save(file_path)
+                        if os.path.getsize(file_path) == 0:
+                            os.remove(file_path)
+                            raise ValueError("La imagen subida está vacía")
                         nueva_miniatura = url_for(
                             "static", filename=f"uploads/{unique_filename}"
                         )
