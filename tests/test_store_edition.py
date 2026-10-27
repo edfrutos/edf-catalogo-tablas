@@ -436,3 +436,75 @@ def test_miniatura_solo_usa_url_bajo_uploads(store_app):
         for v in malos:
             url = _miniatura_de_fila({"images": [v]})
             assert url is None or (url.startswith("/static/uploads/") and "/.." not in url and "//" not in url[1:]), (v, url)
+
+
+# ------------------------------------------ miniatura subida: no puede quedar vacía
+def _png():
+    return bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d"
+        "49444154789c6360000002000001e221bc330000000049454e44ae426082"
+    )
+
+
+def test_subir_miniatura_en_la_tienda_guarda_el_contenido_y_se_sirve(store_app):
+    import io
+
+    import app.database as appdb
+
+    c = _entrar(store_app.test_client())
+    c.post("/catalogs/create", data={"name": "M", "headers": "Nombre"})
+    cid = str(appdb.get_mongo_db()["spreadsheets"].find_one({"name": "M"})["_id"])
+    r = c.post(
+        f"/catalogs/{cid}/edit",
+        data={"name": "M", "headers": "Nombre", "miniatura": "", "miniatura_file": (io.BytesIO(_png()), "m.jpeg")},
+        content_type="multipart/form-data",
+    )
+    assert r.status_code == 302
+    mini = appdb.get_mongo_db()["spreadsheets"].find_one({"name": "M"})["miniatura"]
+    assert mini.startswith("/static/uploads/miniatura_")
+    resp = c.get(mini)
+    assert resp.status_code == 200 and resp.data == _png()
+    # y el listado la usa
+    assert mini.encode() in c.get("/catalogs/").data
+    os.remove(os.path.join(store_app.config["UPLOAD_FOLDER"], os.path.basename(mini)))
+
+
+def test_listado_ignora_miniatura_local_vacia_o_inexistente_y_usa_la_imagen_de_la_fila(store_app):
+    import app.database as appdb
+
+    up = store_app.config["UPLOAD_FOLDER"]
+    os.makedirs(up, exist_ok=True)
+    vacio = os.path.join(up, "miniatura_vacia_test.jpeg")
+    open(vacio, "wb").close()
+    try:
+        db = appdb.get_mongo_db()
+        for mini in ("/static/uploads/miniatura_vacia_test.jpeg", "/static/uploads/no_existe_test.jpeg"):
+            db["spreadsheets"].delete_many({})
+            db["spreadsheets"].insert_one(
+                {"name": "X", "headers": ["Nombre"], "rows": [], "miniatura": mini,
+                 "data": [{"images": ["real.png"]}], "owner": "local@tablateca.local"}
+            )
+            c = _entrar(store_app.test_client())
+            html = c.get("/catalogs/").data
+            assert b'src="/static/uploads/real.png"' in html, mini
+            assert mini.encode() not in html
+    finally:
+        os.remove(vacio)
+
+
+def test_miniatura_rota_solo_se_evalua_en_la_tienda(monkeypatch, tmp_path):
+    from flask import Flask
+
+    from app.routes.catalogs_routes import _miniatura_local_rota
+
+    a = Flask(__name__)
+    a.config["UPLOAD_FOLDER"] = str(tmp_path)
+    monkeypatch.delenv("EDF_EDITION", raising=False)
+    with a.app_context():
+        assert _miniatura_local_rota("/static/uploads/no_existe.jpeg") is False
+    monkeypatch.setenv("EDF_EDITION", "store")
+    with a.app_context():
+        assert _miniatura_local_rota("/static/uploads/no_existe.jpeg") is True
+        assert _miniatura_local_rota("https://x/y.png") is False
+        (tmp_path / "ok.png").write_bytes(b"x")
+        assert _miniatura_local_rota("/static/uploads/ok.png") is False

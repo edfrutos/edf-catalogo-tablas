@@ -230,6 +230,7 @@ def upload_image_to_s3(file_obj, filename):
 
         from app.utils.s3_utils import upload_file_to_s3
 
+        file_obj.seek(0)
         # Crear un archivo temporal
         with tempfile.NamedTemporaryFile(
             delete=False, suffix=f"_{filename}"
@@ -252,3 +253,10 @@ def upload_image_to_s3(file_obj, filename):
     except Exception as e:
         current_app.logger.error(f"Error en upload_image_to_s3: {str(e)}")
         return None
+    finally:
+        # save() deja el flujo al final: sin esto, el respaldo local que guarda
+        # el mismo FileStorage escribía un fichero de 0 bytes.
+        try:
+            file_obj.seek(0)
+        except Exception:
+            pass
