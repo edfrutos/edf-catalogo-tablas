@@ -23,6 +23,7 @@ from app.database import (
 )
 from flask_login import current_user
 from app.decorators import admin_required
+from app.edition import is_store
 from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
 from app.utils.paths import backups_dir as unified_backups_dir
 from app.utils.paths import drive_config_dir
@@ -37,6 +38,23 @@ from tools.db_utils.google_drive_utils import list_files_in_folder
 
 
 logger = logging.getLogger(__name__)
+
+
+def _volver_de_backup(endpoint_estandar: str):
+    """Destino al fallar un backup: en la tienda no existe el panel de mantenimiento (404)."""
+    if is_store():
+        return redirect(url_for("admin.dashboard_admin"))
+    return redirect(url_for(endpoint_estandar))
+
+
+def _descarga_local(contenido: str, extension: str):
+    """Entrega la copia como descarga: la tienda no sube nada a Drive ni escribe en disco."""
+    nombre = f"catalog_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{extension}"
+    return send_file(
+        io.BytesIO(contenido.encode("utf-8")),
+        download_name=nombre,
+        as_attachment=True,
+    )
 
 
 def backup_log_action(
@@ -81,7 +99,7 @@ def register_admin_backup_routes(admin_bp) -> None:
         catalog = get_catalogs_collection()
         if catalog is None:
             flash("Error: No se pudo acceder a la colección de catálogos", "error")
-            return redirect(url_for("maintenance.maintenance_daard"))
+            return _volver_de_backup("maintenance.maintenance_daard")
 
         data = list(catalog.find())
         for d in data:
@@ -90,6 +108,9 @@ def register_admin_backup_routes(admin_bp) -> None:
         output = io.StringIO()
         json.dump(data, output, indent=4, default=str)
         output.seek(0)
+
+        if is_store():
+            return _descarga_local(output.getvalue(), "json")
 
         backups_dir = get_backup_dir()
         filename = f"catalog_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -142,12 +163,12 @@ def register_admin_backup_routes(admin_bp) -> None:
         catalog = get_catalogs_collection()
         if catalog is None:
             flash("Error: No se pudo acceder a la colección de catálogos", "error")
-            return redirect(url_for("maintenance.maintenance_dashboard"))
+            return _volver_de_backup("maintenance.maintenance_dashboard")
 
         data = list(catalog.find())
         if not data:
             flash("No hay datos para exportar", "warning")
-            return redirect(url_for("maintenance.maintenance_dashboard"))
+            return _volver_de_backup("maintenance.maintenance_dashboard")
 
         all_fields = set()
         for row in data:
@@ -164,6 +185,9 @@ def register_admin_backup_routes(admin_bp) -> None:
             writer.writerow(row_filled)
 
         output.seek(0)
+
+        if is_store():
+            return _descarga_local(output.getvalue(), "csv")
 
         backups_dir = get_backup_dir()
         filename = f"catalog_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"

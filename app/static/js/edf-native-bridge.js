@@ -3,7 +3,8 @@
   'use strict';
   if (window.__edfBridgeLoaded) return;
   window.__edfBridgeLoaded = true;
-  var MEDIA = ['/static/uploads/', '/admin/s3/', '/imagenes_subidas/'];
+  var MEDIA = ['/static/uploads/', '/admin/s3/', '/imagenes_subidas/', '/admin/backup/'];
+  var BACKUP = /^\/admin\/backup\/(csv|json)$/;
 
   function api() { return window.pywebview && window.pywebview.api ? window.pywebview.api : null; }
   function toURL(u) { try { return new URL(u, window.location.href); } catch (e) { return null; } }
@@ -50,6 +51,11 @@
     if (!el) return;
     var u = toURL(el.getAttribute('href'));
     if (!u || !/^https?:$/.test(u.protocol)) return;
+    // Copias CSV/JSON: la ventana nativa no descarga por navegación; se guarda con el diálogo del sistema
+    if (u.origin === window.location.origin && BACKUP.test(u.pathname)) {
+      if (window.edfNativeSave(u.href, 'catalog_backup.' + u.pathname.split('/').pop())) { e.preventDefault(); e.stopPropagation(); }
+      return;
+    }
     if (el.hasAttribute('download')) {
       if (window.edfNativeSave(u.href, el.getAttribute('download'))) { e.preventDefault(); e.stopPropagation(); }
       return;
