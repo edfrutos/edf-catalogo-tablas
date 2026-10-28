@@ -779,3 +779,19 @@ def test_guardar_catalogo_desde_el_editor_admin_no_redirige_a_ruta_bloqueada(sto
     assert c.get(destino).status_code == 200
     assert appdb.get_mongo_db()["spreadsheets"].find_one({"_id": __import__("bson").ObjectId(cid)})["name"] == "M2 editado"
 
+
+
+def test_spec_mas_declara_que_no_usa_cifrado_no_exento():
+    from pathlib import Path
+
+    spec = Path(__file__).resolve().parents[1] / "packaging" / "mas" / "TablaTeca_mas.spec"
+    assert '"ITSAppUsesNonExemptEncryption": False' in spec.read_text(encoding="utf-8")
+
+
+def test_pagina_publica_de_privacidad_y_soporte_existente(store_app):
+    c = _entrar(store_app.test_client())
+    r = c.get("/privacidad")
+    assert r.status_code == 200
+    html = r.get_data(as_text=True)
+    assert "no recopila" in html and "does not collect" in html
+    assert c.get("/soporte").status_code == 200

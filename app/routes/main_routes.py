@@ -77,6 +77,12 @@ def welcome():
     return render_template("welcome.html")
 
 
+@main_bp.route("/privacidad")
+def privacidad():
+    """Política de privacidad pública (la pide App Store Connect)."""
+    return render_template("privacidad.html")
+
+
 @main_bp.route("/contacto", methods=["GET", "POST"])
 def contacto():
     if request.method == "POST":
