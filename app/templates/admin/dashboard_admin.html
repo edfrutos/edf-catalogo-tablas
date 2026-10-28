@@ -43,15 +43,20 @@ endblock %} {% block content %}
   <div class="row mb-4">
     <div class="col-12 text-center">
       <h2 class="mb-2">
-        <i class="bi bi-speedometer2"></i> Panel de Administración
+        <i class="bi bi-speedometer2"></i> {% if is_store_edition|default(false) %}Mis catálogos{% else %}Panel de Administración{% endif %}
       </h2>
+      {% if is_store_edition|default(false) %}
+      <p class="lead">Gestiona tus catálogos y tablas.</p>
+      {% else %}
       <p class="lead">
         Bienvenido, <strong>{{ session.username }}</strong>. Aquí puedes
         gestionar usuarios, catálogos y ver el estado del sistema.
       </p>
+      {% endif %}
     </div>
   </div>
   <div class="row mb-4 text-center">
+    {% if not is_store_edition|default(false) %}
     <div class="col-md-4 mb-3">
       <div class="card shadow border-0 h-100">
         <div class="card-body bg-primary text-white rounded">
@@ -62,7 +67,8 @@ endblock %} {% block content %}
         </div>
       </div>
     </div>
-    <div class="col-md-4 mb-3">
+    {% endif %}
+    <div class="col-md-4 mb-3{% if is_store_edition|default(false) %} mx-auto{% endif %}">
       <div class="card shadow border-0 h-100">
         <div class="card-body bg-success text-white rounded">
           <h5 class="card-title">
@@ -72,6 +78,7 @@ endblock %} {% block content %}
         </div>
       </div>
     </div>
+    {% if not is_store_edition|default(false) %}
     <div class="col-md-4 mb-3">
       <div class="card shadow border-0 h-100">
         <div class="card-body bg-warning text-dark rounded">
@@ -84,7 +91,9 @@ endblock %} {% block content %}
         </div>
       </div>
     </div>
+    {% endif %}
   </div>
+  {% if not is_store_edition|default(false) %}
   <div class="row mb-4">
     <div class="col-md-4 mb-3">
       <a
@@ -114,6 +123,7 @@ endblock %} {% block content %}
       </a>
     </div>
   </div>
+  {% endif %}
   <h4 class="mt-4 mb-3"><i class="bi bi-folder-check"></i> Mis Catálogos</h4>
   
   <!-- Controles de selección múltiple -->
@@ -337,6 +347,7 @@ endblock %} {% block content %}
     </div>
     {% endif %}
   </div>
+  {% if not is_store_edition|default(false) %}
   <div class="row mt-3">
     <div class="col-md-4 mx-auto">
       <a
@@ -347,11 +358,15 @@ endblock %} {% block content %}
       </a>
     </div>
   </div>
+  {% endif %}
 </div>
 {% endblock %} 
 
 {% block scripts %}
+{# dashboard.js solo maneja copias, Drive y estado del sistema (sondeo cada 30 s): no hace falta en la tienda #}
+{% if not is_store_edition|default(false) %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=20250803_SMART_DETECTION_{{ range(1000, 9999) | random }}"></script>
+{% endif %}
 
 <!-- Modal de confirmación para eliminación -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">

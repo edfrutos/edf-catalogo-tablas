@@ -90,7 +90,7 @@
     <nav class="navbar navbar-expand-xl navbar-dark bg-dark mb-4">
       <div class="container-fluid">
         <a class="navbar-brand" href="{{ url_for('admin.dashboard_admin') }}"
-          >Admin</a
+          >{% if is_store_edition|default(false) %}TablaTeca{% else %}Admin{% endif %}</a
         >
         <button
           class="navbar-toggler"
@@ -115,6 +115,7 @@
               </a>
             </li>
 
+            {% if not is_store_edition|default(false) %}
             <!-- Gestión de Contenido -->
             <li class="nav-item dropdown">
               <a
@@ -237,6 +238,12 @@
               </ul>
             </li>
 
+            {% endif %}
+            {% if is_store_edition|default(false) %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint and 'catalog' in request.endpoint %}active{% endif %}" href="{{ url_for('catalogs.list') }}"><i class="bi bi-collection"></i> Catálogos</a>
+            </li>
+            {% endif %}
             <!-- Backups -->
             <li class="nav-item dropdown">
               <a
@@ -267,6 +274,7 @@
               </ul>
             </li>
 
+            {% if not is_store_edition|default(false) %}
             <!-- Sistema y Monitoreo -->
             <li class="nav-item dropdown">
               <a
@@ -335,7 +343,11 @@
                 </li>
               </ul>
             </li>
+            {% endif %}
           </ul>
+          {% if is_store_edition|default(false) %}
+          <span class="navbar-text text-light"><i class="bi bi-person"></i> Usuario local</span>
+          {% else %}
           <div class="d-flex">
             <div class="dropdown">
               <button
@@ -368,6 +380,7 @@
               </ul>
             </div>
           </div>
+          {% endif %}
         </div>
       </div>
     </nav>
