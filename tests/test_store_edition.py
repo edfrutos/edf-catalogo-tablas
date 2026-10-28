@@ -646,3 +646,117 @@ def test_tienda_paginas_sin_recursos_externos_y_assets_servidos(store_app):
         "/static/vendor/jquery/jquery-3.7.1.min.js",
     ):
         assert c.get(ruta).status_code == 200, ruta
+
+
+# ------------------------------------------ tienda sin paneles de administración
+@pytest.mark.parametrize(
+    "ruta,bloqueada",
+    [
+        ("/admin/", False),
+        ("/admin/dashboard", False),
+        ("/admin/catalogo/spreadsheets/abc", False),
+        ("/admin/catalogo/spreadsheets/abc/editar", False),
+        ("/catalogs/", False),
+        ("/api/health", False),
+        ("/admin/backup/csv", False),
+        ("/admin/backup/json", False),
+        ("/admin/backup/csv/", False),
+        ("/admin/backup/upload-to-drive/x.json", True),
+        ("/admin/backup/create-and-upload", True),
+        ("/admin/backups/list", True),
+        ("/admin/usuarios", True),
+        ("/admin/usuarios/create", True),
+        ("/admin/password-management", True),
+        ("/admin/db-status", True),
+        ("/admin/db/backup", True),
+        ("/admin/drive-backups", True),
+        ("/admin/maintenance/local-backups", True),
+        ("/admin/logs", True),
+        ("/admin/logs/tail", True),
+        ("/admin/system-status", True),
+        ("/admin/api/system_status", True),
+        ("/admin/s3-link", True),
+        ("/admin/tools/", True),
+        ("/dev-template/readme", True),
+        ("/perfil", True),
+        ("/logout", True),
+        ("/api/system/check-update", True),
+        ("/api/config/drive", True),
+    ],
+)
+def test_is_blocked_path(ruta, bloqueada):
+    from app.store_edition import is_blocked_path
+
+    assert is_blocked_path(ruta) is bloqueada
+
+
+def test_tienda_paneles_de_admin_dan_404_y_lo_demas_funciona(store_app):
+    import app.database as appdb
+
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+    for ruta in (
+        "/admin/usuarios",
+        "/admin/logs",
+        "/admin/logs/tail",
+        "/admin/system-status",
+        "/admin/api/system_status",
+        "/admin/drive-backups",
+        "/admin/maintenance/local-backups",
+        "/admin/tools/",
+        "/admin/db-status",
+        "/admin/backups/list",
+        "/dev-template/readme",
+        "/perfil",
+        "/logout",
+        "/api/system/check-update",
+    ):
+        assert c.get(ruta).status_code == 404, ruta
+    for ruta in (
+        "/admin/",
+        f"/admin/catalogo/spreadsheets/{cid}",
+        "/catalogs/",
+        "/admin/backup/csv",
+        "/admin/backup/json",
+    ):
+        assert c.get(ruta, follow_redirects=True).status_code == 200, ruta
+
+
+def test_tienda_navegacion_sin_enlaces_de_administracion(store_app):
+    import app.database as appdb
+
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+    prohibido = (
+        "/admin/usuarios",
+        "/admin/logs",
+        "/admin/system",
+        "/admin/maintenance",
+        "/admin/tools",
+        "/admin/db",
+        "/perfil",
+        "/logout",
+        "/dev-template",
+        "/admin/drive",
+        "check-update",
+        "api/system_status",
+        "js/dashboard.js",
+        "Cerrar Sesión",
+        "Gestión de Usuarios",
+    )
+    for url in ("/admin/", f"/admin/catalogo/spreadsheets/{cid}", "/catalogs/"):
+        html = c.get(url, follow_redirects=True).get_data(as_text=True)
+        assert "Usuario local" in html, url
+        assert [x for x in prohibido if x in html] == [], url
+
+
+def test_edicion_estandar_conserva_menus_de_administracion(store_app):
+    """Con is_store_edition ausente/False las plantillas siguen mostrando todo."""
+    from flask import render_template, session
+
+    store_app.jinja_env.globals["is_store_edition"] = False
+    with store_app.test_request_context("/catalogs/"):
+        session["role"] = "admin"
+        session["username"] = "admin"
+        html = render_template("navbar.html")
+    assert "Contacto" in html and "Admin" in html and "Scripts" in html and "Cerrar Sesión" in html
