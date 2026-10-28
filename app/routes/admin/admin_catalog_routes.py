@@ -11,6 +11,7 @@ from bson import ObjectId
 from flask import current_app, flash, jsonify, redirect, render_template, request, url_for
 
 from app.database import get_mongo_db
+from app.edition import is_store
 from app.decorators import admin_required
 from app.routes.s3_utils import get_s3_url
 from app.utils.catalog_utils import get_catalog_rows, normalize_catalog_rows
@@ -25,6 +26,17 @@ from app.utils.row_media import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def _catalogos_usuario_url(user_id: str) -> str:
+    """URL de vuelta al listado de catálogos.
+
+    En la edición de tienda no existe la gestión de usuarios
+    (``/admin/catalogos-usuario`` devuelve 404), así que se vuelve al listado local.
+    """
+    if is_store():
+        return url_for("catalogs.list")
+    return url_for("admin.ver_catalogos_usuario_por_id", user_id=user_id)
 
 
 def register_admin_catalog_routes(admin_bp) -> None:
@@ -216,9 +228,7 @@ def register_admin_catalog_routes(admin_bp) -> None:
                         user_id = str(user["_id"])
 
                 if user_id:
-                    return_url = url_for(
-                        "admin.ver_catalogos_usuario_por_id", user_id=user_id
-                    )
+                    return_url = _catalogos_usuario_url(user_id)
                 else:
                     return_url = url_for("admin.dashboard_admin")
             elif not return_url:
@@ -238,9 +248,7 @@ def register_admin_catalog_routes(admin_bp) -> None:
                         user_id = str(user["_id"])
 
                 if user_id:
-                    return_url = url_for(
-                        "admin.ver_catalogos_usuario_por_id", user_id=user_id
-                    )
+                    return_url = _catalogos_usuario_url(user_id)
                 else:
                     return_url = url_for("admin.dashboard_admin")
 
@@ -377,9 +385,7 @@ def register_admin_catalog_routes(admin_bp) -> None:
                     if user:
                         user_id = str(user["_id"])
                 if user_id:
-                    return redirect(
-                        url_for("admin.ver_catalogos_usuario_por_id", user_id=user_id)
-                    )
+                    return redirect(_catalogos_usuario_url(user_id))
                 else:
                     return redirect(url_for("admin.dashboard_admin"))
 

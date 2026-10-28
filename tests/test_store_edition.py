@@ -760,3 +760,22 @@ def test_edicion_estandar_conserva_menus_de_administracion(store_app):
         session["username"] = "admin"
         html = render_template("navbar.html")
     assert "Contacto" in html and "Admin" in html and "Scripts" in html and "Cerrar Sesión" in html
+
+
+def test_guardar_catalogo_desde_el_editor_admin_no_redirige_a_ruta_bloqueada(store_app):
+    """Regresión: tras guardar (p. ej. la miniatura) se iba a /admin/catalogos-usuario/<id> -> 404."""
+    import app.database as appdb
+
+    c = _entrar(store_app.test_client())
+    c.post("/catalogs/create", data={"name": "M2", "headers": "Nombre"})
+    cid = str(appdb.get_mongo_db()["spreadsheets"].find_one({"name": "M2"})["_id"])
+    r = c.post(
+        f"/admin/catalogo/spreadsheets/{cid}/editar",
+        data={"name": "M2 editado", "description": "d", "headers": "Nombre"},
+    )
+    assert r.status_code == 302
+    destino = r.headers["Location"]
+    assert "catalogos-usuario" not in destino
+    assert c.get(destino).status_code == 200
+    assert appdb.get_mongo_db()["spreadsheets"].find_one({"_id": __import__("bson").ObjectId(cid)})["name"] == "M2 editado"
+
