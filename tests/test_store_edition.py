@@ -841,3 +841,9 @@ def test_backup_con_la_cabecera_del_launcher_se_puede_guardar_desde_python(store
 def test_el_puente_nativo_guarda_las_copias_con_el_dialogo_del_sistema():
     src = open("app/static/js/edf-native-bridge.js", encoding="utf-8").read()
     assert "/admin/backup/" in src and "edfNativeSave" in src and "BACKUP.test" in src
+
+
+def test_el_puente_nativo_se_carga_con_version_nueva_para_no_servir_cache_antigua():
+    for tpl in ("app/templates/base.html", "app/templates/admin/base.html"):
+        src = open(tpl, encoding="utf-8").read()
+        assert "edf-native-bridge.js') }}?v=20261028" in src, tpl
