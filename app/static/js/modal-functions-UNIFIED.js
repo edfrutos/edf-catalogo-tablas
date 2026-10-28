@@ -339,7 +339,14 @@ async function edfRenderPdf(url, box, token) {
     isEvalSupported: false,
     disableRange: true,
     disableStream: true,
-    withCredentials: true
+    withCredentials: true,
+    // Fuentes: se dibujan como trazados (no depende de FontFace/@font-face en WKWebView)
+    // y las fuentes estándar y CMaps salen del paquete local de la app.
+    disableFontFace: true,
+    useSystemFonts: false,
+    standardFontDataUrl: '/static/js/vendor/pdfjs/standard_fonts/',
+    cMapUrl: '/static/js/vendor/pdfjs/cmaps/',
+    cMapPacked: true
   }).promise;
   if (box.dataset.edfToken !== token) { return; }
   box.innerHTML = '';
