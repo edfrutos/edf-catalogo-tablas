@@ -340,10 +340,10 @@ async function edfRenderPdf(url, box, token) {
     disableRange: true,
     disableStream: true,
     withCredentials: true,
-    // Fuentes: se dibujan como trazados (no depende de FontFace/@font-face en WKWebView)
-    // y las fuentes estándar y CMaps salen del paquete local de la app.
-    disableFontFace: true,
-    useSystemFonts: false,
+    // Fuentes: NO se desactiva FontFace ni las fuentes del sistema. Hay PDF (p. ej. los de
+    // ReportLab con HeiseiMin-W3) con fuentes CID no embebidas que solo se pintan con la
+    // fuente del sistema y su CMap; con disableFontFace/useSystemFonts=false salían sin texto.
+    // Las fuentes estándar y los CMaps salen del paquete local de la app.
     standardFontDataUrl: '/static/js/vendor/pdfjs/standard_fonts/',
     cMapUrl: '/static/js/vendor/pdfjs/cmaps/',
     cMapPacked: true
