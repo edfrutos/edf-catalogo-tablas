@@ -599,3 +599,50 @@ def test_ver_catalogo_tabla_fuera_de_la_barra_de_botones(store_app):
     p.feed(html)
     assert "table-responsive-custom" in html
     assert p.ok_tabla
+
+
+# ------------------------------------------------- assets locales (sin CDN, offline)
+_HOSTS_CDN = ("cdn.jsdelivr.net", "cdnjs.cloudflare.com", "code.jquery.com", "fonts.googleapis.com", "fonts.gstatic.com", "unpkg.com")
+
+
+def test_assets_base_locales_y_presentes():
+    raiz = os.path.join(os.path.dirname(__file__), "..", "app")
+    for rel in (
+        "templates/base.html",
+        "templates/admin/base.html",
+        "templates/partials/_assets_head.html",
+    ):
+        txt = open(os.path.join(raiz, rel), encoding="utf-8").read()
+        assert not [h for h in _HOSTS_CDN if h in txt], rel
+    vendor = os.path.join(raiz, "static", "vendor")
+    for rel in (
+        "bootstrap/css/bootstrap.min.css",
+        "bootstrap/js/bootstrap.bundle.min.js",
+        "bootstrap-icons/bootstrap-icons.min.css",
+        "bootstrap-icons/fonts/bootstrap-icons.woff2",
+        "fontawesome/css/all.min.css",
+        "fontawesome/webfonts/fa-solid-900.woff2",
+        "jquery/jquery-3.7.1.min.js",
+    ):
+        assert os.path.getsize(os.path.join(vendor, rel)) > 1000, rel
+
+
+def test_tienda_paginas_sin_recursos_externos_y_assets_servidos(store_app):
+    import re as _re
+
+    import app.database as appdb
+
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+    for url in ("/admin/", "/catalogs/", f"/admin/catalogo/spreadsheets/{cid}"):
+        html = c.get(url, follow_redirects=True).get_data(as_text=True)
+        assert not [h for h in _HOSTS_CDN if h in html], url
+        assert "/static/vendor/bootstrap/css/bootstrap.min.css" in html, url
+    for ruta in (
+        "/static/vendor/bootstrap/css/bootstrap.min.css",
+        "/static/vendor/bootstrap/js/bootstrap.bundle.min.js",
+        "/static/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2",
+        "/static/vendor/fontawesome/webfonts/fa-solid-900.woff2",
+        "/static/vendor/jquery/jquery-3.7.1.min.js",
+    ):
+        assert c.get(ruta).status_code == 200, ruta
