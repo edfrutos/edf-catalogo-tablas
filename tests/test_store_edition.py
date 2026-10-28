@@ -545,3 +545,57 @@ def test_visor_pdf_usa_pdfjs_local_con_respaldo_de_iframe():
     assert "cdn" not in js[js.index("function edfEnsurePdfJs") : js.index("function showMarkdownInModal")].lower()
     # y el respaldo al visor integrado existe
     assert "document.createElement('iframe')" in js
+
+
+def test_visor_pdf_fuentes_y_cmaps_locales_sin_fontface():
+    """WKWebView no pintaba el texto (solo viñetas): los glifos se dibujan como
+    trazados y las fuentes estándar / CMaps salen del paquete local."""
+    base = os.path.join(os.path.dirname(__file__), "..", "app", "static", "js")
+    js = open(os.path.join(base, "modal-functions-UNIFIED.js"), encoding="utf-8").read()
+    for clave in (
+        "disableFontFace: true",
+        "useSystemFonts: false",
+        "standardFontDataUrl: '/static/js/vendor/pdfjs/standard_fonts/'",
+        "cMapUrl: '/static/js/vendor/pdfjs/cmaps/'",
+        "cMapPacked: true",
+    ):
+        assert clave in js, clave
+    pdfjs = os.path.join(base, "vendor", "pdfjs")
+    assert os.path.getsize(os.path.join(pdfjs, "standard_fonts", "LiberationSans-Regular.ttf")) > 1000
+    assert os.path.getsize(os.path.join(pdfjs, "standard_fonts", "FoxitSymbol.pfb")) > 1000
+    assert os.path.getsize(os.path.join(pdfjs, "cmaps", "UniJIS-UCS2-H.bcmap")) > 100
+
+
+def test_ver_catalogo_tabla_fuera_de_la_barra_de_botones(store_app):
+    """Regresión: faltaba un </div> en la barra de acciones del admin y la tabla de
+    filas quedaba dentro de la fila flex (más estrecha que la tarjeta)."""
+    from html.parser import HTMLParser
+
+    import app.database as appdb
+
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+    html = c.get(f"/admin/catalogo/spreadsheets/{cid}").get_data(as_text=True)
+
+    class _P(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.pila, self.dentro_barra, self.ok_tabla = [], False, False
+
+        def handle_starttag(self, tag, attrs):
+            if tag != "div":
+                return
+            cls = dict(attrs).get("class", "") or ""
+            self.pila.append(cls)
+            if "table-responsive-custom" in cls:
+                # ningún ancestro puede ser la barra de botones (d-flex gap-2)
+                self.ok_tabla = not any("d-flex" in x and "gap-2" in x for x in self.pila[:-1])
+
+        def handle_endtag(self, tag):
+            if tag == "div" and self.pila:
+                self.pila.pop()
+
+    p = _P()
+    p.feed(html)
+    assert "table-responsive-custom" in html
+    assert p.ok_tabla
