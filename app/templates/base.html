@@ -247,6 +247,8 @@ if (!window.mp4ProblemSolverLoaded) {
 }
 </script>-->
 
+{# En la tienda las actualizaciones las gestiona la Mac App Store: sin aviso ni consulta a GitHub #}
+{% if not is_store_edition|default(false) %}
 <!-- Aviso de nueva versión disponible (solo consulta, no instala nada) -->
 <div id="update-banner" class="alert alert-info alert-dismissible fade show position-fixed"
      style="bottom: 1rem; right: 1rem; z-index: 10050; display: none; max-width: 360px;" role="alert">
@@ -277,6 +279,7 @@ if (!window.mp4ProblemSolverLoaded) {
       .catch(function () { /* sin red o GitHub no disponible: no molestar */ });
   });
 </script>
+{% endif %}
 
 </body>
 </html>

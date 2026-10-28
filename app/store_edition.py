@@ -24,7 +24,7 @@ import secrets
 import threading
 from urllib.parse import urlsplit
 
-from flask import redirect, request, session
+from flask import abort, redirect, request, session
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +138,64 @@ def _cross_origin_write() -> bool:
     return False
 
 
+# Paneles que no existen en la edición de tienda (sin cuentas, sin servidor, sin Drive/S3):
+# se ocultan del menú y además responden 404 aunque se escriba la URL.
+BLOCKED_PREFIXES = (
+    # usuarios y contraseñas
+    "/admin/usuarios",
+    "/admin/assign-temp-password",
+    "/admin/password-management",
+    "/admin/bulk_user_action",
+    "/admin/cleanup_resets",
+    "/admin/catalogos-usuario",
+    "/usuarios",
+    "/perfil",
+    "/editar_perfil",
+    "/logout",
+    "/login_pywebview",
+    "/forgot-password",
+    "/reset-password",
+    "/temp-password-reset",
+    # base de datos, copias remotas, Drive y S3
+    "/admin/db",
+    "/admin/api/",
+    "/admin/backups",
+    "/admin/drive-backups",
+    "/admin/gdrive_upload_test",
+    "/admin/reset_gdrive_token",
+    "/admin/restore-drive-backup",
+    "/admin/restore-local-backup",
+    "/admin/s3",
+    "/admin/generate-presigned-url",
+    "/api/config",
+    # sistema, mantenimiento, logs y herramientas
+    "/admin/maintenance",
+    "/admin/logs",
+    "/admin/system",
+    "/admin/tools",
+    "/admin/scripts-tools-api",
+    "/admin/notification-settings",
+    "/admin/test-modal-functions",
+    "/admin/truncate_log",
+    "/admin/delete-temp-files",
+    "/api/maintenance",
+    "/api/system",
+    # desarrollo
+    "/dev-template",
+    "/test_session",
+)
+# Exportación de catálogos: sí disponible (CSV/JSON); el resto de /admin/backup/ no.
+ALLOWED_BACKUP_PATHS = ("/admin/backup/csv", "/admin/backup/json")
+
+
+def is_blocked_path(path: str) -> bool:
+    """True si la ruta pertenece a un panel que no existe en la edición de tienda."""
+    path = path or "/"
+    if path.startswith("/admin/backup/") or path == "/admin/backup":
+        return path.rstrip("/") not in ALLOWED_BACKUP_PATHS
+    return any(path == p.rstrip("/") or path.startswith(p) for p in BLOCKED_PREFIXES)
+
+
 def _denied():
     return (
         "<h1>Acceso denegado</h1><p>Abre TablaTeca desde su propia ventana.</p>",
@@ -186,6 +244,10 @@ def init_store_edition(app) -> None:
 
         if path.rstrip("/") in ACCOUNT_PATHS:
             return redirect("/")
+        if is_blocked_path(path):
+            abort(404)
         return None
 
     app.config["EDF_EDITION"] = "store"
+    # Las plantillas ocultan los paneles que no existen en la tienda.
+    app.jinja_env.globals["is_store_edition"] = True
