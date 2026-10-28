@@ -547,23 +547,23 @@ def test_visor_pdf_usa_pdfjs_local_con_respaldo_de_iframe():
     assert "document.createElement('iframe')" in js
 
 
-def test_visor_pdf_fuentes_y_cmaps_locales_sin_fontface():
-    """WKWebView no pintaba el texto (solo viñetas): los glifos se dibujan como
-    trazados y las fuentes estándar / CMaps salen del paquete local."""
+def test_visor_pdf_fuentes_y_cmaps_locales_con_respaldo_del_sistema():
+    """Los PDF con fuentes CID no embebidas (p. ej. ReportLab/HeiseiMin-W3) solo se ven con
+    CMaps locales y la fuente del sistema: no hay que desactivar FontFace ni useSystemFonts."""
     base = os.path.join(os.path.dirname(__file__), "..", "app", "static", "js")
     js = open(os.path.join(base, "modal-functions-UNIFIED.js"), encoding="utf-8").read()
     for clave in (
-        "disableFontFace: true",
-        "useSystemFonts: false",
         "standardFontDataUrl: '/static/js/vendor/pdfjs/standard_fonts/'",
         "cMapUrl: '/static/js/vendor/pdfjs/cmaps/'",
         "cMapPacked: true",
     ):
         assert clave in js, clave
+    cfg = js[js.index("getDocument({") : js.index(".promise;", js.index("getDocument({"))]
+    assert "disableFontFace: true" not in cfg
+    assert "useSystemFonts: false" not in cfg
     pdfjs = os.path.join(base, "vendor", "pdfjs")
     assert os.path.getsize(os.path.join(pdfjs, "standard_fonts", "LiberationSans-Regular.ttf")) > 1000
-    assert os.path.getsize(os.path.join(pdfjs, "standard_fonts", "FoxitSymbol.pfb")) > 1000
-    assert os.path.getsize(os.path.join(pdfjs, "cmaps", "UniJIS-UCS2-H.bcmap")) > 100
+    assert os.path.getsize(os.path.join(pdfjs, "cmaps", "90ms-RKSJ-H.bcmap")) > 100
 
 
 def test_ver_catalogo_tabla_fuera_de_la_barra_de_botones(store_app):
