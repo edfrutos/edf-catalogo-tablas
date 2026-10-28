@@ -237,7 +237,17 @@ def init_store_edition(app) -> None:
             return redirect("/")
 
         if request.method in ("GET", "HEAD") and _launch_header_ok():
-            return None  # descarga iniciada por el propio launcher (solo lectura)
+            # Descarga iniciada por el propio launcher (solo lectura). Las copias CSV/JSON
+            # pasan por rutas con sesión: el launcher las pide sin cookie, así que se abre
+            # la sesión local (mismo token secreto que /_store/enter, solo en loopback).
+            if path.rstrip("/") in ALLOWED_BACKUP_PATHS and not _has_local_session():
+                from app.database import get_mongo_db
+
+                db = get_mongo_db()
+                if db is None:
+                    return _denied()
+                _open_local_session(db)
+            return None
 
         if not _has_local_session():
             return _denied()

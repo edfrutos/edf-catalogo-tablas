@@ -795,3 +795,49 @@ def test_pagina_publica_de_privacidad_y_soporte_existente(store_app):
     html = r.get_data(as_text=True)
     assert "no recopila" in html and "does not collect" in html
     assert c.get("/soporte").status_code == 200
+
+
+@pytest.mark.parametrize("ext", ["csv", "json"])
+def test_backup_csv_json_en_la_tienda_es_descarga_local_sin_drive(store_app, monkeypatch, ext):
+    import app.routes.admin.admin_backup_routes as rb
+
+    def _no_debe_llamarse(*a, **k):
+        raise AssertionError("la tienda no debe subir nada a Google Drive")
+
+    monkeypatch.setattr(rb, "upload_to_drive", _no_debe_llamarse)
+    c = _entrar(store_app.test_client())
+    c.post("/catalogs/create", data={"name": "Backup", "headers": "Nombre"})
+    r = c.get(f"/admin/backup/{ext}")
+    assert r.status_code == 200
+    assert "attachment" in r.headers.get("Content-Disposition", "")
+    assert f".{ext}" in r.headers["Content-Disposition"]
+    assert b"Backup" in r.data
+
+
+@pytest.mark.parametrize("ext", ["csv", "json"])
+def test_backup_sin_datos_en_la_tienda_no_redirige_a_ruta_bloqueada(store_app, monkeypatch, ext):
+    import app.routes.admin.admin_backup_routes as rb
+
+    monkeypatch.setattr(rb, "upload_to_drive", lambda *a, **k: (_ for _ in ()).throw(AssertionError("Drive")))
+    c = _entrar(store_app.test_client())
+    r = c.get(f"/admin/backup/{ext}")
+    if r.status_code == 302:
+        assert "maintenance" not in r.headers["Location"]
+        assert c.get(r.headers["Location"]).status_code == 200
+    else:
+        assert r.status_code == 200
+
+
+def test_backup_con_la_cabecera_del_launcher_se_puede_guardar_desde_python(store_app):
+    from app.store_edition import launch_headers
+
+    c = _entrar(store_app.test_client())
+    c.post("/catalogs/create", data={"name": "Guardar", "headers": "Nombre"})
+    # Cliente sin sesión: como urllib en save_file() del launcher, solo con la cabecera
+    r = store_app.test_client().get("/admin/backup/csv", headers=launch_headers())
+    assert r.status_code == 200 and b"Guardar" in r.data
+
+
+def test_el_puente_nativo_guarda_las_copias_con_el_dialogo_del_sistema():
+    src = open("app/static/js/edf-native-bridge.js", encoding="utf-8").read()
+    assert "/admin/backup/" in src and "edfNativeSave" in src and "BACKUP.test" in src
