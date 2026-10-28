@@ -101,5 +101,8 @@ app = BUNDLE(
         "CFBundleDevelopmentRegion": "es",
         "CFBundleLocalizations": ["es", "en"],
         "NSHumanReadableCopyright": "Copyright © 2026 Eugenio de Frutos Sanchez",
+        # Declaración del titular: la edición de tienda no implementa cifrado propio
+        # (solo HTTP en 127.0.0.1). Evita la pregunta de cumplimiento en cada build.
+        "ITSAppUsesNonExemptEncryption": False,
     },
 )

@@ -93,9 +93,15 @@ Interface in Spanish.
 
 **Etiquetas de privacidad de la app (App Privacy):** «Data Not Collected» (no se recopila ningún dato). La app no envía datos a ningún servidor propio ni de terceros; no integra analítica, publicidad ni SDK de terceros.
 
-Antes de marcarlo, confirma con la build final que no hay tráfico saliente (Little Snitch o `nettop` con la app abierta y el Wi-Fi activo durante unos minutos). Con el run 33 ya no hay CDN ni consulta de actualizaciones: la app solo habla con su propio servidor local en `127.0.0.1`.
+Antes de marcarlo, confirma con la build final que no hay tráfico saliente. Comprobación (con la app abierta y el Wi-Fi activo, unos minutos de uso; solo debe aparecer `127.0.0.1`):
 
-**URL de la política de privacidad (obligatoria) [TUYO]:** hay que publicarla en una URL pública. Propuesta: una página estática en uno de tus dominios (por ejemplo `https://edefrutos.me/tablateca/privacidad`). Texto base:
+```bash
+while true; do clear; date; lsof -nP -i -a -c TablaTeca; sleep 5; done
+```
+
+Si aparece cualquier IP que no sea `127.0.0.1`, avísame con la salida. Con el run 33 ya no hay CDN ni consulta de actualizaciones: la app solo habla con su propio servidor local en `127.0.0.1`.
+
+**URL de la política de privacidad (obligatoria):** `https://catalogo.efjdev.com/privacidad` (ruta `/privacidad` de la propia app web, ES + EN; hay que desplegarla). Texto base:
 
 ```
 Política de privacidad de TablaTeca
@@ -113,13 +119,15 @@ Contacto: [correo de soporte]
 
 (Versión en inglés: misma estructura; «TablaTeca does not collect, store on servers or share any personal data…».)
 
-**URL de soporte (obligatoria) [TUYO]:** una página o correo donde atenderte. Opciones: una página en tu dominio con un formulario o correo, o la sección *Issues* del repositorio si lo haces público **[DECIDIR]**. **URL de marketing:** opcional.
+**URL de soporte (obligatoria):** `https://catalogo.efjdev.com/soporte` (formulario de contacto que ya existía en la app web). **URL de marketing:** opcional, puede quedar vacía.
 
 ## 5. Clasificación por edades
 
 Responde «Ninguno» a todos los contenidos (violencia, sexo, juego, terror, alcohol/drogas, etc.). «Acceso web sin restricciones»: **No** (la app solo muestra contenido local). Resultado esperado: **4+**.
 
-## 6. Cumplimiento de exportación (cifrado) **[DECIDIR]**
+## 6. Cumplimiento de exportación (cifrado)
+
+**Decidido por el titular:** `ITSAppUsesNonExemptEncryption = false` (ya fijado en `packaging/mas/TablaTeca_mas.spec`; desde el build 35 App Store Connect no volverá a preguntar). Es una declaración del titular: la edición de tienda no implementa cifrado propio.
 
 El `Info.plist` **no** declara `ITSAppUsesNonExemptEncryption`, así que App Store Connect preguntará por esto en cada build (aparece como «Missing Compliance» en TestFlight).
 
@@ -173,6 +181,6 @@ Se pueden hacer con ⇧⌘5 sobre la ventana ajustada al tamaño elegido.
 3. Rellenar *App Privacy* («Data Not Collected») y la clasificación por edades.
 4. Responder el cumplimiento de exportación (apartado 6).
 5. Pegar las notas del revisor (apartado 7) y los datos de contacto.
-6. Precio: gratuita o de pago **[DECIDIR]**; disponibilidad por territorios.
+6. Precio: **gratuita** (decidido); elegir disponibilidad por territorios.
 7. Revisar que los builds de pruebas antiguos están expirados en TestFlight.
 8. Enviar a revisión.
