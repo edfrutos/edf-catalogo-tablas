@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
-            max-width: 90% !important;
-            max-height: 80vh !important;
-            width: auto !important;
-            height: auto !important;
+            width: 100% !important;
+            height: 70vh !important;
+            max-width: 100% !important;
+            max-height: 70vh !important;
             margin: 0 auto !important;
             object-fit: contain !important;
         }
@@ -26,10 +26,10 @@ document.addEventListener('DOMContentLoaded', function() {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
-            max-width: 90% !important;
-            max-height: 80vh !important;
-            width: auto !important;
-            height: auto !important;
+            width: 100% !important;
+            height: 70vh !important;
+            max-width: 100% !important;
+            max-height: 70vh !important;
             margin: 0 auto !important;
             object-fit: contain !important;
         }

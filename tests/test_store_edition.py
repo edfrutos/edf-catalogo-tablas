@@ -1602,3 +1602,20 @@ def test_zip_y_ajustes_muestran_sus_mensajes_en_su_propia_pagina(zip_app):
     html = c.get("/ajustes").get_data(as_text=True)
     assert "El nombre es obligatorio." in html and html.count("El nombre es obligatorio.") == 1
     assert "El nombre es obligatorio." not in c.get("/ajustes").get_data(as_text=True)  # ya consumido
+
+
+def test_modal_imagen_ocupa_el_area_disponible():
+    """Regresión: el modal de imagen mostraba las imágenes pequeñas a su
+    tamaño natural (un sello perdido en un hueco blanco). Debe ocuparla
+    con object-fit: contain, tanto en la plantilla como en el JS de ajuste."""
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parent.parent / "app"
+    plantilla = (raiz / "templates/admin/ver_catalogo.html").read_text(encoding="utf-8")
+    js = (raiz / "static/js/modal-img-display-fix.js").read_text(encoding="utf-8")
+
+    bloque = plantilla.split(".modal-img-display {", 1)[1].split("}", 1)[0]
+    assert "width: 100%" in bloque and "height: 70vh" in bloque
+    assert "object-fit: contain" in bloque
+    assert "width: auto" not in js
+    assert js.count("width: 100% !important") == 2
