@@ -30,7 +30,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare packaged environment (sin secretos)
         run: |
@@ -58,7 +58,7 @@ jobs:
           fi
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
           check-latest: false
@@ -207,7 +207,7 @@ jobs:
 
       - name: Upload .pkg artifact
         if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: TablaTeca-MAS.pkg
           path: TablaTeca-MAS.pkg
