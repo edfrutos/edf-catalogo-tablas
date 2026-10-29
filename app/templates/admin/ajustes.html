@@ -66,7 +66,77 @@
       </div>
     </div>
   </div>
+
+  <div class="card shadow-sm mb-4" id="drive">
+    <div class="card-header"><strong><i class="bi bi-google"></i> Google Drive (opcional)</strong></div>
+    <div class="card-body">
+      <p class="text-muted small">
+        Sube copias completas (ZIP) a tu propio Google Drive, en una carpeta «TablaTeca». TablaTeca solo ve
+        los archivos que crea ella misma (permiso <code>drive.file</code>) y no envía nada a su desarrollador:
+        los datos van directamente de tu Mac a tu cuenta de Google, solo cuando tú lo pides.
+      </p>
+      {% if drive.error %}
+      <div class="alert alert-danger py-2">{{ drive.error }}</div>
+      {% endif %}
+
+      {% if not drive.credenciales %}
+      <ol class="small">
+        <li>En <strong>Google Cloud Console</strong> crea un proyecto y activa la <strong>Google Drive API</strong>.</li>
+        <li>En «Pantalla de consentimiento de OAuth» configúrala y <strong>publícala en producción</strong>; en modo «Prueba» el permiso caduca a los 7 días.</li>
+        <li>En «Credenciales» crea un <strong>ID de cliente OAuth</strong> de tipo <strong>Aplicación de escritorio</strong> y descarga el JSON.</li>
+        <li>Súbelo aquí (suele llamarse <code>credentials.json</code> o <code>client_secret_….json</code>). Se guarda solo en este equipo.</li>
+      </ol>
+      <form method="post" action="{{ url_for('store_settings.drive_credenciales') }}" enctype="multipart/form-data" class="d-flex gap-2">
+        <input class="form-control" type="file" name="archivo" accept="application/json,.json" required />
+        <button class="btn btn-primary" type="submit">Guardar credenciales</button>
+      </form>
+
+      {% elif drive.esperando %}
+      <div class="alert alert-info py-2" id="drive-espera">
+        Esperando la autorización en el navegador… <span class="text-muted small">(se cancela a los 3 minutos)</span>
+        {% if drive.url %}<br><a href="{{ drive.url }}" target="_blank" rel="noopener">Si no se abrió, pulsa aquí</a>{% endif %}
+      </div>
+      <form method="post" action="{{ url_for('store_settings.drive_cancelar') }}">
+        <button class="btn btn-outline-secondary" type="submit">Cancelar</button>
+      </form>
+
+      {% elif drive.conectado %}
+      <p class="mb-3"><span class="badge bg-success">Conectado</span></p>
+      <div class="d-flex gap-2 flex-wrap">
+        <form method="post" action="{{ url_for('store_settings.drive_subir') }}">
+          <button class="btn btn-success" type="submit"><i class="bi bi-cloud-upload"></i> Subir copia a Drive ahora</button>
+        </form>
+        <form method="post" action="{{ url_for('store_settings.drive_desconectar') }}">
+          <button class="btn btn-outline-danger" type="submit">Desconectar</button>
+        </form>
+      </div>
+
+      {% else %}
+      <p><span class="badge bg-secondary">Credenciales cargadas</span> sin conectar.</p>
+      <div class="d-flex gap-2 flex-wrap">
+        <form method="post" action="{{ url_for('store_settings.drive_conectar') }}">
+          <button class="btn btn-primary" type="submit"><i class="bi bi-box-arrow-up-right"></i> Conectar con Google</button>
+        </form>
+        <form method="post" action="{{ url_for('store_settings.drive_quitar_credenciales') }}">
+          <button class="btn btn-outline-danger" type="submit">Quitar credenciales</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
+<script>
+  (function () {
+    var espera = document.getElementById('drive-espera');
+    if (!espera) return;
+    var t = setInterval(function () {
+      fetch('/ajustes/drive/estado', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (e) { if (!e.esperando) { clearInterval(t); window.location.reload(); } })
+        .catch(function () {});
+    }, 2000);
+  })();
+</script>
 <script>
   (function () {
     var boton = document.getElementById('elegir');
