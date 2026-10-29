@@ -43,6 +43,7 @@ QUÉ PUEDES HACER
 • Poner una miniatura a cada catálogo para reconocerlo de un vistazo.
 • Buscar y ordenar las filas de la tabla.
 • Exportar tus catálogos en CSV o JSON.
+• Crear una copia de seguridad completa en un archivo ZIP (catálogos, imágenes y documentos) y restaurarla cuando quieras.
 
 TUS DATOS SON TUYOS
 • Todo se guarda localmente en tu Mac.
@@ -77,6 +78,7 @@ WHAT YOU CAN DO
 • Give each catalog a thumbnail so you can spot it at a glance.
 • Search and sort the rows of a table.
 • Export your catalogs as CSV or JSON.
+• Create a full backup as a ZIP file (catalogs, images and documents) and restore it whenever you want.
 
 YOUR DATA IS YOURS
 • Everything is stored locally on your Mac.
@@ -152,15 +154,16 @@ How to test (about 2 minutes):
 3. Open it and use "Añadir Fila" to add a row with an image, a PDF or text document and a video/audio file.
 4. Click the thumbnails/document buttons to preview images, PDFs and Markdown inside the app.
 5. Use the search box and column sorting; use Backups > CSV/JSON to export the catalog.
+6. Backups > "Copia completa (ZIP)" saves a full backup; Backups > "Importar copia (ZIP)" restores it (it asks for confirmation and first stores an automatic copy of the current state).
 
 Data and privacy: everything is stored locally in the app sandbox container (SQLite database and an uploads folder). The app collects no data and works fully offline.
 
 Entitlements: App Sandbox is enabled. com.apple.security.network.server and .client are used only for the app's own loopback connection (127.0.0.1) between its embedded web view and its local engine; the app makes no external network requests. com.apple.security.files.user-selected.read-write is used when the user picks files to attach to a row.
 
-Why this is more than a website (Guideline 4.2): the app is a self-contained desktop application with a local database, local file storage, native file pickers, embedded document/image/media viewers, CSV/JSON export, and full offline operation. It does not load a remote website; all resources ship inside the app.
+Why this is more than a website (Guideline 4.2): the app is a self-contained desktop application with a local database, local file storage, native file pickers, embedded document/image/media viewers, CSV/JSON export, full ZIP backup and restore, and full offline operation. It does not load a remote website; all resources ship inside the app.
 ```
 
-**Riesgo conocido (Guideline 4.2, funcionalidad mínima):** la app es una interfaz web empaquetada (pywebview + Flask). El texto anterior defiende su valor local y offline; aun así Apple puede pedir más funciones «nativas». Refuerzos posibles si lo piden: exportar/importar en ZIP (fase 4), arrastrar y soltar archivos, atajos de teclado y menús de macOS.
+**Riesgo conocido (Guideline 4.2, funcionalidad mínima):** la app es una interfaz web empaquetada (pywebview + Flask). El texto anterior defiende su valor local y offline; aun así Apple puede pedir más funciones «nativas». Ya incluye copia completa en ZIP (exportar/importar). Refuerzos posibles si lo piden: ajustes de la app (perfil y carpeta de copias), arrastrar y soltar archivos, atajos de teclado y menús de macOS.
 
 ## 8. Capturas de pantalla (Mac)
 

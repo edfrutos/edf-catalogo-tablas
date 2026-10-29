@@ -854,7 +854,7 @@ def test_el_puente_nativo_guarda_las_copias_con_el_dialogo_del_sistema():
 def test_el_puente_nativo_se_carga_con_version_nueva_para_no_servir_cache_antigua():
     for tpl in ("app/templates/base.html", "app/templates/admin/base.html"):
         src = open(tpl, encoding="utf-8").read()
-        assert "edf-native-bridge.js') }}?v=20261028" in src, tpl
+        assert "edf-native-bridge.js') }}?v=20261029" in src, tpl
 
 
 def _catalogo_para_exportar():
@@ -930,3 +930,201 @@ def test_backup_csv_de_la_tienda_entrega_el_csv_legible(store_app):
     cuerpo = c.get("/admin/backup/csv").get_data(as_text=True).lstrip("﻿")
     assert cuerpo.splitlines()[0] == "Catálogo,Nombre,Notas"
     assert "Legible,Ana,ok" in cuerpo
+
+
+# ------------------------------------------------------------- copia ZIP completa
+def _zip_bytes(manifest=None, catalogos="[]", archivos=None, nombres_extra=()):
+    import io
+    import json
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        if manifest is not False:
+            z.writestr("manifest.json", json.dumps(manifest or {"app": "TablaTeca", "formato": 1}))
+        if catalogos is not None:
+            z.writestr("catalogos.json", catalogos)
+        for n, c in (archivos or {}).items():
+            z.writestr(n, c)
+        for n in nombres_extra:
+            z.writestr(n, b"x")
+    return buf.getvalue()
+
+
+@pytest.fixture()
+def zip_app(store_app, tmp_path):
+    store_app.config["STORE_BACKUP_DIR"] = str(tmp_path / "copias")
+    store_app.config["UPLOAD_FOLDER"] = str(tmp_path / "uploads")
+    os.makedirs(store_app.config["UPLOAD_FOLDER"])
+    return store_app
+
+
+def _importar(c, datos, confirmo=True, nombre="copia.zip"):
+    import io
+
+    form = {"archivo": (io.BytesIO(datos), nombre)}
+    if confirmo:
+        form["confirmo"] = "1"
+    return c.post("/admin/backup/importar", data=form, content_type="multipart/form-data")
+
+
+def test_zip_exportar_incluye_catalogos_y_archivos(zip_app):
+    import io
+    import json
+    import zipfile
+
+    import app.database as appdb
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Para copia", "headers": "Nombre"})
+    with open(os.path.join(zip_app.config["UPLOAD_FOLDER"], "abc_foto.png"), "wb") as f:
+        f.write(b"PNGDATA")
+    r = c.get("/admin/backup/zip")
+    assert r.status_code == 200 and r.mimetype == "application/zip"
+    assert "attachment" in r.headers["Content-Disposition"] and ".zip" in r.headers["Content-Disposition"]
+    with zipfile.ZipFile(io.BytesIO(r.data)) as z:
+        m = json.loads(z.read("manifest.json"))
+        assert m["app"] == "TablaTeca" and m["catalogos"] == 1 and m["archivos"] == 1
+        assert z.read("uploads/abc_foto.png") == b"PNGDATA"
+        assert "Para copia" in z.read("catalogos.json").decode()
+    assert appdb.get_mongo_db()["spreadsheets"].count_documents({}) == 1  # exportar no modifica nada
+
+
+def test_zip_ida_y_vuelta_restaura_catalogos_y_archivos(zip_app):
+    import app.database as appdb
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Original", "headers": "Nombre"})
+    col = appdb.get_mongo_db()["spreadsheets"]
+    cid = col.find_one({"name": "Original"})["_id"]
+    ruta = os.path.join(zip_app.config["UPLOAD_FOLDER"], "k_doc.pdf")
+    with open(ruta, "wb") as f:
+        f.write(b"%PDF")
+    copia = c.get("/admin/backup/zip").data
+
+    col.delete_many({})
+    os.remove(ruta)
+    c.post("/catalogs/create", data={"name": "Intruso", "headers": "A"})
+    r = _importar(c, copia)
+    assert r.status_code == 302 and r.headers["Location"].rstrip("/").endswith("/catalogs")
+    nombres = [d["name"] for d in col.find()]
+    assert nombres == ["Original"]  # sustituye: «Intruso» ya no está
+    assert col.find_one({"name": "Original"})["_id"] == cid
+    assert open(ruta, "rb").read() == b"%PDF"
+    # copia automática del estado anterior
+    previas = os.listdir(zip_app.config["STORE_BACKUP_DIR"])
+    assert len(previas) == 1 and previas[0].startswith("antes_de_importar_")
+
+
+def test_zip_importar_reasigna_el_propietario_al_usuario_local(zip_app):
+    import json
+
+    import app.database as appdb
+
+    c = _entrar(zip_app.test_client())
+    doc = {"_id": {"$oid": "6ae24593a4126a462fe85fab"}, "name": "Ajeno", "headers": ["A"], "rows": [], "data": [],
+           "owner": "otro", "created_by": "otro", "email": "otro@x.com", "owner_name": "Otro"}
+    _importar(c, _zip_bytes(catalogos=json.dumps([doc])))
+    got = appdb.get_mongo_db()["spreadsheets"].find_one({"name": "Ajeno"})
+    assert got["owner"] == "tablateca" and got["created_by"] == "tablateca" and got["email"] == "local@tablateca.local"
+
+
+@pytest.mark.parametrize(
+    "nombre",
+    ["uploads/../fuera.txt", "../fuera.txt", "/abs.txt", "uploads/sub/dir.txt", "uploads/..\\x.txt", "otra/x.txt", "uploads/.oculto"],
+)
+def test_zip_rechaza_rutas_peligrosas_y_no_escribe_nada(zip_app, tmp_path, nombre):
+    import app.database as appdb
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Intacto", "headers": "A"})
+    r = _importar(c, _zip_bytes(nombres_extra=[nombre]))
+    assert r.status_code == 302 and "/admin/backup/importar" in r.headers["Location"]
+    assert [d["name"] for d in appdb.get_mongo_db()["spreadsheets"].find()] == ["Intacto"]
+    assert not (tmp_path / "fuera.txt").exists() and not (tmp_path / "abs.txt").exists()
+    assert os.listdir(zip_app.config["UPLOAD_FOLDER"]) == []
+    assert not os.path.exists(zip_app.config["STORE_BACKUP_DIR"])  # ni siquiera llega a la copia previa
+
+
+@pytest.mark.parametrize(
+    "datos",
+    [
+        b"esto no es un zip",
+        None,  # sin manifiesto
+    ],
+)
+def test_zip_rechaza_archivos_que_no_son_de_tablateca(zip_app, datos):
+    import app.database as appdb
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Intacto", "headers": "A"})
+    datos = datos if datos is not None else _zip_bytes(manifest=False)
+    assert _importar(c, datos).status_code == 302
+    assert [d["name"] for d in appdb.get_mongo_db()["spreadsheets"].find()] == ["Intacto"]
+
+
+def test_zip_rechaza_otra_app_o_formato_futuro_y_catalogos_corruptos(zip_app):
+    import app.database as appdb
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Intacto", "headers": "A"})
+    for datos in (
+        _zip_bytes(manifest={"app": "Otra", "formato": 1}),
+        _zip_bytes(manifest={"app": "TablaTeca", "formato": 99}),
+        _zip_bytes(catalogos="{no json"),
+        _zip_bytes(catalogos='{"no": "lista"}'),
+        _zip_bytes(catalogos=None),
+    ):
+        assert _importar(c, datos).status_code == 302
+        assert [d["name"] for d in appdb.get_mongo_db()["spreadsheets"].find()] == ["Intacto"]
+
+
+def test_zip_sin_confirmar_no_importa_nada(zip_app):
+    import app.database as appdb
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Intacto", "headers": "A"})
+    _importar(c, _zip_bytes(catalogos='[{"name": "Nuevo", "headers": []}]'), confirmo=False)
+    assert [d["name"] for d in appdb.get_mongo_db()["spreadsheets"].find()] == ["Intacto"]
+
+
+def test_zip_si_la_sustitucion_falla_se_restauran_los_catalogos_anteriores(zip_app, monkeypatch):
+    import app.database as appdb
+    from app.storage import local_store
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Anterior", "headers": "A"})
+    col_cls = local_store.LocalCollection
+    original = col_cls.insert_many
+    llamadas = {"n": 0}
+
+    def _falla_la_primera(self, docs, **k):
+        llamadas["n"] += 1
+        if llamadas["n"] == 1:
+            raise RuntimeError("disco lleno")
+        return original(self, docs, **k)
+
+    monkeypatch.setattr(col_cls, "insert_many", _falla_la_primera)
+    r = _importar(c, _zip_bytes(catalogos='[{"name": "Nuevo", "headers": []}]'))
+    assert r.status_code == 302 and "/admin/backup/importar" in r.headers["Location"]
+    assert [d["name"] for d in appdb.get_mongo_db()["spreadsheets"].find()] == ["Anterior"]
+
+
+def test_zip_rutas_permitidas_en_la_tienda_y_menu(store_app):
+    from app.store_edition import is_blocked_path
+
+    assert not is_blocked_path("/admin/backup/zip") and not is_blocked_path("/admin/backup/importar")
+    assert is_blocked_path("/admin/backup/otra")
+    c = _entrar(store_app.test_client())
+    assert c.get("/admin/backup/importar").status_code == 200
+    html = c.get("/admin/").get_data(as_text=True)
+    assert "Copia completa (ZIP)" in html and "Importar copia (ZIP)" in html
+
+
+def test_zip_el_launcher_puede_descargar_la_copia_con_su_cabecera(zip_app):
+    from app.store_edition import launch_headers
+
+    r = zip_app.test_client().get("/admin/backup/zip", headers=launch_headers())
+    assert r.status_code == 200 and r.mimetype == "application/zip"
+    # pero no puede abrir el formulario de importar sin sesión
+    assert zip_app.test_client().get("/admin/backup/importar", headers=launch_headers()).status_code != 200
