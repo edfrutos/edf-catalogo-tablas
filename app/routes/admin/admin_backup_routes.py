@@ -24,6 +24,7 @@ from app.database import (
 from flask_login import current_user
 from app.decorators import admin_required
 from app.edition import is_store
+from app.utils.store_export import catalogos_a_csv, catalogos_a_json
 from app.routes.admin.admin_backup_utils import get_backup_dir, get_backup_files
 from app.utils.paths import backups_dir as unified_backups_dir
 from app.utils.paths import drive_config_dir
@@ -102,15 +103,14 @@ def register_admin_backup_routes(admin_bp) -> None:
             return _volver_de_backup("maintenance.maintenance_daard")
 
         data = list(catalog.find())
+        if is_store():
+            return _descarga_local(catalogos_a_json(data), "json")
         for d in data:
             d["_id"] = str(d["_id"])
 
         output = io.StringIO()
         json.dump(data, output, indent=4, default=str)
         output.seek(0)
-
-        if is_store():
-            return _descarga_local(output.getvalue(), "json")
 
         backups_dir = get_backup_dir()
         filename = f"catalog_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -170,6 +170,9 @@ def register_admin_backup_routes(admin_bp) -> None:
             flash("No hay datos para exportar", "warning")
             return _volver_de_backup("maintenance.maintenance_dashboard")
 
+        if is_store():
+            return _descarga_local(catalogos_a_csv(data), "csv")
+
         all_fields = set()
         for row in data:
             all_fields.update(row.keys())
@@ -185,9 +188,6 @@ def register_admin_backup_routes(admin_bp) -> None:
             writer.writerow(row_filled)
 
         output.seek(0)
-
-        if is_store():
-            return _descarga_local(output.getvalue(), "csv")
 
         backups_dir = get_backup_dir()
         filename = f"catalog_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
