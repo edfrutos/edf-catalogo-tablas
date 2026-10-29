@@ -207,7 +207,7 @@ jobs:
 
       - name: Upload .pkg artifact
         if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: TablaTeca-MAS.pkg
           path: TablaTeca-MAS.pkg
