@@ -151,6 +151,22 @@ class _EdfApi:
             shutil.copyfileobj(r, f)
         return True
 
+    def choose_folder(self):
+        """Diálogo nativo para elegir una carpeta; devuelve {"carpeta", "marcador"} o None."""
+        import webview
+
+        if not webview.windows:
+            return None
+        fd = getattr(webview, "FileDialog", None)
+        dialog = fd.FOLDER if fd is not None else webview.FOLDER_DIALOG
+        sel = webview.windows[0].create_file_dialog(dialog)
+        if not sel:
+            return None
+        ruta = sel if isinstance(sel, str) else sel[0]
+        from app.store_settings import preparar_carpeta
+
+        return preparar_carpeta(str(ruta))
+
 # Cargar variables de entorno desde el .env empaquetado en la propia app.
 # Ruta explícita (en vez de load_dotenv() a secas): sin esto, python-dotenv
 # busca .env subiendo desde el directorio de trabajo del proceso, así que si

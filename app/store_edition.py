@@ -261,3 +261,7 @@ def init_store_edition(app) -> None:
     app.config["EDF_EDITION"] = "store"
     # Las plantillas ocultan los paneles que no existen en la tienda.
     app.jinja_env.globals["is_store_edition"] = True
+
+    from app.store_settings_routes import store_settings_bp
+
+    app.register_blueprint(store_settings_bp)

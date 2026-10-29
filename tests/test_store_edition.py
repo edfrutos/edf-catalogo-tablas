@@ -930,3 +930,105 @@ def test_backup_csv_de_la_tienda_entrega_el_csv_legible(store_app):
     cuerpo = c.get("/admin/backup/csv").get_data(as_text=True).lstrip("﻿")
     assert cuerpo.splitlines()[0] == "Catálogo,Nombre,Notas"
     assert "Legible,Ana,ok" in cuerpo
+
+
+# ----------------------------------------------------------------- Ajustes
+def test_validar_perfil():
+    from app.store_settings import validar_perfil
+
+    ok, err = validar_perfil({"nombre": " Ana ", "email": "a@b.es", "organizacion": "X"})
+    assert not err and ok["nombre"] == "Ana"
+    assert validar_perfil({"nombre": ""})[1]
+    assert validar_perfil({"nombre": "A", "email": "no-es-correo"})[1]
+    assert validar_perfil({"nombre": "A" * 101})[1]
+    assert not validar_perfil({"nombre": "A", "email": ""})[1]
+
+
+def test_es_escribible(tmp_path):
+    from app.store_settings import es_escribible
+
+    assert es_escribible(str(tmp_path))
+    assert not es_escribible("")
+    assert not es_escribible("relativa/ruta")
+    assert not es_escribible(str(tmp_path / "no_existe"))
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_marcador_sin_pyobjc_no_falla(tmp_path):
+    from app import store_settings as s
+
+    assert s.abrir_marcador("") == ""
+    if not os.path.exists("/System/Library"):  # fuera de macOS no hay Foundation
+        assert s.crear_marcador(str(tmp_path)) == ""
+        assert s.preparar_carpeta(str(tmp_path)) == {"carpeta": str(tmp_path), "marcador": ""}
+
+
+def test_ajustes_perfil_actualiza_nombre_y_barra(store_app):
+    c = _entrar(store_app.test_client())
+    assert b"Usuario local" in c.get("/ajustes").data
+    r = c.post("/ajustes/perfil", data={"nombre": "Eugenio", "email": "e@x.es", "organizacion": "EDF"})
+    assert r.status_code == 302
+    html = c.get("/ajustes").get_data(as_text=True)
+    assert 'value="Eugenio"' in html and 'value="e@x.es"' in html
+    assert "Eugenio</span>" in html
+
+
+def test_ajustes_perfil_invalido_no_guarda(store_app):
+    c = _entrar(store_app.test_client())
+    c.post("/ajustes/perfil", data={"nombre": "", "email": "mal"})
+    from app import store_settings
+    import app.database as appdb
+
+    assert store_settings.cargar(appdb.get_mongo_db())["email"] == ""
+
+
+def test_ajustes_carpeta_y_copia_zip(store_app, tmp_path):
+    import zipfile
+
+    c = _entrar(store_app.test_client())
+    c.post("/catalogs/create", data={"name": "Para copia", "headers": "Nombre"})
+    destino = tmp_path / "copias"
+    destino.mkdir()
+    c.post("/ajustes/carpeta", data={"carpeta": str(destino)})
+    assert str(destino) in c.get("/ajustes").get_data(as_text=True)
+    r = c.post("/ajustes/guardar-copia")
+    assert r.status_code == 302
+    zips = list(destino.glob("TablaTeca_copia_*.zip"))
+    assert len(zips) == 1 and not list(destino.glob("*.parte"))
+    with zipfile.ZipFile(zips[0]) as z:
+        assert "manifest.json" in z.namelist() and "catalogos.json" in z.namelist()
+
+
+def test_ajustes_carpeta_inaccesible_se_rechaza(store_app, tmp_path):
+    c = _entrar(store_app.test_client())
+    c.post("/ajustes/carpeta", data={"carpeta": str(tmp_path / "no_existe")})
+    from app import store_settings
+    import app.database as appdb
+
+    assert store_settings.cargar(appdb.get_mongo_db())["carpeta"] == ""
+    c.post("/ajustes/guardar-copia")  # sin carpeta: no revienta
+    assert c.get("/ajustes").status_code == 200
+
+
+def test_ajustes_olvidar_carpeta(store_app, tmp_path):
+    c = _entrar(store_app.test_client())
+    c.post("/ajustes/carpeta", data={"carpeta": str(tmp_path)})
+    c.post("/ajustes/carpeta/olvidar")
+    from app import store_settings
+    import app.database as appdb
+
+    assert store_settings.cargar(appdb.get_mongo_db())["carpeta"] == ""
+
+
+def test_ajustes_no_existe_en_la_edicion_estandar(monkeypatch):
+    monkeypatch.delenv("EDF_EDITION", raising=False)
+    from app import edition
+
+    assert not edition.is_store()
+
+
+def test_launcher_expone_choose_folder_y_entitlement_de_marcadores():
+    src = open("launcher_native_websockets.py", encoding="utf-8").read()
+    assert "def choose_folder" in src and "preparar_carpeta" in src
+    plist = open("packaging/mas/entitlements-mas.plist", encoding="utf-8").read()
+    assert "com.apple.security.files.bookmarks.app-scope" in plist
