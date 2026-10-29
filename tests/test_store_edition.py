@@ -1618,4 +1618,4 @@ def test_modal_imagen_ocupa_el_area_disponible():
     assert "width: 100%" in bloque and "height: 70vh" in bloque
     assert "object-fit: contain" in bloque
     assert "width: auto" not in js
-    assert js.count("width: 100% !important") == 2
+    assert js.count("height: 70vh !important") == 2
