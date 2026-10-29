@@ -184,8 +184,9 @@ BLOCKED_PREFIXES = (
     "/dev-template",
     "/test_session",
 )
-# Exportación de catálogos: sí disponible (CSV/JSON); el resto de /admin/backup/ no.
-ALLOWED_BACKUP_PATHS = ("/admin/backup/csv", "/admin/backup/json")
+# Exportación de catálogos: sí disponible (CSV/JSON y copia ZIP); el resto de /admin/backup/ no.
+DOWNLOAD_BACKUP_PATHS = ("/admin/backup/csv", "/admin/backup/json", "/admin/backup/zip")
+ALLOWED_BACKUP_PATHS = DOWNLOAD_BACKUP_PATHS + ("/admin/backup/importar",)
 
 
 def is_blocked_path(path: str) -> bool:
@@ -240,7 +241,7 @@ def init_store_edition(app) -> None:
             # Descarga iniciada por el propio launcher (solo lectura). Las copias CSV/JSON
             # pasan por rutas con sesión: el launcher las pide sin cookie, así que se abre
             # la sesión local (mismo token secreto que /_store/enter, solo en loopback).
-            if path.rstrip("/") in ALLOWED_BACKUP_PATHS and not _has_local_session():
+            if path.rstrip("/") in DOWNLOAD_BACKUP_PATHS and not _has_local_session():
                 from app.database import get_mongo_db
 
                 db = get_mongo_db()
@@ -258,6 +259,9 @@ def init_store_edition(app) -> None:
             abort(404)
         return None
 
+    from app.store_backup_routes import store_backup_bp
+
+    app.register_blueprint(store_backup_bp)
     app.config["EDF_EDITION"] = "store"
     # Las plantillas ocultan los paneles que no existen en la tienda.
     app.jinja_env.globals["is_store_edition"] = True
