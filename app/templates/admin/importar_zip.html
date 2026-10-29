@@ -1,0 +1,28 @@
+{% extends "admin/base.html" %}
+{% block title %}Importar copia - TablaTeca{% endblock %}
+{% block content %}
+<div class="container my-4" style="max-width: 760px;">
+  <h2 class="mb-3"><i class="bi bi-box-arrow-in-down"></i> Importar copia de seguridad</h2>
+  <p>
+    Elige un archivo ZIP creado con <strong>Backups &rsaquo; Copia completa (ZIP)</strong>.
+    Los catálogos actuales se <strong>sustituyen</strong> por los del archivo y se añaden sus
+    imágenes y documentos. Antes de importar, TablaTeca guarda una copia automática de tu estado actual.
+  </p>
+  <form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
+    <div class="mb-3">
+      <label for="archivo" class="form-label">Archivo de copia (.zip)</label>
+      <input class="form-control" type="file" id="archivo" name="archivo" accept=".zip,application/zip" required />
+    </div>
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" id="confirmo" name="confirmo" value="1" required />
+      <label class="form-check-label" for="confirmo">
+        Entiendo que se sustituirán mis catálogos actuales.
+      </label>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Importar</button>
+      <a href="{{ url_for('catalogs.list') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

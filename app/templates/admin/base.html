@@ -271,6 +271,19 @@
                     ><i class="bi bi-filetype-json"></i> Backup JSON</a
                   >
                 </li>
+                {% if is_store_edition|default(false) %}
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('store_backup.exportar_zip') }}"
+                    ><i class="bi bi-file-earmark-zip"></i> Copia completa (ZIP)</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('store_backup.importar') }}"
+                    ><i class="bi bi-box-arrow-in-down"></i> Importar copia (ZIP)</a
+                  >
+                </li>
+                {% endif %}
               </ul>
             </li>
 
@@ -414,7 +427,7 @@
     <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pywebview_compatibility.js') }}"></script>
     <!-- Modal functions para admin -->
-    <script src="{{ url_for('static', filename='js/edf-native-bridge.js') }}?v=20261028"></script>
+    <script src="{{ url_for('static', filename='js/edf-native-bridge.js') }}?v=20261029"></script>
     <script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
     {% block scripts %}{% endblock %}
     <!-- Botón Ir Arriba -->
