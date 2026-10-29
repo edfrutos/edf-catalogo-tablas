@@ -1256,6 +1256,285 @@ def test_volver_del_catalogo_en_la_tienda_va_siempre_al_listado(store_app):
     assert href.rstrip("/") == "/catalogs"
 
 
+# ----------------------------------------------------------------- Google Drive (Ajustes)
+CRED_OK = (
+    b'{"installed": {"client_id": "123-abc.apps.googleusercontent.com", '
+    b'"client_secret": "secreto-cliente", "auth_uri": "https://x", "token_uri": "https://y"}}'
+)
+
+
+@pytest.fixture()
+def drive_dir(monkeypatch, tmp_path):
+    carpeta = tmp_path / "gdrive"
+    monkeypatch.setenv("EDF_STORE_DRIVE_DIR", str(carpeta))
+    from app import store_drive
+
+    store_drive.cancelar()
+    yield carpeta
+    store_drive.cancelar()
+
+
+class _Resp:
+    def __init__(self, status=200, cuerpo=None, headers=None):
+        self.status_code, self._c, self.headers = status, cuerpo or {}, headers or {}
+
+    def json(self):
+        return self._c
+
+
+class _Google:
+    """Sustituye al módulo requests dentro de store_drive y registra las llamadas."""
+
+    def __init__(self, token_status=200, scope="https://www.googleapis.com/auth/drive.file"):
+        self.llamadas, self.token_status, self.scope = [], token_status, scope
+        self.carpeta_existe = False
+
+    def post(self, url, **kw):
+        self.llamadas.append(("post", url, kw))
+        if url.endswith("/token"):
+            if self.token_status != 200:
+                return _Resp(self.token_status, {"error": "invalid_grant"})
+            cuerpo = {"access_token": "acceso-1", "expires_in": 3600, "scope": self.scope}
+            if kw["data"].get("grant_type") == "authorization_code":
+                cuerpo["refresh_token"] = "refresco-secreto"
+            return _Resp(200, cuerpo)
+        if url.endswith("/revoke"):
+            return _Resp(200)
+        if "uploadType=resumable" in url or kw.get("params", {}).get("uploadType") == "resumable":
+            return _Resp(200, headers={"Location": "https://upload.example/sesion1"})
+        return _Resp(200, {"id": "carpeta-nueva"})
+
+    def get(self, url, **kw):
+        self.llamadas.append(("get", url, kw))
+        return _Resp(200, {"files": [{"id": "carpeta-1"}] if self.carpeta_existe else []})
+
+    def put(self, url, **kw):
+        self.llamadas.append(("put", url, {**kw, "cuerpo": kw["data"].read()}))
+        return _Resp(200, {"id": "archivo-1", "name": "copia.zip"})
+
+
+@pytest.fixture()
+def google(monkeypatch):
+    from app import store_drive
+
+    g = _Google()
+    monkeypatch.setattr(store_drive, "requests", g)
+    return g
+
+
+def test_drive_valida_credentials_json():
+    from app.store_drive import DriveError, validar_credenciales
+
+    assert validar_credenciales(CRED_OK)["client_secret"] == "secreto-cliente"
+    for malo in (
+        b"no es json",
+        b"[]",
+        b'{"web": {"client_id": "a.apps.googleusercontent.com", "client_secret": "s"}}',
+        b'{"otra": 1}',
+        b'{"installed": {"client_id": "malo", "client_secret": "s"}}',
+        b'{"installed": {"client_id": "a.apps.googleusercontent.com"}}',
+        b"x" * 30000,
+    ):
+        with pytest.raises(DriveError):
+            validar_credenciales(malo)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="permisos POSIX")
+def test_drive_credenciales_y_token_se_guardan_con_permisos_privados(drive_dir, google):
+    from app import store_drive
+
+    store_drive.guardar_credenciales(CRED_OK)
+    assert (drive_dir / "credentials.json").stat().st_mode & 0o777 == 0o600
+
+
+def _autorizar(url_auth):
+    """Hace de navegador: devuelve a la app el código con el state de la URL de Google."""
+    import urllib.request
+    from urllib.parse import parse_qs, urlsplit
+
+    q = parse_qs(urlsplit(url_auth).query)
+    destino = q["redirect_uri"][0] + "?" + "code=codigo-1&state=" + q["state"][0]
+    urllib.request.urlopen(destino, timeout=5).read()
+    return q
+
+
+def _esperar(cond, segundos=5):
+    import time
+
+    limite = time.time() + segundos
+    while time.time() < limite:
+        if cond():
+            return True
+        time.sleep(0.05)
+    return False
+
+
+def test_drive_flujo_oauth_con_pkce_y_alcance_minimo(drive_dir, google):
+    import base64
+    import hashlib
+
+    from app import store_drive
+
+    store_drive.guardar_credenciales(CRED_OK)
+    abiertas = []
+    url = store_drive.iniciar_autorizacion(abrir=abiertas.append)
+    assert abiertas == [url] and store_drive.estado()["esperando"]
+    q = _autorizar(url)
+    assert q["scope"] == ["https://www.googleapis.com/auth/drive.file"]
+    assert q["code_challenge_method"] == ["S256"] and q["access_type"] == ["offline"]
+    assert q["redirect_uri"][0].startswith("http://127.0.0.1:")
+    assert _esperar(lambda: store_drive.estado()["conectado"])
+    canje = [c for c in google.llamadas if c[0] == "post" and c[1].endswith("/token")][0][2]["data"]
+    desafio = base64.urlsafe_b64encode(hashlib.sha256(canje["code_verifier"].encode()).digest())
+    assert desafio.decode().rstrip("=") == q["code_challenge"][0]
+    assert canje["code"] == "codigo-1" and canje["redirect_uri"] == q["redirect_uri"][0]
+    e = store_drive.estado()
+    assert e["conectado"] and not e["esperando"] and not e["error"]
+
+
+def test_drive_rechaza_state_ajeno_y_no_guarda_token(drive_dir, google):
+    import urllib.error
+    import urllib.request
+    from urllib.parse import parse_qs, urlsplit
+
+    from app import store_drive
+
+    store_drive.guardar_credenciales(CRED_OK)
+    url = store_drive.iniciar_autorizacion(abrir=lambda u: None)
+    redirect = parse_qs(urlsplit(url).query)["redirect_uri"][0]
+    urllib.request.urlopen(redirect + "?code=x&state=otro", timeout=5).read()
+    assert _esperar(lambda: not store_drive.estado()["esperando"])
+    e = store_drive.estado()
+    assert not e["conectado"] and e["error"]
+    assert not any(c[1].endswith("/token") for c in google.llamadas)
+
+
+def test_drive_rechaza_si_no_se_concede_el_alcance(drive_dir, monkeypatch):
+    from app import store_drive
+
+    monkeypatch.setattr(store_drive, "requests", _Google(scope="openid"))
+    store_drive.guardar_credenciales(CRED_OK)
+    _autorizar(store_drive.iniciar_autorizacion(abrir=lambda u: None))
+    assert _esperar(lambda: not store_drive.estado()["esperando"])
+    assert not store_drive.estado()["conectado"] and store_drive.estado()["error"]
+
+
+def test_drive_subir_crea_carpeta_y_envia_el_zip(drive_dir, google, tmp_path):
+    from app import store_drive
+
+    store_drive.guardar_credenciales(CRED_OK)
+    _autorizar(store_drive.iniciar_autorizacion(abrir=lambda u: None))
+    assert _esperar(lambda: store_drive.estado()["conectado"])
+    zip_ = tmp_path / "c.zip"
+    zip_.write_bytes(b"PK-contenido")
+    r = store_drive.subir(str(zip_), "copia.zip")
+    assert r == {"id": "archivo-1", "name": "copia.zip"}
+    put = [c for c in google.llamadas if c[0] == "put"][0]
+    assert put[1] == "https://upload.example/sesion1" and put[2]["cuerpo"] == b"PK-contenido"
+    assert put[2]["headers"]["Authorization"] == "Bearer acceso-1"
+    # primera vez: busca la carpeta, no existe, la crea
+    assert any(c[0] == "post" and c[1] == store_drive.DRIVE_FILES for c in google.llamadas)
+
+
+def test_drive_reutiliza_la_carpeta_existente(drive_dir, google, tmp_path):
+    from app import store_drive
+
+    google.carpeta_existe = True
+    store_drive.guardar_credenciales(CRED_OK)
+    _autorizar(store_drive.iniciar_autorizacion(abrir=lambda u: None))
+    assert _esperar(lambda: store_drive.estado()["conectado"])
+    zip_ = tmp_path / "c.zip"
+    zip_.write_bytes(b"x")
+    store_drive.subir(str(zip_), "c.zip")
+    assert not any(c[0] == "post" and c[1] == store_drive.DRIVE_FILES for c in google.llamadas)
+    inicio = [c for c in google.llamadas if c[0] == "post" and "upload" in c[1]][0]
+    assert "carpeta-1" in inicio[2]["data"]
+
+
+def test_drive_refresca_el_token_caducado_y_borra_el_permiso_revocado(drive_dir, google, tmp_path):
+    import json
+
+    from app import store_drive
+
+    store_drive.guardar_credenciales(CRED_OK)
+    caducado = {"refresh_token": "refresco-secreto", "access_token": "viejo", "expires_at": 0}
+    (drive_dir / "token.json").write_text(json.dumps(caducado))
+    assert store_drive._token_de_acceso() == "acceso-1"
+    assert json.loads((drive_dir / "token.json").read_text())["refresh_token"] == "refresco-secreto"
+
+    (drive_dir / "token.json").write_text(json.dumps(caducado))
+    google.token_status = 400
+    with pytest.raises(store_drive.PermisoCaducado):
+        store_drive._token_de_acceso()
+    assert not (drive_dir / "token.json").exists() and not store_drive.estado()["conectado"]
+
+
+def test_drive_desconectar_revoca_y_borra_el_token(drive_dir, google):
+    from app import store_drive
+
+    store_drive.guardar_credenciales(CRED_OK)
+    _autorizar(store_drive.iniciar_autorizacion(abrir=lambda u: None))
+    assert _esperar(lambda: store_drive.estado()["conectado"])
+    store_drive.desconectar()
+    assert not store_drive.estado()["conectado"] and store_drive.estado()["credenciales"]
+    assert any(c[1].endswith("/revoke") for c in google.llamadas)
+    store_drive.quitar_credenciales()
+    assert not store_drive.estado()["credenciales"]
+
+
+def test_drive_nuevas_credenciales_invalidan_el_token_anterior(drive_dir, google):
+    from app import store_drive
+
+    store_drive.guardar_credenciales(CRED_OK)
+    (drive_dir / "token.json").write_text('{"refresh_token": "r", "access_token": "a", "expires_at": 9999999999}')
+    assert store_drive.estado()["conectado"]
+    store_drive.guardar_credenciales(CRED_OK)
+    assert not store_drive.estado()["conectado"]
+
+
+def test_drive_rutas_de_ajustes_y_el_secreto_nunca_llega_a_la_pagina(zip_app, drive_dir, google, monkeypatch, tmp_path):
+    import io
+
+    from app import store_drive
+
+    monkeypatch.setattr(store_drive.webbrowser, "open", lambda u: True)
+    c = _entrar(zip_app.test_client())
+    html = c.get("/ajustes").get_data(as_text=True)
+    assert "credentials.json" in html and "Guardar credenciales" in html
+
+    c.post("/ajustes/drive/credenciales", data={"archivo": (io.BytesIO(b"basura"), "x.json")}, content_type="multipart/form-data")
+    assert not store_drive.estado()["credenciales"]
+    c.post("/ajustes/drive/credenciales", data={"archivo": (io.BytesIO(CRED_OK), "credentials.json")}, content_type="multipart/form-data")
+    assert store_drive.estado()["credenciales"]
+    html = c.get("/ajustes").get_data(as_text=True)
+    assert "Conectar con Google" in html and "secreto-cliente" not in html
+
+    c.post("/ajustes/drive/conectar")
+    assert c.get("/ajustes/drive/estado").get_json()["esperando"] is True
+    assert "Esperando la autorización" in c.get("/ajustes").get_data(as_text=True)
+    c.post("/ajustes/drive/cancelar")
+    assert c.get("/ajustes/drive/estado").get_json()["esperando"] is False
+
+    (drive_dir / "token.json").write_text('{"refresh_token": "refresco-secreto", "access_token": "acceso-1", "expires_at": 9999999999}')
+    c.post("/catalogs/create", data={"name": "Para Drive", "headers": "Nombre"})
+    html = c.get("/ajustes").get_data(as_text=True)
+    assert "Subir copia a Drive ahora" in html and "refresco-secreto" not in html
+    r = c.post("/ajustes/drive/subir", follow_redirects=True)
+    assert "Copia subida a Google Drive" in r.get_data(as_text=True)
+    put = [x for x in google.llamadas if x[0] == "put"][0]
+    assert put[2]["cuerpo"][:2] == b"PK"  # es el ZIP de la copia
+    assert not any(n.endswith(".zip") for n in os.listdir(drive_dir))  # el temporal se borra
+
+    c.post("/ajustes/drive/desconectar")
+    assert not store_drive.estado()["conectado"]
+
+
+def test_drive_sin_credenciales_no_se_puede_conectar(drive_dir, google):
+    from app import store_drive
+
+    with pytest.raises(store_drive.DriveError):
+        store_drive.iniciar_autorizacion(abrir=lambda u: None)
+
 class _SinSeekable:
     """Como SpooledTemporaryFile en Python 3.10: lee y se posiciona, pero no tiene seekable()."""
 

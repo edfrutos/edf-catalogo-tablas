@@ -10,6 +10,7 @@ from flask import (
     Blueprint,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -17,6 +18,7 @@ from flask import (
     url_for,
 )
 
+from app import store_drive
 from app import store_settings as ajustes
 from app.decorators import admin_required
 from app.store_backup_zip import crear_zip
@@ -42,6 +44,7 @@ def ver():
         "admin/ajustes.html",
         ajustes=datos,
         carpeta_activa=carpeta_activa,
+        drive=store_drive.estado(),
     )
 
 
@@ -112,3 +115,95 @@ def guardar_copia():
         return redirect(url_for("store_settings.ver"))
     flash(f"Copia guardada: {os.path.basename(destino)}", "success")
     return redirect(url_for("store_settings.ver"))
+
+
+# ------------------------------------------------------------------ Google Drive (opcional)
+def _volver():
+    return redirect(url_for("store_settings.ver") + "#drive")
+
+
+@store_settings_bp.route("/ajustes/drive/credenciales", methods=["POST"])
+@admin_required
+def drive_credenciales():
+    archivo = request.files.get("archivo")
+    if not archivo or not archivo.filename:
+        flash("Elige tu archivo credentials.json.", "warning")
+        return _volver()
+    try:
+        store_drive.guardar_credenciales(archivo.stream.read(store_drive.MAX_CREDENCIALES + 1))
+        flash("Credenciales guardadas. Ya puedes conectar con Google.", "success")
+    except store_drive.DriveError as exc:
+        flash(str(exc), "danger")
+    return _volver()
+
+
+@store_settings_bp.route("/ajustes/drive/credenciales/quitar", methods=["POST"])
+@admin_required
+def drive_quitar_credenciales():
+    store_drive.quitar_credenciales()
+    flash("Credenciales y permiso de Drive eliminados de este equipo.", "success")
+    return _volver()
+
+
+@store_settings_bp.route("/ajustes/drive/conectar", methods=["POST"])
+@admin_required
+def drive_conectar():
+    try:
+        store_drive.iniciar_autorizacion()
+        flash("Se ha abierto el navegador para autorizar el acceso a Google Drive.", "info")
+    except store_drive.DriveError as exc:
+        flash(str(exc), "danger")
+    return _volver()
+
+
+@store_settings_bp.route("/ajustes/drive/estado")
+@admin_required
+def drive_estado():
+    estado = store_drive.estado()
+    estado.pop("url", None)
+    return jsonify(estado)
+
+
+@store_settings_bp.route("/ajustes/drive/cancelar", methods=["POST"])
+@admin_required
+def drive_cancelar():
+    store_drive.cancelar()
+    return _volver()
+
+
+@store_settings_bp.route("/ajustes/drive/subir", methods=["POST"])
+@admin_required
+def drive_subir():
+    import tempfile
+
+    sello = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    nombre = f"TablaTeca_copia_{sello}.zip"
+    temporal = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            suffix=".zip", dir=store_drive.directorio(), delete=False
+        ) as f:
+            temporal = f.name
+            crear_zip(_db(), current_app.config["UPLOAD_FOLDER"], f)
+        resultado = store_drive.subir(temporal, nombre)
+        flash(f"Copia subida a Google Drive (carpeta TablaTeca): {resultado['name']}", "success")
+    except store_drive.DriveError as exc:
+        flash(str(exc), "danger")
+    except OSError:
+        logger.exception("No se pudo preparar la copia para Drive")
+        flash("No se pudo preparar la copia para subirla.", "danger")
+    finally:
+        if temporal:
+            try:
+                os.remove(temporal)
+            except OSError:
+                pass
+    return _volver()
+
+
+@store_settings_bp.route("/ajustes/drive/desconectar", methods=["POST"])
+@admin_required
+def drive_desconectar():
+    store_drive.desconectar()
+    flash("Google Drive desconectado.", "success")
+    return _volver()

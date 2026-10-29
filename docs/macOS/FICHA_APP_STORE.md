@@ -93,7 +93,7 @@ Interface in Spanish.
 
 ## 4. Privacidad
 
-**Etiquetas de privacidad de la app (App Privacy):** «Data Not Collected» (no se recopila ningún dato). La app no envía datos a ningún servidor propio ni de terceros; no integra analítica, publicidad ni SDK de terceros.
+**Etiquetas de privacidad de la app (App Privacy):** «Data Not Collected» (no se recopila ningún dato). La app no envía datos a ningún servidor propio ni de terceros; no integra analítica, publicidad ni SDK de terceros. **Nota sobre Google Drive (opcional, apagado por defecto):** si el usuario lo conecta, la app sube las copias que él pide directamente a *su propio* Drive (alcance `drive.file`). El desarrollador no recibe ni puede acceder a esos datos, por lo que «Data Not Collected» sigue siendo coherente con la definición de Apple (datos que el desarrollador y/o sus socios pueden consultar). Es una interpretación mía: revísala al rellenar el cuestionario y, si dudas, consulta la guía de Apple sobre «Data Collection».
 
 Antes de marcarlo, confirma con la build final que no hay tráfico saliente. Comprobación (con la app abierta y el Wi-Fi activo, unos minutos de uso; solo debe aparecer `127.0.0.1`):
 
@@ -101,7 +101,7 @@ Antes de marcarlo, confirma con la build final que no hay tráfico saliente. Com
 while true; do clear; date; lsof -nP -i -a -c TablaTeca; sleep 5; done
 ```
 
-Si aparece cualquier IP que no sea `127.0.0.1`, avísame con la salida. Con el run 33 ya no hay CDN ni consulta de actualizaciones: la app solo habla con su propio servidor local en `127.0.0.1`.
+Esa comprobación vale con Google Drive **sin conectar** (es opcional y está apagado por defecto). Si aparece cualquier IP que no sea `127.0.0.1`, avísame con la salida. Con el run 33 ya no hay CDN ni consulta de actualizaciones: la app solo habla con su propio servidor local en `127.0.0.1`.
 
 **URL de la política de privacidad (obligatoria):** `https://catalogo.efjdev.com/privacidad` (ruta `/privacidad` de la propia app web, ES + EN; hay que desplegarla). Texto base:
 
@@ -155,15 +155,16 @@ How to test (about 2 minutes):
 4. Click the thumbnails/document buttons to preview images, PDFs and Markdown inside the app.
 5. Use the search box and column sorting; use Backups > CSV/JSON to export the catalog.
 6. Backups > "Copia completa (ZIP)" saves a full backup; Backups > "Importar copia (ZIP)" restores it (it asks for confirmation and first stores an automatic copy of the current state).
+7. Settings (top bar): owner profile, a folder for local backups (native folder picker, remembered between launches) and an optional Google Drive connection. You do not need to use Google Drive to review the app.
 
-Data and privacy: everything is stored locally in the app sandbox container (SQLite database and an uploads folder). The app collects no data and works fully offline.
+Data and privacy: everything is stored locally in the app sandbox container (SQLite database and an uploads folder). The app collects no data and works fully offline; the optional Google Drive backup sends data only from the user's Mac to the user's own Google account, never to the developer.
 
-Entitlements: App Sandbox is enabled. com.apple.security.network.server and .client are used only for the app's own loopback connection (127.0.0.1) between its embedded web view and its local engine; the app makes no external network requests. com.apple.security.files.user-selected.read-write is used when the user picks files to attach to a row.
+Entitlements: App Sandbox is enabled. com.apple.security.network.server and .client are used only for the app's own loopback connection (127.0.0.1) between its embedded web view and its local engine; by default the app makes no external network requests. The only exception is the optional Google Drive backup in Settings, off by default: if the user connects it, the app talks directly to Google (OAuth with the user's own credentials, "drive.file" scope only) to upload backups the user requests to the user's own Drive; the developer receives no data. com.apple.security.files.user-selected.read-write is used when the user picks files to attach to a row.
 
 Why this is more than a website (Guideline 4.2): the app is a self-contained desktop application with a local database, local file storage, native file pickers, embedded document/image/media viewers, CSV/JSON export, full ZIP backup and restore, and full offline operation. It does not load a remote website; all resources ship inside the app.
 ```
 
-**Riesgo conocido (Guideline 4.2, funcionalidad mínima):** la app es una interfaz web empaquetada (pywebview + Flask). El texto anterior defiende su valor local y offline; aun así Apple puede pedir más funciones «nativas». Ya incluye copia completa en ZIP (exportar/importar). Refuerzos posibles si lo piden: ajustes de la app (perfil y carpeta de copias), arrastrar y soltar archivos, atajos de teclado y menús de macOS.
+**Riesgo conocido (Guideline 4.2, funcionalidad mínima):** la app es una interfaz web empaquetada (pywebview + Flask). El texto anterior defiende su valor local y offline; aun así Apple puede pedir más funciones «nativas». Ya incluye copia completa en ZIP (exportar/importar). Ya incluye también Ajustes (perfil, carpeta de copias y Google Drive opcional). Refuerzos posibles si lo piden: arrastrar y soltar archivos, atajos de teclado y menús de macOS.
 
 ## 8. Capturas de pantalla (Mac)
 
