@@ -930,3 +930,29 @@ def test_backup_csv_de_la_tienda_entrega_el_csv_legible(store_app):
     cuerpo = c.get("/admin/backup/csv").get_data(as_text=True).lstrip("﻿")
     assert cuerpo.splitlines()[0] == "Catálogo,Nombre,Notas"
     assert "Legible,Ana,ok" in cuerpo
+
+
+def test_dashboard_de_la_tienda_no_ofrece_buscar_por_propietario(store_app):
+    c = _entrar(store_app.test_client())
+    html = c.get("/admin/").get_data(as_text=True)
+    assert "Usuario propietario" not in html
+    assert "nombre o propietario" not in html
+    assert 'name="search_type" value="name"' in html
+    assert "<th>Propietario</th>" not in html
+
+
+def test_volver_del_catalogo_en_la_tienda_va_siempre_al_listado(store_app):
+    import app.database as appdb
+
+    c = _entrar(store_app.test_client())
+    c.post("/catalogs/create", data={"name": "Vuelta", "headers": "Nombre"})
+    cid = str(appdb.get_mongo_db()["spreadsheets"].find_one({"name": "Vuelta"})["_id"])
+    # el referente es la pantalla de edición: antes «Volver» devolvía a ella
+    html = c.get(
+        f"/admin/catalogo/spreadsheets/{cid}",
+        headers={"Referer": f"http://127.0.0.1/catalogs/{cid}/edit"},
+    ).get_data(as_text=True)
+    import re
+
+    href = re.search(r'<a href="([^"]*)" class="btn btn-light">\s*<i class="bi bi-arrow-left"></i> Volver', html).group(1)
+    assert href.rstrip("/") == "/catalogs"
