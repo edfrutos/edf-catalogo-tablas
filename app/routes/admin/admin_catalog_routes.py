@@ -252,6 +252,10 @@ def register_admin_catalog_routes(admin_bp) -> None:
                 else:
                     return_url = url_for("admin.dashboard_admin")
 
+            if is_store():
+                # Un único usuario local: «Volver» siempre al listado (el referente sería la edición)
+                return_url = url_for("catalogs.list")
+
             return render_template(
                 "admin/ver_catalogo.html",
                 catalog=catalog,

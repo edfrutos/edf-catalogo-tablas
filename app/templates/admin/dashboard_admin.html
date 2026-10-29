@@ -6,15 +6,18 @@ endblock %} {% block content %}
     method="get"
     action="{{ url_for('admin.dashboard_admin') }}"
   >
-    <div class="col-md-4 mb-2">
+    <div class="{% if is_store_edition|default(false) %}col-md-7{% else %}col-md-4{% endif %} mb-2">
       <input
         type="text"
         class="form-control"
         name="search"
-        placeholder="Buscar por nombre o propietario"
+        placeholder="{% if is_store_edition|default(false) %}Buscar por nombre{% else %}Buscar por nombre o propietario{% endif %}"
         value="{{ search or '' }}"
       />
     </div>
+    {% if is_store_edition|default(false) %}
+    <input type="hidden" name="search_type" value="name" />
+    {% else %}
     <div class="col-md-3 mb-2">
       <select class="form-select" name="search_type">
         <option value="name" {% if search_type == 'name' %}selected{% endif %}>
@@ -25,6 +28,7 @@ endblock %} {% block content %}
         </option>
       </select>
     </div>
+    {% endif %}
     <div class="col-md-2 mb-2">
       <button type="submit" class="btn btn-primary w-100">
         <i class="bi bi-search"></i> Buscar
@@ -295,7 +299,7 @@ endblock %} {% block content %}
         <tr>
           <th>Nombre</th>
           <th>Tipo</th>
-          <th>Propietario</th>
+          {% if not is_store_edition|default(false) %}<th>Propietario</th>{% endif %}
           <th>Fecha de creación</th>
           <th>Acciones</th>
         </tr>
@@ -305,7 +309,7 @@ endblock %} {% block content %}
         <tr>
           <td><i class="bi bi-table"></i> {{ tabla.name }}</td>
           <td>{{ tabla.tipo|capitalize }}</td>
-          <td>{{ tabla.owner if tabla.owner else '—' }}</td>
+          {% if not is_store_edition|default(false) %}<td>{{ tabla.owner if tabla.owner else '—' }}</td>{% endif %}
           <td>
             {% if tabla.created_at %} {{ tabla.created_at.strftime('%Y-%m-%d
             %H:%M') if tabla.created_at.strftime else tabla.created_at }} {%
