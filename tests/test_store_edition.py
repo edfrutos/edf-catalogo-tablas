@@ -807,6 +807,10 @@ def test_backup_csv_json_en_la_tienda_es_descarga_local_sin_drive(store_app, mon
     monkeypatch.setattr(rb, "upload_to_drive", _no_debe_llamarse)
     c = _entrar(store_app.test_client())
     c.post("/catalogs/create", data={"name": "Backup", "headers": "Nombre"})
+    import app.database as appdb
+
+    cid = str(appdb.get_mongo_db()["spreadsheets"].find_one({"name": "Backup"})["_id"])
+    c.post(f"/catalogs/add-row/{cid}", data={"Nombre": "Ana"})
     r = c.get(f"/admin/backup/{ext}")
     assert r.status_code == 200
     assert "attachment" in r.headers.get("Content-Disposition", "")
@@ -833,6 +837,10 @@ def test_backup_con_la_cabecera_del_launcher_se_puede_guardar_desde_python(store
 
     c = _entrar(store_app.test_client())
     c.post("/catalogs/create", data={"name": "Guardar", "headers": "Nombre"})
+    import app.database as appdb
+
+    cid = str(appdb.get_mongo_db()["spreadsheets"].find_one({"name": "Guardar"})["_id"])
+    c.post(f"/catalogs/add-row/{cid}", data={"Nombre": "Ana"})
     # Cliente sin sesión: como urllib en save_file() del launcher, solo con la cabecera
     r = store_app.test_client().get("/admin/backup/csv", headers=launch_headers())
     assert r.status_code == 200 and b"Guardar" in r.data
@@ -847,3 +855,78 @@ def test_el_puente_nativo_se_carga_con_version_nueva_para_no_servir_cache_antigu
     for tpl in ("app/templates/base.html", "app/templates/admin/base.html"):
         src = open(tpl, encoding="utf-8").read()
         assert "edf-native-bridge.js') }}?v=20261028" in src, tpl
+
+
+def _catalogo_para_exportar():
+    h = "8cb8150d9b254f218e9d907f7af638e0"
+    filas = [
+        {
+            "Fecha": "2026-10-28",
+            "Nombre": "Nombre 1",
+            "Descripción": "Descripción, con coma",
+            "Documentación": [f"{h}_manual.pdf", "nota.md"],
+            "images": [f"{h}_foto.jpeg"],
+        }
+    ]
+    return {
+        "name": "Catálogo 1",
+        "description": "d",
+        "headers": ["Fecha", "Nombre", "Descripción", "Documentación"],
+        "rows": filas,
+        "data": filas,
+        "owner": "local@tablateca.local",
+        "_id": "abc",
+        "miniatura": "/static/uploads/x.jpg",
+        "row_count": 1,
+    }
+
+
+def test_csv_legible_una_fila_por_registro_sin_campos_tecnicos():
+    import csv
+    import io
+
+    from app.utils.store_export import catalogos_a_csv
+
+    texto = catalogos_a_csv([_catalogo_para_exportar()])
+    assert texto.startswith("﻿")  # BOM para Excel/Numbers
+    filas = list(csv.reader(io.StringIO(texto.lstrip("﻿"))))
+    assert filas[0] == ["Catálogo", "Fecha", "Nombre", "Descripción", "Documentación", "Imágenes"]
+    assert filas[1] == ["Catálogo 1", "2026-10-28", "Nombre 1", "Descripción, con coma", "manual.pdf; nota.md", "foto.jpeg"]
+    for tecnico in ("_id", "owner", "row_count", "miniatura", "data", "[{"):
+        assert tecnico not in texto
+
+
+def test_csv_de_varios_catalogos_une_columnas():
+    import csv
+    import io
+
+    from app.utils.store_export import catalogos_a_csv
+
+    otro = {"name": "Otro", "headers": ["Nombre", "Precio"], "rows": [{"Nombre": "X", "Precio": "5"}], "data": [{"Nombre": "X", "Precio": "5"}]}
+    filas = list(csv.reader(io.StringIO(catalogos_a_csv([_catalogo_para_exportar(), otro]).lstrip("﻿"))))
+    assert "Precio" in filas[0]
+    assert filas[2][0] == "Otro" and filas[2][filas[0].index("Precio")] == "5"
+    assert filas[1][filas[0].index("Precio")] == ""
+
+
+def test_json_legible_sin_campos_tecnicos():
+    import json
+
+    from app.utils.store_export import catalogos_a_json
+
+    datos = json.loads(catalogos_a_json([_catalogo_para_exportar()]))
+    assert list(datos[0]) == ["name", "description", "headers", "created_at", "updated_at", "rows"]
+    assert datos[0]["rows"][0]["Nombre"] == "Nombre 1" and "images" in datos[0]["rows"][0]
+    assert "_id" not in datos[0] and "owner" not in datos[0] and "data" not in datos[0]
+
+
+def test_backup_csv_de_la_tienda_entrega_el_csv_legible(store_app):
+    c = _entrar(store_app.test_client())
+    c.post("/catalogs/create", data={"name": "Legible", "headers": "Nombre,Notas"})
+    import app.database as appdb
+
+    cid = str(appdb.get_mongo_db()["spreadsheets"].find_one({"name": "Legible"})["_id"])
+    c.post(f"/catalogs/add-row/{cid}", data={"Nombre": "Ana", "Notas": "ok"})
+    cuerpo = c.get("/admin/backup/csv").get_data(as_text=True).lstrip("﻿")
+    assert cuerpo.splitlines()[0] == "Catálogo,Nombre,Notas"
+    assert "Legible,Ana,ok" in cuerpo
