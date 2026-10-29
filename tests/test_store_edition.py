@@ -1254,3 +1254,57 @@ def test_volver_del_catalogo_en_la_tienda_va_siempre_al_listado(store_app):
 
     href = re.search(r'<a href="([^"]*)" class="btn btn-light">\s*<i class="bi bi-arrow-left"></i> Volver', html).group(1)
     assert href.rstrip("/") == "/catalogs"
+
+
+class _SinSeekable:
+    """Como SpooledTemporaryFile en Python 3.10: lee y se posiciona, pero no tiene seekable()."""
+
+    def __init__(self, datos: bytes):
+        import io
+
+        self._f = io.BytesIO(datos)
+        self.read, self.seek, self.tell = self._f.read, self._f.seek, self._f.tell
+
+
+def test_zip_se_importa_aunque_el_upload_no_tenga_seekable_como_en_python_310(zip_app):
+    """Regresión: en el paquete (Python 3.10) el restore fallaba con AttributeError: seekable."""
+    import app.database as appdb
+    from app.store_backup_zip import importar_zip
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Original", "headers": "Nombre"})
+    col = appdb.get_mongo_db()["spreadsheets"]
+    ruta = os.path.join(zip_app.config["UPLOAD_FOLDER"], "k_doc.pdf")
+    with open(ruta, "wb") as f:
+        f.write(b"%PDF")
+    copia = c.get("/admin/backup/zip").data
+    col.delete_many({})
+    os.remove(ruta)
+
+    from app.store_edition import ensure_local_user
+
+    res = importar_zip(
+        appdb.get_mongo_db(),
+        zip_app.config["UPLOAD_FOLDER"],
+        _SinSeekable(copia),
+        zip_app.config["STORE_BACKUP_DIR"],
+        ensure_local_user(appdb.get_mongo_db()),
+    )
+    assert res["catalogos"] == 1 and res["archivos"] == 1
+    assert [d["name"] for d in col.find()] == ["Original"]
+    assert open(ruta, "rb").read() == b"%PDF"
+
+
+def test_zip_sin_seekable_y_corrupto_sigue_dando_mensaje_claro(zip_app):
+    import app.database as appdb
+    from app.store_backup_zip import ZipInvalido, importar_zip
+    from app.store_edition import ensure_local_user
+
+    with pytest.raises(ZipInvalido):
+        importar_zip(
+            appdb.get_mongo_db(),
+            zip_app.config["UPLOAD_FOLDER"],
+            _SinSeekable(b"esto no es un zip"),
+            zip_app.config["STORE_BACKUP_DIR"],
+            ensure_local_user(appdb.get_mongo_db()),
+        )
