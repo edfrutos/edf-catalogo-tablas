@@ -1534,3 +1534,71 @@ def test_drive_sin_credenciales_no_se_puede_conectar(drive_dir, google):
 
     with pytest.raises(store_drive.DriveError):
         store_drive.iniciar_autorizacion(abrir=lambda u: None)
+
+class _SinSeekable:
+    """Como SpooledTemporaryFile en Python 3.10: lee y se posiciona, pero no tiene seekable()."""
+
+    def __init__(self, datos: bytes):
+        import io
+
+        self._f = io.BytesIO(datos)
+        self.read, self.seek, self.tell = self._f.read, self._f.seek, self._f.tell
+
+
+def test_zip_se_importa_aunque_el_upload_no_tenga_seekable_como_en_python_310(zip_app):
+    """Regresión: en el paquete (Python 3.10) el restore fallaba con AttributeError: seekable."""
+    import app.database as appdb
+    from app.store_backup_zip import importar_zip
+
+    c = _entrar(zip_app.test_client())
+    c.post("/catalogs/create", data={"name": "Original", "headers": "Nombre"})
+    col = appdb.get_mongo_db()["spreadsheets"]
+    ruta = os.path.join(zip_app.config["UPLOAD_FOLDER"], "k_doc.pdf")
+    with open(ruta, "wb") as f:
+        f.write(b"%PDF")
+    copia = c.get("/admin/backup/zip").data
+    col.delete_many({})
+    os.remove(ruta)
+
+    from app.store_edition import ensure_local_user
+
+    res = importar_zip(
+        appdb.get_mongo_db(),
+        zip_app.config["UPLOAD_FOLDER"],
+        _SinSeekable(copia),
+        zip_app.config["STORE_BACKUP_DIR"],
+        ensure_local_user(appdb.get_mongo_db()),
+    )
+    assert res["catalogos"] == 1 and res["archivos"] == 1
+    assert [d["name"] for d in col.find()] == ["Original"]
+    assert open(ruta, "rb").read() == b"%PDF"
+
+
+def test_zip_sin_seekable_y_corrupto_sigue_dando_mensaje_claro(zip_app):
+    import app.database as appdb
+    from app.store_backup_zip import ZipInvalido, importar_zip
+    from app.store_edition import ensure_local_user
+
+    with pytest.raises(ZipInvalido):
+        importar_zip(
+            appdb.get_mongo_db(),
+            zip_app.config["UPLOAD_FOLDER"],
+            _SinSeekable(b"esto no es un zip"),
+            zip_app.config["STORE_BACKUP_DIR"],
+            ensure_local_user(appdb.get_mongo_db()),
+        )
+
+
+def test_zip_y_ajustes_muestran_sus_mensajes_en_su_propia_pagina(zip_app):
+    """Regresión: los flash vivían dentro del bloque content de admin/base.html y estas páginas
+    lo sobrescriben; el error se veía después, en otra pantalla."""
+    c = _entrar(zip_app.test_client())
+    r = _importar(c, b"esto no es un zip")
+    assert r.status_code == 302 and r.headers["Location"].endswith("/admin/backup/importar")
+    html = c.get(r.headers["Location"]).get_data(as_text=True)
+    assert "no es un ZIP válido" in html and html.count("no es un ZIP válido") == 1
+
+    c.post("/ajustes/perfil", data={"nombre": ""})
+    html = c.get("/ajustes").get_data(as_text=True)
+    assert "El nombre es obligatorio." in html and html.count("El nombre es obligatorio.") == 1
+    assert "El nombre es obligatorio." not in c.get("/ajustes").get_data(as_text=True)  # ya consumido

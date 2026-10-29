@@ -13,6 +13,7 @@ falla a medias, se restauran los catálogos anteriores.
 
 from __future__ import annotations
 
+import contextlib
 import datetime as _dt
 import json
 import logging
@@ -149,6 +150,23 @@ def _asignar_propietario(doc: dict, usuario: dict) -> None:
         doc["created_by_id"] = str(usuario["_id"])
 
 
+@contextlib.contextmanager
+def _fichero_con_seekable(origen: BinaryIO):
+    """Entrega ``origen`` si ``zipfile`` puede usarlo; si no, una copia en un fichero real.
+
+    Werkzeug entrega los uploads como ``SpooledTemporaryFile``, que en Python 3.10 (el del
+    paquete de la tienda) no tiene ``seekable()``: ``zipfile`` falla con AttributeError al
+    leer cualquier miembro. Desde 3.11 sí lo tiene.
+    """
+    if hasattr(origen, "seekable"):
+        yield origen
+        return
+    with tempfile.TemporaryFile() as copia:
+        shutil.copyfileobj(origen, copia, 1024 * 1024)
+        copia.seek(0)
+        yield copia
+
+
 def importar_zip(
     db,
     carpeta_uploads: str,
@@ -157,6 +175,11 @@ def importar_zip(
     usuario: dict,
 ) -> dict[str, Any]:
     """Sustituye los catálogos y añade los archivos del ZIP. Lanza ``ZipInvalido`` si no vale."""
+    with _fichero_con_seekable(origen) as fichero:
+        return _importar(db, carpeta_uploads, fichero, carpeta_copias, usuario)
+
+
+def _importar(db, carpeta_uploads: str, origen: BinaryIO, carpeta_copias: str, usuario: dict) -> dict[str, Any]:
     try:
         z = zipfile.ZipFile(origen)
     except zipfile.BadZipFile:
