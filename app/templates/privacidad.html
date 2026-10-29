@@ -4,30 +4,34 @@
 {% block content %}
 <div class="container my-5" style="max-width: 820px;">
   <h1 class="mb-1">Política de privacidad de TablaTeca</h1>
-  <p class="text-muted">Última actualización: 28 de octubre de 2026</p>
+  <p class="text-muted">Última actualización: 29 de octubre de 2026</p>
 
   <p>La edición de TablaTeca para la Mac App Store <strong>no recopila, no envía a servidores y no comparte ningún dato personal</strong>.</p>
   <ul>
     <li>Todo lo que introduces (catálogos, filas, imágenes, documentos y archivos multimedia) se guarda únicamente en tu Mac, dentro del contenedor de la aplicación.</li>
     <li>La app no requiere cuenta ni inicio de sesión.</li>
     <li>No usa analítica, publicidad ni cookies de seguimiento, y no incluye SDK de terceros que recojan datos.</li>
-    <li>Funciona sin conexión a internet: solo se comunica con su propio motor local en tu equipo (127.0.0.1).</li>
+    <li>Funciona sin conexión a internet: por defecto solo se comunica con su propio motor local en tu equipo (127.0.0.1).</li>
   </ul>
+  <h2 class="h5 mt-4">Copia opcional en Google Drive</h2>
+  <p>Si, y solo si, tú activas en Ajustes la conexión con Google Drive, TablaTeca se conecta directamente con Google (accounts.google.com y googleapis.com) para autorizar tu cuenta y subir las copias de seguridad que tú pidas, a una carpeta «TablaTeca» de <em>tu</em> Drive. Esos datos van de tu Mac a tu cuenta de Google: no pasan por servidores nuestros y no tenemos acceso a ellos. Se solicita únicamente el permiso <code>drive.file</code> (la app solo ve los archivos que ella misma crea). Las credenciales y el permiso se guardan solo en tu Mac y puedes revocarlos en cualquier momento con «Desconectar» en Ajustes o desde tu cuenta de Google. Si no activas esta función, la app no realiza ninguna conexión externa.</p>
   <p>Puedes eliminar tus datos en cualquier momento desinstalando la aplicación o borrando su carpeta de datos.</p>
   <p>Si tienes dudas sobre esta política, escríbenos desde la <a href="{{ url_for('main.soporte') }}">página de soporte</a>.</p>
 
   <hr class="my-5">
 
   <h1 class="mb-1">TablaTeca privacy policy</h1>
-  <p class="text-muted">Last updated: October 28, 2026</p>
+  <p class="text-muted">Last updated: October 29, 2026</p>
 
   <p>The Mac App Store edition of TablaTeca <strong>does not collect, send to servers or share any personal data</strong>.</p>
   <ul>
     <li>Everything you enter (catalogs, rows, images, documents and media files) is stored only on your Mac, inside the app's container.</li>
     <li>The app requires no account or sign-in.</li>
     <li>It uses no analytics, advertising or tracking cookies, and includes no third-party SDKs that collect data.</li>
-    <li>It works offline: it only talks to its own local engine on your computer (127.0.0.1).</li>
+    <li>It works offline: by default it only talks to its own local engine on your computer (127.0.0.1).</li>
   </ul>
+  <h2 class="h5 mt-4">Optional Google Drive backup</h2>
+  <p>If, and only if, you turn on the Google Drive connection in Settings, TablaTeca connects directly to Google (accounts.google.com and googleapis.com) to authorize your account and upload the backups you request to a "TablaTeca" folder in <em>your own</em> Drive. That data goes from your Mac to your Google account: it does not pass through our servers and we have no access to it. Only the <code>drive.file</code> permission is requested (the app can only see files it creates itself). The credentials and the permission are stored only on your Mac and you can revoke them at any time with "Disconnect" in Settings or from your Google account. If you do not turn this feature on, the app makes no external connections.</p>
   <p>You can delete your data at any time by uninstalling the app or removing its data folder.</p>
   <p>If you have questions about this policy, reach us through the <a href="{{ url_for('main.soporte') }}">support page</a>.</p>
 </div>
