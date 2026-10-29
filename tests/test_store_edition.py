@@ -1308,3 +1308,18 @@ def test_zip_sin_seekable_y_corrupto_sigue_dando_mensaje_claro(zip_app):
             zip_app.config["STORE_BACKUP_DIR"],
             ensure_local_user(appdb.get_mongo_db()),
         )
+
+
+def test_zip_y_ajustes_muestran_sus_mensajes_en_su_propia_pagina(zip_app):
+    """Regresión: los flash vivían dentro del bloque content de admin/base.html y estas páginas
+    lo sobrescriben; el error se veía después, en otra pantalla."""
+    c = _entrar(zip_app.test_client())
+    r = _importar(c, b"esto no es un zip")
+    assert r.status_code == 302 and r.headers["Location"].endswith("/admin/backup/importar")
+    html = c.get(r.headers["Location"]).get_data(as_text=True)
+    assert "no es un ZIP válido" in html and html.count("no es un ZIP válido") == 1
+
+    c.post("/ajustes/perfil", data={"nombre": ""})
+    html = c.get("/ajustes").get_data(as_text=True)
+    assert "El nombre es obligatorio." in html and html.count("El nombre es obligatorio.") == 1
+    assert "El nombre es obligatorio." not in c.get("/ajustes").get_data(as_text=True)  # ya consumido
