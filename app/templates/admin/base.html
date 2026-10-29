@@ -359,7 +359,8 @@
             {% endif %}
           </ul>
           {% if is_store_edition|default(false) %}
-          <span class="navbar-text text-light"><i class="bi bi-person"></i> Usuario local</span>
+          <a class="text-light me-3 text-decoration-none" href="/ajustes"><i class="bi bi-gear"></i> Ajustes</a>
+          <span class="navbar-text text-light"><i class="bi bi-person"></i> {{ session.get('nombre') or 'Usuario local' }}</span>
           {% else %}
           <div class="d-flex">
             <div class="dropdown">

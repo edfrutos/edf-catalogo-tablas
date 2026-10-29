@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+{% block title %}Ajustes - TablaTeca{% endblock %}
+{% block content %}
+<div class="container my-4" style="max-width: 820px;">
+  <h2 class="mb-4"><i class="bi bi-gear"></i> Ajustes</h2>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-header"><strong>Perfil del propietario</strong></div>
+    <div class="card-body">
+      <p class="text-muted small">Estos datos se guardan solo en tu Mac; no se envían a ningún servidor.</p>
+      <form method="post" action="{{ url_for('store_settings.guardar_perfil') }}">
+        <div class="mb-3">
+          <label class="form-label" for="nombre">Nombre</label>
+          <input class="form-control" id="nombre" name="nombre" maxlength="100" required
+                 value="{{ ajustes.nombre or session.get('nombre', '') }}" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="email">Correo electrónico (opcional)</label>
+          <input class="form-control" type="email" id="email" name="email" maxlength="254"
+                 value="{{ ajustes.email }}" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="organizacion">Organización (opcional)</label>
+          <input class="form-control" id="organizacion" name="organizacion" maxlength="120"
+                 value="{{ ajustes.organizacion }}" />
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Guardar perfil</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-header"><strong>Carpeta de copias de seguridad</strong></div>
+    <div class="card-body">
+      {% if carpeta_activa %}
+      <p class="mb-2">Carpeta actual: <code>{{ carpeta_activa }}</code></p>
+      {% elif ajustes.carpeta %}
+      <div class="alert alert-warning py-2">
+        La carpeta <code>{{ ajustes.carpeta }}</code> ya no es accesible. Vuelve a elegirla.
+      </div>
+      {% else %}
+      <p class="text-muted">Aún no has elegido ninguna carpeta.</p>
+      {% endif %}
+
+      <form id="form-carpeta" method="post" action="{{ url_for('store_settings.guardar_carpeta') }}" class="mb-3">
+        <input type="hidden" name="marcador" id="marcador" value="" />
+        <div class="input-group">
+          <input class="form-control" name="carpeta" id="carpeta" placeholder="/Users/tu-usuario/Documentos/Copias TablaTeca" value="{{ ajustes.carpeta }}" />
+          <button class="btn btn-outline-secondary" type="button" id="elegir"><i class="bi bi-folder2-open"></i> Elegir carpeta…</button>
+          <button class="btn btn-primary" type="submit">Guardar</button>
+        </div>
+        <div class="form-text">macOS pedirá permiso para acceder a la carpeta que elijas con «Elegir carpeta…».</div>
+      </form>
+
+      <div class="d-flex gap-2">
+        <form method="post" action="{{ url_for('store_settings.guardar_copia') }}">
+          <button class="btn btn-success" type="submit" {% if not carpeta_activa %}disabled{% endif %}>
+            <i class="bi bi-file-earmark-zip"></i> Guardar copia ahora en esa carpeta
+          </button>
+        </form>
+        {% if ajustes.carpeta %}
+        <form method="post" action="{{ url_for('store_settings.olvidar_carpeta') }}">
+          <button class="btn btn-outline-danger" type="submit">Quitar carpeta</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function () {
+    var boton = document.getElementById('elegir');
+    boton.addEventListener('click', function () {
+      var api = window.pywebview && window.pywebview.api;
+      if (!api || !api.choose_folder) {
+        alert('Escribe la ruta de la carpeta en el campo y pulsa Guardar.');
+        return;
+      }
+      api.choose_folder().then(function (r) {
+        if (!r || !r.carpeta) return;
+        document.getElementById('carpeta').value = r.carpeta;
+        document.getElementById('marcador').value = r.marcador || '';
+        document.getElementById('form-carpeta').submit();
+      });
+    });
+  })();
+</script>
+{% endblock %}
