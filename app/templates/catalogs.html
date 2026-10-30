@@ -104,9 +104,11 @@
                             <p class="card-text">
                                 <strong>Columnas:</strong> {{ catalog.headers|length }}
                             </p>
+                            {% if not is_store_edition|default(false) %}
                             <p class="card-text">
                                 <strong>Creado por:</strong> {{ catalog.created_by }}
                             </p>
+                            {% endif %}
                             {% if catalog.created_at %}
                             <p class="card-text">
                                 <strong>Fecha de creación:</strong> {{ catalog.created_at_formatted if catalog.created_at_formatted else 'N/A' }}

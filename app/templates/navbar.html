@@ -45,9 +45,9 @@
                 </li>
                 {% endif %}
             </ul>
-            <div class="d-flex">
+            <div class="d-flex align-items-center">
                 {% if is_store_edition|default(false) %}
-                <a class="text-light me-3 text-decoration-none" href="/ajustes"><i class="fas fa-gear"></i> Ajustes</a>
+                <a class="navbar-text text-light me-3 text-decoration-none" href="/ajustes"><i class="fas fa-gear"></i> Ajustes</a>
                 <span class="navbar-text text-light"><i class="fas fa-user"></i> {{ session.get('nombre') or 'Usuario local' }}</span>
                 {% elif 'username' in session %}
                 <div class="dropdown">
