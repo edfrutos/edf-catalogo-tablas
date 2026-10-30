@@ -545,8 +545,8 @@
       <div class="row">
         <div class="col-md-6">
           <small class="text-muted">
-            <i class="bi bi-calendar"></i> <strong>Creada:</strong> {{ table.created_at }}<br>
-            <i class="bi bi-person"></i> <strong>Propietario:</strong> {{ table.owner }}
+            <i class="bi bi-calendar"></i> <strong>Creada:</strong> {{ table.created_at }}{% if not is_store_edition|default(false) %}<br>
+            <i class="bi bi-person"></i> <strong>Propietario:</strong> {{ table.owner }}{% endif %}
           </small>
         </div>
         <div class="col-md-6">

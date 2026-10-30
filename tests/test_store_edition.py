@@ -1619,3 +1619,37 @@ def test_modal_imagen_ocupa_el_area_disponible():
     assert "object-fit: contain" in bloque
     assert "width: auto" not in js
     assert js.count("\n            height: 70vh !important;") == 2
+
+
+def test_propietario_oculto_en_edicion_store():
+    """En la edición store no hay usuarios: la ficha del catálogo no debe
+    mostrar 'Propietario' (ni 'Creado por'), y en la web sigue visible."""
+    import re
+    from pathlib import Path
+
+    from jinja2 import Environment
+
+    raiz = Path(__file__).resolve().parent.parent / "app/templates"
+    for nombre, etiqueta in (
+        ("admin/ver_catalogo.html", "Propietario:"),
+        ("ver_tabla.html", "Propietario:"),
+        ("catalogo_creado.html", "Creado por:"),
+    ):
+        fuente = (raiz / nombre).read_text(encoding="utf-8")
+        # Toda aparición de la etiqueta debe estar dentro de un bloque
+        # {% if not is_store_edition|default(false) %} ... {% endif %}.
+        for m in re.finditer(re.escape(etiqueta), fuente):
+            antes = fuente[: m.start()]
+            abre = antes.rfind("{% if not is_store_edition|default(false) %}")
+            cierra = antes.rfind("{% endif %}")
+            assert abre != -1 and abre > cierra, f"{nombre}: '{etiqueta}' sin guarda store"
+
+    # Comprobación de comportamiento sobre el fragmento de ver_catalogo
+    frag = (
+        "{% if not is_store_edition|default(false) %}"
+        "<span>Propietario: {{ o }}</span>{% endif %}"
+    )
+    env = Environment()
+    assert "Propietario" not in env.from_string(frag).render(o="x", is_store_edition=True)
+    assert "Propietario" in env.from_string(frag).render(o="x", is_store_edition=False)
+    assert "Propietario" in env.from_string(frag).render(o="x")
