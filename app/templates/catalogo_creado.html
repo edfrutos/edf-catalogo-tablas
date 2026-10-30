@@ -25,10 +25,12 @@
                                     <th style="width: 30%">Nombre:</th>
                                     <td>{{ catalog.name }}</td>
                                 </tr>
+                                {% if not is_store_edition|default(false) %}
                                 <tr>
                                     <th>Creado por:</th>
                                     <td>{{ catalog.owner_name }}</td>
                                 </tr>
+                                {% endif %}
                                 <tr>
                                     <th>Fecha de creación:</th>
                                     <td>{{ catalog.created_at }}</td>
