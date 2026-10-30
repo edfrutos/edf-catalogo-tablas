@@ -1653,3 +1653,22 @@ def test_propietario_oculto_en_edicion_store():
     assert "Propietario" not in env.from_string(frag).render(o="x", is_store_edition=True)
     assert "Propietario" in env.from_string(frag).render(o="x", is_store_edition=False)
     assert "Propietario" in env.from_string(frag).render(o="x")
+
+
+def test_navbar_store_alineada_y_sin_creado_por():
+    """Regresión: 'Ajustes' (un <a> sin relleno) quedaba 8 px más arriba que
+    el nombre de usuario (navbar-text). Ambos deben compartir el mismo estilo
+    de bloque y el contenedor centrar en vertical. Además, las tarjetas de
+    catálogos no muestran 'Creado por' en la edición store."""
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parent.parent / "app/templates"
+    nav = (raiz / "navbar.html").read_text(encoding="utf-8")
+    assert '<div class="d-flex align-items-center">' in nav
+    linea = next(l for l in nav.splitlines() if 'href="/ajustes"' in l)
+    assert "navbar-text" in linea
+
+    cat = (raiz / "catalogs.html").read_text(encoding="utf-8")
+    pos = cat.index("<strong>Creado por:</strong>")
+    antes = cat[:pos]
+    assert antes.rfind("{% if not is_store_edition|default(false) %}") > antes.rfind("{% endif %}")
