@@ -131,13 +131,7 @@ Responde «Ninguno» a todos los contenidos (violencia, sexo, juego, terror, alc
 
 **Decidido por el titular:** `ITSAppUsesNonExemptEncryption = false` (ya fijado en `packaging/mas/TablaTeca_mas.spec`; desde el build 35 App Store Connect no volverá a preguntar). Es una declaración del titular: la edición de tienda no implementa cifrado propio.
 
-El `Info.plist` **no** declara `ITSAppUsesNonExemptEncryption`, así que App Store Connect preguntará por esto en cada build (aparece como «Missing Compliance» en TestFlight).
-
-Hechos: la edición de tienda solo usa HTTP local en `127.0.0.1` y no cifra datos propios; el intérprete de Python empaquetado incluye las bibliotecas estándar de TLS, aunque la app no las usa en esta edición.
-
-Opciones:
-1. Responder en la web en cada subida (sin cambios de código).
-2. Declarar `ITSAppUsesNonExemptEncryption = false` en el `Info.plist` (se haría en `packaging/mas/TablaTeca_mas.spec`), una vez estés seguro de que es veraz. **No estoy seguro** de que las bibliotecas empaquetadas obliguen a otra respuesta: es una declaración legal tuya. Si hay dudas, consúltalo con Apple o con un asesor de exportación antes de fijarlo.
+Pregunta de App Store Connect, si apareciera: «¿Usa cifrado?» → **No** (la edición de tienda solo usa HTTP local en `127.0.0.1` y no cifra datos propios). Con la clave ya en el `Info.plist` no debe preguntar; si lo hiciera, avísame con una captura.
 
 ## 7. Notas para el revisor (App Review Information)
 
@@ -166,17 +160,32 @@ Why this is more than a website (Guideline 4.2): the app is a self-contained des
 
 **Riesgo conocido (Guideline 4.2, funcionalidad mínima):** la app es una interfaz web empaquetada (pywebview + Flask). El texto anterior defiende su valor local y offline; aun así Apple puede pedir más funciones «nativas». Ya incluye copia completa en ZIP (exportar/importar). Ya incluye también Ajustes (perfil, carpeta de copias y Google Drive opcional). Refuerzos posibles si lo piden: arrastrar y soltar archivos, atajos de teclado y menús de macOS.
 
-## 8. Capturas de pantalla (Mac)
+## 8. Capturas de pantalla (Mac): guión
 
-Obligatorio al menos 1 y máximo 10, en una de estas resoluciones (16:10): 1280×800, 1440×900, 2560×1600 o 2880×1800. Formato PNG o JPEG, sin transparencia. Capturas sugeridas, con datos de ejemplo no personales:
-1. Dashboard con varios catálogos.
-2. Vista de un catálogo con filas, imágenes y documentos.
-3. Modal de imagen ampliada.
-4. Visor de PDF abierto.
-5. Formulario de «Añadir fila».
-6. Exportación CSV/JSON (menú Backups).
+**Formato:** mínimo 1, máximo 10. Una de estas medidas (16:10): 1280×800, 1440×900, 2560×1600 o 2880×1800. PNG o JPEG, **sin transparencia** (las capturas de ventana con ⇧⌘5 llevan sombra transparente: usa «Capturar pantalla completa» o recorta a la medida exacta). Todas del **mismo build final** (el que vas a enviar a revisión).
 
-Se pueden hacer con ⇧⌘5 sobre la ventana ajustada al tamaño elegido.
+**Preparación**
+1. Escritorio limpio, fondo liso, resolución escalada que dé 16:10 (por ejemplo 1440×900 en «Más espacio» o 1280×800).
+2. Datos de ejemplo **no personales**: 3-4 catálogos con nombre neutro (p. ej. «Herramientas», «Libros», «Plantas», «Inventario taller»), miniaturas, y un catálogo principal con 6-8 filas con imagen, un PDF y un vídeo.
+3. Sin nombres reales, rutas de usuario, correo ni datos de Drive visibles en pantalla.
+4. Ventana de la app maximizada a la medida elegida.
+
+**Orden recomendado (la primera es la que más pesa en la ficha)**
+
+| # | Pantalla | Qué debe verse |
+|---|---|---|
+| 1 | Dashboard | Varios catálogos con miniatura |
+| 2 | Vista de un catálogo | Filas con imágenes y botones de documento/multimedia |
+| 3 | Modal de imagen ampliada | Imagen a tamaño completo del área (verifica que ocupa todo el modal) |
+| 4 | Visor de PDF | PDF abierto dentro de la app |
+| 5 | «Añadir fila» | Formulario con campos y adjuntos |
+| 6 | Menú Backups | Opciones CSV/JSON y Copia completa (ZIP) |
+| 7 | Ajustes (opcional) | Perfil y carpeta de copias; **sin** conectar Drive |
+
+**Comprobaciones antes de subirlas**
+- Medida exacta y sin canal alfa: `sips -g pixelWidth -g pixelHeight -g hasAlpha *.png` (debe decir `hasAlpha: no`).
+- Ninguna muestra «Creado por», «Propietario» ni usuario (en la edición de tienda ya están ocultos desde el build 50).
+- Revisa que la barra de menús y el Dock no muestren datos personales ni otras apps.
 
 ## 9. Lista de pasos en App Store Connect
 
@@ -188,3 +197,14 @@ Se pueden hacer con ⇧⌘5 sobre la ventana ajustada al tamaño elegido.
 6. Precio: **gratuita** (decidido); elegir disponibilidad por territorios.
 7. Revisar que los builds de pruebas antiguos están expirados en TestFlight.
 8. Enviar a revisión.
+
+## 10. Datos que tienes que aportar tú (resumen)
+
+| Campo | Dónde | Estado |
+|---|---|---|
+| Nombre, correo y teléfono de contacto de revisión | App Review Information | **[TUYO]** |
+| Categoría secundaria | Información de la app | **[DECIDIR]** (opcional) |
+| Fecha y correo de soporte en la política de privacidad | `https://catalogo.efjdev.com/privacidad` | Comprobar que la página publicada los muestra |
+| Capturas (apartado 8) | Versión 1.0 > Mac | Pendiente |
+| Comprobación de red con `lsof` (apartado 4) | Antes de marcar «Data Not Collected» | Pendiente |
+| Build 50 elegido y builds 48/49 y anteriores caducados | Versión 1.0 / TestFlight | Pendiente |
