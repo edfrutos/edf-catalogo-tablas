@@ -10,7 +10,7 @@
 ## Activación del entorno
 
 ```bash
-cd /Users/edefrutos/docker-python-patched/edf-catalogo-tablas
+cd /Volumes/AppleStore/edf-catalogo-tablas
 source .venv/bin/activate
 ```
 
