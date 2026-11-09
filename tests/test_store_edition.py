@@ -1889,6 +1889,10 @@ def test_tienda_neutraliza_las_variables_de_s3_y_no_usa_el_proxy_bloqueado(monke
     try:
         assert os.environ["USE_S3"] == "false" and os.environ["S3_BUCKET_NAME"] == ""
         assert os.environ["AWS_ACCESS_KEY_ID"] == "" and os.environ["AWS_SECRET_ACCESS_KEY"] == ""
+        assert not aplicacion.config.get("USE_S3")
+        for clave in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "S3_BUCKET_NAME"):
+            assert not aplicacion.config.get(clave), clave
+        assert _entrar(aplicacion.test_client()).get("/s3/x.png").status_code == 404
 
         def _no_debe_llamarse(*a, **k):
             raise AssertionError("la tienda no puede crear un cliente de S3")

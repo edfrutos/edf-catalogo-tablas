@@ -167,6 +167,7 @@ BLOCKED_PREFIXES = (
     "/admin/restore-drive-backup",
     "/admin/restore-local-backup",
     "/admin/s3",
+    "/s3/",
     "/admin/generate-presigned-url",
     "/api/config",
     # sistema, mantenimiento, logs y herramientas
@@ -246,6 +247,11 @@ def disable_remote_storage() -> list:
 
 def init_store_edition(app) -> None:
     disable_remote_storage()
+    # ``config.Config`` ya copió esos valores a app.config antes de llegar aquí: también ahí
+    # (los usa init_extensions para crear el cliente S3 y rutas que leen current_app.config).
+    for name in REMOTE_STORAGE_ENV:
+        if name in app.config:
+            app.config[name] = False if name == "USE_S3" else ""
 
     @app.before_request
     def _store_gate():
