@@ -231,6 +231,11 @@ document.getElementById('goTopBtn').onclick = function() {
 <!-- Script unificado de modales (cargado una sola vez globalmente) -->
 <script src="{{ url_for('static', filename='js/edf-native-bridge.js') }}?v=20261029"></script>
 <script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
+{# Atajos de teclado y vista previa con Espacio: solo en la edición de tienda #}
+{% if is_store_edition|default(false) %}
+<script src="{{ url_for('static', filename='js/store-atajos.js') }}?v=20261109"></script>
+<script src="{{ url_for('static', filename='js/store-arrastrar.js') }}?v=20261109"></script>
+{% endif %}
 <!-- Scripts de solución de problemas MP4 (cargados globalmente para evitar duplicaciones)
 <script>
 // Verificar si los scripts ya fueron cargados para evitar duplicaciones

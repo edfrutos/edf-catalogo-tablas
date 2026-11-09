@@ -429,6 +429,11 @@
     <!-- Modal functions para admin -->
     <script src="{{ url_for('static', filename='js/edf-native-bridge.js') }}?v=20261029"></script>
     <script src="{{ url_for('static', filename='js/modal-functions-UNIFIED.js') }}?v={{ range(1, 10000) | random }}"></script>
+    {# Atajos de teclado y vista previa con Espacio: solo en la edición de tienda #}
+    {% if is_store_edition|default(false) %}
+    <script src="{{ url_for('static', filename='js/store-atajos.js') }}?v=20261109"></script>
+    <script src="{{ url_for('static', filename='js/store-arrastrar.js') }}?v=20261109"></script>
+    {% endif %}
     {% block scripts %}{% endblock %}
     <!-- Botón Ir Arriba -->
     <button
