@@ -1672,3 +1672,191 @@ def test_navbar_store_alineada_y_sin_creado_por():
     pos = cat.index("<strong>Creado por:</strong>")
     antes = cat[:pos]
     assert antes.rfind("{% if not is_store_edition|default(false) %}") > antes.rfind("{% endif %}")
+
+
+# ------------------------------------- atajos de teclado y vista previa (tienda)
+def test_atajos_se_cargan_en_la_tienda_y_se_sirven(store_app):
+    import app.database as appdb
+
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+    html = c.get(f"/admin/catalogo/spreadsheets/{cid}").get_data(as_text=True)
+    assert "js/store-atajos.js" in html
+    r = c.get("/static/js/store-atajos.js")
+    assert r.status_code == 200 and b"__tablatecaAtajos" in r.data
+
+
+def test_atajos_solo_dentro_del_bloque_de_la_edicion_de_tienda():
+    """La edición estándar no debe cargar el script: en cada plantilla base la referencia
+    vive dentro de ``{% if is_store_edition|default(false) %}`` y el bloque se cierra
+    justo después."""
+    import re
+
+    raiz = os.path.join(os.path.dirname(__file__), "..", "app", "templates")
+    for nombre in ("base.html", os.path.join("admin", "base.html")):
+        with open(os.path.join(raiz, nombre), encoding="utf-8") as f:
+            src = f.read()
+        assert src.count("store-atajos.js") == 1, nombre
+        assert src.count("store-arrastrar.js") == 1, nombre
+        pos = src.index("store-atajos.js")
+        assert pos < src.index("store-arrastrar.js"), nombre
+        abierto = src.rfind("{% if", 0, pos)
+        assert src[abierto:].startswith("{% if is_store_edition|default(false) %}"), nombre
+        cierre = src.index("{% endif %}", pos)
+        assert "{% if" not in src[pos:cierre], nombre
+        assert src.index("store-arrastrar.js") < cierre, nombre
+        assert re.search(r"\{%\s*endif\s*%\}", src[cierre:cierre + 12]), nombre
+
+
+def test_atajos_dependen_de_elementos_que_existen_en_las_plantillas():
+    """El script localiza la tabla, el buscador y los visores por selector; si alguien
+    renombra uno de ellos, el atajo dejaría de funcionar en silencio."""
+    raiz = os.path.join(os.path.dirname(__file__), "..", "app", "templates")
+
+    def leer(*partes):
+        with open(os.path.join(raiz, *partes), encoding="utf-8") as f:
+            return f.read()
+
+    # Vista de tabla de la tienda (catálogo en el panel) y vista de tabla clásica.
+    for tabla, enlace_nueva in (
+        (leer("admin", "ver_catalogo.html"), "catalogs.add_row"),
+        (leer("ver_tabla.html"), "agregar_fila"),
+    ):
+        for pieza in ('id="tablaFilas"', 'id="searchInput"', enlace_nueva, "showImageModal(", "showMultimediaModal("):
+            assert pieza in tabla, pieza
+        assert "showDocumentModal(" in tabla
+    assert 'id="backupDropdown"' in leer("admin", "base.html")
+    assert 'href="/ajustes"' in leer("navbar.html")
+
+
+def test_arrastrar_se_carga_en_la_tienda_y_se_sirve(store_app):
+    import app.database as appdb
+
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+    html = c.get(f"/admin/catalogo/spreadsheets/{cid}").get_data(as_text=True)
+    assert "js/store-arrastrar.js" in html
+    r = c.get("/static/js/store-arrastrar.js")
+    assert r.status_code == 200 and b"__tablatecaArrastrar" in r.data
+
+
+def test_arrastrar_depende_de_los_nombres_de_los_campos_de_archivo():
+    """El reparto de archivos arrastrados se apoya en el nombre (``images``,
+    ``<columna>_file``, ``<columna>_file_N``) y en ``accept`` de los campos de los
+    formularios de añadir y editar fila. Si cambian, el arrastre dejaría de colocarlos."""
+    import re
+
+    raiz = os.path.join(os.path.dirname(__file__), "..", "app", "templates")
+    formularios = [
+        os.path.join("catalogos", "add_row.html"),
+        os.path.join("catalogos", "edit_row.html"),
+        os.path.join("admin", "agregar_fila.html"),
+        os.path.join("admin", "editar_fila.html"),
+    ]
+    for nombre in formularios:
+        with open(os.path.join(raiz, nombre), encoding="utf-8") as f:
+            src = f.read()
+        campos = re.findall(r"<input[^>]*type=\"file\"[^>]*>", src, flags=re.S)
+        nombres = [re.search(r'name="([^"]+)"', c).group(1) for c in campos if 'name="' in c]
+        assert "images" in nombres, nombre
+        assert any(n.endswith("_file }}") or n.endswith("_file") for n in nombres), nombre
+        assert any("_file_" in n for n in nombres), nombre
+        assert all("accept=" in c for c in campos if 'name="images"' in c or "_file" in c), nombre
+
+
+# ------------------------------------------------- menú nativo «Archivo» (tienda)
+def _launcher_menu_ns(monkeypatch, store):
+    """Carga solo las funciones del menú del launcher, con ``webview`` real (sin GUI)."""
+    import ast
+    import json
+    import pathlib
+
+    import webview
+
+    src = (pathlib.Path(__file__).resolve().parents[1] / "launcher_native_websockets.py").read_text()
+    tree = ast.parse(src)
+    wanted = {"_store_edition", "_accion_de_menu", "_menu_nativo"}
+    code = "\n".join(ast.get_source_segment(src, n) for n in tree.body
+                     if isinstance(n, ast.FunctionDef) and n.name in wanted)
+    ns = {"PORT": 5004, "json": json, "webview": webview}
+    exec(code, ns)  # noqa: S102 - solo funciones del propio launcher
+    if store:
+        monkeypatch.setenv("EDF_EDITION", "store")
+    else:
+        monkeypatch.delenv("EDF_EDITION", raising=False)
+    return ns
+
+
+def test_menu_nativo_solo_existe_en_la_tienda(monkeypatch):
+    assert _launcher_menu_ns(monkeypatch, store=False)["_menu_nativo"]() == []
+
+
+def test_menu_nativo_de_la_tienda_tiene_las_acciones_esperadas(monkeypatch):
+    from webview.menu import Menu, MenuAction, MenuSeparator
+
+    menu = _launcher_menu_ns(monkeypatch, store=True)["_menu_nativo"]()
+    assert len(menu) == 1 and isinstance(menu[0], Menu) and menu[0].title == "Archivo"
+    acciones = [i.title for i in menu[0].items if isinstance(i, MenuAction)]
+    assert acciones == [
+        "Nueva fila (⌘N)",
+        "Buscar en la tabla (⌘F)",
+        "Copias de seguridad (⌘B)",
+        "Ajustes (⌘,)",
+    ]
+    assert sum(isinstance(i, MenuSeparator) for i in menu[0].items) == 2
+
+
+def test_cada_accion_del_menu_llama_a_la_misma_funcion_de_la_pagina(monkeypatch):
+    import webview
+    from webview.menu import MenuAction
+
+    ns = _launcher_menu_ns(monkeypatch, store=True)
+    llamadas = []
+
+    class _Ventana:
+        def evaluate_js(self, codigo):
+            llamadas.append(codigo)
+
+    monkeypatch.setattr(webview, "windows", [_Ventana()])
+    for item in [i for i in ns["_menu_nativo"]()[0].items if isinstance(i, MenuAction)]:
+        item.function()
+    assert llamadas == [
+        'window.tablatecaAccion && window.tablatecaAccion("nueva-fila")',
+        'window.tablatecaAccion && window.tablatecaAccion("buscar")',
+        'window.tablatecaAccion && window.tablatecaAccion("copias")',
+        'window.tablatecaAccion && window.tablatecaAccion("ajustes")',
+    ]
+
+
+def test_accion_del_menu_sin_ventana_o_con_error_no_rompe_la_app(monkeypatch):
+    import webview
+
+    ns = _launcher_menu_ns(monkeypatch, store=True)
+    monkeypatch.setattr(webview, "windows", [])
+    ns["_accion_de_menu"]("buscar")()  # sin ventana: no hace nada
+
+    class _Rota:
+        def evaluate_js(self, codigo):
+            raise RuntimeError("página no lista")
+
+    monkeypatch.setattr(webview, "windows", [_Rota()])
+    ns["_accion_de_menu"]("buscar")()  # el error se registra, no se propaga
+
+
+def test_el_launcher_pasa_el_menu_a_webview_start():
+    import pathlib
+
+    src = (pathlib.Path(__file__).resolve().parents[1] / "launcher_native_websockets.py").read_text()
+    assert "menu=_menu_nativo()" in src
+
+
+def test_los_nombres_de_accion_del_menu_existen_en_el_javascript():
+    import pathlib
+    import re
+
+    raiz = pathlib.Path(__file__).resolve().parents[1]
+    js = (raiz / "app" / "static" / "js" / "store-atajos.js").read_text()
+    py = (raiz / "launcher_native_websockets.py").read_text()
+    en_python = set(re.findall(r'_accion_de_menu\("([a-z-]+)"\)', py))
+    en_js = set(re.findall(r'"?([a-z-]+)"?\s*:\s*"[nfb,]"', js.split("ACCIONES_MENU =")[1].split("}")[0]))
+    assert en_python and en_python == en_js

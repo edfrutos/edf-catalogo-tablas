@@ -5,6 +5,7 @@ Ejecuta la aplicación web Flask en una ventana nativa de macOS
 con soporte para WebSockets en tiempo real
 """
 
+import json
 import os
 import socket
 import subprocess
@@ -344,6 +345,50 @@ def _launch_headers():
     return {}
 
 
+def _accion_de_menu(nombre):
+    """Devuelve la función que ejecuta una acción del menú «Archivo».
+
+    No duplica lógica: llama en la página a ``window.tablatecaAccion`` (definida en
+    app/static/js/store-atajos.js), el mismo código que usan los atajos de teclado.
+    """
+
+    def _ejecutar():
+        try:
+            if webview.windows:
+                codigo = f"window.tablatecaAccion && window.tablatecaAccion({json.dumps(nombre)})"
+                webview.windows[0].evaluate_js(codigo)
+        except Exception as exc:
+            print(f"⚠️ Acción de menú «{nombre}» no disponible: {exc}")
+
+    return _ejecutar
+
+
+def _menu_nativo():
+    """Menú «Archivo» de la edición de tienda (en la estándar no cambia nada).
+
+    pywebview conserva los menús por defecto (aplicación, Visualización y Edición) y
+    añade este. Sus opciones no admiten atajo nativo, por eso el atajo va en el título;
+    la tecla la gestiona store-atajos.js.
+    """
+    if not _store_edition():
+        return []
+    from webview.menu import Menu, MenuAction, MenuSeparator
+
+    return [
+        Menu(
+            "Archivo",
+            [
+                MenuAction("Nueva fila (⌘N)", _accion_de_menu("nueva-fila")),
+                MenuAction("Buscar en la tabla (⌘F)", _accion_de_menu("buscar")),
+                MenuSeparator(),
+                MenuAction("Copias de seguridad (⌘B)", _accion_de_menu("copias")),
+                MenuSeparator(),
+                MenuAction("Ajustes (⌘,)", _accion_de_menu("ajustes")),
+            ],
+        )
+    ]
+
+
 def wait_for_server(max_attempts=60):
     """Espera a que el servidor Flask esté listo"""
     last_error = None
@@ -465,6 +510,7 @@ def main():
             window,
             debug=os.environ.get("EDF_WEBVIEW_DEBUG") == "1",
             gui="native",
+            menu=_menu_nativo(),
             private_mode=False,
         )
 
