@@ -6,7 +6,7 @@
  *   ⌘B   menú de copias de seguridad (o ir al panel si no está en pantalla)
  *   ⌘,   Ajustes
  *   ↑ ↓  seleccionar fila de la tabla
- *   Espacio  vista previa del primer adjunto de la fila seleccionada
+ *   Espacio  vista previa de la fila seleccionada (imagen; si no hay, multimedia; si no, documento)
  *
  * Reutiliza los visores que ya existen (showImageModal, showMultimediaModal,
  * showDocumentModal): no añade ninguna ruta ni dependencia.
@@ -38,11 +38,21 @@
     return !!document.querySelector(".modal.show");
   }
 
+  // Visible = ni la fila ni ningún ancestro está oculto. Se usan los estilos calculados y no
+  // getClientRects(): en WKWebView las filas de tabla pueden devolver una lista vacía y las
+  // flechas dejaban de funcionar aunque Espacio y el clic sí lo hacían.
+  function esVisible(el) {
+    for (var nodo = el; nodo && nodo !== document.documentElement; nodo = nodo.parentElement) {
+      if (nodo.hidden) return false;
+      var estilo = window.getComputedStyle(nodo);
+      if (estilo.display === "none" || (nodo === el && estilo.visibility === "hidden")) return false;
+    }
+    return true;
+  }
+
   function filasVisibles() {
     var filas = document.querySelectorAll("#tablaFilas tbody tr");
-    return Array.prototype.filter.call(filas, function (fila) {
-      return fila.getClientRects().length > 0;
-    });
+    return Array.prototype.filter.call(filas, esVisible);
   }
 
   function seleccionar(fila) {
@@ -67,11 +77,16 @@
     return true;
   }
 
+  // Orden de preferencia de la vista previa: primero la imagen, luego multimedia y por último
+  // el documento, con independencia del orden de las columnas de la tabla.
+  var VISORES = [/showImageModal\s*\(/, /showMultimediaModal\s*\(/, /showDocumentModal\s*\(/];
+
   function disparadorVistaPrevia(fila) {
     var candidatos = fila.querySelectorAll("[onclick]");
-    for (var i = 0; i < candidatos.length; i++) {
-      var codigo = candidatos[i].getAttribute("onclick") || "";
-      if (/show(Image|Multimedia|Document)Modal\s*\(/.test(codigo)) return candidatos[i];
+    for (var v = 0; v < VISORES.length; v++) {
+      for (var i = 0; i < candidatos.length; i++) {
+        if (VISORES[v].test(candidatos[i].getAttribute("onclick") || "")) return candidatos[i];
+      }
     }
     return null;
   }

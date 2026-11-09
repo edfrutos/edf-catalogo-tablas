@@ -20,6 +20,7 @@ from __future__ import annotations
 import datetime as _dt
 import hmac
 import logging
+import os
 import secrets
 import threading
 from urllib.parse import urlsplit
@@ -166,6 +167,7 @@ BLOCKED_PREFIXES = (
     "/admin/restore-drive-backup",
     "/admin/restore-local-backup",
     "/admin/s3",
+    "/s3/",
     "/admin/generate-presigned-url",
     "/api/config",
     # sistema, mantenimiento, logs y herramientas
@@ -215,7 +217,42 @@ def _has_local_session() -> bool:
     )
 
 
+# Variables que activan S3/AWS. La edición de tienda es solo local (los paneles de S3 están
+# bloqueados y la ficha de privacidad declara que no sale nada del equipo), así que se
+# anulan al arrancar aunque el entorno o un ``.env`` empaquetado por error las traiga:
+# si no, las tablas pedirían las imágenes a ``/admin/s3/…`` (bloqueada) y las subidas
+# se copiarían a un bucket.
+REMOTE_STORAGE_ENV = (
+    "USE_S3",
+    "S3_BUCKET_NAME",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_SESSION_TOKEN",
+)
+
+
+def disable_remote_storage() -> list:
+    """Neutraliza las variables de S3/AWS; devuelve las que traían un valor.
+
+    Se dejan definidas pero vacías (``USE_S3=false``) en vez de borrarlas: así un
+    ``load_dotenv()`` posterior, que no pisa las variables existentes, no las repone.
+    """
+    activas = [name for name in REMOTE_STORAGE_ENV if os.environ.get(name)]
+    for name in REMOTE_STORAGE_ENV:
+        os.environ[name] = "false" if name == "USE_S3" else ""
+    if activas:
+        logger.warning("Edición de tienda: se ignoran las variables de S3/AWS %s", activas)
+    return activas
+
+
 def init_store_edition(app) -> None:
+    disable_remote_storage()
+    # ``config.Config`` ya copió esos valores a app.config antes de llegar aquí: también ahí
+    # (los usa init_extensions para crear el cliente S3 y rutas que leen current_app.config).
+    for name in REMOTE_STORAGE_ENV:
+        if name in app.config:
+            app.config[name] = False if name == "USE_S3" else ""
+
     @app.before_request
     def _store_gate():
         if not _host_is_local() or _cross_origin_write():

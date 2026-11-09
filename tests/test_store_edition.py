@@ -1860,3 +1860,75 @@ def test_los_nombres_de_accion_del_menu_existen_en_el_javascript():
     en_python = set(re.findall(r'_accion_de_menu\("([a-z-]+)"\)', py))
     en_js = set(re.findall(r'"?([a-z-]+)"?\s*:\s*"[nfb,]"', js.split("ACCIONES_MENU =")[1].split("}")[0]))
     assert en_python and en_python == en_js
+
+
+# ------------- la tienda ignora S3/AWS aunque el entorno (o un .env empaquetado) lo active
+def test_tienda_neutraliza_las_variables_de_s3_y_no_usa_el_proxy_bloqueado(monkeypatch, tmp_path):
+    """Regresión: una compilación local con el ``.env`` real activaba S3 y la tabla pedía las
+    imágenes a ``/admin/s3/…`` (bloqueada en la tienda): el visor decía «Imagen no encontrada»."""
+    import io
+
+    monkeypatch.setenv("EDF_EDITION", "store")
+    monkeypatch.setenv("EDF_LOCAL_DB", str(tmp_path / "t.sqlite3"))
+    monkeypatch.delenv("MONGO_URI", raising=False)
+    for nombre, valor in (
+        ("USE_S3", "true"),
+        ("S3_BUCKET_NAME", "bucket-de-prueba"),
+        ("AWS_ACCESS_KEY_ID", "AKIAXXXXXXXX"),
+        ("AWS_SECRET_ACCESS_KEY", "secreto"),
+    ):
+        monkeypatch.setenv(nombre, valor)
+    from app.storage import local_store
+
+    local_store.reset_local_client()
+    import app as app_pkg
+    import app.database as appdb
+    from app.utils import s3_utils
+
+    aplicacion = app_pkg.create_app(testing=True)
+    try:
+        assert os.environ["USE_S3"] == "false" and os.environ["S3_BUCKET_NAME"] == ""
+        assert os.environ["AWS_ACCESS_KEY_ID"] == "" and os.environ["AWS_SECRET_ACCESS_KEY"] == ""
+        assert not aplicacion.config.get("USE_S3")
+        for clave in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "S3_BUCKET_NAME"):
+            assert not aplicacion.config.get(clave), clave
+        assert _entrar(aplicacion.test_client()).get("/s3/x.png").status_code == 404
+
+        def _no_debe_llamarse(*a, **k):
+            raise AssertionError("la tienda no puede crear un cliente de S3")
+
+        monkeypatch.setattr(s3_utils.boto3, "client", _no_debe_llamarse)
+        assert s3_utils.get_s3_url("foto.png") is None
+
+        c = _entrar(aplicacion.test_client())
+        c.post("/catalogs/create", data={"name": "S3", "headers": "Nombre"})
+        cid = str(appdb.get_mongo_db()["spreadsheets"].find_one({"name": "S3"})["_id"])
+        c.post(
+            f"/catalogs/add-row/{cid}",
+            data={"Nombre": "uno", "images": (io.BytesIO(_png()), "foto s3.png")},
+            content_type="multipart/form-data",
+        )
+        html = c.get(f"/admin/catalogo/spreadsheets/{cid}").get_data(as_text=True)
+        assert "/static/uploads/" in html and "/admin/s3/" not in html
+        guardado = appdb.get_mongo_db()["spreadsheets"].find_one({"name": "S3"})["data"][0]["images"][0]
+        resp = c.get(f"/static/uploads/{guardado}")
+        assert resp.status_code == 200 and resp.data == _png()
+        os.remove(os.path.join(aplicacion.config["UPLOAD_FOLDER"], guardado))
+    finally:
+        local_store.reset_local_client()
+        appdb._mongo_client = appdb._mongo_db = None
+        appdb._is_connected = False
+
+
+def test_atajos_visibilidad_y_prioridad_de_vista_previa_en_el_codigo():
+    """Contrato con el JS: las filas visibles no dependen de ``.getClientRects()`` (puede venir
+    vacío en WKWebView para <tr>) y la vista previa prefiere imagen, luego multimedia y por
+    último documento."""
+    import re
+
+    ruta = os.path.join(os.path.dirname(__file__), "..", "app", "static", "js", "store-atajos.js")
+    with open(ruta, encoding="utf-8") as f:
+        js = f.read()
+    assert ".getClientRects(" not in js
+    visores = re.search(r"var VISORES = \[(.*?)\];", js).group(1)
+    assert visores.index("showImageModal") < visores.index("showMultimediaModal") < visores.index("showDocumentModal")
