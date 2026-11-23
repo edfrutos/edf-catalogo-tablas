@@ -226,7 +226,7 @@ jobs:
             echo "        'flask', 'flask_login', 'flask_session', 'pymongo', 'requests'," >> "TablaTeca.spec"
             echo "        'webview', 'werkzeug', 'jinja2', 'markupsafe', 'itsdangerous'," >> "TablaTeca.spec"
             echo "        'click', 'blinker', 'boto3', 'botocore', 's3transfer'," >> "TablaTeca.spec"
-            echo "        'jmespath', 'python_dateutil', 'urllib3', 'certifi'," >> "TablaTeca.spec"
+            echo "        'jmespath', 'dateutil', 'urllib3', 'certifi'," >> "TablaTeca.spec"
             echo "        'charset_normalizer', 'idna', 'six', 'websockets'," >> "TablaTeca.spec"
             echo "        'asyncio', 'threading', 'tempfile', 'pathlib', 'datetime'," >> "TablaTeca.spec"
             echo "        'json', 'os', 'sys', 'time'," >> "TablaTeca.spec"

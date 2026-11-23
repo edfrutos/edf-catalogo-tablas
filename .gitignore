@@ -372,3 +372,8 @@ crear_docs_limpios.py
 **/.pytest_cache/
 .ruff_cache/
 **/.ruff_cache/
+
+# Build Developer ID (packaging/devid/devid_dmg.sh)
+.venv-devid/
+build-devid/
+dist-devid/
