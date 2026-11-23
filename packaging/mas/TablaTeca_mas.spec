@@ -30,7 +30,7 @@ a = Analysis(
         "flask", "flask_login", "flask_session", "pymongo", "requests",
         "webview", "werkzeug", "jinja2", "markupsafe", "itsdangerous",
         "click", "blinker", "boto3", "botocore", "s3transfer",
-        "jmespath", "python_dateutil", "urllib3", "certifi",
+        "jmespath", "dateutil", "urllib3", "certifi",
         "charset_normalizer", "idna", "six", "websockets",
         "asyncio", "threading", "tempfile", "pathlib", "datetime",
         "json", "os", "sys", "time",

@@ -171,7 +171,8 @@ types-s3transfer==0.13.0
 
 # Utilidades de empaquetado
 packaging==24.2
-setuptools
+# <81: las versiones recientes de setuptools ya no traen pkg_resources, que modulegraph (py2app) aún importa
+setuptools<81
 wheel
 
 # Utilidades de configuración
@@ -227,7 +228,8 @@ pyobjc-framework-WebKit==11.1
 
 # Utilidades de empaquetado para macOS
 py2app==0.28.8
-altgraph==0.17.4
+# 0.17.5: ya no importa pkg_resources (con 0.17.4 PyInstaller falla al arrancar)
+altgraph==0.17.5
 macholib==1.16.3
 modulegraph==0.19.6
 
