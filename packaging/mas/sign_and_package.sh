@@ -42,6 +42,25 @@ AD_HOC="${MAS_AD_HOC:-0}"
 [ -d "$APP_PATH" ] || { echo "No existe $APP_PATH" >&2; exit 1; }
 APP_PATH="${APP_PATH%/}"
 
+# App Review rechaza (guideline 2.5.1) los binarios que importan símbolos BLAS/
+# LAPACK no públicos de Accelerate. Llegaron con scipy (build 51, 2026-11-26):
+# se comprueba antes de firmar para no enterarse en la revisión.
+echo "🔎 Buscando símbolos no públicos (guideline 2.5.1)..."
+bad_syms=""
+while IFS= read -r -d '' bin; do
+  if file -b "$bin" | grep -q 'Mach-O'; then
+    hits="$(nm -u "$bin" 2>/dev/null | grep -E '^_(lsame_|dcabs1_|xerbla_array__)$' || true)"
+    [ -n "$hits" ] && bad_syms="${bad_syms}${bin#"$APP_PATH"/}: $(echo $hits)
+"
+  fi
+done < <(find "$APP_PATH/Contents" -type f \( -name '*.so' -o -name '*.dylib' \) -print0)
+if [ -n "$bad_syms" ]; then
+  echo "$bad_syms"
+  echo "::error title=Símbolos no públicos (2.5.1)::${bad_syms//$'\n'/%0A}"
+  exit 1
+fi
+[ -d "$APP_PATH/Contents/Frameworks/scipy" ] && { echo "::error title=scipy en el bundle::excluir scipy en TablaTeca_mas.spec"; exit 1; }
+
 INFO_PLIST="$APP_PATH/Contents/Info.plist"
 PLISTBUDDY=/usr/libexec/PlistBuddy
 BUNDLE_ID="$($PLISTBUDDY -c 'Print :CFBundleIdentifier' "$INFO_PLIST")"

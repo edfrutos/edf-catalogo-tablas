@@ -42,7 +42,11 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    # scipy solo lo usa packaging/icon/make_icon.py, no la app. Llega por los
+    # imports opcionales de pandas y enlaza símbolos BLAS/LAPACK que App Review
+    # rechaza como API no pública (guideline 2.5.1: _lsame_, _dcabs1_,
+    # _xerbla_array__; rechazo del 2026-11-26, build 51).
+    excludes=["scipy"],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
