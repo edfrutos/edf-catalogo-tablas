@@ -377,3 +377,8 @@ crear_docs_limpios.py
 .venv-devid/
 build-devid/
 dist-devid/
+
+# Build de descarga directa (packaging/devid/devid_dmg.sh)
+.venv-devid/
+dist-devid/
+build-devid/
