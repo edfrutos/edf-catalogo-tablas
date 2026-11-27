@@ -30,6 +30,20 @@ s3_client = boto3.client(
 # -------------------------------
 
 
+def _es_tienda():
+    """Edición de tienda: todo es local y S3 no se usa nunca.
+
+    S3_BUCKET_NAME se lee al importar este módulo, antes de que
+    init_store_edition() vacíe las variables de S3/AWS. Si el entorno del proceso
+    traía un bucket (p. ej. la app sin sandbox lanzada desde una terminal con
+    S3_BUCKET_NAME exportada), la vista de catálogo de la tienda generaba URLs
+    /admin/s3/… (ruta bloqueada: 404) en vez de /static/uploads/….
+    """
+    from app.edition import is_store
+
+    return is_store()
+
+
 def upload_file_to_s3(file_path, object_name=None, delete_local=True):
     """Sube un archivo a AWS S3.
 
@@ -41,6 +55,8 @@ def upload_file_to_s3(file_path, object_name=None, delete_local=True):
     Returns:
         str|None: Ruta S3 si sube correctamente, None si falla.
     """
+    if _es_tienda():
+        return None
     if object_name is None:
         object_name = os.path.basename(file_path)
 
@@ -59,6 +75,8 @@ def upload_file_to_s3(file_path, object_name=None, delete_local=True):
 
 def delete_file_from_s3(object_name):
     """Elimina un archivo de S3."""
+    if _es_tienda():
+        return False
     try:
         s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=object_name)
         return True
@@ -80,7 +98,7 @@ def get_s3_url(object_name, expiration=3600):
     # Sin bucket configurado (p. ej. edición local de la tienda) no hay S3 que
     # consultar: boto3 lanzaría TypeError/ParamValidationError, que no es
     # ClientError y tumbaba la vista del catálogo.
-    if not S3_BUCKET_NAME:
+    if not S3_BUCKET_NAME or _es_tienda():
         return None
     try:
         url = s3_client.generate_presigned_url(

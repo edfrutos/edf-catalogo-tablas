@@ -370,6 +370,48 @@ def test_get_s3_url_con_bucket_sigue_firmando(monkeypatch):
     assert s3u.get_s3_url("a.png", 60) == "https://s3.test/bucket/a.png?e=60"
 
 
+def test_get_s3_url_en_tienda_ignora_bucket_del_entorno(monkeypatch):
+    """Aunque el proceso traiga S3_BUCKET_NAME (leído al importar el módulo), la
+    tienda no genera URLs de S3: la vista de catálogo debe usar /static/uploads/."""
+    import app.routes.s3_utils as s3u
+
+    class FakeS3:
+        def generate_presigned_url(self, op, Params, ExpiresIn):
+            raise AssertionError("la tienda no debe firmar URLs de S3")
+
+        def upload_file(self, *a, **k):
+            raise AssertionError("la tienda no debe subir a S3")
+
+        def delete_object(self, *a, **k):
+            raise AssertionError("la tienda no debe borrar en S3")
+
+    monkeypatch.setenv("EDF_EDITION", "store")
+    monkeypatch.setattr(s3u, "S3_BUCKET_NAME", "bucket")
+    monkeypatch.setattr(s3u, "s3_client", FakeS3())
+    assert s3u.get_s3_url("a.png") is None
+    assert s3u.upload_file_to_s3("/no/existe/a.png", delete_local=False) is None
+    assert s3u.delete_file_from_s3("a.png") is False
+
+
+def test_vista_admin_tienda_con_bucket_en_entorno_usa_static_uploads(store_app, monkeypatch):
+    import app.database as appdb
+    import app.routes.s3_utils as s3u
+
+    class FakeS3:
+        def generate_presigned_url(self, op, Params, ExpiresIn):
+            return f"https://s3.test/{Params['Key']}"
+
+    monkeypatch.setattr(s3u, "S3_BUCKET_NAME", "bucket")
+    monkeypatch.setattr(s3u, "s3_client", FakeS3())
+    cid = _catalogo_con_media(appdb.get_mongo_db())
+    c = _entrar(store_app.test_client())
+
+    r = c.get(f"/admin/catalogo/spreadsheets/{cid}")
+    assert r.status_code == 200
+    assert b"/static/uploads/foto1.png" in r.data
+    assert b"/admin/s3/foto1.png" not in r.data
+
+
 # ------------------------------------------------ miniatura del catálogo (listado)
 @pytest.mark.parametrize(
     "row, esperado",
